@@ -1,0 +1,504 @@
+{
+  "specVersion": 1,
+  "timer": {
+    "durationsMinutes": {
+      "focus": {
+        "default": 25,
+        "min": 1,
+        "max": 120
+      },
+      "shortBreak": {
+        "default": 5,
+        "min": 1,
+        "max": 60
+      },
+      "longBreak": {
+        "default": 15,
+        "min": 1,
+        "max": 90
+      }
+    },
+    "longBreakEvery": 4,
+    "soundEnabledDefault": true,
+    "completionSoundWindowSeconds": 60
+  },
+  "calendar": {
+    "weekStartsOn": 1
+  },
+  "decor": {
+    "roughness": 1.3,
+    "bowing": 1.1,
+    "seeds": {
+      "logo": 7,
+      "dial": 11,
+      "cycle": 31,
+      "chart": 23,
+      "underline": 41,
+      "character": 53
+    }
+  },
+  "palette": {
+    "ink": "#1f2a52",
+    "muted": "#7c849c",
+    "line": "#dde3f0",
+    "accent": "#3f6ee8",
+    "accentSoft": "#c6d6ff",
+    "teal": "#2a9d8f",
+    "hair": "#3552b5",
+    "hairDeep": "#24357a",
+    "hairLight": "#8fc3f7",
+    "navy": "#22306b",
+    "skin": "#fff0e6",
+    "blush": "#f8a9b8",
+    "white": "#ffffff",
+    "eye": "#2d4ea6",
+    "mouth": "#e2707f",
+    "tear": "#9fd3ff",
+    "wood": "#c99358",
+    "rice": "#fffdf7",
+    "sky": "#7fb6f2"
+  },
+  "character": {
+    "name": "Whale-chan",
+    "roughness": 0.5,
+    "bowing": 0.6,
+    "outlineWidth": 1.6,
+    "frames": {
+      "full": [
+        10,
+        6,
+        188,
+        188
+      ],
+      "face": [
+        16,
+        4,
+        168,
+        168
+      ]
+    },
+    "reactionSeconds": {
+      "rice": 10,
+      "cry": 4
+    },
+    "captions": {
+      "focusReady": "Ready when you are!",
+      "focusRunning": "Focus now, rice later!",
+      "paused": "Taking a breather?",
+      "breakReady": "Break time. You earned it!",
+      "breakRunning": "Resting in standby… zzz",
+      "rice": "Thanks for the rice!",
+      "cry": "Aww… the rice got away. Try again?"
+    },
+    "alt": {
+      "idle": "Whale-chan smiling",
+      "rice": "Whale-chan happily eating a bowl of rice",
+      "cry": "Whale-chan crying"
+    },
+    "groups": {
+      "back": [
+        "tail",
+        "tailBelly",
+        "backHair",
+        "hairTipL",
+        "hairTipR"
+      ],
+      "body": [
+        "dress",
+        "apron",
+        "apronFrill",
+        "collar",
+        "bow",
+        "shoeL",
+        "shoeR"
+      ],
+      "head": [
+        "finL",
+        "finLLight",
+        "finR",
+        "finRLight",
+        "face",
+        "lockL",
+        "lockR",
+        "bangs",
+        "headband",
+        "ahoge",
+        "shineL",
+        "shineR",
+        "blushL",
+        "blushR"
+      ]
+    },
+    "poses": {
+      "idle": [
+        "@back",
+        "@body",
+        "armIdleL",
+        "handIdleL",
+        "armIdleR",
+        "handIdleR",
+        "@head",
+        "eyeL",
+        "eyeR",
+        "eyeShineL",
+        "eyeShineR",
+        "eyeLowL",
+        "eyeLowR",
+        "mouthSmile"
+      ],
+      "rice": [
+        "@back",
+        "@body",
+        "armRiceL",
+        "armRiceR",
+        "@head",
+        "eyeHappyL",
+        "eyeHappyR",
+        "mouthOpen",
+        "rice",
+        "riceGrains",
+        "bowl",
+        "bowlRim",
+        "handRiceL",
+        "handRiceR",
+        "chopsticks",
+        "riceBite",
+        "heartL",
+        "heartR",
+        "heartSmall"
+      ],
+      "cry": [
+        "@back",
+        "@body",
+        "armIdleL",
+        "handIdleL",
+        "armIdleR",
+        "handIdleR",
+        "@head",
+        "browL",
+        "browR",
+        "eyeL",
+        "eyeR",
+        "eyeShineL",
+        "eyeShineR",
+        "tearPoolL",
+        "tearPoolR",
+        "tearL",
+        "tearR",
+        "dropL",
+        "dropR",
+        "mouthCry"
+      ]
+    },
+    "parts": {
+      "tail": {
+        "d": "M134 170 C150 172 162 162 166 148 C168 142 167 136 165 131 C171 124 181 120 190 121 C186 128 181 132 176 134 C184 136 190 143 192 151 C184 149 176 145 171 141 C168 158 158 176 138 179 Z",
+        "fill": "navy",
+        "stroke": "ink"
+      },
+      "tailBelly": {
+        "d": "M141 175 C154 172 163 162 166 150",
+        "stroke": "white",
+        "width": 2.2
+      },
+      "backHair": {
+        "d": "M48 86 C44 50 70 32 100 32 C130 32 156 50 152 86 C150 112 162 142 156 170 C140 178 120 172 100 172 C80 172 60 178 44 170 C38 142 50 112 48 86 Z",
+        "fill": "hair",
+        "stroke": "ink"
+      },
+      "hairTipL": {
+        "d": "M47 166 C44 154 46 145 50 138 C54 148 60 156 68 161 C63 167 55 169 47 166 Z",
+        "fill": "hairLight"
+      },
+      "hairTipR": {
+        "d": "M153 166 C156 154 154 145 150 138 C146 148 140 156 132 161 C137 167 145 169 153 166 Z",
+        "fill": "hairLight"
+      },
+      "dress": {
+        "d": "M76 122 C70 140 64 160 60 178 C80 185 120 185 140 178 C136 160 130 140 124 122 Z",
+        "fill": "navy",
+        "stroke": "ink"
+      },
+      "apron": {
+        "d": "M86 134 C84 148 81 162 79 176 C92 180 108 180 121 176 C119 162 116 148 114 134 Z",
+        "fill": "white",
+        "stroke": "ink"
+      },
+      "apronFrill": {
+        "d": "M79 176 C83 181 87 181 90 177 C94 182 98 182 101 178 C105 182 109 182 112 177 C115 181 119 181 121 176",
+        "stroke": "ink",
+        "width": 1.2
+      },
+      "collar": {
+        "d": "M84 122 C90 130 110 130 116 122 L112 120 C106 125 94 125 88 120 Z",
+        "fill": "white",
+        "stroke": "ink"
+      },
+      "bow": {
+        "d": "M100 127 L91 121 L91 133 Z M100 127 L109 121 L109 133 Z",
+        "fill": "sky",
+        "stroke": "ink",
+        "width": 1.2
+      },
+      "shoeL": {
+        "d": "M76 183 C76 177 90 177 90 183 C90 188 76 188 76 183 Z",
+        "fill": "navy",
+        "stroke": "ink"
+      },
+      "shoeR": {
+        "d": "M110 183 C110 177 124 177 124 183 C124 188 110 188 110 183 Z",
+        "fill": "navy",
+        "stroke": "ink"
+      },
+      "armIdleL": {
+        "d": "M80 124 C70 132 66 144 67 155 C70 157 74 157 77 155 C77 145 80 136 86 130 Z",
+        "fill": "navy",
+        "stroke": "ink"
+      },
+      "handIdleL": {
+        "d": "M66 156 C66 151 76 151 76 156 C76 161 66 161 66 156 Z",
+        "fill": "skin",
+        "stroke": "ink",
+        "width": 1.2
+      },
+      "armIdleR": {
+        "d": "M120 124 C130 132 134 144 133 155 C130 157 126 157 123 155 C123 145 120 136 114 130 Z",
+        "fill": "navy",
+        "stroke": "ink"
+      },
+      "handIdleR": {
+        "d": "M124 156 C124 151 134 151 134 156 C134 161 124 161 124 156 Z",
+        "fill": "skin",
+        "stroke": "ink",
+        "width": 1.2
+      },
+      "armRiceL": {
+        "d": "M80 124 C72 130 68 138 70 146 C73 148 77 148 80 146 C80 140 82 134 86 130 Z",
+        "fill": "navy",
+        "stroke": "ink"
+      },
+      "armRiceR": {
+        "d": "M120 124 C128 130 132 138 130 146 C127 148 123 148 120 146 C120 140 118 134 114 130 Z",
+        "fill": "navy",
+        "stroke": "ink"
+      },
+      "finL": {
+        "d": "M60 78 C46 70 30 70 20 78 C31 81 39 88 43 97 C47 90 53 85 61 83 Z",
+        "fill": "hairDeep",
+        "stroke": "ink"
+      },
+      "finLLight": {
+        "d": "M25 79 C33 82 39 88 42 94",
+        "stroke": "hairLight",
+        "width": 1.6
+      },
+      "finR": {
+        "d": "M140 78 C154 70 170 70 180 78 C169 81 161 88 157 97 C153 90 147 85 139 83 Z",
+        "fill": "hairDeep",
+        "stroke": "ink"
+      },
+      "finRLight": {
+        "d": "M175 79 C167 82 161 88 158 94",
+        "stroke": "hairLight",
+        "width": 1.6
+      },
+      "face": {
+        "d": "M56 90 C56 64 76 50 100 50 C124 50 144 64 144 90 C144 114 124 130 100 130 C76 130 56 114 56 90 Z",
+        "fill": "skin",
+        "stroke": "ink"
+      },
+      "lockL": {
+        "d": "M57 84 C52 100 52 118 57 132 C62 127 64 118 64 106 C64 97 61 89 59 83 Z",
+        "fill": "hair",
+        "stroke": "ink"
+      },
+      "lockR": {
+        "d": "M143 84 C148 100 148 118 143 132 C138 127 136 118 136 106 C136 97 139 89 141 83 Z",
+        "fill": "hair",
+        "stroke": "ink"
+      },
+      "bangs": {
+        "d": "M54 94 C48 60 72 40 100 40 C128 40 152 60 146 94 C142 86 140 78 136 73 C132 81 126 86 120 88 C118 80 116 74 112 71 C108 79 102 84 96 86 C96 78 92 72 88 69 C84 77 76 83 68 85 C66 80 64 76 62 73 C58 79 56 86 54 94 Z",
+        "fill": "hair",
+        "stroke": "ink"
+      },
+      "headband": {
+        "d": "M62 60 C76 46 124 46 138 60 C134 62 130 61 126 58 C122 62 118 61 114 57 C110 61 104 61 100 57 C96 61 90 61 86 57 C82 61 78 62 74 58 C70 62 66 62 62 60 Z",
+        "fill": "white",
+        "stroke": "ink",
+        "width": 1.3
+      },
+      "ahoge": {
+        "d": "M101 42 C95 30 99 18 113 15 C106 23 106 31 108 40 Z",
+        "fill": "hair",
+        "stroke": "ink"
+      },
+      "shineL": {
+        "d": "M74 72 C78 68 83 66 88 66",
+        "stroke": "hairLight",
+        "width": 2.4
+      },
+      "shineR": {
+        "d": "M112 66 C118 66 123 68 127 72",
+        "stroke": "hairLight",
+        "width": 2.4
+      },
+      "blushL": {
+        "d": "M62 112 C62 108 76 108 76 112 C76 116 62 116 62 112 Z",
+        "fill": "blush"
+      },
+      "blushR": {
+        "d": "M124 112 C124 108 138 108 138 112 C138 116 124 116 124 112 Z",
+        "fill": "blush"
+      },
+      "eyeL": {
+        "d": "M73 100 C73 87 91 87 91 100 C91 113 73 113 73 100 Z",
+        "fill": "eye",
+        "stroke": "ink"
+      },
+      "eyeR": {
+        "d": "M109 100 C109 87 127 87 127 100 C127 113 109 113 109 100 Z",
+        "fill": "eye",
+        "stroke": "ink"
+      },
+      "eyeShineL": {
+        "d": "M76 95 C76 91 82 91 82 95 C82 99 76 99 76 95 Z",
+        "fill": "white"
+      },
+      "eyeShineR": {
+        "d": "M112 95 C112 91 118 91 118 95 C118 99 112 99 112 95 Z",
+        "fill": "white"
+      },
+      "eyeLowL": {
+        "d": "M82 106 C82 103 88 103 88 106 C88 109 82 109 82 106 Z",
+        "fill": "sky"
+      },
+      "eyeLowR": {
+        "d": "M118 106 C118 103 124 103 124 106 C124 109 118 109 118 106 Z",
+        "fill": "sky"
+      },
+      "mouthSmile": {
+        "d": "M94 116 C97 120 103 120 106 116",
+        "stroke": "ink",
+        "width": 1.8
+      },
+      "eyeHappyL": {
+        "d": "M73 102 C77 93 87 93 91 102",
+        "stroke": "ink",
+        "width": 2.6
+      },
+      "eyeHappyR": {
+        "d": "M109 102 C113 93 123 93 127 102",
+        "stroke": "ink",
+        "width": 2.6
+      },
+      "mouthOpen": {
+        "d": "M93 115 C95 124 105 124 107 115 Z",
+        "fill": "mouth",
+        "stroke": "ink"
+      },
+      "rice": {
+        "d": "M72 141 C76 128 90 124 100 126 C110 124 124 128 128 141 Z",
+        "fill": "rice",
+        "stroke": "ink"
+      },
+      "riceGrains": {
+        "d": "M86 133 L89 131 M98 130 L101 129 M110 134 L113 132 M94 137 L97 136 M104 137 L107 136",
+        "stroke": "muted",
+        "width": 1.2
+      },
+      "bowl": {
+        "d": "M70 140 C72 157 84 165 100 165 C116 165 128 157 130 140 Z",
+        "fill": "white",
+        "stroke": "ink"
+      },
+      "bowlRim": {
+        "d": "M74 150 C90 155 110 155 126 150",
+        "stroke": "sky",
+        "width": 2.4
+      },
+      "handRiceL": {
+        "d": "M64 146 C64 140 74 140 74 146 C74 152 64 152 64 146 Z",
+        "fill": "skin",
+        "stroke": "ink",
+        "width": 1.2
+      },
+      "handRiceR": {
+        "d": "M126 146 C126 140 136 140 136 146 C136 152 126 152 126 146 Z",
+        "fill": "skin",
+        "stroke": "ink",
+        "width": 1.2
+      },
+      "chopsticks": {
+        "d": "M131 143 L106 118 M135 141 L110 116",
+        "stroke": "wood",
+        "width": 2.4
+      },
+      "riceBite": {
+        "d": "M103 117 C103 113 110 113 110 117 C110 121 103 121 103 117 Z",
+        "fill": "rice",
+        "stroke": "ink",
+        "width": 1.2
+      },
+      "heartL": {
+        "d": "M40 52 C36 46 28 50 33 57 L40 64 L47 57 C52 50 44 46 40 52 Z",
+        "fill": "sky",
+        "stroke": "ink",
+        "width": 1.2
+      },
+      "heartR": {
+        "d": "M160 44 C157 39 150 42 154 48 L160 54 L166 48 C170 42 163 39 160 44 Z",
+        "fill": "sky",
+        "stroke": "ink",
+        "width": 1.2
+      },
+      "heartSmall": {
+        "d": "M168 74 C166 71 162 73 164 76 L168 80 L172 76 C174 73 170 71 168 74 Z",
+        "fill": "sky",
+        "stroke": "ink",
+        "width": 1
+      },
+      "browL": {
+        "d": "M73 84 C78 81 84 81 89 85",
+        "stroke": "ink",
+        "width": 1.8
+      },
+      "browR": {
+        "d": "M111 85 C116 81 122 81 127 84",
+        "stroke": "ink",
+        "width": 1.8
+      },
+      "tearPoolL": {
+        "d": "M73 104 C77 111 87 111 91 104",
+        "stroke": "tear",
+        "width": 3
+      },
+      "tearPoolR": {
+        "d": "M109 104 C113 111 123 111 127 104",
+        "stroke": "tear",
+        "width": 3
+      },
+      "tearL": {
+        "d": "M78 109 C75 120 73 130 75 140 C80 140 82 130 83 120 C83 114 81 110 78 109 Z",
+        "fill": "tear"
+      },
+      "tearR": {
+        "d": "M122 109 C125 120 127 130 125 140 C120 140 118 130 117 120 C117 114 119 110 122 109 Z",
+        "fill": "tear"
+      },
+      "dropL": {
+        "d": "M58 92 C53 98 53 104 58 104 C63 104 63 98 58 92 Z",
+        "fill": "tear"
+      },
+      "dropR": {
+        "d": "M142 92 C137 98 137 104 142 104 C147 104 147 98 142 92 Z",
+        "fill": "tear"
+      },
+      "mouthCry": {
+        "d": "M91 119 C95 113 105 113 109 119 C105 123 95 123 91 119 Z",
+        "fill": "mouth",
+        "stroke": "ink"
+      }
+    }
+  }
+}

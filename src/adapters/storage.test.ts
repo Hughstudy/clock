@@ -1,0 +1,256 @@
+import { describe, expect, it } from 'vitest'
+import { spec } from '../data/spec'
+import { applyAction, type AppAction } from '../logic/app'
+import { encodeSnapshot } from '../logic/snapshot'
+import type { AppSnapshot } from '../logic/types'
+import { createLock, type LockRunner } from './locks'
+import { SnapshotStore, type KeyValueStorage } from './storage'
+
+const KEY = 'test:snapshot'
+const MIN = 60_000
+const T0 = Date.UTC(2026, 9, 28, 9)
+const utcKey = (ms: number) => new Date(ms).toISOString().slice(0, 10)
+
+class MemoryStorage implements KeyValueStorage {
+  readonly data = new Map<string, string>()
+  failWrites = false
+  failReads = false
+  getItem(key: string): string | null {
+    if (this.failReads) throw new DOMException('blocked', 'SecurityError')
+    return this.data.get(key) ?? null
+  }
+  setItem(key: string, value: string): void {
+    if (this.failWrites) throw new DOMException('full', 'QuotaExceededError')
+    this.data.set(key, value)
+  }
+}
+
+/** One lock shared by "tabs", standing in for the Web Locks API. */
+function sharedLock(): LockRunner {
+  let tail: Promise<unknown> = Promise.resolve()
+  return {
+    run<T>(task: () => T | Promise<T>) {
+      const result = tail.then(task, task)
+      tail = result.catch(() => undefined)
+      return result
+    },
+  }
+}
+
+function tab(storage: KeyValueStorage | null, writerId: string, lock: LockRunner | null = sharedLock()): SnapshotStore {
+  return new SnapshotStore({ key: KEY, storage, lock, spec, writerId, now: () => T0, timeZone: () => 'Europe/Berlin' })
+}
+
+function act(store: SnapshotStore, action: AppAction, now: number) {
+  return store.transact((latest) => {
+    const t = applyAction(latest, action, { now, dateKeyOf: utcKey }, spec)
+    return { snapshot: t.snapshot, changed: t.changed, value: t.completion }
+  })
+}
+
+function stored(storage: MemoryStorage): AppSnapshot {
+  return JSON.parse(storage.data.get(KEY) ?? 'null') as AppSnapshot
+}
+
+describe('SnapshotStore persistence', () => {
+  it('starts with defaults and writes only when something changes', async () => {
+    const storage = new MemoryStorage()
+    const store = tab(storage, 'a')
+    expect(store.status).toEqual({ persistence: 'saved', notice: null })
+    await act(store, { type: 'reconcile' }, T0)
+    expect(storage.data.has(KEY)).toBe(false)
+
+    const commit = await act(store, { type: 'start', sessionId: 's1', timeZone: 'UTC' }, T0)
+    expect(commit.saved).toBe(true)
+    expect(stored(storage)).toMatchObject({ revision: 1, writer: 'a', timer: { session: { id: 's1', status: 'running' } } })
+  })
+
+  it('restores running and paused sessions after a reload', async () => {
+    const storage = new MemoryStorage()
+    const first = tab(storage, 'a')
+    await act(first, { type: 'start', sessionId: 's1', timeZone: 'UTC' }, T0)
+    expect(tab(storage, 'b').snapshot.timer.session).toEqual({
+      status: 'running', id: 's1', durationMs: 25 * MIN, deadline: T0 + 25 * MIN, timeZone: 'UTC',
+    })
+
+    await act(first, { type: 'pause' }, T0 + 5 * MIN)
+    expect(tab(storage, 'c').snapshot.timer.session).toEqual({
+      status: 'paused', id: 's1', durationMs: 25 * MIN, remainingMs: 20 * MIN, timeZone: 'UTC',
+    })
+  })
+
+  it('credits background expiry once when the app reopens', async () => {
+    const storage = new MemoryStorage()
+    await act(tab(storage, 'a'), { type: 'start', sessionId: 's1', timeZone: 'UTC' }, T0)
+    const reopened = tab(storage, 'b')
+    const first = await act(reopened, { type: 'reconcile' }, T0 + 90 * MIN)
+    const repeat = await act(reopened, { type: 'reconcile' }, T0 + 91 * MIN)
+    expect(first.value?.credited).toBe(true)
+    expect(repeat.value).toBeNull()
+    expect(stored(storage).completions).toHaveLength(1)
+    expect(stored(storage).timer).toEqual({ phase: 'shortBreak', session: null, completedFocusCount: 1 })
+  })
+})
+
+describe('SnapshotStore across tabs', () => {
+  it('serializes concurrent reconciles so only one credits the session', async () => {
+    const storage = new MemoryStorage()
+    const lock = sharedLock()
+    const a = tab(storage, 'a', lock)
+    const b = tab(storage, 'b', lock)
+    await act(a, { type: 'start', sessionId: 's1', timeZone: 'UTC' }, T0)
+    // Tab b still holds pre-start memory; both notice the expiry at once.
+    const [ra, rb] = await Promise.all([
+      act(a, { type: 'reconcile' }, T0 + 25 * MIN),
+      act(b, { type: 'reconcile' }, T0 + 25 * MIN),
+    ])
+    expect([ra.value?.credited, rb.value?.credited]).toEqual([true, undefined])
+    expect(stored(storage).completions.map((r) => r.sessionId)).toEqual(['s1'])
+  })
+
+  it('does not let a stale tab overwrite newer state', async () => {
+    const storage = new MemoryStorage()
+    const lock = sharedLock()
+    const a = tab(storage, 'a', lock)
+    const b = tab(storage, 'b', lock)
+    await act(a, { type: 'start', sessionId: 's1', timeZone: 'UTC' }, T0)
+    await act(a, { type: 'reconcile' }, T0 + 25 * MIN)
+    // b never received a's writes, but acts on the latest stored data.
+    await act(b, { type: 'skipBreak' }, T0 + 26 * MIN)
+    expect(stored(storage).completions).toHaveLength(1)
+    expect(stored(storage).timer).toEqual({ phase: 'focus', session: null, completedFocusCount: 1 })
+  })
+
+  it('repairs a lost update that arrives through a storage event', async () => {
+    const storage = new MemoryStorage()
+    const lock = sharedLock()
+    const a = tab(storage, 'a', lock)
+    const b = tab(storage, 'b', lock)
+    await act(a, { type: 'start', sessionId: 's1', timeZone: 'UTC' }, T0)
+    const bStart = b.receive(storage.data.get(KEY) ?? null)
+    expect(bStart?.snapshot.timer.session?.id).toBe('s1')
+
+    // a credits s1; then a stale write lacking it lands, e.g. from a slow cross-process propagation.
+    await act(a, { type: 'reconcile' }, T0 + 25 * MIN)
+    const stale = { ...bStart!.snapshot, revision: 5, writer: 'b', timer: { ...bStart!.snapshot.timer, session: null } }
+    storage.data.set(KEY, encodeSnapshot(stale))
+
+    const seen = a.receive(storage.data.get(KEY) ?? null)
+    expect(seen?.needsHeal).toBe(true)
+    await a.transact((latest) => ({ snapshot: latest, changed: false, value: null }))
+    expect(stored(storage).completions.map((r) => r.sessionId)).toEqual(['s1'])
+  })
+
+  it('shows saved data read-only when the Web Locks API is missing', async () => {
+    expect(createLock('x', null)).toBeNull()
+    const storage = new MemoryStorage()
+    await act(tab(storage, 'a'), { type: 'start', sessionId: 's1', timeZone: 'UTC' }, T0)
+    const before = storage.data.get(KEY)
+
+    const store = tab(storage, 'b', null)
+    expect(store.status).toEqual({ persistence: 'read-only', notice: { kind: 'no-locks' } })
+    expect(store.snapshot.timer.session?.id).toBe('s1')
+    const commit = await act(store, { type: 'reset' }, T0 + MIN)
+    expect(commit.saved).toBe(false)
+    expect(storage.data.get(KEY)).toBe(before)
+  })
+})
+
+describe('SnapshotStore recovery', () => {
+  it('reports failed writes, keeps progress in memory, and saves it once storage recovers', async () => {
+    const storage = new MemoryStorage()
+    const store = tab(storage, 'a')
+    storage.failWrites = true
+    const failed = await act(store, { type: 'start', sessionId: 's1', timeZone: 'UTC' }, T0)
+    expect(failed.saved).toBe(false)
+    expect(failed.error).toMatch(/QuotaExceededError/)
+    expect(store.snapshot.timer.session?.id).toBe('s1')
+
+    storage.failWrites = false
+    const retried = await act(store, { type: 'reconcile' }, T0 + MIN)
+    expect(retried.saved).toBe(true)
+    expect(stored(storage).timer.session?.id).toBe('s1')
+  })
+
+  it('backs up unreadable data before replacing it', async () => {
+    const storage = new MemoryStorage()
+    storage.data.set(KEY, '{"version": 2, broken')
+    const store = tab(storage, 'a')
+    expect(store.status.notice).toMatchObject({ kind: 'unreadable', backupKey: `${KEY}:backup:${T0}` })
+    expect(storage.data.get(`${KEY}:backup:${T0}`)).toBe('{"version": 2, broken')
+
+    await act(store, { type: 'start', sessionId: 's1', timeZone: 'UTC' }, T0)
+    expect(stored(storage).timer.session?.id).toBe('s1')
+    expect([...storage.data.keys()].filter((k) => k.includes('backup'))).toHaveLength(1)
+  })
+
+  it('leaves unreadable data untouched when no backup can be made', async () => {
+    const storage = new MemoryStorage()
+    storage.data.set(KEY, 'garbage')
+    storage.failWrites = true
+    const store = tab(storage, 'a')
+    storage.failWrites = false
+    expect(store.status).toMatchObject({ persistence: 'memory-only', notice: { kind: 'unreadable', backupKey: null } })
+    await act(store, { type: 'start', sessionId: 's1', timeZone: 'UTC' }, T0)
+    expect(storage.data.get(KEY)).toBe('garbage')
+  })
+
+  it('stops writing when data turns unreadable mid-session and cannot be backed up', async () => {
+    const storage = new MemoryStorage()
+    const store = tab(storage, 'a')
+    await act(store, { type: 'start', sessionId: 's1', timeZone: 'UTC' }, T0)
+    storage.data.set(KEY, 'corrupted by something else')
+    storage.failWrites = true
+    const commit = await act(store, { type: 'pause' }, T0 + MIN)
+    storage.failWrites = false
+
+    expect(commit.saved).toBe(false)
+    expect(store.status).toMatchObject({ persistence: 'memory-only', notice: { kind: 'unreadable', backupKey: null } })
+    await act(store, { type: 'resume' }, T0 + 2 * MIN)
+    expect(storage.data.get(KEY)).toBe('corrupted by something else')
+  })
+
+  it('restores a running timer saved before session time zones were recorded', () => {
+    const storage = new MemoryStorage()
+    const v1 = {
+      version: 1, revision: 4, writer: 'old',
+      settings: { durationsMinutes: { focus: 25, shortBreak: 5, longBreak: 15 }, soundEnabled: true },
+      timer: { phase: 'focus', completedFocusCount: 0, session: { status: 'running', id: 's1', durationMs: 25 * MIN, deadline: T0 + 25 * MIN } },
+      completions: [],
+    }
+    storage.data.set(KEY, JSON.stringify(v1))
+    const store = tab(storage, 'a')
+    expect(store.status).toEqual({ persistence: 'saved', notice: null })
+    expect(store.snapshot.timer.session).toEqual({
+      status: 'running', id: 's1', durationMs: 25 * MIN, deadline: T0 + 25 * MIN, timeZone: 'Europe/Berlin',
+    })
+  })
+
+  it('repairs partially invalid data and keeps the original as a backup', () => {
+    const storage = new MemoryStorage()
+    const raw = { version: 2, revision: 3, writer: 'x', settings: { durationsMinutes: { focus: 30, shortBreak: 5, longBreak: 15 }, soundEnabled: 'yes' }, timer: { phase: 'focus', session: null, completedFocusCount: 0 }, completions: [] }
+    storage.data.set(KEY, JSON.stringify(raw))
+    const store = tab(storage, 'a')
+    expect(store.snapshot.settings).toEqual({ durationsMinutes: { focus: 30, shortBreak: 5, longBreak: 15 }, soundEnabled: true })
+    expect(store.status.notice).toEqual({ kind: 'repaired', fields: ['settings.soundEnabled'], backupKey: `${KEY}:backup:${T0}` })
+  })
+
+  it('never overwrites data from a newer app version', async () => {
+    const storage = new MemoryStorage()
+    storage.data.set(KEY, '{"version": 3, "future": true}')
+    const store = tab(storage, 'a')
+    expect(store.status).toEqual({ persistence: 'read-only', notice: { kind: 'newer', version: 3 } })
+    const commit = await act(store, { type: 'start', sessionId: 's1', timeZone: 'UTC' }, T0)
+    expect(commit.saved).toBe(false)
+    expect(storage.data.get(KEY)).toBe('{"version": 3, "future": true}')
+  })
+
+  it('runs in memory when storage is blocked', async () => {
+    const storage = new MemoryStorage()
+    storage.failReads = true
+    const store = tab(storage, 'a')
+    expect(store.status).toEqual({ persistence: 'memory-only', notice: { kind: 'unavailable' } })
+    expect((await act(store, { type: 'start', sessionId: 's1', timeZone: 'UTC' }, T0)).saved).toBe(false)
+    expect(tab(null, 'b').status.persistence).toBe('memory-only')
+  })
+})
