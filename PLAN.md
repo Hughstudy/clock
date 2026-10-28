@@ -1,6 +1,6 @@
 # Clock — development plan
 
-Status (2026-10-28): milestones 1 and 2 are done and verified in a local production build. The app is renamed Whale Focus, the tomato theme is replaced by Whale-chan (idle, eating rice on success, crying on failure), and the review gaps are closed. Milestone 3 (publish to GitHub Pages) is in progress.
+Status (2026-10-28): Whale Focus is live at **https://hughstudy.github.io/clock/** (repository [Hughstudy/clock](https://github.com/Hughstudy/clock), deployed by GitHub Actions). Milestones 1–3 are done. Remaining: the device-level acceptance checks listed below (install flow, installed-mode offline, real phones, reduced motion).
 
 ## Goal and release order
 
@@ -139,7 +139,7 @@ Store one versioned, validated application snapshot under an app-specific localS
 - Provide concise iPhone Add to Home Screen guidance. Test browser and installed modes independently; do not promise that distinct installations share saved state. [Apple installation guidance](https://support.apple.com/guide/iphone/turn-a-website-into-an-app-iph42ab2f3a7/ios), [installation storage differences](https://web.dev/learn/pwa/installation)
 - Limit the service worker to offline/cache/update responsibilities. It is not a persistent timer or alarm process; session recovery belongs in the app. [Service-worker lifecycle](https://web.dev/learn/pwa/service-workers)
 - Namespace service-worker caches and storage for this app. Updates should remove obsolete app caches without interrupting an active timer or removing saved progress.
-- Repository: GitHub account `Hughstudy` (from `gh auth`). Proposed repository `Hughstudy/clock`, public because GitHub Pages on a free plan requires it, giving the base path `/clock/`. Not created yet; create it only after milestone 2 is verified.
+- Repository: [Hughstudy/clock](https://github.com/Hughstudy/clock), public because GitHub Pages on a free plan requires it. Pages source is GitHub Actions; the base path is `/clock/`. Pushing workflow files needs SSH or a `gh` token with the `workflow` scope; `origin` uses SSH.
 - At implementation, record tested browser versions: iPhone Safari and home-screen mode, Android Chrome and installed mode, plus a desktop browser for two-tab tests. Do not claim physical-device verification from desktop emulation alone.
 
 ## Implementation decisions
@@ -190,29 +190,30 @@ Recorded 2026-10-28.
 - [x] Add PWA manifest, install icons (Whale-chan’s face), offline caching, and a safe update strategy.
 - [x] Add a GitHub Actions workflow that installs from the lockfile, runs the tests, builds, and deploys `dist/`.
 - [x] Document local development and deployment commands in a README.
-- [ ] Create the GitHub repository, push, and set Pages to deploy from GitHub Actions.
-- [ ] Pass the acceptance checks below and verify the deployed URL in a browser.
+- [x] Create the GitHub repository, push, and set Pages to deploy from GitHub Actions (first run: tests and build passed, deployed in about a minute).
+- [x] Verify the deployed URL in a browser.
+- [ ] Pass the remaining acceptance checks below (device and install checks).
 
 ## Acceptance checks
 
-Evidence so far (2026-10-28, local `vite preview` of the `/clock/` build in the desktop app’s Chromium pane, 375 px viewport): on the Whale Focus build, start → reset showed the cry with no credit; a simulated background expiry showed rice once, credited one session with its time zone, and readied the break; a reload did not replay the reaction; Stats, Settings, and fast settings taps behaved; the update prompt applied the new build; no console errors. On the earlier tomato build (same storage and timer code paths), two tabs settling one expiry, corrupted-storage backup, and offline reopening with the server stopped also passed. Boxes below stay unchecked until the deployed site is checked.
+Evidence (2026-10-28). *Local* = `vite preview` of the `/clock/` production build; *live* = https://hughstudy.github.io/clock/. Both were checked in the desktop app’s Chromium browser pane at a 375 px viewport. Where a check ran on the earlier tomato build, the storage and timer code paths are the same. Not yet tested: real phones (iPhone Safari, Android Chrome), installed home-screen mode, and other desktop browsers.
 
-- [ ] `npm run build` passes, and the production app has no console errors during all core flows.
-- [ ] Focus, short break, and every-fourth-focus long break follow the configured durations.
-- [ ] Running and paused timers survive reload; changed settings do not alter an active session.
-- [ ] Background expiry credits one session and leaves the next phase waiting to start.
-- [ ] Reloads, repeated effects, and simultaneous tabs cannot duplicate or overwrite session credit.
-- [ ] Concurrent settings/completion writes preserve both changes; missing Web Locks produces the documented read-only state.
-- [ ] Resetting or abandoning an unexpired focus session grants no credit; resetting after expiry retains the earned completion.
-- [ ] Midnight grouping, reopening on a later date, week boundaries, travel/time-zone changes, daylight-saving changes, and streak continuity are correct. Manual clock changes do not produce duplicate credit or invalid display values.
-- [ ] Older/invalid storage and write failures produce recoverable behavior.
-- [ ] The production repository subpath loads without missing assets; manifest and service-worker scopes are correct.
-- [ ] Cold offline reopening works after caching, including installed mode; app updates preserve progress. Record observed browser-to-install storage behavior.
-- [ ] Muted or blocked audio produces no error; restoring an old completed session does not replay its alarm.
-- [ ] Whale-chan shows rice exactly once per newly credited focus completion and cries only when an unexpired focus session is reset; breaks, Skip break, tab switches, and reloads never trigger or replay a reaction.
-- [ ] All three poses are visually reviewed at phone size, have text alternatives, and respect reduced motion.
-- [ ] No tomato imagery or wording remains; the repository contains no copied fan art or DeepSeek logo/wordmark; the credit and non-affiliation note are present.
-- [ ] Phone layout, install flow, sound toggle, keyboard use, and reduced motion are checked. Record any physical-device checks that could not be performed.
+- [x] `npm run build` passes, and the production app has no console errors during all core flows (local and live: start, reset, expiry, reload, Stats, Settings, update prompt).
+- [x] Focus, short break, and every-fourth-focus long break follow the configured durations (unit tests).
+- [x] Running and paused timers survive reload; changed settings do not alter an active session (unit tests; running reload in the browser).
+- [x] Background expiry credits one session and leaves the next phase waiting to start (unit tests; local, with a simulated past deadline).
+- [x] Reloads, repeated effects, and simultaneous tabs cannot duplicate or overwrite session credit (unit tests; two tabs in the browser on the earlier build).
+- [x] Concurrent settings/completion writes preserve both changes; missing Web Locks produces the documented read-only state (unit tests; fast settings taps in the browser).
+- [x] Resetting or abandoning an unexpired focus session grants no credit; resetting after expiry retains the earned completion (unit tests; local and live reset).
+- [x] Midnight grouping, reopening on a later date, week boundaries, travel/time-zone changes, daylight-saving changes, and streak continuity are correct. Manual clock changes do not produce duplicate credit or invalid display values (unit tests, including New York, Tokyo and Berlin zone cases; not observed live across a real midnight).
+- [x] Older/invalid storage and write failures produce recoverable behavior (unit tests, including v1 → v2 migration and failed backups; corrupted storage in the browser on the earlier build).
+- [x] The production repository subpath loads without missing assets; manifest and service-worker scopes are correct (live: all assets 200 under `/clock/`; manifest `start_url`/`scope`/`id` are `/clock/`; service-worker scope `/clock/`; all four icons 200; all 13 shell files precached in `whale-focus-precache-v2`).
+- [ ] Cold offline reopening works after caching, including installed mode; app updates preserve progress. Done: offline reopening with the server stopped (local, earlier build); a prompt-mode update kept data (local); live page controlled by the service worker with a complete precache. Not done: live offline relaunch and installed mode.
+- [x] Muted or blocked audio produces no error; restoring an old completed session does not replay its alarm (unit tests: blocked audio context, chime window; no reaction replay on reload in the browser).
+- [x] Whale-chan shows rice exactly once per newly credited focus completion and cries only when an unexpired focus session is reset; breaks, Skip break, tab switches, and reloads never trigger or replay a reaction (unit tests; local and live).
+- [ ] All three poses are visually reviewed at phone size, have text alternatives, and respect reduced motion. Done: poses reviewed, alt text present. Not done: `prefers-reduced-motion` was not emulated (CSS rule present).
+- [x] No tomato imagery or wording remains; the repository contains no copied fan art or DeepSeek logo/wordmark; the credit and non-affiliation note are present.
+- [ ] Phone layout, install flow, sound toggle, keyboard use, and reduced motion are checked. Done: 375 px emulated layout, keyboard focus ring, sound toggle persists and raises no errors. Not done: hearing the chime, the install flow, reduced motion, and any physical phone.
 
 ## References
 
