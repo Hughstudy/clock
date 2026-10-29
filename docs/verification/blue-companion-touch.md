@@ -86,6 +86,32 @@ Environment: Node 26.12.1, npm 11.20.0, desktop in-app Chromium reporting
   encouragement with an empty visual cue. Navigation returned without replay.
 - No console warnings/errors were captured in the checked production flows.
 
+## Countdown companionship follow-up
+
+The user requested visible companionship during countdown. A subsequent
+animation-only change adds a 4.8-second subtle breath (1.2% width / 1.5% height
+expansion, 0.5 SVG-unit lift), synchronized 2-degree hand movements and the
+existing 6.8-second blink cycle to the focused stance. These are visual timings,
+not breathing instructions or health claims. Only internal SVG groups animate.
+
+Ambient selectors explicitly yield to touch and permitted finite cues. This
+also avoids CSS specificity keeping an older ambient animation active during
+direct play. Reduced-motion settings retain the static focused expression.
+No timer, persistence, callback or shared contract changes are included.
+
+Follow-up verification on the same desktop Chromium 156 environment:
+
+- `npm run check`: 201 tests passed; `/clock/` production and fixture builds
+  passed, along with the standalone fixture's strict TypeScript check.
+- The expanded browser fixture passed **30/30 checks**, including a continuously
+  advancing breath across rerenders, ambient suspension during touch, resumption
+  after direct play and zero countdown animations with motion off.
+- During a real production five-minute countdown, after the start gesture ended,
+  computed styles showed `blue-focus-breathe` and `blue-blink`. Successive
+  measurements confirmed changing body geometry with identical native button
+  bounds. The 375-pixel scene was visually inspected; pause remained immediate.
+- No browser console warnings/errors were captured in the fixture checks.
+
 ## Remaining work
 
 This increment implements direct character contact, not shared contact with the

@@ -134,6 +134,12 @@ This is a delivered touch-interaction slice of A1/A2, not completion of the full
 plan. Shared button/timer contact, thought-saving choreography and reward
 artwork still need main-owned anchors/contracts and the relevant design choices.
 
+The user's follow-up requests companionship throughout the countdown. The
+focused stance now uses a subtle repeating breath, small synchronized hand
+movements and an occasional blink. These ambient motions use the existing
+validated timing data, yield to direct touch and finite cues, and stop in reduced
+motion. They do not depend on countdown ticks or change main-owned behavior.
+
 A handoff includes changed paths, the shared interface version, supported poses/cues, fixture-versus-real coverage, static variants, contact/interruption recordings, actual verification and remaining decisions. The main owner integrates shared screens/styles and the release candidate.
 
 - [x] Animation responsibilities and main-logic boundary documented.
