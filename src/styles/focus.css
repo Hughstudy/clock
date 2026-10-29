@@ -22,20 +22,6 @@ body { background: radial-gradient(ellipse at 50% 15%, #fff 0%, var(--paper) 65%
 .settings-entry > span { font-size: 1.75rem; line-height: 20px; }
 .settings-entry:hover { background: var(--whale-soft); }
 .home { gap: 12px; }
-.focus-intro { padding-top: 10px; }
-.eyebrow { margin: 0 0 8px; font-size: .59rem; letter-spacing: .22em; color: #71819b; font-weight: 800; }
-.focus-intro h2 { margin: 0; font-size: 1.4rem; font-weight: 750; letter-spacing: .08em; }
-.focus-scene { width: 100%; display: flex; flex-direction: column; align-items: center; position: relative; }
-.focus-scene::before { content: ''; position: absolute; inset: 3% 3% 8%; z-index: -1; border-radius: 48% 48% 45% 45%; background: radial-gradient(ellipse at 50% 30%, #edf3ff 0%, #f0f4ff66 50%, transparent 72%); }
-.focus-scene .dial { width: min(250px, 100%); margin-top: 4px; }
-.dial-track { fill: #fff9; stroke: #e1e9fb; stroke-width: 6; }
-.dial-arc { stroke-width: 6; }
-.dial-face { opacity: .55; }
-.dial-phase { font-size: .875rem; font-weight: 600; letter-spacing: .12em; margin-bottom: 10px; }
-.digits { font-size: clamp(2.8rem, 14vw, 3.6rem); letter-spacing: -.055em; font-weight: 750; }
-.dial-status { font-size: .7rem; display: flex; align-items: center; gap: 5px; font-weight: 600; margin-top: 12px; }
-.status-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--muted); }
-.status-running { background: var(--accent); }
 .controls { gap: 8px; margin-top: -4px; }
 .btn { transition: background-color .12s ease, box-shadow .12s ease; }
 .btn:active, .btn-primary:active { transform: none; }
@@ -48,7 +34,6 @@ body { background: radial-gradient(ellipse at 50% 15%, #fff 0%, var(--paper) 65%
 .control-divider { width: 1px; height: 14px; background: var(--line); }
 .end-confirm { padding: 12px; border: 1px solid var(--line); border-radius: 18px; background: #fff; }
 .end-confirm p { margin: 0 0 6px; font-size: .875rem; }
-.focus-footnote { margin: 0; font-size: .75rem; color: var(--muted); letter-spacing: .025em; }
 .local-indicator { margin: 0; font-size: .625rem; color: var(--muted); }
 .local-indicator > span { color: #426e76; }
 .tab-bar { width: min(420px, calc(100% - 32px)); left: 50%; right: auto; transform: translateX(-50%); bottom: calc(10px + env(safe-area-inset-bottom)); border: 1px solid #e0e8f0; border-radius: 22px; background: #ffffffef; padding: 5px; gap: 6px; box-shadow: 0 5px 24px #2b45760a; }
@@ -66,20 +51,10 @@ body { background: radial-gradient(ellipse at 50% 15%, #fff 0%, var(--paper) 65%
 .app[data-reduced-motion='true'] *, .app[data-reduced-motion='true'] *::before, .app[data-reduced-motion='true'] *::after { animation: none !important; transition: none !important; }
 @media (min-width: 600px) {
   .app { padding-top: 34px; }
-  .focus-intro { padding-top: 16px; }
-  .focus-scene .dial { width: 260px; }
 }
 @media (max-width: 360px) {
   .app { padding-inline: 16px; padding-top: calc(env(safe-area-inset-top) + 12px); }
-  .focus-intro h2 { font-size: 1.25rem; }
-  .focus-scene .dial { width: 220px; }
 }
-/* Keep normal state responses within the same space, so Pause stays where Start was. */
-.home .companion-feedback__greeting .companion-feedback__character { inline-size: min(210px, 62vw); }
-.home .companion-feedback__content { min-height: 54px; display: flex; flex-direction: column; justify-content: center; }
-.home .companion-feedback[data-placement='requested'] .companion-feedback__content { min-height: 54px; }
-.home .focus-scene .dial { width: min(230px, 100%); margin-top: 0; }
-.home .focus-intro { padding-top: 0; }
 .home { gap: 8px; }
 .app-wordmark { min-width: 0; }
 .app-title { min-width: 0; overflow-wrap: anywhere; }
@@ -87,10 +62,7 @@ body { background: radial-gradient(ellipse at 50% 15%, #fff 0%, var(--paper) 65%
 .settings-entry { margin-left: 8px; }
 .home .btn-primary { padding-inline: 16px; }
 /* Optional small step, one-off lengths and thought capture. Targets stay at least 44px. */
-.step-field { width: min(320px, 100%); display: grid; gap: 4px; text-align: start; }
-.step-field label { font-size: .8125rem; font-weight: 650; color: var(--ink); }
-.step-optional { font-weight: 500; color: var(--muted); }
-.step-field input, .thought-form textarea { width: 100%; min-height: 44px; padding: 10px 14px; border: 1px solid var(--line); border-radius: 14px; background: #fff; color: var(--ink); font: inherit; font-size: 1rem; }
+.step-input, .thought-form textarea { width: 100%; min-height: 44px; padding: 10px 14px; border: 1px solid var(--line); border-radius: 14px; background: #fff; color: var(--ink); font: inherit; font-size: 1rem; }
 .session-step { margin: 0; max-width: 320px; font-size: .875rem; color: var(--ink); overflow-wrap: anywhere; }
 .session-step span { margin-right: 6px; color: var(--muted); font-size: .75rem; }
 .duration-choices { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px; }
@@ -115,3 +87,39 @@ body { background: radial-gradient(ellipse at 50% 15%, #fff 0%, var(--paper) 65%
 .thought-meta { color: var(--muted); font-size: .75rem; }
 .thought-row-actions { display: flex; flex-wrap: wrap; }
 .thought-row-actions .link-button { margin-left: 0; }
+
+/* The companion is the scene. The clock is a small badge in its corner. */
+.home { gap: 10px; }
+.stage { position: relative; width: 100%; padding: 8px 0 0; border-radius: 36px;
+  background: radial-gradient(ellipse 70% 55% at 50% 58%, #e8f0ff 0%, #f1f5ffaa 55%, transparent 78%); }
+.home .companion-feedback__greeting { padding: 26px 0 0; }
+.home .companion-feedback__greeting .companion-feedback__character { inline-size: min(360px, 90vw); }
+.home .blue-companion { width: 100%; }
+.home .companion-feedback__invite { position: absolute; inline-size: 1px; block-size: 1px; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.home .companion-feedback { position: relative; padding-bottom: 44px; }
+/* Overlays the creature's lower half and grows upward, so the controls below never move. */
+.home .companion-feedback__content { position: absolute; z-index: 2; left: 50%; bottom: 0; inline-size: min(330px, 94%); transform: translateX(-50%); padding: 0; }
+.home .companion-feedback__content:has(> p) { padding: 6px 14px 2px; border-radius: 22px; background: #fff; box-shadow: 0 2px 14px #2b45760f; }
+.home .companion-feedback__content:has(> p)::before { content: ''; position: absolute; top: -7px; left: 50%; width: 14px; height: 14px; background: #fff; transform: translateX(-50%) rotate(45deg); border-radius: 3px; }
+.home .companion-feedback__status, .home .companion-feedback__copy { position: relative; margin: 0; line-height: 1.5; }
+.home .companion-feedback__copy { font-size: .875rem; }
+.home .companion-feedback__actions { gap: 0; }
+.home .companion-feedback__actions > button { padding-block: 0; }
+.home .companion-feedback__status { font-size: .8125rem; }
+.clock-badge { position: absolute; z-index: 1; top: 8px; right: 4px; display: flex; align-items: center; gap: 6px; padding: 5px 10px 5px 5px;
+  border: 1px solid var(--line); border-radius: 999px; background: #ffffffd9; color: var(--ink); }
+.clock-badge__ring { width: 30px; height: 30px; flex-shrink: 0; }
+.clock-badge__track { fill: none; stroke: #e1e9fb; stroke-width: 4; }
+.clock-badge__arc { fill: none; stroke: var(--whale); stroke-width: 4; stroke-linecap: round; }
+.home.is-break .clock-badge__arc { stroke: #6aa99a; }
+.clock-badge__text { display: grid; line-height: 1.15; }
+.clock-badge__time { font-size: 1rem; font-weight: 750; font-variant-numeric: tabular-nums; letter-spacing: -.02em; }
+.clock-badge__status { font-size: .625rem; color: var(--muted); font-weight: 600; }
+.home .controls { margin-top: 0; }
+@media (max-width: 360px) {
+  .home .companion-feedback__greeting .companion-feedback__character { inline-size: min(300px, 88vw); }
+}
+.step-toggle { min-height: 44px; padding: 0 14px; border: 1px dashed #c9d6ee; border-radius: 999px; background: transparent; color: #546d90; font: inherit; font-size: .8125rem; font-weight: 600; cursor: pointer; }
+.step-toggle:hover { background: var(--whale-soft); }
+.step-slot { min-height: 44px; display: flex; align-items: center; justify-content: center; }
+.step-input { width: min(320px, 100%); text-align: center; font-size: .9375rem; }

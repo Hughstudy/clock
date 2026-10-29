@@ -17,6 +17,8 @@ interface Props {
   /** The app keeps one live region above navigation. Standalone previews may announce here. */
   announce?: boolean
   bookmarkState?: 'available' | 'saving' | 'saved' | 'failed'
+  /** Omit routine timer status that another element already shows; results and errors stay. */
+  quietStatus?: boolean
 }
 
 function Placeholder() {
@@ -30,7 +32,7 @@ function Placeholder() {
 }
 
 /** Presentation only: all operations are callbacks, including saved/failed bookmark state. */
-export function CompanionFeedback({ feedback, reducedMotion, motionEnabled = false, renderCharacter, onNext, onBookmark, onDismiss, onRequest, announce = true, bookmarkState = 'available' }: Props) {
+export function CompanionFeedback({ feedback, reducedMotion, motionEnabled = false, renderCharacter, onNext, onBookmark, onDismiss, onRequest, announce = true, bookmarkState = 'available', quietStatus = false }: Props) {
   const { frame, announcement } = feedback
   const { presentation, labels } = useCompanionView(feedback, reducedMotion, motionEnabled)
   const requested = frame.placement === 'requested' && frame.encouragement !== null
@@ -43,7 +45,7 @@ export function CompanionFeedback({ feedback, reducedMotion, motionEnabled = fal
         </button>
       ) : <div className="companion-feedback__character" aria-hidden="true">{renderCharacter ? renderCharacter(presentation) : <Placeholder />}</div>}
       <div className="companion-feedback__content">
-        {(frame.persistence !== 'saved' || frame.status.kind === 'error' || frame.status.result || !frame.encouragement) && <p className={`companion-feedback__status${frame.status.kind === 'error' ? ' companion-feedback__status--error' : ''}`}>{frame.status.text}</p>}
+        {(frame.persistence !== 'saved' || frame.status.kind === 'error' || frame.status.result || (!frame.encouragement && !quietStatus)) && <p className={`companion-feedback__status${frame.status.kind === 'error' ? ' companion-feedback__status--error' : ''}`}>{frame.status.text}</p>}
         {frame.encouragement && <p className="companion-feedback__copy">{frame.encouragement.text}</p>}
         <div className="companion-feedback__actions">
           {requested && onNext && <button type="button" onClick={onNext}>{labels.next}</button>}

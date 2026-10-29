@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
-import { formatClock, PHASE_LABELS, spokenClock } from '../components/format'
+import { ClockBadge } from '../components/ClockBadge'
+import { PHASE_LABELS } from '../components/format'
 import { ThoughtPanel } from '../components/ThoughtPanel'
-import { TimerDial } from '../components/TimerDial'
 import { BlueCompanion } from '../components/companion/BlueCompanion'
 import { CompanionFeedback } from '../components/companion/CompanionFeedback'
 import type { SaveState } from '../contracts/focus'
@@ -26,12 +26,13 @@ const STATUS_TEXT = { ready: '准备好了', running: '专注中', paused: '已�
 export function HomeScreen({ view, companion, thoughts, reducedMotion, canEdit, saveState, dispatch }: Props) {
   const [confirmEnd, setConfirmEnd] = useState(false)
   const [choosing, setChoosing] = useState(false)
+  const [stepOpen, setStepOpen] = useState(false)
   const [step, setStep] = useState('')
   useEffect(() => { setConfirmEnd(false); setChoosing(false) }, [view.sessionId])
   const label = PHASE_LABELS[view.phase]
   const readyFocus = view.status === 'ready' && !view.isBreak
   // A one-off start takes the typed step with it; the field clears only once the session exists.
-  useEffect(() => { if (view.sessionId) setStep('') }, [view.sessionId])
+  useEffect(() => { if (view.sessionId) { setStep(''); setStepOpen(false) } }, [view.sessionId])
   const start = (durationMinutes?: number) => dispatch({ type: 'start', step, ...(durationMinutes ? { durationMinutes } : {}) })
   const primary = view.status === 'running'
     ? { text: view.isBreak ? '暂停休息' : uiText('UI03'), run: () => dispatch({ type: 'pause' }) }
@@ -43,11 +44,10 @@ export function HomeScreen({ view, companion, thoughts, reducedMotion, canEdit, 
 
   return (
     <section className={`screen home ${view.isBreak ? 'is-break' : 'is-focus'}`} aria-label="专注计时">
-      <div className="focus-intro">
-        <p className="eyebrow">A LITTLE SPACE TO {view.isBreak ? 'REST' : 'FOCUS'}</p>
-        <h2>{view.isBreak ? '歇一歇，也很好。' : '从这一小段开始。'}</h2>
-      </div>
-      <div className="focus-scene">
+      {/* The companion is the scene; the clock waits quietly in its corner. */}
+      <div className="stage">
+        <ClockBadge label={label} status={view.isBreak && view.status === 'running' ? '休息中' : STATUS_TEXT[view.status]}
+          remainingMs={view.remainingMs} progress={view.progress} running={view.status === 'running'} />
         <CompanionFeedback
           feedback={companion.feedback}
           reducedMotion={reducedMotion}
@@ -56,27 +56,26 @@ export function HomeScreen({ view, companion, thoughts, reducedMotion, canEdit, 
           onNext={companion.next}
           onDismiss={companion.dismiss}
           announce={false}
+          quietStatus
           renderCharacter={(presentation) => <BlueCompanion presentation={presentation} cueId={companion.cue?.id} />}
         />
-        <TimerDial progress={view.progress}>
-          <p className="dial-phase">{label}</p>
-          <div className="digits" role="timer" aria-label={`${label}还剩${spokenClock(view.remainingMs)}`}>
-            {formatClock(view.remainingMs)}
-          </div>
-          <div className="dial-status"><span className={`status-dot status-${view.status}`} aria-hidden="true" />{view.isBreak && view.status === 'running' ? '休息中' : STATUS_TEXT[view.status]}</div>
-        </TimerDial>
       </div>
-      {readyFocus && (
-        <div className="step-field">
-          <label htmlFor="session-step">{uiText('UI11')}<span className="step-optional">（可留空）</span></label>
-          <input id="session-step" type="text" enterKeyHint="go" maxLength={view.stepMaxLength} value={step} disabled={!canEdit}
-            placeholder={uiText('UI10')} onChange={(e) => setStep(e.target.value)}
+      {/* One fixed-height row in every state, so Pause appears exactly where Start was. */}
+      <div className="step-slot">
+        {!view.isBreak && view.step && view.status !== 'ready' && (
+          <p className="session-step"><span>{uiText('UI10')}</span>{view.step}</p>
+        )}
+        {readyFocus && !stepOpen && (
+          <button type="button" className="step-toggle" disabled={!canEdit} onClick={() => setStepOpen(true)}>
+            ＋ {uiText('UI10')}
+          </button>
+        )}
+        {readyFocus && stepOpen && (
+          <input className="step-input" type="text" enterKeyHint="go" maxLength={view.stepMaxLength} value={step} disabled={!canEdit}
+            aria-label={`${uiText('UI11')}（可留空）`} placeholder={`${uiText('UI11')}（可留空）`} onChange={(e) => setStep(e.target.value)} autoFocus
             onKeyDown={(e) => { if (e.key === 'Enter' && !e.nativeEvent.isComposing) { e.preventDefault(); start() } }} />
-        </div>
-      )}
-      {!view.isBreak && view.step && view.status !== 'ready' && (
-        <p className="session-step"><span>{uiText('UI10')}</span>{view.step}</p>
-      )}
+        )}
+      </div>
       <div className="controls">
         <button type="button" className="btn btn-primary" disabled={!canEdit} onClick={primary.run}>
           <span className="primary-symbol" aria-hidden="true">{view.status === 'running' ? 'Ⅱ' : '▷'}</span>{primary.text}
@@ -91,6 +90,7 @@ export function HomeScreen({ view, companion, thoughts, reducedMotion, canEdit, 
             <button type="button" className="btn btn-secondary" aria-expanded={choosing} aria-controls="duration-choices" disabled={!canEdit} onClick={() => setChoosing(!choosing)}>
               换个时长
             </button>
+
             <span className="control-divider" aria-hidden="true" />
             <button type="button" className="btn btn-secondary" disabled={!canEdit} onClick={() => dispatch({ type: 'startBreak' })}>{uiText('UI08')}</button>
           </>}
@@ -119,7 +119,6 @@ export function HomeScreen({ view, companion, thoughts, reducedMotion, canEdit, 
         )}
       </div>
       <ThoughtPanel thoughts={thoughts} canEdit={canEdit} inSession={view.status !== 'ready'} />
-      <p className="focus-footnote">{view.isBreak ? '休息不计入专注时间，按你的节奏来。' : '随时暂停，短短一段也会被记录。'}</p>
       <p className="local-indicator">{saveState === 'saved' ? '◦ 进度保存在此浏览器' : ' '}</p>
     </section>
   )
