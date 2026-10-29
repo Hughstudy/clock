@@ -1,12 +1,35 @@
 # Whale Focus
 
-This branch continues the supplied 2026-10-29 PRD v3 handoff, including the first focus slice: start, pause/resume,
-manual early ending, actual-time history, participation at start, and automatic
-recovery from the saved deadline. The final character and product name remain
-undecided. The user selected a soft, round blue creature with expressive arms for this working prototype. The home screen now uses original rough.js artwork, short event-driven gestures, quiet focus and reduced-motion poses. Read [PLAN.md](PLAN.md),
-[AGENTS.md](AGENTS.md), and the [shared development register](https://chatgpt.com/library?file_id=libfile_c81e264086d88191828a7654a36d7421&account_id=personal)
-for ownership and handoffs. Thought capture, full 7/30-day review, rewards,
-backup/import/clear UI and final visual design are still pending. Nothing on this branch has been published.
+The implementation baseline `e6daa66` contains the supplied 2026-10-29 PRD v3 handoff and
+the blue companion integration. This includes start, pause/resume, manual early
+ending, actual-time history, participation at start, and recovery from the saved
+deadline. On 2026-10-29 the user requested committing and pushing this baseline
+and the English workstream plans. Check [GitHub Actions](https://github.com/Hughstudy/clock/actions)
+for deployment results. This publishes the current prototype; the planned P0
+features below are not yet complete.
+
+The user selected a soft, round blue creature with expressive arms for the
+working prototype. Home uses original rough.js artwork, short event-driven
+gestures, quiet focus and reduced-motion poses. Final artwork, product name and
+brand assets remain open. Thought capture, full history/reflection, persistent
+rewards and favorites, backup/restore/clear UI and final visual design are still
+pending.
+
+The English [PLAN.md](PLAN.md) is the current review draft: it records the PRD
+gaps, proposed choices, shared interface and integration order. Work is split into
+the [Animation Plan](docs/plans/ANIMATION_PLAN.md) (art, poses, contact and motion)
+and [Main Logic Plan](docs/plans/MAIN_LOGIC_PLAN.md) (timer, thoughts, records,
+rewards, persistence and functional screens). Main logic provides read-only
+results and permitted cues; animation never changes time, saved data or rewards.
+Both can be developed independently against the agreed interface. This split is
+documentation only; further product implementation awaits plan review.
+See [AGENTS.md](AGENTS.md) for
+engineering and collaboration rules. The [supplied handoff](docs/handoff-20261029/README.md),
+[PRD v3](docs/handoff-20261029/番茄钟_产品PRD_v3.md) and
+[register snapshot](docs/handoff-20261029/番茄钟_开发协作.md) are historical source
+references, preserved in their original language; no cloud register has been
+updated. Maintained local project documentation uses English. This documentation
+preference does not change the application's UI language.
 
 The companion module is connected to actual saved start/pause/resume/end/rest events. Click the creature for encouragement; Enter works too. Copy never rotates on a countdown tick. Early and full endings have equal gestures, and reload/cross-tab recovery never replays them. Animation can be disabled in Settings; the operating system’s reduced-motion preference always wins. Focus and Records are the two main destinations, with Settings in the header.
 
@@ -47,6 +70,7 @@ the drawing data.
 | --- | --- |
 | `src/logic/` | Pure domain functions: timer transitions, accounting, calendar, snapshot validation and merging, seeded rough.js sketches. No React, DOM, storage or clock access. |
 | `src/data/pet-spec.json` | Tunable timer defaults and bounds, cadence, calendar week start, sketch seeds, palette, and Whale-chan's parts, poses, captions and reaction timings. Validated by `src/logic/spec.ts`. |
+| `src/data/companion-spec.json` | Original blue companion shapes, palette, semantic poses and animation timings. |
 | `src/adapters/` | Browser effects: `localStorage` snapshot store, Web Locks, local calendar dates, sound, page lifecycle. |
 | `src/hooks/` | React coordination between adapters and logic. |
 | `src/components/`, `src/screens/` | Presentation only. |
@@ -84,7 +108,12 @@ One-time setup: in the repository's **Settings → Pages**, set **Source** to
 
 ## Current verification
 
-See [the continuation report](docs/verification/friendly-companion.md) for source comparison, checks, browser evidence and remaining device work. The [supplied handoff](docs/handoff-20261029/README.md) and PRD are retained as immutable reference snapshots, not a live task board.
+See [the continuation report](docs/verification/friendly-companion.md) for source
+comparison, checks, browser evidence and remaining device work. Its branch and
+integration status describe the time of testing; the baseline and publication request above
+reflect subsequent actions. The documentation update did not rerun application
+tests. The [supplied handoff](docs/handoff-20261029/README.md) and PRD remain
+immutable reference snapshots, not a live task board.
 
 ## Credits
 

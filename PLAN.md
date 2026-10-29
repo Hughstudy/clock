@@ -1,111 +1,155 @@
-# 番茄钟改造计划
+# Focus App: Next Implementation Plan (Review Draft)
 
-本地续作（2026-10-29）：已导入用户提供的 `57ca8697cfa3a694f5e319e00d8dc4ee38b4c907` 完整交接源码，并接通 T30 陪伴模块。用户选择了“柔软、圆润的蓝色小生物，带有表情丰富的小手臂”。当前为原创角色可运行原型；未合并 main、未发布。详见本文末尾及 [验证记录](docs/verification/friendly-companion.md)。
+Updated: 2026-10-29. This plan describes the next work from the current code baseline and awaits user review. It is not a new PRD revision or a claim that the planned features already exist. This update splits the work into animation and main logic; it changes documentation only, not the source-code structure. Maintain this plan and active project documentation in English; the app's launch language remains a separate product decision.
 
-更新基线：2026-10-28，产品PRD v3（读取的文件版本7）。当前分支已实施第一批F1核心；完整新版仍在开发。正式产品名称、角色与最终UI尚未确定，原鲸鱼是候选之一。
+## 1. Sources and current baseline
 
-## 依据与协作入口
+- Requirements: the supplied [PRD v3, file revision 7](docs/handoff-20261029/番茄钟_产品PRD_v3.md), especially sections 3–10 and 12–14. Its appendix describes older code, so it must not be treated as the current implementation. The PRD body takes precedence over conflicting appendix descriptions.
+- Subsequent user choice: friendly, cute animation with “a soft, round blue creature with expressive little arms.” Continue this prototype direction. The final name, brand icons, material and individual gestures remain open.
+- Implementation baseline: `e6daa66`, containing the complete handoff source and blue companion integration. On 2026-10-29 the user requested committing and pushing this implementation together with the English workstream plans. A fresh fetch found remote main at `0a57d03` with no divergent commits. This publication covers the current prototype, not the unfinished P0 plan; deployment results are tracked in [GitHub Actions](https://github.com/Hughstudy/clock/actions).
+- Handoff source baseline: `57ca8697cfa3a694f5e319e00d8dc4ee38b4c907`. Preserve the original PRD and [collaboration register snapshot](docs/handoff-20261029/番茄钟_开发协作.md) as historical references. Do not overwrite the cloud register or turn this plan into a duplicate cross-window ownership board.
+- Existing evidence: the [friendly companion verification report](docs/verification/friendly-companion.md). That implementation passed strict type checks, 193 tests, a `/clock/` production build, and desktop Chromium checks at phone widths, including offline reopening. Branch statements in that report describe its original verification point; the current Git baseline is above. Application tests were not rerun for this documentation update.
 
-- [产品PRD主稿](https://chatgpt.com/library?file_id=libfile_819c07bf86108191af0be21b4e39123d&account_id=personal)：正文定义目标及确定性；附录描述旧代码与差距。
-- [开发协作文件](https://chatgpt.com/library?file_id=libfile_c81e264086d88191828a7654a36d7421&account_id=personal)：唯一实时任务、认领、文件归属、接口请求与交付登记；这里不复制另一份实时看板。
-- AGENTS.md：工程边界、数据不变量与跨窗口规则。
-- 旧版核对提交：0a57d037bb472bc9f4035196bca2c4c7f0529955。旧计划完整历史可从该Git提交读取；其中哭泣、固定角色与仅完整完成记账不再是现行产品要求。
+## 2. Current differences from the PRD
 
-## 已有基础与当前差距
+| Capability | Implemented now | Remaining work | PRD reference |
+| --- | --- | --- | --- |
+| F1: timing and accounting | Deadline timing, pause/resume, actual short and zero-second records, freely available rest, expiry reconciliation before actions, separate participation and full-completion counts | Optional small step; first-use and quick-duration hierarchy; clear actual duration and next actions after ending | Sections 4, 10 |
+| Supportive feedback | Saved start/pause/resume/end/rest events; requested encouragement with next/dismiss; no replay on recovery or synchronization | Welcome/return and F2/F3 events; requested-encouragement categories; bookmarks; saved event-encouragement preference | Section 7 |
+| Blue companion | Original rough.js artwork, seven semantic poses, finite wave/rebound/ending gestures, quiet focus, saved animation preference | Contact with real UI elements, local deformation and cancellable choreography; final artwork and icons | Section 8 |
+| F2: thought capture | No domain model or entry point yet | One-tap empty marker, optional text, drafts, return path, session association, put-away status, deletion and undo | Section 5 |
+| F3: records | Actual-time totals and a basic history list | Day-grouped records, proposed 7/30-day views, inline details, thoughts/collections modes and position preservation | Section 6 |
+| Rewards | One participation record per new session and an encouragement library | Visible session mementos that can be revisited, welcome content, bookmarks, permanent content and deduplication; mechanics require review | Section 7 |
+| Persistence | Snapshot v3, v1/v2 migration, Web Locks, pending-save retries, merging within a dataset generation and generation-isolation foundation | Edit/delete conflict rules, full-model migration, JSON backup, replacement restore and clear-all | Section 10 |
+| Settings and delivery | Duration/sound/motion controls, two primary destinations, auxiliary Settings, static PWA and GitHub Pages configuration | Clear invalid-input recovery, encouragement/memento preferences, data management; complete physical-device, installation and accessibility acceptance | Sections 9, 12 |
 
-| 能力 | 当前源码 | 改造目标 |
+One experience issue deserves early attention: after a successful ending, encouragement hides the factual status containing the actual duration, while Home displays the next ready timer. Accounting is correct, but the user cannot immediately see how much time was just recorded. Present the factual result separately from encouragement within the existing scene.
+
+## 3. Product goal and scope
+
+Complete a coherent phone journey: **start a small session → pause or capture a thought whenever needed → end with actual time recorded → rest or continue → revisit experiences, thoughts and favorites → back up and restore local data.** The blue companion has its own playful personality throughout. Users never need to work to keep it happy or take care of it.
+
+Deliver through the existing static Web/PWA application and GitHub Pages. Retain React 18, TypeScript, Vite, Strict Mode, rough.js, localStorage and the pure-logic/adapter/hook boundaries. Reuse the reliable timer core. No backend, accounts or cloud synchronization are included.
+
+P0 includes F1, F2, F3, the complete basic reward experience and preferences, backup/replacement restore/clear-all, reliable local data and phone usability. Encouragement and a participation counter alone do not complete the reward system or P0.
+
+Month/arbitrary-date filtering, individual focus-record deletion, CSV, backup merging and hiding seconds remain P1. Native applications, stores and commercialization require separate decisions. Exclude task trees, AI chat, growth/hunger/mood decay, streak pressure, multiple characters and decoration shops.
+
+## 4. Concrete proposals for this review
+
+These are recommendations, not individually approved decisions. Continue the selected round blue creature instead of reopening unrelated character directions.
+
+| Decision | Recommendation | Status and tradeoff |
 | --- | --- | --- |
-| 计时 | 25/5/15分钟、自定义、暂停恢复、截止时间结算、四段长休息 | 轻量短时开始；提前结束保存实际时间；主动休息 |
-| 数据 | 快照v2、v1迁移、Web Locks、去重、原文保护、稳定历史日期 | 结束与参与记录；想法编辑删除；奖励收藏；恢复清理不复活 |
-| 陪伴 | Whale-chan idle/rice/cry、英文固定话语、饭碗 | 全正向节点、主动鼓励、收藏；可替换角色呈现 |
-| 页面 | Home、Stats、Settings三个主导航 | 当前建议专注与记录两个主导航，独立辅助设置，同页详情 |
-| 记录 | 今日、本周、完整次数、streak | 按日流，时间/步骤/想法/纪念关联，7/30天与集中查找 |
-| 交付 | 静态前端、PWA、GitHub Actions、安装说明 | 数据自主权、生产流程与真实手机验收 |
+| Character personality | Curious and playful, with expressive little arms; communicate through silhouette, weight and purposeful contact | Extends the user's choice. Review the specific silhouette and gestures in the next prototype; no fixed name or ocean setting |
+| Page structure | Keep Focus and Records as the two primary destinations, with Settings as a third, occasional surface; at most one local panel open | Reuse the current structure and validate the complete set of states |
+| Lightweight start | First-use primary action: “Start with 5 minutes.” Reveal 5/15/25 choices on demand; later show the user's last explicit selection clearly | A PRD proposal for review. A one-off choice does not silently change the 25/5/15 defaults |
+| Ending experience | Show actual session time, its memento and one response in the same scene; prioritize rest, with another session secondary | Treat early and deadline endings equally. Never auto-start the next session or hide facts behind encouragement |
+| Sound and motion | New users start quietly; preserve existing sound choices. Use static poses whenever the OS or app requests reduced motion | Default silence is a proposal. Reuse the existing saved animation setting and OS precedence |
+| Physical interaction | Start with option A: stationary controls with surfaces that react to contact. Nudge an edge on start, put away a saved thought, lean against the timer during rest | Compare B, coordinated scene interaction, and C, actual control movement, using the same task. No physics engine or freely draggable world is needed initially |
+| Records | Default to the last 7 days, switchable to 30; one range total, collapsed trend and day-grouped list; thoughts and collections in the same page | A PRD structure proposal. Thoughts and collections are not restricted to the 7-day window |
+| Reward format | One original illustration style showing the companion's everyday life: small session mementos attached to real records; welcome content, bookmarked phrases and a few permanent illustrations in Collections | Review acquisition, saving and later viewing together. No separate reward room or claim step |
+| Permanent rewards | Prepare three illustrations in a consistent style; use 3/8/20 distinct sessions only as candidate review parameters | Quantity, thresholds and whether to use cumulative unlocking are unapproved. The initial design review (A1/L0) must settle the rule before production implementation; these numbers are not scientific guidance |
 
-历史计划记录旧版已部署到 https://hughstudy.github.io/clock/ 、79项Vitest测试和桌面375px检查；本次文档改动没有重跑这些检查，不证明当前线上已满足新版要求。
+For session mementos, propose retaining the current participation rule: one per newly started logical session, with equal treatment for zero-second and fully elapsed sessions. This is separate from permanent-content unlocking. Hiding mementos must not stop accounting or remove rewards. If cumulative unlocking is rejected, define the alternative way permanent content becomes available and update the milestones rather than silently dropping that part of reward design.
 
-## 产品方向
+## 5. Two independent workstreams
 
-最高原则是“只要愿意使用工具，就值得肯定”。开始、暂停、短段结束、分心、休息和回来都被接纳；技术错误真实呈现。角色有自己的兴趣与快乐，不需要用户工作来维持。
+The remaining work is split into two plans. These define responsibilities and deliverables, not a new live assignment board. Existing files stay in place until an implementation change justifies moving them.
 
-“平静的开心”允许活力、调皮、幽默和探索。蓝色优先，但物种、比例、材质、构图、时间表达和名称开放。旧A/B/C和未通过的UI三案不占据默认候选位置；旧资产按新目标比较。
+| Workstream | Owns | Does not own | Detailed plan |
+| --- | --- | --- | --- |
+| Animation | Character art/poses, deterministic geometry, motion timing, contact anchors, visual deformation, responsive scene components, static/reduced-motion presentation, reward artwork and visual inspection | Timer transitions, saving, statistics, note lifecycle, reward eligibility, bookmarks, feedback eligibility or persistent settings | [Animation Plan](docs/plans/ANIMATION_PLAN.md) |
+| Main logic | F1/F2/F3, model/storage/migration, settings, reward and bookmark rules, backup/restore/clear, semantic feedback and accessible functional screens, app/PWA integration | Character geometry, gesture choreography, animation scheduling or local deformation algorithms | [Main Logic Plan](docs/plans/MAIN_LOGIC_PLAN.md) |
 
-F1轻量计时、F2想法暂存、F3长期回顾构成完整P0。三层奖励、参与纪念、具体阈值及136句文案的选用保留PRD提案/待评审状态。可以先做可调整的功能原型，最终视觉与商业资产另定。
+Main logic owns the meaning and saved result of an action. Animation owns how that result looks. For example, main logic saves a thought and decides whether a fresh success cue is allowed; animation uses that cue to make the creature put it away. If animation is disabled, the same thought is saved and the factual result stays visible.
 
-用户后续要求角色/物品与UI有触碰、形变、震动和受限推移关系。先做可点击样例，验证稳定操作和减少动态；不要让所有元素同时运动，不锁定小人或鲸鱼为正式角色。
+This is a responsibility split across the existing architecture. Pure drawing/pose functions remain DOM-free in `src/logic/`; DOM measurement, OS motion preferences and scheduling remain in appropriate adapters/hooks. Do not move all animation into components or put all browser effects into pure main logic.
 
-## 实施顺序
+### Ownership at the boundary
 
-| 阶段 | 工作 | 完成证据 |
+- Main owns `src/contracts/`, `src/App.tsx`, functional screens/controls, root composition and `src/styles/focus.css`. Animation provides visual components and scoped styles; main integrates them and supplies stable target anchors.
+- Main owns `feedback.ts`, `feedback-host.ts`, `useFeedback.ts`, encouragement content/selection, save/error messages and the single announcement owner. These responsibilities stay in main even where a current folder is named `companion`.
+- Animation owns the display-only mapping in `companion.ts`, deterministic artwork in `blue-companion.ts`, `BlueCompanion.tsx`, `useBlueCompanion.ts`, `useCompanionView.ts`, the motion preference hook/OS adapter and its specific art/config/style files. It maps permitted cues to poses without deciding whether a reward or save occurred.
+- Main retains `CompanionFeedback.tsx` because it renders factual status, semantic actions and accessibility output. Animation supplies its character slot and visual styling through the reviewed contract.
+- Main persists motion/display preferences; animation reads the supplied preference and OS setting. Main saves reward ownership and selects content IDs; animation supplies validated artwork for those IDs. No competing stores, settings controllers or ledgers.
+- Changes to shared contracts are integrated by main and reviewed by both workstreams before either side depends on them. A cross-boundary edit goes through the file owner instead of parallel changes to the same path.
+
+## 6. Interface between main logic and animation
+
+The current code has `C1-F1` in `src/contracts/focus.ts`, `AppFeedbackEvent`, `FeedbackFrame` and `CompanionPresentation`. They are useful starting points, but they do not yet constitute a complete independent animation contract for F2/rewards/contact scenes. The following is the target interface to publish in L0; names and exact TypeScript fields remain proposed.
+
+```mermaid
+flowchart LR
+    User[User action] --> Main[Main logic and application hooks]
+    Main <--> Store[(Versioned local snapshot)]
+    Main -->|Read-only view and permitted cue| Animation[Animation and presentation]
+    Animation --> Visual[Pose, contact and visual response]
+    Animation -->|Explicit user-intent callback| Main
+    Main --> Facts[Factual status and accessible announcement]
+```
+
+| Contract element | Producer and content | Consumer rule |
 | --- | --- | --- |
-| 0 规则与接口 | 同步旧文档；共享认领；发布类型、动作结果和视图契约 | 能读取同一任务文件并取得实际接口提交；责任路径清楚 |
-| 1 移除压力 | 清理cry、失饭、保连续、休息资格与误导保存文案，更新旧断言 | 运行/暂停/到期边界/休息结束均无负面反馈；未保存不假称成功 |
-| 2 可信记录核心 | 快照迁移，参与/到期分开，短段记录，一触开始和主动休息 | 1秒合法；8分运行+3分暂停+2分运行记10分；去重与迁移通过 |
-| 3 页面与陪伴并行 | 专注和暂存；记录和设置；文案与可替换角色；统一接线 | 三功能连贯，奖励可保存再查看，汇总可复算，关键状态稿评审 |
-| 4 数据与手机验收 | 备份、替换恢复、清理、离线、更新、真机 | 重复恢复不翻倍，删除不复活，真实设备结果可复现 |
-| 5 有条件商业发行 | 角色品牌、平台、权益和价格 | 销售承诺有验证支持，商业决定明确后再做购买与商店工作 |
+| Read-only view | Main supplies phase/status, true time/progress, factual persistence/error state, selected content IDs and presentation preferences; only the data needed by the renderer | Render the latest state. No access to mutable snapshots or storage and no recalculation of elapsed time/reward eligibility |
+| Transient visual cue | Main validates the operation identity, generation/revision, origin and persistence, then supplies a stable cue identity and allowed semantic result | One permitted gesture at most. Renderer may cancel or omit it; doing so has no effect on accounting or saved content |
+| Scene inputs | Main's layout exposes stable target refs/anchors; animation measures and coordinates contact within its UI hooks | No DOM measurements in pure logic. Adapt to resize/keyboard changes; cancel safely if a target is absent or moves |
+| User callbacks | Main supplies explicit request/next/dismiss/bookmark or other approved controls | Dispatch only on real user intent. Touching a button in a character animation must not dispatch a click |
+| Accessibility output | Main selects factual messages, announcement identity and priority; native controls keep accessible names and focus | Animation adds no duplicate live announcements. Reduced motion retains a useful static expression and all semantic controls |
+| Local completion/cancellation | Animation clears only its own transient motion state | `animationend`, timeouts and cancellation must never save, grant rewards, start/end sessions or enable a waiting business action |
 
-阶段1涉及旧页面、Hook与角色配置，由集成窗口先完成再交接。阶段3的状态稿、独立组件与物理样例可在接口任务后并行；正式接线等待对应业务提交。不要为并行分别造计时、存储或奖励系统。
+### Event rules and independent verification
 
-## 新版完成清单
+- Snapshot state and transient cues are separate. Countdown refreshes update readings but never generate a new gesture, phrase, reward or drawing seed.
+- Main suppresses stale, duplicate, rejected and no-op outcomes. Recovery, synchronization and navigation update state silently; opening a screen does not replay past success.
+- Save-dependent success requires confirmed persistence. Pending, memory-only, read-only and failed states remain truthful. A later successful retry uses the original operation identity and can produce at most one eligible success cue.
+- Explicit requests for encouragement do not require a data write. Bookmark/save success does. Distinguish the two rather than gating every visual event on persistence.
+- Main decides error priority and which cues may be shown. Animation can suppress motion for reduced motion, hidden/unmounted screens, input stability or missing anchors, but cannot upgrade an ineligible result into success.
+- Give visual cues an identity independent of screen-reader announcement identity. Main owns durable reward/notification deduplication; animation owns only transient gesture consumption. Do not persist animation replay queues.
+- Rapid operations, errors, navigation, backgrounding, generation changes and reduced motion cancel stale choreography. Latest state wins; no delayed playback queue and no waiting for a gesture before the next action.
+- Publish fixtures for ready/running/paused/resting, early/full/zero endings, empty/text thought saves, requested encouragement, pending/failure/retry, restore/sync, stale IDs and reduced motion. Animation can develop against fixtures; main must pass the same functional outcomes with a static or absent renderer.
 
-- [ ] 公共契约已发布，各窗口取得一致基线。
-- [ ] 界面、读屏、规则和相关断言已移除哭泣、损失、休息资格和连续打卡催促。
-- [ ] F1轻量开始、暂停、真实短段结束与主动休息完整。
-- [ ] 新模型、旧v1/v2迁移、多窗口与失败重试通过。
-- [ ] F2空标记、文字、草稿、返回、撤销与删除完整。
-- [ ] F3同页记录、7/30天、明细、想法与收藏完整。
-- [ ] 节点/主动鼓励、每段纪念、实际制作的长期内容可保存回看。
-- [ ] 偏好、减少动态、声音、中文与可访问性一致。
-- [ ] JSON备份、替换恢复和清理完成，旧窗口不复活数据。
-- [ ] 角色/UI关键状态稿已评审，物理互动有明确采用范围。
-- [ ] 生产构建和受影响流程已验证。
-- [ ] 真实iPhone/Android的浏览器、安装、离线、锁屏恢复、声音与更新结果已记录。
+## 7. Parallel sequence and integration gates
 
-旧版完成项不能直接勾选到新版清单。文档、接口、功能、集成与发布分别记录；PRD v2不表示应用或数据schema自动升级。
+The earlier M1–M6 sequence is replaced by the following two workstreams. Scope and acceptance obligations are retained in their detailed plans; the split does not approve open visual or reward proposals.
 
-## 保留的工程基础
+| Stage | Animation deliverable | Main-logic deliverable | Dependency / review result |
+| --- | --- | --- | --- |
+| 1. Define the boundary and experience | A1: character states, contact storyboards and coherent reward samples | L0: shared view/cue/callback contract, fixtures, behavior and reward decisions | Review the first experience and publish the contract together; final art polish does not block unrelated business work |
+| 2. Build independently | A2: cancellable contact runtime and visual components using fixtures | L1: F1 and schema foundation; then L2: reliable thought capture | Both proceed after the contract. Each can be verified without the other's unfinished implementation |
+| 3. Connect real results | A3: replace fixtures at integration points with real views/cues; inspect contact and static modes | L3: history, approved rewards, bookmarks and preferences; integrate the available A2 components | Success cues follow actual saves. Main retains screen semantics and accessibility ownership |
+| 4. Complete the release candidate | A4: complete phone/motion evidence for A3’s integrated scenes and approved assets | L4: backup/restore/clear; L5: complete application, phone and PWA checks | Run the full journey together. No release claim without actual implementation and recorded evidence |
 
-保留React 18、TypeScript、Vite、Strict Mode、纯逻辑/适配器/Hook/展示分层与有意义的回归。rough.js的稳定种子和缓存可复用，但不绑定最终角色。时长在开始时捕获，显示从deadline派生；先结算到期再动作。
+For traceability, previous M1 maps to A1/L0; M2 to L1 plus the L0 contracts; M3 to L2; M4 to L3 and A2/A3 assets; M5 to L4; M6 to A4/L5. There is one application and one release candidate, not separate animation and timer products.
 
-保留短时Web Lock、整体快照、字段级偏好patch、原文保护、未来版本不覆盖、开始时区与稳定日期、受阻音频处理。编辑删除和替换恢复必须重做合并语义，不能照搬只增不减的完成集合。
+Review boundaries are product choices and concrete deliverables. Once a workstream's scope and contract are agreed, routine technical decisions within it do not require repeated permission. New code should use `codex/` feature branches; this documentation change does not create or claim implementation branches.
 
-PWA按真实base path运行，当前为 /clock/。缓存不删除用户数据，活动会话不强制更新。最终名称未定时保留现有技术命名空间；以后改名必须迁移历史。
+## 8. Shared acceptance and handoff
 
-## 验证与交接
+- Preserve React 18/strict TypeScript/Vite, deterministic domain functions, deadline timing, short Web Locks, truthful persistence states, stable calendar dates and existing migrations. Neither workstream may weaken these for presentation convenience.
+- Each source path has one implementation owner. Publish contract changes before consumers adopt them; include referenceable commits, changed paths, fixtures, actual checks and unresolved items in handoffs. Use the applicable live register for actual multi-window assignments if that workflow resumes.
+- Main's functional acceptance must pass with motion disabled or the character renderer replaced by a static placeholder. Animation acceptance must pass using contract fixtures without a live timer or real persistence.
+- Combined verification covers rapid actions, save failures/retry, closed-tab expiry, duplicate events, stale tabs, deletion/restore, responsive anchors, focus, reduced motion and offline availability. An animated celebration is never evidence of a successful save.
+- For application changes, run relevant tests, `npm run check`, `BASE_PATH=/clock/ npm run build`, then affected production-browser flows and console inspection. Pure geometry/domain checks remain DOM-free. Documentation-only work requires content, link and diff checks, not application tests.
+- Inspect 320/375/430 widths, 200% text, landscape/safe areas, soft keyboard, stable touch targets, real screen readers and blocked audio. Record actual versions; iPhone/Android browsers and installed modes require separate evidence. Unavailable device checks stay explicitly unverified.
+- Keep `/clock/` asset/manifest/service-worker paths correct. Never force-update an active or paused session, use the worker as a persistent alarm, or clear progress with caches. Branding changes preserve namespaces or supply a migration.
+- Publish a reviewable release candidate only after both workstreams' required checks and integrated acceptance. Pushing main deploys; follow the user's actual release instruction separately.
 
-文档修改检查引用、冲突规则、依赖和归属即可。应用修改运行相关测试与npm run build，再检查生产流程与console。数据变更覆盖短段、暂停、到期竞争、并发、迁移、存储失败、删除及恢复清理。
+## 9. Current review status and next step
 
-页面检查320/375/430宽、200%文字、键盘焦点、软键盘、面板和减少动态。物理反馈不能移动正被操作的目标，不遮状态，不要求等待动画结束。
+This is an English documentation split for review, not a source-code refactor. The next product deliverables are A1's character/contact/reward samples and L0's shared contract with explicit fixtures. Subsequent visual work and core functionality can then proceed in parallel.
 
-历史未完成的真机、安装离线、声音听感和部分减少动态检查仍未验证。将实际命令、结果、基线、完整SHA与未完成项写回共享文件，不从桌面窄屏推定真机通过。
-
-## 发布边界
-
-现有.github/workflows/deploy.yml在main推送后测试、构建并部署GitHub Pages。使用独立功能与集成分支；准备改造文档或完成局部任务不等于授权上线整个新版。先形成可审查结果，再按用户发布授权处理main。
-
-开发命令见README.md。当前没有购买、账号或云同步；需要时按平台和商业阶段单独决策。
-
-## 第一批 F1 实施范围（2026-10-29）
-
-已接入：可选5分钟开始（不改默认）、暂停/继续、确认提前结束、主动休息、真实毫秒记录与最小记录列表；参与数和完整到期数分离。schema v3迁移v1/v2并保留旧时长、日期和ID；未知开始时间保持空。开始/暂停/继续/结束提交快照，关闭/后台按原deadline恢复，暂停不累计，重开只补记一段且不重播反馈。失败保留内存并显示待保存、自动/手动重试。
-
-W-E的角色清理提交7d8469bf147d91fb076a5743ed8ac1c851c04420已合入分支历史，采用同等结束反馈和暂停/运行优先；角色仍未定稿。公共契约为src/contracts/focus.ts（C1-F1），不代表完整C1已冻结。
-
-待后续：F2想法、可选小步骤、完整7/30天回顾、奖励收藏、数据导出/替换恢复/清理、最终导航和视觉、物理互动、手机安装/锁屏实测。datasetGeneration的合并隔离已实现，但尚无导入或清理命令；便签删除标记留到T05，不虚构已实现。
-
-本轮验证证据见docs/verification/focus-records.md；本地实现和检查不等于远端发布，未推送main或部署。
-
-## 友好伙伴续作（2026-10-29）
-
-- [x] 核对交接：96个文件与版本清单 SHA-256/大小全部一致。当前工作区原为 `0a57d037bb472bc9f4035196bca2c4c7f0529955`，导入完整 F1/T30 版本，保留实际短段、参与记录、schema v3、重试及去重。
-- [x] 接入真实操作反馈：开始、暂停、继续、两类结束、自由休息；保存失败保持真实提示。反馈放在路由之上，导航、重开、同步和倒计时刷新不重播。
-- [x] 按用户选择制作原创蓝色伙伴：轮廓、软渐变、芽状头顶、腮红、小手臂、七种语义姿态。固定 rough.js 几何只生成一次；招手、落地回弹和温柔收尾为有限动作；专注态安静。仅角色及其小底座受力，主按钮、数字不位移。
-- [x] 用户主动点击伙伴可要一句鼓励、换一句、收起；暂不显示尚未实现持久化的收藏能力。
-- [x] 设置增加可保存的动画开关，尊重系统减少动态；旧 v1/v2/v3 设置缺失此字段时兼容默认值，不误报修复。静态状态保留表情。
-- [x] 专注/记录两个主入口、独立设置；计时环显示真实剩余比例；移除旧负面 metadata，统一当前界面的中文提示。
-- [x] 严格类型、纯逻辑架构、回归检查及 `/clock/` 生产构建通过。浏览器实际证据见验证记录。
-- [ ] F2想法、完整F3、收藏/奖励持久化、JSON导出/替换恢复/清理仍待后续；没有将可运行局部原型标作完整P0。
-- [ ] 正式角色/名称/品牌图标、跨控件物理交互的最终选择、物理手机及安装/锁屏/更新验收、公开发布仍待后续。
-
-本次只继续用户提供的本地快照，不覆盖云端协作登记。上述逐项证据优先于前文历史总清单；前文组合条目没有全部实现的继续保留未勾选。
+- [x] Handoff source, F1 foundation and blue companion committed to local main (`e6daa66`).
+- [x] PRD-to-code gaps and unapproved proposals documented in English.
+- [x] Animation and main-logic plans separated, with ownership, interface, dependencies and acceptance criteria.
+- [ ] User review of the split and proposed product choices.
+- [ ] A1/L0 experience review and shared interface published in code.
+- [ ] A2 fixture-driven animation components.
+- [ ] L1/L2 F1, data foundation and thought lifecycle.
+- [ ] L3 records, approved rewards, bookmarks and preferences.
+- [ ] A3 real-result integration and approved artwork.
+- [ ] A4 animation, accessibility and device acceptance.
+- [ ] L4 complete backup/restore/clear.
+- [ ] L5 integrated phone/PWA release candidate.
+- [x] User authorized committing and pushing the current implementation and planning documents on 2026-10-29.
+- [ ] Full P0 release after implementation, verification and the relevant release instruction.

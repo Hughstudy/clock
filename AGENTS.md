@@ -2,14 +2,16 @@
 
 ## Read before changing code
 
-Local continuation (2026-10-29): the user supplied the exported `57ca8697cfa3a694f5e319e00d8dc4ee38b4c907` handoff and explicitly chose a soft, round blue creature with expressive arms. Its source is integrated on `codex/friendly-companion`. Read the supplied [PRD snapshot](docs/handoff-20261029/番茄钟_产品PRD_v3.md) and [handoff register snapshot](docs/handoff-20261029/番茄钟_开发协作.md) for this continuation. These files are historical references, not a second live board. No remote register or release status has been changed. The source's earlier windows were explicitly stopped in the supplied handoff; this chat owns the local integration. Keep the original character's provenance while its install icons remain; the new creature is an original prototype, with no final name selected.
+Local continuation (2026-10-29): the user supplied the exported `57ca8697cfa3a694f5e319e00d8dc4ee38b4c907` handoff and explicitly chose a soft, round blue creature with expressive arms. Its source and companion integration were committed on local `main` at `e6daa66`. On 2026-10-29 the user explicitly requested committing and pushing the current code and planning documents; this authorizes the existing main-triggered Pages workflow for this prototype, not implementation of unreviewed future features. The English plan remains a review draft before further implementation; see [PLAN.md](PLAN.md) for the current review draft and milestone order. Read the supplied [PRD snapshot](docs/handoff-20261029/番茄钟_产品PRD_v3.md) and [handoff register snapshot](docs/handoff-20261029/番茄钟_开发协作.md) for this continuation. These files are historical references, not a second live board. The remote collaboration register has not been changed; verify the publication result through Git and GitHub Actions. The source's earlier windows were explicitly stopped in the supplied handoff; this chat owns the local integration. Keep the original character's provenance while its install icons remain; the new creature is an original prototype, with no final name selected.
+
+Maintain PLAN.md and ongoing local project documentation in English. Preserve supplied source snapshots and historical verification reports as records of their original content. This documentation-language preference does not change application UI copy or approve the plan's open product decisions.
 
 Read PLAN.md and these current sources:
 
 - [Product PRD](https://chatgpt.com/library?file_id=libfile_819c07bf86108191af0be21b4e39123d&account_id=personal). Reviewed baseline: document v3, file revision 7; check for later updates.
 - [Shared development register](https://chatgpt.com/library?file_id=libfile_c81e264086d88191828a7654a36d7421&account_id=personal). This is the single live task, ownership, dependency, interface-request and handoff file. Do not create a second live board in the repo.
 
-The branch implements the first F1 focus/actual-records slice on the legacy Whale Focus base. The full PRD is not complete; see PLAN.md for verified scope. Follow the latest user decisions and PRD body. Historical plans and appendix descriptions of legacy behavior are not requirements to preserve it.
+Local main implements the first F1 focus/actual-records slice and the blue companion integration on the legacy Whale Focus base. The full PRD is not complete; see PLAN.md for verified scope and remaining work. Follow the latest user decisions and PRD body. Historical plans and appendix descriptions of legacy behavior are not requirements to preserve it.
 
 ## Product direction
 
@@ -17,24 +19,30 @@ The branch implements the first F1 focus/actual-records slice on the legacy Whal
 - Technical results remain truthful. Do not say a short session, note or reward is saved until persistence succeeds; show errors and recovery actions accurately.
 - Develop F1 lightweight start and flexible timing, F2 thought capture and return, and F3 actual-time history and reflection as a connected core.
 - Current layout proposal: Focus and Records as two primary destinations, plus a separate low-frequency Settings surface entered from Focus. Use in-place detail, at most one local panel, and no separate reward/collection rooms.
-- Final character, product name, artwork, timer form and UI remain undecided. The existing whale is one candidate, not the selected answer. Rejected older UI/character directions are not mandatory starting points.
-- Blue is a preferred exploration direction, not an ocean-world, cream-background, chibi-proportion or medium requirement. Calm happiness describes autonomy and kindness; lively, curious and playful expression is welcome.
+- Continue the user's selected soft, round blue creature with expressive arms as the prototype direction. Final artwork, product name, timer form and UI remain subject to design review; retained whale assets do not make the whale the selected direction. Rejected older UI/character directions are not mandatory starting points.
+- The selected blue direction does not require an ocean world, cream background or a particular drawing medium. Calm happiness describes autonomy and kindness; lively, curious and playful expression is welcome.
 - Preserve the PRD's review status for five-minute start, default silence, mementos, reward thresholds and specific copy. Use configurable prototypes where appropriate; do not describe every proposal as individually approved.
 - Do not incidentally add a backend, authentication, cloud sync, social features, commerce, multiple characters, open-ended AI chat, task trees or complex pet care.
 
 ## Multi-window coordination
 
+The exported window assignments are historical for this local continuation. Apply the following live-register workflow if shared multi-window development resumes; do not treat the archived register as a new claim or overwrite it with current local status.
+
 - Read the shared register at task start, before public-interface changes, after milestones, before handoff and after context recovery. It does not automatically notify other windows.
 - Claim work with the latest real file version and a conditional update. A failed version check is not a claim. Reload and preserve intervening work; never omit the guard to force an update.
 - Use an independent branch and checkout/worktree for each window. Never switch another window's branch, erase its edits, or force-push shared history.
 - W-A owns the shared model, storage, central hooks, root composition/styles, dependencies and integration. W-B owns focus UI, W-C records/settings UI, and W-D companion/copy/physical samples. Exact paths and actual claims are in the register.
-- The initial pressure-removal task touches legacy shared files and must finish before those files are handed to page/companion owners. Isolated new prototypes can proceed against the published contract.
+- The initial pressure-removal work is included in the current baseline. Coordinate any further shared cleanup before handing affected files to page/companion owners. Isolated new prototypes can proceed against the published contract.
 - Record public contract changes and publish a contract commit. Routine choices inside an owned module do not need repeated user approval.
 - Handoffs include a reachable full SHA, baseline, changed paths, contract version, actual validation and next step. Local-only is not remotely available, integrated or verified.
 - Respect existing in-flight ownership if it differs from a proposed assignment. Resolve the overlap without discarding work.
 
 ## Architecture
 
+- Follow the separate [Animation Plan](docs/plans/ANIMATION_PLAN.md) and [Main Logic Plan](docs/plans/MAIN_LOGIC_PLAN.md); PLAN.md owns their shared interface and integration sequence. These are module responsibilities, not new live window claims. The documentation split does not itself authorize a source reorganization or approve pending product choices.
+- Main logic owns accounting, persistence, rewards/bookmarks, saved settings, feedback eligibility/copy/priority and factual screen semantics. Animation owns deterministic drawing, pose mapping, contact geometry and cancellable presentation. Main must work with a static renderer; animation must be testable with contract fixtures.
+- Main publishes read-only views, permitted transient cues and explicit user-intent callbacks. Animation completion/cancellation changes only local presentation state; it cannot save, grant rewards, start/end timers or gate controls. Keep visual cue identity independent from accessible announcement identity and preserve one main-owned live-region policy.
+- Main integrates shared contracts, root/screens, `CompanionFeedback.tsx`, `companion.css` and `focus.css`. Animation owns its rendering modules, scoped character/scene styles and motion-preference reader. Follow the detailed path boundaries before editing; folders named `logic` or `companion` do not alone determine ownership.
 - Keep React 18 and matching React DOM/types, strict TypeScript, Vite, the lockfile and Strict Mode. rough.js remains available for appropriate artwork but does not determine the final character medium.
 - src/logic/ is pure and deterministic: no React, browser APIs, storage, audio, scheduling, hidden clocks or unseeded randomness. Inject time, calendar inputs, configuration and seeds.
 - src/adapters/ owns effects and persistence; src/hooks/ coordinates them. Screens/components consume views and dispatch actions, never independently account for time or write localStorage.
@@ -68,7 +76,7 @@ The branch implements the first F1 focus/actual-records slice on the legacy Whal
 
 ## Companion and physical interaction
 
-- Remove the legacy cry trigger, pressure copy and associated active assertions in the scheduled task, including accessibility text. Merely hiding tears is insufficient.
+- Legacy cry triggers and pressure copy have been removed from active product flows. Keep them out of behavior, accessibility text and active assertions; merely hiding a negative reaction is insufficient.
 - Keep provenance/non-affiliation information while legacy assets remain. Do not relabel referenced character assets as a newly established independent commercial identity.
 - User-requested physicality is an exploration direction: edge contact, local deformation, rebound and bounded movement. Prototype and inspect effects before adopting them.
 - Preserve core controls' hit areas, focus and readable status. Do not move a target during pointer-down/up or active keyboard use, and do not require waiting for animation.
