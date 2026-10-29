@@ -30,9 +30,9 @@
   --accent-soft: var(--whale-soft);
   --focus: #e07a1f;
   --radius: 20px;
-  --tab-height: 64px;
+  --tab-height: 4rem;
 
-  font-family: 'Nunito Variable', ui-rounded, 'SF Pro Rounded', system-ui, sans-serif;
+  font-family: 'Nunito Variable', 'PingFang SC', 'Microsoft YaHei', 'Noto Sans SC', ui-rounded, 'SF Pro Rounded', system-ui, sans-serif;
   font-size: 16px;
   line-height: 1.45;
   color: var(--ink);
@@ -181,10 +181,6 @@ button {
   animation: hop 0.5s ease-in-out 4;
 }
 
-.pose-cry .whale {
-  animation: sob 0.6s ease-in-out infinite;
-}
-
 @keyframes breathe {
   50% {
     transform: translateY(1.5px) scale(1.01, 0.985);
@@ -194,15 +190,6 @@ button {
 @keyframes hop {
   50% {
     transform: translateY(-7px);
-  }
-}
-
-@keyframes sob {
-  25% {
-    transform: translateX(-1.5px) rotate(-1deg);
-  }
-  75% {
-    transform: translateX(1.5px) rotate(1deg);
   }
 }
 
@@ -236,21 +223,13 @@ button {
   color: var(--whale-deep);
 }
 
-.pose-cry .bubble {
-  border-color: #9fd3ff;
-}
-
 .pose-rice .bubble::before {
   border-color: var(--whale);
 }
 
-.pose-cry .bubble::before {
-  border-color: #9fd3ff;
-}
-
 .dial {
   position: relative;
-  width: min(250px, 70vw);
+  width: min(15.625rem, 100%);
   aspect-ratio: 1;
 }
 
@@ -669,3 +648,12 @@ fieldset {
     transform: none;
   }
 }
+
+.home .controls-secondary { flex-wrap: wrap; }
+.home .save-state { color: var(--muted); font-size: .875rem; text-align: center; }
+.home .end-confirm { text-align: center; }
+.home .end-confirm .btn { margin: .25rem; }
+.home .hint { max-width: 26rem; text-align: center; }
+.stats .focus-records { list-style: none; margin: 0; padding: 0; }
+.stats .focus-records li { display: grid; gap: .35rem; padding: 1rem 0; border-bottom: 1px solid var(--line); overflow-wrap: anywhere; }
+.stats .focus-records time, .stats .focus-records span { color: var(--muted); font-size: .875rem; }

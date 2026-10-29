@@ -46,12 +46,13 @@ export function startSession(
   now: number,
   sessionId: string,
   timeZone: string,
+  durationMinutes?: number,
 ): TimerState {
   if (timer.session) return timer
-  const durationMs = phaseDurationMs(settings, timer.phase)
+  const durationMs = durationMinutes === undefined ? phaseDurationMs(settings, timer.phase) : durationMinutes * MINUTE_MS
   return {
     ...timer,
-    session: { status: 'running', id: sessionId, durationMs, deadline: now + durationMs, timeZone },
+    session: { status: 'running', id: sessionId, durationMs, deadline: now + durationMs, timeZone, startedAt: now },
   }
 }
 
@@ -64,6 +65,7 @@ export function pauseSession(timer: TimerState, now: number): TimerState {
     durationMs: session.durationMs,
     remainingMs: clampRemaining(session.deadline - now, session.durationMs),
     timeZone: session.timeZone,
+    startedAt: session.startedAt,
   }
   return { ...timer, session: paused }
 }
@@ -77,11 +79,12 @@ export function resumeSession(timer: TimerState, now: number): TimerState {
     durationMs: session.durationMs,
     deadline: now + clampRemaining(session.remainingMs, session.durationMs),
     timeZone: session.timeZone,
+    startedAt: session.startedAt,
   }
   return { ...timer, session: running }
 }
 
-/** Abandons the active session without credit. The phase and cadence stay as they are. */
+/** Clears the active session. The application layer must record focus before calling. */
 export function resetSession(timer: TimerState): TimerState {
   return timer.session ? { ...timer, session: null } : timer
 }
@@ -96,6 +99,7 @@ export interface ExpiredSession {
   deadline: number
   durationMs: number
   timeZone: string
+  startedAt: number | null
 }
 
 /**
@@ -117,6 +121,7 @@ export function expireSession(
     deadline: session.deadline,
     durationMs: session.durationMs,
     timeZone: session.timeZone,
+    startedAt: session.startedAt,
   }
   if (timer.phase === 'focus') {
     const completedFocusCount = timer.completedFocusCount + 1

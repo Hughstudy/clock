@@ -1,0 +1,63 @@
+/* The companion, its invitation and its response share one quiet place. */
+.companion-feedback {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  inline-size: 100%;
+  min-inline-size: 0;
+  color: var(--ink, #243f5a);
+}
+.companion-feedback__greeting {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  border: 0;
+  padding: 0 12px 8px;
+  background: transparent;
+  border-radius: 30px;
+  color: inherit;
+  max-width: 100%;
+}
+.companion-feedback__character {
+  display: block;
+  inline-size: min(260px, 100%);
+  color: #347db6;
+  pointer-events: none;
+}
+.companion-feedback__greeting .companion-feedback__character { inline-size: min(260px, 70vw); }
+.companion-feedback__placeholder { display: block; inline-size: 100%; block-size: auto; }
+.companion-feedback__invite {
+  font-size: .75rem;
+  color: var(--muted, #58728a);
+  letter-spacing: .05em;
+  padding: 3px 0;
+}
+.companion-feedback__greeting:hover .companion-feedback__invite { color: var(--whale-deep, #265cab); }
+.companion-feedback__content { min-inline-size: 0; max-inline-size: 100%; padding-inline: 12px; }
+.companion-feedback__status,
+.companion-feedback__copy { margin: 2px 0 6px; line-height: 1.7; overflow-wrap: anywhere; text-wrap: pretty; }
+.companion-feedback__status { color: var(--muted, #58728a); font-size: .875rem; }
+.companion-feedback__copy { font-size: .9375rem; font-weight: 600; }
+.companion-feedback__status--error { padding-inline-start: .75rem; border-inline-start: 3px solid #92520d; color: #71400c; text-align: start; }
+.companion-feedback__actions { display: flex; flex-wrap: wrap; justify-content: center; gap: .5rem; }
+.companion-feedback__actions:empty { display: none; }
+.companion-feedback__actions > button {
+  min-block-size: 2.75rem;
+  padding: .5rem .875rem;
+  border: 0;
+  border-radius: .75rem;
+  background: transparent;
+  color: var(--whale-deep, #265cab);
+  font: inherit;
+  font-size: .8125rem;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  cursor: pointer;
+}
+.companion-feedback__actions > button:hover { background: var(--whale-soft, #e3eaff); }
+.companion-feedback__actions > button:focus-visible { outline: 3px solid #347db6; outline-offset: 3px; }
+.companion-feedback__actions > button:disabled { cursor: default; }
+.companion-feedback__live { position: absolute; inline-size: 1px; block-size: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+@media (prefers-reduced-motion: reduce) {
+  .companion-feedback__character * { animation: none !important; transition: none !important; }
+}

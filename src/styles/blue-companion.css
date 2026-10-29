@@ -1,0 +1,95 @@
+.blue-companion {
+  display: block;
+  width: min(100%, 260px);
+  height: auto;
+  margin-inline: auto;
+  overflow: visible;
+  pointer-events: none;
+  isolation: isolate;
+}
+.blue-companion__gesture,
+.blue-companion__body { transform-origin: 120px 165px; }
+.blue-companion__tuft { transform-origin: 111px 42px; }
+.blue-companion__shadow { transform-origin: 120px 165px; opacity: .55; }
+.blue-companion__arm--left { transform-origin: 71px 105px; }
+.blue-companion__arm--right { transform-origin: 168px 105px; }
+.blue-companion__eyes { transform-origin: 120px 95px; }
+.blue-companion__sparkles { opacity: 0; transform-origin: 120px 95px; }
+.blue-companion[data-stance='resting'] .blue-companion__body { transform: rotate(-4deg) scale(1.035, .97); }
+.blue-companion[data-stance='support'] .blue-companion__body { transform: rotate(-2deg); }
+.blue-companion[data-stance='paused'] .blue-companion__body { transform: scale(1.025, .98); }
+.blue-companion[data-static='false']:is([data-stance='ready'], [data-stance='paused'], [data-stance='resting']) .blue-companion__body {
+  animation: blue-breathe var(--blue-breathing) ease-in-out infinite;
+}
+.blue-companion[data-static='false']:is([data-stance='ready'], [data-stance='support']) .blue-companion__eyes {
+  animation: blue-blink var(--blue-blink) linear infinite;
+}
+.blue-companion[data-cue='welcome'] .blue-companion__gesture,
+.blue-companion[data-cue='support'] .blue-companion__gesture { animation: blue-greeting var(--blue-greeting) ease-in-out both; }
+.blue-companion:is([data-cue='welcome'], [data-cue='support']) .blue-companion__arm--right { animation: blue-wave var(--blue-greeting) ease-in-out both; }
+.blue-companion[data-cue='begin'] .blue-companion__gesture { animation: blue-land var(--blue-begin) cubic-bezier(.22, .8, .3, 1) both; }
+.blue-companion[data-cue='begin'] .blue-companion__shadow { animation: blue-shadow var(--blue-begin) ease-out both; }
+.blue-companion[data-cue='begin'] .blue-companion__tuft { animation: blue-tuft var(--blue-begin) ease-in-out both; }
+.blue-companion[data-cue='settle'] .blue-companion__gesture { animation: blue-settle var(--blue-settle) ease-in-out both; }
+.blue-companion[data-cue='settle'] .blue-companion__sparkles { animation: blue-sparkle var(--blue-settle) ease-out both; }
+.blue-companion[data-cue='settle'] .blue-companion__arm--left { animation: blue-hug-left var(--blue-settle) ease-in-out both; }
+.blue-companion[data-cue='settle'] .blue-companion__arm--right { animation: blue-hug-right var(--blue-settle) ease-in-out both; }
+
+@keyframes blue-breathe {
+  0%, 100% { transform: scale(1, 1); }
+  50% { transform: scale(1.018, .985); }
+}
+@keyframes blue-blink {
+  0%, 42%, 46%, 100% { transform: scaleY(1); }
+  44% { transform: scaleY(.08); }
+}
+@keyframes blue-greeting {
+  0%, 100% { transform: translateY(0) rotate(0); }
+  18% { transform: translateY(2px) scale(1.03, .97); }
+  40% { transform: translateY(-5px) rotate(-3deg); }
+  72% { transform: translateY(0) rotate(2deg); }
+}
+@keyframes blue-wave {
+  0%, 100% { transform: rotate(0); }
+  20% { transform: rotate(-15deg); }
+  38%, 65% { transform: rotate(13deg); }
+  50%, 78% { transform: rotate(-12deg); }
+}
+@keyframes blue-land {
+  0% { transform: translateY(0); }
+  20% { transform: scale(1.045, .95); }
+  45% { transform: translateY(-7px) scale(.98, 1.025); }
+  68% { transform: scale(1.045, .96); }
+  85% { transform: scale(.99, 1.01); }
+  100% { transform: none; }
+}
+@keyframes blue-shadow {
+  0%, 100% { transform: scaleX(1); opacity: .55; }
+  45% { transform: scaleX(.85); opacity: .3; }
+  68% { transform: scaleX(1.08); opacity: .65; }
+}
+@keyframes blue-tuft {
+  0%, 100% { transform: rotate(0); }
+  40% { transform: rotate(9deg); }
+  70% { transform: rotate(-11deg); }
+  85% { transform: rotate(4deg); }
+}
+@keyframes blue-settle {
+  0%, 100% { transform: none; }
+  20% { transform: scale(1.04, .96); }
+  43% { transform: translateY(-6px) rotate(-3deg); }
+  68% { transform: translateY(1px) rotate(2deg) scale(1.025, .975); }
+  84% { transform: rotate(-1deg); }
+}
+@keyframes blue-hug-left { 0%, 100% { transform: rotate(0); } 40%, 65% { transform: rotate(10deg); } }
+@keyframes blue-hug-right { 0%, 100% { transform: rotate(0); } 40%, 65% { transform: rotate(-10deg); } }
+@keyframes blue-sparkle {
+  0%, 100% { opacity: 0; transform: scale(.8); }
+  25%, 65% { opacity: 1; transform: scale(1); }
+  85% { opacity: 0; transform: scale(1.04); }
+}
+/* The same expressive arms and facial poses remain when movement is disabled. */
+.blue-companion[data-static='true'] * { animation: none !important; }
+@media (prefers-reduced-motion: reduce) {
+  .blue-companion * { animation: none !important; transition: none !important; }
+}

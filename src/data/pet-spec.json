@@ -1,5 +1,8 @@
 {
   "specVersion": 1,
+  "presentation": {
+    "motionEnabledDefault": true
+  },
   "timer": {
     "durationsMinutes": {
       "focus": {
@@ -20,7 +23,8 @@
     },
     "longBreakEvery": 4,
     "soundEnabledDefault": true,
-    "completionSoundWindowSeconds": 60
+    "completionSoundWindowSeconds": 60,
+    "quickFocusMinutes": 5
   },
   "calendar": {
     "weekStartsOn": 1
@@ -78,22 +82,20 @@
       ]
     },
     "reactionSeconds": {
-      "rice": 10,
-      "cry": 4
+      "ended": 4
     },
     "captions": {
-      "focusReady": "Ready when you are!",
-      "focusRunning": "Focus now, rice later!",
-      "paused": "Taking a breather?",
-      "breakReady": "Break time. You earned it!",
-      "breakRunning": "Resting in standby… zzz",
-      "rice": "Thanks for the rice!",
-      "cry": "Aww… the rice got away. Try again?"
+      "focusReady": "准备好时，就从这一小段开始。",
+      "focusRunning": "我陪你做这一小段。",
+      "paused": "停一会儿也可以。",
+      "breakReady": "想休息的时候，就休息一下。",
+      "breakRunning": "慢慢歇一会儿。",
+      "rice": "谢谢这一小段相伴。",
+      "ended": "谢谢这一小段相伴。"
     },
     "alt": {
-      "idle": "Whale-chan smiling",
-      "rice": "Whale-chan happily eating a bowl of rice",
-      "cry": "Whale-chan crying"
+      "idle": "微笑着陪伴的临时角色",
+      "rice": "Whale-chan happily eating a bowl of rice"
     },
     "groups": {
       "back": [
@@ -166,28 +168,6 @@
         "heartL",
         "heartR",
         "heartSmall"
-      ],
-      "cry": [
-        "@back",
-        "@body",
-        "armIdleL",
-        "handIdleL",
-        "armIdleR",
-        "handIdleR",
-        "@head",
-        "browL",
-        "browR",
-        "eyeL",
-        "eyeR",
-        "eyeShineL",
-        "eyeShineR",
-        "tearPoolL",
-        "tearPoolR",
-        "tearL",
-        "tearR",
-        "dropL",
-        "dropR",
-        "mouthCry"
       ]
     },
     "parts": {
@@ -457,47 +437,6 @@
         "fill": "sky",
         "stroke": "ink",
         "width": 1
-      },
-      "browL": {
-        "d": "M73 84 C78 81 84 81 89 85",
-        "stroke": "ink",
-        "width": 1.8
-      },
-      "browR": {
-        "d": "M111 85 C116 81 122 81 127 84",
-        "stroke": "ink",
-        "width": 1.8
-      },
-      "tearPoolL": {
-        "d": "M73 104 C77 111 87 111 91 104",
-        "stroke": "tear",
-        "width": 3
-      },
-      "tearPoolR": {
-        "d": "M109 104 C113 111 123 111 127 104",
-        "stroke": "tear",
-        "width": 3
-      },
-      "tearL": {
-        "d": "M78 109 C75 120 73 130 75 140 C80 140 82 130 83 120 C83 114 81 110 78 109 Z",
-        "fill": "tear"
-      },
-      "tearR": {
-        "d": "M122 109 C125 120 127 130 125 140 C120 140 118 130 117 120 C117 114 119 110 122 109 Z",
-        "fill": "tear"
-      },
-      "dropL": {
-        "d": "M58 92 C53 98 53 104 58 104 C63 104 63 98 58 92 Z",
-        "fill": "tear"
-      },
-      "dropR": {
-        "d": "M142 92 C137 98 137 104 142 104 C147 104 147 98 142 92 Z",
-        "fill": "tear"
-      },
-      "mouthCry": {
-        "d": "M91 119 C95 113 105 113 109 119 C105 123 95 123 91 119 Z",
-        "fill": "mouth",
-        "stroke": "ink"
       }
     }
   }

@@ -20,6 +20,8 @@ export interface SettingsForm {
   fields: DurationField[]
   soundEnabled: boolean
   setSoundEnabled: (on: boolean) => void
+  motionEnabled: boolean
+  setMotionEnabled: (on: boolean) => void
   isDefault: boolean
   restoreDefaults: () => void
 }
@@ -79,7 +81,9 @@ export function useSettingsForm(saved: Settings, dispatch: (action: UserAction) 
     fields,
     soundEnabled: settings.soundEnabled,
     setSoundEnabled: (on) => save({ soundEnabled: on }),
-    isDefault: sameSettings({ ...defaults, soundEnabled: settings.soundEnabled }, settings),
+    motionEnabled: settings.motionEnabled,
+    setMotionEnabled: (on) => save({ motionEnabled: on }),
+    isDefault: sameSettings({ ...defaults, soundEnabled: settings.soundEnabled, motionEnabled: settings.motionEnabled }, settings),
     restoreDefaults: () => {
       setDrafts({})
       save({ durationsMinutes: defaults.durationsMinutes })

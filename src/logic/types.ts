@@ -8,6 +8,8 @@ export type DateKey = string
 export interface Settings {
   durationsMinutes: Record<Phase, number>
   soundEnabled: boolean
+  /** The system's reduced-motion preference always takes priority. */
+  motionEnabled: boolean
 }
 
 /**
@@ -16,9 +18,16 @@ export interface Settings {
  * sessions hold the remaining time. `timeZone` is the IANA zone at start,
  * used to date the completion even if the device travels.
  */
-export type Session =
-  | { status: 'running'; id: string; durationMs: number; deadline: number; timeZone: string }
-  | { status: 'paused'; id: string; durationMs: number; remainingMs: number; timeZone: string }
+export type Session = {
+  id: string
+  durationMs: number
+  timeZone: string
+  /** Unknown for sessions created before schema v3; never inferred from a deadline. */
+  startedAt: number | null
+} & (
+  | { status: 'running'; deadline: number }
+  | { status: 'paused'; remainingMs: number }
+)
 
 export interface TimerState {
   /** Phase of the active session, or the phase waiting to be started. */
@@ -28,13 +37,26 @@ export interface TimerState {
   completedFocusCount: number
 }
 
-/** Accounting source of truth for stats and streaks. One per focus session. */
-export interface CompletionRecord {
+/** Accounting source of truth. Manual and deadline endings have equal standing. */
+export interface FocusRecord {
   sessionId: string
-  /** The session deadline, not the time the app noticed the expiry. */
-  completedAt: number
+  startedAt: number | null
+  /** Deadline for expiry; action instant for a manual end. */
+  endedAt: number
   dateKey: DateKey
-  focusMs: number
+  targetMs: number
+  elapsedMs: number
+  endReason: 'deadline' | 'manual'
+  source: 'native' | 'legacy'
+}
+
+/** One entry at start, independent of duration and full-completion cadence. */
+export interface ParticipationRecord {
+  sessionId: string
+  participatedAt: number | null
+  /** Null for a migrated active session whose original start is unknown. */
+  dateKey: DateKey | null
+  source: 'native' | 'legacy-completion' | 'legacy-active'
 }
 
 export interface AppSnapshot {
@@ -43,7 +65,10 @@ export interface AppSnapshot {
   revision: number
   /** Id of the tab that wrote this revision; breaks revision ties. */
   writer: string
+  /** Replacement/clear will advance this under the same lock; older sets never merge back. */
+  datasetGeneration: number
   settings: Settings
   timer: TimerState
-  completions: CompletionRecord[]
+  records: FocusRecord[]
+  participations: ParticipationRecord[]
 }

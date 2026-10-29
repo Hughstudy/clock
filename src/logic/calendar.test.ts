@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { addDays, fromDayNumber, isDateKey, startOfWeek, toDayNumber, weekday } from './calendar'
 import { indexByDay, weekTotals } from './stats'
 import { currentStreak } from './streak'
-import type { CompletionRecord } from './types'
+import type { FocusRecord } from './types'
 
 describe('calendar keys', () => {
   it('round-trips day numbers across centuries and leap days', () => {
@@ -39,11 +39,15 @@ describe('calendar keys', () => {
   })
 })
 
-const record = (sessionId: string, dateKey: string, minutes = 25): CompletionRecord => ({
+const record = (sessionId: string, dateKey: string, minutes = 25): FocusRecord => ({
   sessionId,
   dateKey,
-  completedAt: 0,
-  focusMs: minutes * 60_000,
+  endedAt: 0,
+  elapsedMs: minutes * 60_000,
+  targetMs: minutes * 60_000,
+  startedAt: null,
+  endReason: 'deadline',
+  source: 'legacy',
 })
 
 describe('stats', () => {

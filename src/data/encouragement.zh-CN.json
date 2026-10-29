@@ -1,0 +1,3342 @@
+{
+  "schemaVersion": 1,
+  "copyVersion": "prd-v3-r7",
+  "reviewStatus": "candidate",
+  "source": "产品PRD v3 第7.10节，文档修订7",
+  "entries": [
+    {
+      "id": "WEL01",
+      "pool": "WEL",
+      "text": "很高兴见到你，先做一点也很好。",
+      "level": "light",
+      "states": [
+        "focus-ready",
+        "break-ready"
+      ],
+      "requiredFacts": [
+        "initialized",
+        "firstVisit"
+      ],
+      "tags": [
+        "presence"
+      ],
+      "copyVersion": "prd-v3-r7",
+      "collectible": true,
+      "reviewStatus": "candidate"
+    },
+    {
+      "id": "WEL02",
+      "pool": "WEL",
+      "text": "你好，这里可以按你的节奏来。",
+      "level": "light",
+      "states": [
+        "focus-ready",
+        "break-ready"
+      ],
+      "requiredFacts": [
+        "initialized",
+        "firstVisit"
+      ],
+      "tags": [
+        "autonomy"
+      ],
+      "copyVersion": "prd-v3-r7",
+      "collectible": true,
+      "reviewStatus": "candidate"
+    },
+    {
+      "id": "WEL03",
+      "pool": "WEL",
+      "text": "先选一个舒服的时长吧。",
+      "level": "light",
+      "states": [
+        "focus-ready",
+        "break-ready"
+      ],
+      "requiredFacts": [
+        "initialized",
+        "firstVisit"
+      ],
+      "tags": [
+        "presence"
+      ],
+      "copyVersion": "prd-v3-r7",
+      "collectible": true,
+      "reviewStatus": "candidate"
+    },
+    {
+      "id": "WEL04",
+      "pool": "WEL",
+      "text": "从你想做的那一小步开始就好。",
+      "level": "light",
+      "states": [
+        "focus-ready",
+        "break-ready"
+      ],
+      "requiredFacts": [
+        "initialized",
+        "firstVisit"
+      ],
+      "tags": [
+        "small-step"
+      ],
+      "copyVersion": "prd-v3-r7",
+      "collectible": true,
+      "reviewStatus": "candidate"
+    },
+    {
+      "id": "WEL05",
+      "pool": "WEL",
+      "text": "给眼前这件事，留一小段时间吧。",
+      "level": "light",
+      "states": [
+        "focus-ready",
+        "break-ready"
+      ],
+      "requiredFacts": [
+        "initialized",
+        "firstVisit"
+      ],
+      "tags": [
+        "patience"
+      ],
+      "copyVersion": "prd-v3-r7",
+      "collectible": true,
+      "reviewStatus": "candidate"
+    },
+    {
+      "id": "RET01",
+      "pool": "RET",
+      "text": "欢迎回来，从现在这一刻开始就好。",
+      "level": "light",
+      "states": [
+        "focus-ready",
+        "break-ready"
+      ],
+      "requiredFacts": [
+        "initialized",
+        "returnVisit"
+      ],
+      "tags": [
+        "return"
+      ],
+      "copyVersion": "prd-v3-r7",
+      "collectible": true,
+      "reviewStatus": "candidate"
+    },
+    {
+      "id": "RET02",
+      "pool": "RET",
+      "text": "见到你真好，今天也按你的节奏来。",
+      "level": "light",
+      "states": [
+        "focus-ready",
+        "break-ready"
+      ],
+      "requiredFacts": [
+        "initialized",
+        "returnVisit"
+      ],
+      "tags": [
+        "autonomy"
+      ],
+      "copyVersion": "prd-v3-r7",
+      "collectible": true,
+      "reviewStatus": "candidate"
+    },
+    {
+      "id": "RET03",
+      "pool": "RET",
+      "text": "这一回，想从哪一小步开始？",
+      "level": "light",
+      "states": [
+        "focus-ready",
+        "break-ready"
+      ],
+      "requiredFacts": [
+        "initialized",
+        "returnVisit"
+      ],
+      "tags": [
+        "small-step"
+      ],
+      "copyVersion": "prd-v3-r7",
+      "collectible": true,
+      "reviewStatus": "candidate"
+    },
+    {
+      "id": "RET04",
+      "pool": "RET",
+      "text": "新的这一段，选个舒服的时长吧。",
+      "level": "light",
+      "states": [
+        "focus-ready",
+        "break-ready"
+      ],
+      "requiredFacts": [
+        "initialized",
+        "returnVisit"
+      ],
+      "tags": [
+        "presence"
+      ],
+      "copyVersion": "prd-v3-r7",
+      "collectible": true,
+      "reviewStatus": "candidate"
+    },
+    {
+      "id": "RET05",
+      "pool": "RET",
+      "text": "欢迎，接下来想做的事可以慢慢选。",
+      "level": "light",
+      "states": [
+        "focus-ready",
+        "break-ready"
+      ],
+      "requiredFacts": [
+        "initialized",
+        "returnVisit"
+      ],
+      "tags": [
+        "patience"
+      ],
+      "copyVersion": "prd-v3-r7",
+      "collectible": true,
+      "reviewStatus": "candidate"
+    },
+    {
+      "id": "STA01",
+      "pool": "STA",
+      "text": "开始了，我陪你做这一小段。",
+      "level": "light",
+      "states": [
+        "focus-running"
+      ],
+      "requiredFacts": [
+        "operationSaved",
+        "focusStarted"
+      ],
+      "tags": [
+        "small-step"
+      ],
+      "copyVersion": "prd-v3-r7",
+      "collectible": true,
+      "reviewStatus": "candidate"
+    },
+    {
+      "id": "STA02",
+      "pool": "STA",
+      "text": "这一小步，已经迈出来了。",
+      "level": "light",
+      "states": [
+        "focus-running"
+      ],
+      "requiredFacts": [
+        "operationSaved",
+        "focusStarted"
+      ],
+      "tags": [
+        "small-step"
+      ],
+      "copyVersion": "prd-v3-r7",
+      "collectible": true,
+      "reviewStatus": "candidate"
+    },
+    {
+      "id": "STA03",
+      "pool": "STA",
+      "text": "从这里开始，就很好。",
+      "level": "light",
+      "states": [
+        "focus-running"
+      ],
+      "requiredFacts": [
+        "operationSaved",
+        "focusStarted"
+      ],
+      "tags": [
+        "small-step"
+      ],
+      "copyVersion": "prd-v3-r7",
+      "collectible": true,
+      "reviewStatus": "candidate"
+    },
+    {
+      "id": "STA04",
+      "pool": "STA",
+      "text": "眼前这一件，慢慢来。",
+      "level": "light",
+      "states": [
+        "focus-running"
+      ],
+      "requiredFacts": [
+        "operationSaved",
+        "focusStarted"
+      ],
+      "tags": [
+        "patience"
+      ],
+      "copyVersion": "prd-v3-r7",
+      "collectible": true,
+      "reviewStatus": "candidate"
+    },
+    {
+      "id": "STA05",
+      "pool": "STA",
+      "text": "为这次开始，轻轻鼓个掌。",
+      "level": "light",
+      "states": [
+        "focus-running"
+      ],
+      "requiredFacts": [
+        "operationSaved",
+        "focusStarted"
+      ],
+      "tags": [
+        "small-step"
+      ],
+      "copyVersion": "prd-v3-r7",
+      "collectible": true,
+      "reviewStatus": "candidate"
+    },
+    {
+      "id": "PAU01",
+      "pool": "PAU",
+      "text": "停一停也好，节奏由你来定。",
+      "level": "light",
+      "states": [
+        "focus-paused"
+      ],
+      "requiredFacts": [
+        "operationSaved"
+      ],
+      "tags": [
+        "autonomy"
+      ],
+      "copyVersion": "prd-v3-r7",
+      "collectible": true,
+      "reviewStatus": "candidate"
+    },
+    {
+      "id": "PAU02",
+      "pool": "PAU",
+      "text": "先歇一会儿，之后再决定。",
+      "level": "light",
+      "states": [
+        "focus-paused"
+      ],
+      "requiredFacts": [
+        "operationSaved"
+      ],
+      "tags": [
+        "rest"
+      ],
+      "copyVersion": "prd-v3-r7",
+      "collectible": true,
+      "reviewStatus": "candidate"
+    },
+    {
+      "id": "PAU03",
+      "pool": "PAU",
+      "text": "这一刻，留给自己缓一缓。",
+      "level": "light",
+      "states": [
+        "focus-paused"
+      ],
+      "requiredFacts": [
+        "operationSaved"
+      ],
+      "tags": [
+        "presence"
+      ],
+      "copyVersion": "prd-v3-r7",
+      "collectible": true,
+      "reviewStatus": "candidate"
+    },
+    {
+      "id": "PAU04",
+      "pool": "PAU",
+      "text": "按下暂停，也是在照顾自己的节奏。",
+      "level": "light",
+      "states": [
+        "focus-paused"
+      ],
+      "requiredFacts": [
+        "operationSaved"
+      ],
+      "tags": [
+        "autonomy"
+      ],
+      "copyVersion": "prd-v3-r7",
+      "collectible": true,
+      "reviewStatus": "candidate"
+    },
+    {
+      "id": "PAU05",
+      "pool": "PAU",
+      "text": "就停在这里，下一步由你选。",
+      "level": "light",
+      "states": [
+        "focus-paused"
+      ],
+      "requiredFacts": [
+        "operationSaved"
+      ],
+      "tags": [
+        "autonomy"
+      ],
+      "copyVersion": "prd-v3-r7",
+      "collectible": true,
+      "reviewStatus": "candidate"
+    },
+    {
+      "id": "RES01",
+      "pool": "RES",
+      "text": "好，我们接着这里。",
+      "level": "light",
+      "states": [
+        "focus-running"
+      ],
+      "requiredFacts": [
+        "operationSaved"
+      ],
+      "tags": [
+        "return"
+      ],
+      "copyVersion": "prd-v3-r7",
+      "collectible": true,
+      "reviewStatus": "candidate"
+    },
+    {
+      "id": "RES02",
+      "pool": "RES",
+      "text": "从刚才停下的地方继续就好。",
+      "level": "light",
+      "states": [
+        "focus-running"
+      ],
+      "requiredFacts": [
+        "operationSaved"
+      ],
+      "tags": [
+        "rest"
+      ],
+      "copyVersion": "prd-v3-r7",
+      "collectible": true,
+      "reviewStatus": "candidate"
+    },
+    {
+      "id": "RES03",
+      "pool": "RES",
+      "text": "回来了，这一段接着走。",
+      "level": "light",
+      "states": [
+        "focus-running"
+      ],
+      "requiredFacts": [
+        "operationSaved"
+      ],
+      "tags": [
+        "return"
+      ],
+      "copyVersion": "prd-v3-r7",
+      "collectible": true,
+      "reviewStatus": "candidate"
+    },
+    {
+      "id": "RES04",
+      "pool": "RES",
+      "text": "这一小步，继续按你的节奏来。",
+      "level": "light",
+      "states": [
+        "focus-running"
+      ],
+      "requiredFacts": [
+        "operationSaved"
+      ],
+      "tags": [
+        "autonomy"
+      ],
+      "copyVersion": "prd-v3-r7",
+      "collectible": true,
+      "reviewStatus": "candidate"
+    },
+    {
+      "id": "RES05",
+      "pool": "RES",
+      "text": "好，给眼前这件事一点时间。",
+      "level": "light",
+      "states": [
+        "focus-running"
+      ],
+      "requiredFacts": [
+        "operationSaved"
+      ],
+      "tags": [
+        "patience"
+      ],
+      "copyVersion": "prd-v3-r7",
+      "collectible": true,
+      "reviewStatus": "candidate"
+    },
+    {
+      "id": "END01",
+      "pool": "END",
+      "text": "谢谢你给自己这一小段时间。",
+      "level": "light",
+      "states": [
+        "focus-ready",
+        "break-ready"
+      ],
+      "requiredFacts": [
+        "operationSaved",
+        "positiveElapsed"
+      ],
+      "tags": [
+        "patience"
+      ],
+      "copyVersion": "prd-v3-r7",
+      "collectible": true,
+      "reviewStatus": "candidate"
+    },
+    {
+      "id": "END02",
+      "pool": "END",
+      "text": "这一段到这里，辛苦啦。",
+      "level": "light",
+      "states": [
+        "focus-ready",
+        "break-ready"
+      ],
+      "requiredFacts": [
+        "operationSaved",
+        "positiveElapsed"
+      ],
+      "tags": [
+        "presence"
+      ],
+      "copyVersion": "prd-v3-r7",
+      "collectible": true,
+      "reviewStatus": "candidate"
+    },
+    {
+      "id": "END03",
+      "pool": "END",
+      "text": "这次投入，也值得被好好记住。",
+      "level": "light",
+      "states": [
+        "focus-ready",
+        "break-ready"
+      ],
+      "requiredFacts": [
+        "operationSaved",
+        "positiveElapsed"
+      ],
+      "tags": [
+        "presence"
+      ],
+      "copyVersion": "prd-v3-r7",
+      "collectible": true,
+      "reviewStatus": "candidate"
+    },
+    {
+      "id": "END04",
+      "pool": "END",
+      "text": "很高兴陪你走过这一小段。",
+      "level": "light",
+      "states": [
+        "focus-ready",
+        "break-ready"
+      ],
+      "requiredFacts": [
+        "operationSaved",
+        "positiveElapsed"
+      ],
+      "tags": [
+        "presence"
+      ],
+      "copyVersion": "prd-v3-r7",
+      "collectible": true,
+      "reviewStatus": "candidate"
+    },
+    {
+      "id": "END05",
+      "pool": "END",
+      "text": "接下来，按你舒服的方式安排吧。",
+      "level": "light",
+      "states": [
+        "focus-ready",
+        "break-ready"
+      ],
+      "requiredFacts": [
+        "operationSaved",
+        "positiveElapsed"
+      ],
+      "tags": [
+        "autonomy"
+      ],
+      "copyVersion": "prd-v3-r7",
+      "collectible": true,
+      "reviewStatus": "candidate"
+    },
+    {
+      "id": "ZER01",
+      "pool": "ZER",
+      "text": "愿意试着开始，就值得肯定。",
+      "level": "light",
+      "states": [
+        "focus-ready",
+        "break-ready"
+      ],
+      "requiredFacts": [
+        "operationSaved",
+        "zeroElapsed",
+        "participationSaved"
+      ],
+      "tags": [
+        "small-step"
+      ],
+      "copyVersion": "prd-v3-r7",
+      "collectible": true,
+      "reviewStatus": "candidate"
+    },
+    {
+      "id": "ZER02",
+      "pool": "ZER",
+      "text": "开始的这一小步，也算数。",
+      "level": "light",
+      "states": [
+        "focus-ready",
+        "break-ready"
+      ],
+      "requiredFacts": [
+        "operationSaved",
+        "zeroElapsed",
+        "participationSaved"
+      ],
+      "tags": [
+        "small-step"
+      ],
+      "copyVersion": "prd-v3-r7",
+      "collectible": true,
+      "reviewStatus": "candidate"
+    },
+    {
+      "id": "ZER03",
+      "pool": "ZER",
+      "text": "这次先到这里，下一步由你决定。",
+      "level": "light",
+      "states": [
+        "focus-ready",
+        "break-ready"
+      ],
+      "requiredFacts": [
+        "operationSaved",
+        "zeroElapsed",
+        "participationSaved"
+      ],
+      "tags": [
+        "autonomy"
+      ],
+      "copyVersion": "prd-v3-r7",
+      "collectible": true,
+      "reviewStatus": "candidate"
+    },
+    {
+      "id": "ZER04",
+      "pool": "ZER",
+      "text": "谢谢你愿意给自己一次开始。",
+      "level": "light",
+      "states": [
+        "focus-ready",
+        "break-ready"
+      ],
+      "requiredFacts": [
+        "operationSaved",
+        "zeroElapsed",
+        "participationSaved"
+      ],
+      "tags": [
+        "small-step"
+      ],
+      "copyVersion": "prd-v3-r7",
+      "collectible": true,
+      "reviewStatus": "candidate"
+    },
+    {
+      "id": "ZER05",
+      "pool": "ZER",
+      "text": "接下来怎么安排，你可以自己决定。",
+      "level": "light",
+      "states": [
+        "focus-ready",
+        "break-ready"
+      ],
+      "requiredFacts": [
+        "operationSaved",
+        "zeroElapsed",
+        "participationSaved"
+      ],
+      "tags": [
+        "autonomy"
+      ],
+      "copyVersion": "prd-v3-r7",
+      "collectible": true,
+      "reviewStatus": "candidate"
+    },
+    {
+      "id": "NME01",
+      "pool": "NME",
+      "text": "先留个记号，想补充时再说。",
+      "level": "light",
+      "states": [
+        "focus-ready",
+        "focus-running",
+        "focus-paused",
+        "break-ready",
+        "break-running",
+        "break-paused"
+      ],
+      "requiredFacts": [
+        "operationSaved",
+        "emptyNote"
+      ],
+      "tags": [
+        "stored"
+      ],
+      "copyVersion": "prd-v3-r7",
+      "collectible": true,
+      "reviewStatus": "candidate"
+    },
+    {
+      "id": "NME02",
+      "pool": "NME",
+      "text": "记号放好了，接下来按你的节奏来。",
+      "level": "light",
+      "states": [
+        "focus-ready",
+        "focus-running",
+        "focus-paused",
+        "break-ready",
+        "break-running",
+        "break-paused"
+      ],
+      "requiredFacts": [
+        "operationSaved",
+        "emptyNote"
+      ],
+      "tags": [
+        "autonomy"
+      ],
+      "copyVersion": "prd-v3-r7",
+      "collectible": true,
+      "reviewStatus": "candidate"
+    },
+    {
+      "id": "NME03",
+      "pool": "NME",
+      "text": "给刚才那一刻，留了个小记号。",
+      "level": "light",
+      "states": [
+        "focus-ready",
+        "focus-running",
+        "focus-paused",
+        "break-ready",
+        "break-running",
+        "break-paused"
+      ],
+      "requiredFacts": [
+        "operationSaved",
+        "emptyNote"
+      ],
+      "tags": [
+        "stored"
+      ],
+      "copyVersion": "prd-v3-r7",
+      "collectible": true,
+      "reviewStatus": "candidate"
+    },
+    {
+      "id": "NME04",
+      "pool": "NME",
+      "text": "这一笔先记着，想写什么以后再加。",
+      "level": "light",
+      "states": [
+        "focus-ready",
+        "focus-running",
+        "focus-paused",
+        "break-ready",
+        "break-running",
+        "break-paused"
+      ],
+      "requiredFacts": [
+        "operationSaved",
+        "emptyNote"
+      ],
+      "tags": [
+        "presence"
+      ],
+      "copyVersion": "prd-v3-r7",
+      "collectible": true,
+      "reviewStatus": "candidate"
+    },
+    {
+      "id": "NME05",
+      "pool": "NME",
+      "text": "记在这里了，可以回到眼前这一件。",
+      "level": "light",
+      "states": [
+        "focus-ready",
+        "focus-running",
+        "focus-paused",
+        "break-ready",
+        "break-running",
+        "break-paused"
+      ],
+      "requiredFacts": [
+        "operationSaved",
+        "emptyNote"
+      ],
+      "tags": [
+        "stored"
+      ],
+      "copyVersion": "prd-v3-r7",
+      "collectible": true,
+      "reviewStatus": "candidate"
+    },
+    {
+      "id": "NTX01",
+      "pool": "NTX",
+      "text": "想法放好了，之后随时能看。",
+      "level": "light",
+      "states": [
+        "focus-ready",
+        "focus-running",
+        "focus-paused",
+        "break-ready",
+        "break-running",
+        "break-paused"
+      ],
+      "requiredFacts": [
+        "operationSaved",
+        "textNote"
+      ],
+      "tags": [
+        "stored"
+      ],
+      "copyVersion": "prd-v3-r7",
+      "collectible": true,
+      "reviewStatus": "candidate"
+    },
+    {
+      "id": "NTX02",
+      "pool": "NTX",
+      "text": "这件事先记在这里。",
+      "level": "light",
+      "states": [
+        "focus-ready",
+        "focus-running",
+        "focus-paused",
+        "break-ready",
+        "break-running",
+        "break-paused"
+      ],
+      "requiredFacts": [
+        "operationSaved",
+        "textNote"
+      ],
+      "tags": [
+        "stored"
+      ],
+      "copyVersion": "prd-v3-r7",
+      "collectible": true,
+      "reviewStatus": "candidate"
+    },
+    {
+      "id": "NTX03",
+      "pool": "NTX",
+      "text": "记下来了，可以先顾眼前这一件。",
+      "level": "light",
+      "states": [
+        "focus-ready",
+        "focus-running",
+        "focus-paused",
+        "break-ready",
+        "break-running",
+        "break-paused"
+      ],
+      "requiredFacts": [
+        "operationSaved",
+        "textNote"
+      ],
+      "tags": [
+        "stored"
+      ],
+      "copyVersion": "prd-v3-r7",
+      "collectible": true,
+      "reviewStatus": "candidate"
+    },
+    {
+      "id": "NTX04",
+      "pool": "NTX",
+      "text": "这条想法，已经有地方放了。",
+      "level": "light",
+      "states": [
+        "focus-ready",
+        "focus-running",
+        "focus-paused",
+        "break-ready",
+        "break-running",
+        "break-paused"
+      ],
+      "requiredFacts": [
+        "operationSaved",
+        "textNote"
+      ],
+      "tags": [
+        "stored"
+      ],
+      "copyVersion": "prd-v3-r7",
+      "collectible": true,
+      "reviewStatus": "candidate"
+    },
+    {
+      "id": "NTX05",
+      "pool": "NTX",
+      "text": "先让这个想法在这里歇一会儿。",
+      "level": "light",
+      "states": [
+        "focus-ready",
+        "focus-running",
+        "focus-paused",
+        "break-ready",
+        "break-running",
+        "break-paused"
+      ],
+      "requiredFacts": [
+        "operationSaved",
+        "textNote"
+      ],
+      "tags": [
+        "rest"
+      ],
+      "copyVersion": "prd-v3-r7",
+      "collectible": true,
+      "reviewStatus": "candidate"
+    },
+    {
+      "id": "BCK01",
+      "pool": "BCK",
+      "text": "回到这里，慢慢接上就好。",
+      "level": "light",
+      "states": [
+        "focus-running",
+        "focus-paused"
+      ],
+      "requiredFacts": [
+        "returnedToSession"
+      ],
+      "tags": [
+        "return"
+      ],
+      "copyVersion": "prd-v3-r7",
+      "collectible": true,
+      "reviewStatus": "candidate"
+    },
+    {
+      "id": "BCK02",
+      "pool": "BCK",
+      "text": "眼前这一步，还在这里。",
+      "level": "light",
+      "states": [
+        "focus-running",
+        "focus-paused"
+      ],
+      "requiredFacts": [
+        "returnedToSession"
+      ],
+      "tags": [
+        "presence"
+      ],
+      "copyVersion": "prd-v3-r7",
+      "collectible": true,
+      "reviewStatus": "candidate"
+    },
+    {
+      "id": "BCK03",
+      "pool": "BCK",
+      "text": "接下来怎么做，还是你来选。",
+      "level": "light",
+      "states": [
+        "focus-running",
+        "focus-paused"
+      ],
+      "requiredFacts": [
+        "returnedToSession"
+      ],
+      "tags": [
+        "presence"
+      ],
+      "copyVersion": "prd-v3-r7",
+      "collectible": true,
+      "reviewStatus": "candidate"
+    },
+    {
+      "id": "BCK04",
+      "pool": "BCK",
+      "text": "先看眼前这一件就好。",
+      "level": "light",
+      "states": [
+        "focus-running",
+        "focus-paused"
+      ],
+      "requiredFacts": [
+        "returnedToSession"
+      ],
+      "tags": [
+        "presence"
+      ],
+      "copyVersion": "prd-v3-r7",
+      "collectible": true,
+      "reviewStatus": "candidate"
+    },
+    {
+      "id": "BCK05",
+      "pool": "BCK",
+      "text": "好，给自己一点重新接上的时间。",
+      "level": "light",
+      "states": [
+        "focus-running",
+        "focus-paused"
+      ],
+      "requiredFacts": [
+        "returnedToSession"
+      ],
+      "tags": [
+        "return"
+      ],
+      "copyVersion": "prd-v3-r7",
+      "collectible": true,
+      "reviewStatus": "candidate"
+    },
+    {
+      "id": "BRK01",
+      "pool": "BRK",
+      "text": "现在，安心歇一会儿吧。",
+      "level": "light",
+      "states": [
+        "break-running"
+      ],
+      "requiredFacts": [
+        "operationSaved"
+      ],
+      "tags": [
+        "rest"
+      ],
+      "copyVersion": "prd-v3-r7",
+      "collectible": true,
+      "reviewStatus": "candidate"
+    },
+    {
+      "id": "BRK02",
+      "pool": "BRK",
+      "text": "这段时间，留给休息。",
+      "level": "light",
+      "states": [
+        "break-running"
+      ],
+      "requiredFacts": [
+        "operationSaved"
+      ],
+      "tags": [
+        "rest"
+      ],
+      "copyVersion": "prd-v3-r7",
+      "collectible": true,
+      "reviewStatus": "candidate"
+    },
+    {
+      "id": "BRK03",
+      "pool": "BRK",
+      "text": "换个舒服的姿势也很好。",
+      "level": "light",
+      "states": [
+        "break-running"
+      ],
+      "requiredFacts": [
+        "operationSaved"
+      ],
+      "tags": [
+        "presence"
+      ],
+      "copyVersion": "prd-v3-r7",
+      "collectible": true,
+      "reviewStatus": "candidate"
+    },
+    {
+      "id": "BRK04",
+      "pool": "BRK",
+      "text": "先松一口气，之后的事待会儿再说。",
+      "level": "light",
+      "states": [
+        "break-running"
+      ],
+      "requiredFacts": [
+        "operationSaved"
+      ],
+      "tags": [
+        "presence"
+      ],
+      "copyVersion": "prd-v3-r7",
+      "collectible": true,
+      "reviewStatus": "candidate"
+    },
+    {
+      "id": "BRK05",
+      "pool": "BRK",
+      "text": "休息也有它的位置。",
+      "level": "light",
+      "states": [
+        "break-running"
+      ],
+      "requiredFacts": [
+        "operationSaved"
+      ],
+      "tags": [
+        "rest"
+      ],
+      "copyVersion": "prd-v3-r7",
+      "collectible": true,
+      "reviewStatus": "candidate"
+    },
+    {
+      "id": "BRE01",
+      "pool": "BRE",
+      "text": "下一步，照自己的节奏选。",
+      "level": "light",
+      "states": [
+        "focus-ready",
+        "break-ready"
+      ],
+      "requiredFacts": [
+        "operationSaved"
+      ],
+      "tags": [
+        "autonomy"
+      ],
+      "copyVersion": "prd-v3-r7",
+      "collectible": true,
+      "reviewStatus": "candidate"
+    },
+    {
+      "id": "BRE02",
+      "pool": "BRE",
+      "text": "还想歇一会儿，也很好。",
+      "level": "light",
+      "states": [
+        "focus-ready",
+        "break-ready"
+      ],
+      "requiredFacts": [
+        "operationSaved"
+      ],
+      "tags": [
+        "rest"
+      ],
+      "copyVersion": "prd-v3-r7",
+      "collectible": true,
+      "reviewStatus": "candidate"
+    },
+    {
+      "id": "BRE03",
+      "pool": "BRE",
+      "text": "可以再休息，也可以开始一小段。",
+      "level": "light",
+      "states": [
+        "focus-ready",
+        "break-ready"
+      ],
+      "requiredFacts": [
+        "operationSaved"
+      ],
+      "tags": [
+        "rest"
+      ],
+      "copyVersion": "prd-v3-r7",
+      "collectible": true,
+      "reviewStatus": "candidate"
+    },
+    {
+      "id": "BRE04",
+      "pool": "BRE",
+      "text": "接下来想怎么安排，都由你来。",
+      "level": "light",
+      "states": [
+        "focus-ready",
+        "break-ready"
+      ],
+      "requiredFacts": [
+        "operationSaved"
+      ],
+      "tags": [
+        "autonomy"
+      ],
+      "copyVersion": "prd-v3-r7",
+      "collectible": true,
+      "reviewStatus": "candidate"
+    },
+    {
+      "id": "BRE05",
+      "pool": "BRE",
+      "text": "先看看自己现在想做什么。",
+      "level": "light",
+      "states": [
+        "focus-ready",
+        "break-ready"
+      ],
+      "requiredFacts": [
+        "operationSaved"
+      ],
+      "tags": [
+        "presence"
+      ],
+      "copyVersion": "prd-v3-r7",
+      "collectible": true,
+      "reviewStatus": "candidate"
+    },
+    {
+      "id": "REV01",
+      "pool": "REV",
+      "text": "每一次开始，都在这里留了一笔。",
+      "level": "light",
+      "states": [
+        "focus-ready",
+        "focus-running",
+        "focus-paused",
+        "break-ready",
+        "break-running",
+        "break-paused"
+      ],
+      "requiredFacts": [
+        "historyReadable",
+        "hasRecords"
+      ],
+      "tags": [
+        "small-step"
+      ],
+      "copyVersion": "prd-v3-r7",
+      "collectible": true,
+      "reviewStatus": "candidate"
+    },
+    {
+      "id": "REV02",
+      "pool": "REV",
+      "text": "这些记录，可以慢慢看。",
+      "level": "light",
+      "states": [
+        "focus-ready",
+        "focus-running",
+        "focus-paused",
+        "break-ready",
+        "break-running",
+        "break-paused"
+      ],
+      "requiredFacts": [
+        "historyReadable",
+        "hasRecords"
+      ],
+      "tags": [
+        "stored"
+      ],
+      "copyVersion": "prd-v3-r7",
+      "collectible": true,
+      "reviewStatus": "candidate"
+    },
+    {
+      "id": "REV03",
+      "pool": "REV",
+      "text": "你的节奏，值得被认真了解。",
+      "level": "light",
+      "states": [
+        "focus-ready",
+        "focus-running",
+        "focus-paused",
+        "break-ready",
+        "break-running",
+        "break-paused"
+      ],
+      "requiredFacts": [
+        "historyReadable",
+        "hasRecords"
+      ],
+      "tags": [
+        "autonomy"
+      ],
+      "copyVersion": "prd-v3-r7",
+      "collectible": true,
+      "reviewStatus": "candidate"
+    },
+    {
+      "id": "REV04",
+      "pool": "REV",
+      "text": "今天想看看哪一段？",
+      "level": "light",
+      "states": [
+        "focus-ready",
+        "focus-running",
+        "focus-paused",
+        "break-ready",
+        "break-running",
+        "break-paused"
+      ],
+      "requiredFacts": [
+        "historyReadable",
+        "hasRecords"
+      ],
+      "tags": [
+        "presence"
+      ],
+      "copyVersion": "prd-v3-r7",
+      "collectible": true,
+      "reviewStatus": "candidate"
+    },
+    {
+      "id": "REV05",
+      "pool": "REV",
+      "text": "这一点一滴，都是你的经历。",
+      "level": "light",
+      "states": [
+        "focus-ready",
+        "focus-running",
+        "focus-paused",
+        "break-ready",
+        "break-running",
+        "break-paused"
+      ],
+      "requiredFacts": [
+        "historyReadable",
+        "hasRecords"
+      ],
+      "tags": [
+        "presence"
+      ],
+      "copyVersion": "prd-v3-r7",
+      "collectible": true,
+      "reviewStatus": "candidate"
+    },
+    {
+      "id": "EMP01",
+      "pool": "EMP",
+      "text": "这里会记下你开启的每一小段。",
+      "level": "light",
+      "states": [
+        "focus-ready",
+        "focus-running",
+        "focus-paused",
+        "break-ready",
+        "break-running",
+        "break-paused"
+      ],
+      "requiredFacts": [
+        "historyReadable",
+        "noRecords"
+      ],
+      "tags": [
+        "stored"
+      ],
+      "copyVersion": "prd-v3-r7",
+      "collectible": true,
+      "reviewStatus": "candidate"
+    },
+    {
+      "id": "EMP02",
+      "pool": "EMP",
+      "text": "第一笔，留给你想开始的时候。",
+      "level": "light",
+      "states": [
+        "focus-ready",
+        "focus-running",
+        "focus-paused",
+        "break-ready",
+        "break-running",
+        "break-paused"
+      ],
+      "requiredFacts": [
+        "historyReadable",
+        "noRecords"
+      ],
+      "tags": [
+        "small-step"
+      ],
+      "copyVersion": "prd-v3-r7",
+      "collectible": true,
+      "reviewStatus": "candidate"
+    },
+    {
+      "id": "EMP03",
+      "pool": "EMP",
+      "text": "想留下记录时，从一小段开始就好。",
+      "level": "light",
+      "states": [
+        "focus-ready",
+        "focus-running",
+        "focus-paused",
+        "break-ready",
+        "break-running",
+        "break-paused"
+      ],
+      "requiredFacts": [
+        "historyReadable",
+        "noRecords"
+      ],
+      "tags": [
+        "stored"
+      ],
+      "copyVersion": "prd-v3-r7",
+      "collectible": true,
+      "reviewStatus": "candidate"
+    },
+    {
+      "id": "EMP04",
+      "pool": "EMP",
+      "text": "空白也很自在，什么时候开始由你。",
+      "level": "light",
+      "states": [
+        "focus-ready",
+        "focus-running",
+        "focus-paused",
+        "break-ready",
+        "break-running",
+        "break-paused"
+      ],
+      "requiredFacts": [
+        "historyReadable",
+        "noRecords"
+      ],
+      "tags": [
+        "autonomy"
+      ],
+      "copyVersion": "prd-v3-r7",
+      "collectible": true,
+      "reviewStatus": "candidate"
+    },
+    {
+      "id": "EMP05",
+      "pool": "EMP",
+      "text": "慢慢来，这里有地方放你的记录。",
+      "level": "light",
+      "states": [
+        "focus-ready",
+        "focus-running",
+        "focus-paused",
+        "break-ready",
+        "break-running",
+        "break-paused"
+      ],
+      "requiredFacts": [
+        "historyReadable",
+        "noRecords"
+      ],
+      "tags": [
+        "stored"
+      ],
+      "copyVersion": "prd-v3-r7",
+      "collectible": true,
+      "reviewStatus": "candidate"
+    },
+    {
+      "id": "MEM01",
+      "pool": "MEM",
+      "text": "这一份，记着你愿意开始的时刻。",
+      "level": "light",
+      "states": [
+        "focus-ready",
+        "focus-running",
+        "focus-paused",
+        "break-ready",
+        "break-running",
+        "break-paused"
+      ],
+      "requiredFacts": [
+        "mementoSaved",
+        "explicitView"
+      ],
+      "tags": [
+        "small-step"
+      ],
+      "copyVersion": "prd-v3-r7",
+      "collectible": true,
+      "reviewStatus": "candidate"
+    },
+    {
+      "id": "MEM02",
+      "pool": "MEM",
+      "text": "把这次开始，留作一个小纪念。",
+      "level": "light",
+      "states": [
+        "focus-ready",
+        "focus-running",
+        "focus-paused",
+        "break-ready",
+        "break-running",
+        "break-paused"
+      ],
+      "requiredFacts": [
+        "mementoSaved",
+        "explicitView"
+      ],
+      "tags": [
+        "stored"
+      ],
+      "copyVersion": "prd-v3-r7",
+      "collectible": true,
+      "reviewStatus": "candidate"
+    },
+    {
+      "id": "MEM03",
+      "pool": "MEM",
+      "text": "给刚才的自己，留一点可爱的记忆。",
+      "level": "light",
+      "states": [
+        "focus-ready",
+        "focus-running",
+        "focus-paused",
+        "break-ready",
+        "break-running",
+        "break-paused"
+      ],
+      "requiredFacts": [
+        "mementoSaved",
+        "explicitView"
+      ],
+      "tags": [
+        "return"
+      ],
+      "copyVersion": "prd-v3-r7",
+      "collectible": true,
+      "reviewStatus": "candidate"
+    },
+    {
+      "id": "MEM04",
+      "pool": "MEM",
+      "text": "这一小份，是这次开始留下的印记。",
+      "level": "light",
+      "states": [
+        "focus-ready",
+        "focus-running",
+        "focus-paused",
+        "break-ready",
+        "break-running",
+        "break-paused"
+      ],
+      "requiredFacts": [
+        "mementoSaved",
+        "explicitView"
+      ],
+      "tags": [
+        "small-step"
+      ],
+      "copyVersion": "prd-v3-r7",
+      "collectible": true,
+      "reviewStatus": "candidate"
+    },
+    {
+      "id": "MEM05",
+      "pool": "MEM",
+      "text": "以后翻到它，还能看看这一段。",
+      "level": "light",
+      "states": [
+        "focus-ready",
+        "focus-running",
+        "focus-paused",
+        "break-ready",
+        "break-running",
+        "break-paused"
+      ],
+      "requiredFacts": [
+        "mementoSaved",
+        "explicitView"
+      ],
+      "tags": [
+        "presence"
+      ],
+      "copyVersion": "prd-v3-r7",
+      "collectible": true,
+      "reviewStatus": "candidate"
+    },
+    {
+      "id": "NEW01",
+      "pool": "NEW",
+      "text": "有一份新内容，放进你的收藏了。",
+      "level": "light",
+      "states": [
+        "focus-ready",
+        "focus-running",
+        "focus-paused",
+        "break-ready",
+        "break-running",
+        "break-paused"
+      ],
+      "requiredFacts": [
+        "rewardApproved",
+        "rewardContentReady",
+        "rewardSaved",
+        "quietRewardMoment"
+      ],
+      "tags": [
+        "stored"
+      ],
+      "copyVersion": "prd-v3-r7",
+      "collectible": true,
+      "reviewStatus": "candidate"
+    },
+    {
+      "id": "NEW02",
+      "pool": "NEW",
+      "text": "送你一点新鲜感，喜欢时再打开看看。",
+      "level": "light",
+      "states": [
+        "focus-ready",
+        "focus-running",
+        "focus-paused",
+        "break-ready",
+        "break-running",
+        "break-paused"
+      ],
+      "requiredFacts": [
+        "rewardApproved",
+        "rewardContentReady",
+        "rewardSaved",
+        "quietRewardMoment"
+      ],
+      "tags": [
+        "presence"
+      ],
+      "copyVersion": "prd-v3-r7",
+      "collectible": true,
+      "reviewStatus": "candidate"
+    },
+    {
+      "id": "NEW03",
+      "pool": "NEW",
+      "text": "收藏里，多了一点新的小趣味。",
+      "level": "light",
+      "states": [
+        "focus-ready",
+        "focus-running",
+        "focus-paused",
+        "break-ready",
+        "break-running",
+        "break-paused"
+      ],
+      "requiredFacts": [
+        "rewardApproved",
+        "rewardContentReady",
+        "rewardSaved",
+        "quietRewardMoment"
+      ],
+      "tags": [
+        "stored"
+      ],
+      "copyVersion": "prd-v3-r7",
+      "collectible": true,
+      "reviewStatus": "candidate"
+    },
+    {
+      "id": "NEW04",
+      "pool": "NEW",
+      "text": "这一份小惊喜，已经替你收好了。",
+      "level": "light",
+      "states": [
+        "focus-ready",
+        "focus-running",
+        "focus-paused",
+        "break-ready",
+        "break-running",
+        "break-paused"
+      ],
+      "requiredFacts": [
+        "rewardApproved",
+        "rewardContentReady",
+        "rewardSaved",
+        "quietRewardMoment"
+      ],
+      "tags": [
+        "stored"
+      ],
+      "copyVersion": "prd-v3-r7",
+      "collectible": true,
+      "reviewStatus": "candidate"
+    },
+    {
+      "id": "NEW05",
+      "pool": "NEW",
+      "text": "新内容收好了，随时可以看看。",
+      "level": "light",
+      "states": [
+        "focus-ready",
+        "focus-running",
+        "focus-paused",
+        "break-ready",
+        "break-running",
+        "break-paused"
+      ],
+      "requiredFacts": [
+        "rewardApproved",
+        "rewardContentReady",
+        "rewardSaved",
+        "quietRewardMoment"
+      ],
+      "tags": [
+        "stored"
+      ],
+      "copyVersion": "prd-v3-r7",
+      "collectible": true,
+      "reviewStatus": "candidate"
+    },
+    {
+      "id": "ASKG01",
+      "pool": "ASKG",
+      "text": "你值得被温柔地对待。",
+      "level": "light",
+      "states": [
+        "focus-ready",
+        "focus-running",
+        "focus-paused",
+        "break-ready",
+        "break-running",
+        "break-paused"
+      ],
+      "requiredFacts": [
+        "explicitRequest"
+      ],
+      "tags": [
+        "care"
+      ],
+      "copyVersion": "prd-v3-r7",
+      "collectible": true,
+      "reviewStatus": "candidate"
+    },
+    {
+      "id": "ASKG02",
+      "pool": "ASKG",
+      "text": "你的节奏，可以由你自己决定。",
+      "level": "light",
+      "states": [
+        "focus-ready",
+        "focus-running",
+        "focus-paused",
+        "break-ready",
+        "break-running",
+        "break-paused"
+      ],
+      "requiredFacts": [
+        "explicitRequest"
+      ],
+      "tags": [
+        "autonomy"
+      ],
+      "copyVersion": "prd-v3-r7",
+      "collectible": true,
+      "reviewStatus": "candidate"
+    },
+    {
+      "id": "ASKG03",
+      "pool": "ASKG",
+      "text": "给自己一点耐心，也是一种支持。",
+      "level": "light",
+      "states": [
+        "focus-ready",
+        "focus-running",
+        "focus-paused",
+        "break-ready",
+        "break-running",
+        "break-paused"
+      ],
+      "requiredFacts": [
+        "explicitRequest"
+      ],
+      "tags": [
+        "patience"
+      ],
+      "copyVersion": "prd-v3-r7",
+      "collectible": true,
+      "reviewStatus": "candidate"
+    },
+    {
+      "id": "ASKG04",
+      "pool": "ASKG",
+      "text": "愿意照顾自己，这件事就很珍贵。",
+      "level": "light",
+      "states": [
+        "focus-ready",
+        "focus-running",
+        "focus-paused",
+        "break-ready",
+        "break-running",
+        "break-paused"
+      ],
+      "requiredFacts": [
+        "explicitRequest"
+      ],
+      "tags": [
+        "care"
+      ],
+      "copyVersion": "prd-v3-r7",
+      "collectible": true,
+      "reviewStatus": "candidate"
+    },
+    {
+      "id": "ASKG05",
+      "pool": "ASKG",
+      "text": "慢慢来，也有慢慢来的力量。",
+      "level": "light",
+      "states": [
+        "focus-ready",
+        "focus-running",
+        "focus-paused",
+        "break-ready",
+        "break-running",
+        "break-paused"
+      ],
+      "requiredFacts": [
+        "explicitRequest"
+      ],
+      "tags": [
+        "patience"
+      ],
+      "copyVersion": "prd-v3-r7",
+      "collectible": true,
+      "reviewStatus": "candidate"
+    },
+    {
+      "id": "ASKG06",
+      "pool": "ASKG",
+      "text": "这一刻，可以先站在自己这边。",
+      "level": "light",
+      "states": [
+        "focus-ready",
+        "focus-running",
+        "focus-paused",
+        "break-ready",
+        "break-running",
+        "break-paused"
+      ],
+      "requiredFacts": [
+        "explicitRequest"
+      ],
+      "tags": [
+        "presence"
+      ],
+      "copyVersion": "prd-v3-r7",
+      "collectible": true,
+      "reviewStatus": "candidate"
+    },
+    {
+      "id": "ASKG07",
+      "pool": "ASKG",
+      "text": "给今天的自己，留一点宽松。",
+      "level": "light",
+      "states": [
+        "focus-ready",
+        "focus-running",
+        "focus-paused",
+        "break-ready",
+        "break-running",
+        "break-paused"
+      ],
+      "requiredFacts": [
+        "explicitRequest"
+      ],
+      "tags": [
+        "patience"
+      ],
+      "copyVersion": "prd-v3-r7",
+      "collectible": true,
+      "reviewStatus": "candidate"
+    },
+    {
+      "id": "ASKG08",
+      "pool": "ASKG",
+      "text": "小小的一步，也有它的位置。",
+      "level": "light",
+      "states": [
+        "focus-ready",
+        "focus-running",
+        "focus-paused",
+        "break-ready",
+        "break-running",
+        "break-paused"
+      ],
+      "requiredFacts": [
+        "explicitRequest"
+      ],
+      "tags": [
+        "return"
+      ],
+      "copyVersion": "prd-v3-r7",
+      "collectible": true,
+      "reviewStatus": "candidate"
+    },
+    {
+      "id": "ASKG09",
+      "pool": "ASKG",
+      "text": "你身上值得珍惜的部分，远比一张待办清单能写下的多。",
+      "level": "deep",
+      "states": [
+        "focus-ready",
+        "focus-running",
+        "focus-paused",
+        "break-ready",
+        "break-running",
+        "break-paused"
+      ],
+      "requiredFacts": [
+        "explicitRequest"
+      ],
+      "tags": [
+        "care"
+      ],
+      "copyVersion": "prd-v3-r7",
+      "collectible": true,
+      "reviewStatus": "candidate"
+    },
+    {
+      "id": "ASKG10",
+      "pool": "ASKG",
+      "text": "你可以一边慢慢认识自己，一边就被好好对待。温柔不必等到一切都变好以后。",
+      "level": "deep",
+      "states": [
+        "focus-ready",
+        "focus-running",
+        "focus-paused",
+        "break-ready",
+        "break-running",
+        "break-paused"
+      ],
+      "requiredFacts": [
+        "explicitRequest"
+      ],
+      "tags": [
+        "care"
+      ],
+      "copyVersion": "prd-v3-r7",
+      "collectible": true,
+      "reviewStatus": "candidate"
+    },
+    {
+      "id": "ASKG11",
+      "pool": "ASKG",
+      "text": "那些让你眼睛亮起来的小事，也值得占据生活的一角。愿你有时间，慢慢靠近自己喜欢的东西。",
+      "level": "deep",
+      "states": [
+        "focus-ready",
+        "focus-running",
+        "focus-paused",
+        "break-ready",
+        "break-running",
+        "break-paused"
+      ],
+      "requiredFacts": [
+        "explicitRequest"
+      ],
+      "tags": [
+        "patience"
+      ],
+      "copyVersion": "prd-v3-r7",
+      "collectible": true,
+      "reviewStatus": "candidate"
+    },
+    {
+      "id": "ASKG12",
+      "pool": "ASKG",
+      "text": "也许有些优点，你自己还不常看见。愿你慢慢发现，也把那份欣赏留给自己。",
+      "level": "deep",
+      "states": [
+        "focus-ready",
+        "focus-running",
+        "focus-paused",
+        "break-ready",
+        "break-running",
+        "break-paused"
+      ],
+      "requiredFacts": [
+        "explicitRequest"
+      ],
+      "tags": [
+        "possibility"
+      ],
+      "copyVersion": "prd-v3-r7",
+      "collectible": true,
+      "reviewStatus": "candidate"
+    },
+    {
+      "id": "ASKG13",
+      "pool": "ASKG",
+      "text": "把温柔分给别人时，也可以给自己留一份。你的需要，同样值得被认真听见。",
+      "level": "deep",
+      "states": [
+        "focus-ready",
+        "focus-running",
+        "focus-paused",
+        "break-ready",
+        "break-running",
+        "break-paused"
+      ],
+      "requiredFacts": [
+        "explicitRequest"
+      ],
+      "tags": [
+        "care"
+      ],
+      "copyVersion": "prd-v3-r7",
+      "collectible": true,
+      "reviewStatus": "candidate"
+    },
+    {
+      "id": "ASKG14",
+      "pool": "ASKG",
+      "text": "有些可能性，需要在适合你的节奏里，才慢慢显露出来。你可以给自己一点时间。",
+      "level": "deep",
+      "states": [
+        "focus-ready",
+        "focus-running",
+        "focus-paused",
+        "break-ready",
+        "break-running",
+        "break-paused"
+      ],
+      "requiredFacts": [
+        "explicitRequest"
+      ],
+      "tags": [
+        "autonomy"
+      ],
+      "copyVersion": "prd-v3-r7",
+      "collectible": true,
+      "reviewStatus": "candidate"
+    },
+    {
+      "id": "ASKS01",
+      "pool": "ASKS",
+      "text": "可以把第一步，缩到舒服的大小。",
+      "level": "light",
+      "states": [
+        "focus-ready",
+        "focus-running",
+        "focus-paused",
+        "break-ready",
+        "break-running",
+        "break-paused"
+      ],
+      "requiredFacts": [
+        "explicitRequest",
+        "categorySelected"
+      ],
+      "tags": [
+        "small-step"
+      ],
+      "copyVersion": "prd-v3-r7",
+      "collectible": true,
+      "reviewStatus": "candidate"
+    },
+    {
+      "id": "ASKS02",
+      "pool": "ASKS",
+      "text": "先选一个容易上手的动作吧。",
+      "level": "light",
+      "states": [
+        "focus-ready",
+        "focus-running",
+        "focus-paused",
+        "break-ready",
+        "break-running",
+        "break-paused"
+      ],
+      "requiredFacts": [
+        "explicitRequest",
+        "categorySelected"
+      ],
+      "tags": [
+        "presence"
+      ],
+      "copyVersion": "prd-v3-r7",
+      "collectible": true,
+      "reviewStatus": "candidate"
+    },
+    {
+      "id": "ASKS03",
+      "pool": "ASKS",
+      "text": "准备好一点点，就从一点点开始。",
+      "level": "light",
+      "states": [
+        "focus-ready",
+        "focus-running",
+        "focus-paused",
+        "break-ready",
+        "break-running",
+        "break-paused"
+      ],
+      "requiredFacts": [
+        "explicitRequest",
+        "categorySelected"
+      ],
+      "tags": [
+        "small-step"
+      ],
+      "copyVersion": "prd-v3-r7",
+      "collectible": true,
+      "reviewStatus": "candidate"
+    },
+    {
+      "id": "ASKS04",
+      "pool": "ASKS",
+      "text": "五分钟也可以是很好的起点。",
+      "level": "light",
+      "states": [
+        "focus-ready",
+        "focus-running",
+        "focus-paused",
+        "break-ready",
+        "break-running",
+        "break-paused"
+      ],
+      "requiredFacts": [
+        "explicitRequest",
+        "categorySelected"
+      ],
+      "tags": [
+        "small-step"
+      ],
+      "copyVersion": "prd-v3-r7",
+      "collectible": true,
+      "reviewStatus": "candidate"
+    },
+    {
+      "id": "ASKS05",
+      "pool": "ASKS",
+      "text": "先动手试一下，之后再调整。",
+      "level": "light",
+      "states": [
+        "focus-ready",
+        "focus-running",
+        "focus-paused",
+        "break-ready",
+        "break-running",
+        "break-paused"
+      ],
+      "requiredFacts": [
+        "explicitRequest",
+        "categorySelected"
+      ],
+      "tags": [
+        "presence"
+      ],
+      "copyVersion": "prd-v3-r7",
+      "collectible": true,
+      "reviewStatus": "candidate"
+    },
+    {
+      "id": "ASKS06",
+      "pool": "ASKS",
+      "text": "现在只看第一步，就够了。",
+      "level": "light",
+      "states": [
+        "focus-ready",
+        "focus-running",
+        "focus-paused",
+        "break-ready",
+        "break-running",
+        "break-paused"
+      ],
+      "requiredFacts": [
+        "explicitRequest",
+        "categorySelected"
+      ],
+      "tags": [
+        "small-step"
+      ],
+      "copyVersion": "prd-v3-r7",
+      "collectible": true,
+      "reviewStatus": "candidate"
+    },
+    {
+      "id": "ASKS07",
+      "pool": "ASKS",
+      "text": "今天的开始，可以很小。",
+      "level": "light",
+      "states": [
+        "focus-ready",
+        "focus-running",
+        "focus-paused",
+        "break-ready",
+        "break-running",
+        "break-paused"
+      ],
+      "requiredFacts": [
+        "explicitRequest",
+        "categorySelected"
+      ],
+      "tags": [
+        "small-step"
+      ],
+      "copyVersion": "prd-v3-r7",
+      "collectible": true,
+      "reviewStatus": "candidate"
+    },
+    {
+      "id": "ASKS08",
+      "pool": "ASKS",
+      "text": "先给自己一个轻轻起步的机会。",
+      "level": "light",
+      "states": [
+        "focus-ready",
+        "focus-running",
+        "focus-paused",
+        "break-ready",
+        "break-running",
+        "break-paused"
+      ],
+      "requiredFacts": [
+        "explicitRequest",
+        "categorySelected"
+      ],
+      "tags": [
+        "presence"
+      ],
+      "copyVersion": "prd-v3-r7",
+      "collectible": true,
+      "reviewStatus": "candidate"
+    },
+    {
+      "id": "ASKS09",
+      "pool": "ASKS",
+      "text": "你说开始有点难，也为自己找来了一点支持。愿意这样照顾自己，很值得珍惜。",
+      "level": "deep",
+      "states": [
+        "focus-ready",
+        "focus-running",
+        "focus-paused",
+        "break-ready",
+        "break-running",
+        "break-paused"
+      ],
+      "requiredFacts": [
+        "explicitRequest",
+        "categorySelected"
+      ],
+      "tags": [
+        "care"
+      ],
+      "copyVersion": "prd-v3-r7",
+      "collectible": true,
+      "reviewStatus": "candidate"
+    },
+    {
+      "id": "ASKS10",
+      "pool": "ASKS",
+      "text": "那件让你想试一试的事，值得有一个温柔的开头。开头可以小到，只给它五分钟。",
+      "level": "deep",
+      "states": [
+        "focus-ready",
+        "focus-running",
+        "focus-paused",
+        "break-ready",
+        "break-running",
+        "break-paused"
+      ],
+      "requiredFacts": [
+        "explicitRequest",
+        "categorySelected"
+      ],
+      "tags": [
+        "care"
+      ],
+      "copyVersion": "prd-v3-r7",
+      "collectible": true,
+      "reviewStatus": "candidate"
+    },
+    {
+      "id": "ASKS11",
+      "pool": "ASKS",
+      "text": "有些能力，要在适合自己的方式里，才慢慢舒展开来。你可以一边尝试，一边找到它。",
+      "level": "deep",
+      "states": [
+        "focus-ready",
+        "focus-running",
+        "focus-paused",
+        "break-ready",
+        "break-running",
+        "break-paused"
+      ],
+      "requiredFacts": [
+        "explicitRequest",
+        "categorySelected"
+      ],
+      "tags": [
+        "possibility"
+      ],
+      "copyVersion": "prd-v3-r7",
+      "collectible": true,
+      "reviewStatus": "candidate"
+    },
+    {
+      "id": "ASKS12",
+      "pool": "ASKS",
+      "text": "想把一件事做好，里面藏着一份在意。可以先带着这份在意，轻轻试一小步。",
+      "level": "deep",
+      "states": [
+        "focus-ready",
+        "focus-running",
+        "focus-paused",
+        "break-ready",
+        "break-running",
+        "break-paused"
+      ],
+      "requiredFacts": [
+        "explicitRequest",
+        "categorySelected"
+      ],
+      "tags": [
+        "small-step"
+      ],
+      "copyVersion": "prd-v3-r7",
+      "collectible": true,
+      "reviewStatus": "candidate"
+    },
+    {
+      "id": "ASKS13",
+      "pool": "ASKS",
+      "text": "你可以从还不熟悉的地方开始。留一点空间，给以后慢慢长出来的熟练和信心。",
+      "level": "deep",
+      "states": [
+        "focus-ready",
+        "focus-running",
+        "focus-paused",
+        "break-ready",
+        "break-running",
+        "break-paused"
+      ],
+      "requiredFacts": [
+        "explicitRequest",
+        "categorySelected"
+      ],
+      "tags": [
+        "possibility"
+      ],
+      "copyVersion": "prd-v3-r7",
+      "collectible": true,
+      "reviewStatus": "candidate"
+    },
+    {
+      "id": "ASKS14",
+      "pool": "ASKS",
+      "text": "为自己找一个更容易的起点，是在认真对待自己的需要。这样的体贴，也是一种力量。",
+      "level": "deep",
+      "states": [
+        "focus-ready",
+        "focus-running",
+        "focus-paused",
+        "break-ready",
+        "break-running",
+        "break-paused"
+      ],
+      "requiredFacts": [
+        "explicitRequest",
+        "categorySelected"
+      ],
+      "tags": [
+        "care"
+      ],
+      "copyVersion": "prd-v3-r7",
+      "collectible": true,
+      "reviewStatus": "candidate"
+    },
+    {
+      "id": "ASKB01",
+      "pool": "ASKB",
+      "text": "回来这一刻，可以先找找刚才的位置。",
+      "level": "light",
+      "states": [
+        "focus-ready",
+        "focus-running",
+        "focus-paused",
+        "break-ready",
+        "break-running",
+        "break-paused"
+      ],
+      "requiredFacts": [
+        "explicitRequest",
+        "categorySelected"
+      ],
+      "tags": [
+        "return"
+      ],
+      "copyVersion": "prd-v3-r7",
+      "collectible": true,
+      "reviewStatus": "candidate"
+    },
+    {
+      "id": "ASKB02",
+      "pool": "ASKB",
+      "text": "先看看做到哪里，再选下一步。",
+      "level": "light",
+      "states": [
+        "focus-ready",
+        "focus-running",
+        "focus-paused",
+        "break-ready",
+        "break-running",
+        "break-paused"
+      ],
+      "requiredFacts": [
+        "explicitRequest",
+        "categorySelected"
+      ],
+      "tags": [
+        "presence"
+      ],
+      "copyVersion": "prd-v3-r7",
+      "collectible": true,
+      "reviewStatus": "candidate"
+    },
+    {
+      "id": "ASKB03",
+      "pool": "ASKB",
+      "text": "接下来的一步，可以重新选择。",
+      "level": "light",
+      "states": [
+        "focus-ready",
+        "focus-running",
+        "focus-paused",
+        "break-ready",
+        "break-running",
+        "break-paused"
+      ],
+      "requiredFacts": [
+        "explicitRequest",
+        "categorySelected"
+      ],
+      "tags": [
+        "autonomy"
+      ],
+      "copyVersion": "prd-v3-r7",
+      "collectible": true,
+      "reviewStatus": "candidate"
+    },
+    {
+      "id": "ASKB04",
+      "pool": "ASKB",
+      "text": "换个更容易接上的起点也可以。",
+      "level": "light",
+      "states": [
+        "focus-ready",
+        "focus-running",
+        "focus-paused",
+        "break-ready",
+        "break-running",
+        "break-paused"
+      ],
+      "requiredFacts": [
+        "explicitRequest",
+        "categorySelected"
+      ],
+      "tags": [
+        "return"
+      ],
+      "copyVersion": "prd-v3-r7",
+      "collectible": true,
+      "reviewStatus": "candidate"
+    },
+    {
+      "id": "ASKB05",
+      "pool": "ASKB",
+      "text": "给自己一点重新进入的时间。",
+      "level": "light",
+      "states": [
+        "focus-ready",
+        "focus-running",
+        "focus-paused",
+        "break-ready",
+        "break-running",
+        "break-paused"
+      ],
+      "requiredFacts": [
+        "explicitRequest",
+        "categorySelected"
+      ],
+      "tags": [
+        "patience"
+      ],
+      "copyVersion": "prd-v3-r7",
+      "collectible": true,
+      "reviewStatus": "candidate"
+    },
+    {
+      "id": "ASKB06",
+      "pool": "ASKB",
+      "text": "接下来怎样安排，仍然由你决定。",
+      "level": "light",
+      "states": [
+        "focus-ready",
+        "focus-running",
+        "focus-paused",
+        "break-ready",
+        "break-running",
+        "break-paused"
+      ],
+      "requiredFacts": [
+        "explicitRequest",
+        "categorySelected"
+      ],
+      "tags": [
+        "autonomy"
+      ],
+      "copyVersion": "prd-v3-r7",
+      "collectible": true,
+      "reviewStatus": "candidate"
+    },
+    {
+      "id": "ASKB07",
+      "pool": "ASKB",
+      "text": "眼前这一点，可以慢慢重新捡起来。",
+      "level": "light",
+      "states": [
+        "focus-ready",
+        "focus-running",
+        "focus-paused",
+        "break-ready",
+        "break-running",
+        "break-paused"
+      ],
+      "requiredFacts": [
+        "explicitRequest",
+        "categorySelected"
+      ],
+      "tags": [
+        "patience"
+      ],
+      "copyVersion": "prd-v3-r7",
+      "collectible": true,
+      "reviewStatus": "candidate"
+    },
+    {
+      "id": "ASKB08",
+      "pool": "ASKB",
+      "text": "先安顿一下，再回到想做的事。",
+      "level": "light",
+      "states": [
+        "focus-ready",
+        "focus-running",
+        "focus-paused",
+        "break-ready",
+        "break-running",
+        "break-paused"
+      ],
+      "requiredFacts": [
+        "explicitRequest",
+        "categorySelected"
+      ],
+      "tags": [
+        "return"
+      ],
+      "copyVersion": "prd-v3-r7",
+      "collectible": true,
+      "reviewStatus": "candidate"
+    },
+    {
+      "id": "ASKB09",
+      "pool": "ASKB",
+      "text": "刚才的打断，只是这一小段经历中的一件事。你在意的事，和你身上的可能，都还在。",
+      "level": "deep",
+      "states": [
+        "focus-ready",
+        "focus-running",
+        "focus-paused",
+        "break-ready",
+        "break-running",
+        "break-paused"
+      ],
+      "requiredFacts": [
+        "explicitRequest",
+        "categorySelected"
+      ],
+      "tags": [
+        "possibility"
+      ],
+      "copyVersion": "prd-v3-r7",
+      "collectible": true,
+      "reviewStatus": "candidate"
+    },
+    {
+      "id": "ASKB10",
+      "pool": "ASKB",
+      "text": "能不能一直专注，装不下对一个人的全部理解。你的好，值得被看得更完整。",
+      "level": "deep",
+      "states": [
+        "focus-ready",
+        "focus-running",
+        "focus-paused",
+        "break-ready",
+        "break-running",
+        "break-paused"
+      ],
+      "requiredFacts": [
+        "explicitRequest",
+        "categorySelected"
+      ],
+      "tags": [
+        "presence"
+      ],
+      "copyVersion": "prd-v3-r7",
+      "collectible": true,
+      "reviewStatus": "candidate"
+    },
+    {
+      "id": "ASKB11",
+      "pool": "ASKB",
+      "text": "回到一件事的方式，可以是继续，也可以是重新安排。认真听听此刻的需要，同样可贵。",
+      "level": "deep",
+      "states": [
+        "focus-ready",
+        "focus-running",
+        "focus-paused",
+        "break-ready",
+        "break-running",
+        "break-paused"
+      ],
+      "requiredFacts": [
+        "explicitRequest",
+        "categorySelected"
+      ],
+      "tags": [
+        "autonomy"
+      ],
+      "copyVersion": "prd-v3-r7",
+      "collectible": true,
+      "reviewStatus": "candidate"
+    },
+    {
+      "id": "ASKB12",
+      "pool": "ASKB",
+      "text": "重新找到自己的节奏，也是一种可以慢慢学会的能力。这里有时间，留给你试一试。",
+      "level": "deep",
+      "states": [
+        "focus-ready",
+        "focus-running",
+        "focus-paused",
+        "break-ready",
+        "break-running",
+        "break-paused"
+      ],
+      "requiredFacts": [
+        "explicitRequest",
+        "categorySelected"
+      ],
+      "tags": [
+        "autonomy"
+      ],
+      "copyVersion": "prd-v3-r7",
+      "collectible": true,
+      "reviewStatus": "candidate"
+    },
+    {
+      "id": "ASKB13",
+      "pool": "ASKB",
+      "text": "接下来，你仍然可以选择怎样对待自己。愿这一次，能多一点耐心和善意。",
+      "level": "deep",
+      "states": [
+        "focus-ready",
+        "focus-running",
+        "focus-paused",
+        "break-ready",
+        "break-running",
+        "break-paused"
+      ],
+      "requiredFacts": [
+        "explicitRequest",
+        "categorySelected"
+      ],
+      "tags": [
+        "care"
+      ],
+      "copyVersion": "prd-v3-r7",
+      "collectible": true,
+      "reviewStatus": "candidate"
+    },
+    {
+      "id": "ASKB14",
+      "pool": "ASKB",
+      "text": "你值得拥有一种容易回来的方式：有地方安放念头，也有余地重新选择。",
+      "level": "deep",
+      "states": [
+        "focus-ready",
+        "focus-running",
+        "focus-paused",
+        "break-ready",
+        "break-running",
+        "break-paused"
+      ],
+      "requiredFacts": [
+        "explicitRequest",
+        "categorySelected"
+      ],
+      "tags": [
+        "autonomy"
+      ],
+      "copyVersion": "prd-v3-r7",
+      "collectible": true,
+      "reviewStatus": "candidate"
+    },
+    {
+      "id": "ASKT01",
+      "pool": "ASKT",
+      "text": "累的时候，先歇一歇也很好。",
+      "level": "light",
+      "states": [
+        "focus-ready",
+        "focus-running",
+        "focus-paused",
+        "break-ready",
+        "break-running",
+        "break-paused"
+      ],
+      "requiredFacts": [
+        "explicitRequest",
+        "categorySelected"
+      ],
+      "tags": [
+        "rest"
+      ],
+      "copyVersion": "prd-v3-r7",
+      "collectible": true,
+      "reviewStatus": "candidate"
+    },
+    {
+      "id": "ASKT02",
+      "pool": "ASKT",
+      "text": "这一刻，照顾自己可以排在前面。",
+      "level": "light",
+      "states": [
+        "focus-ready",
+        "focus-running",
+        "focus-paused",
+        "break-ready",
+        "break-running",
+        "break-paused"
+      ],
+      "requiredFacts": [
+        "explicitRequest",
+        "categorySelected"
+      ],
+      "tags": [
+        "care"
+      ],
+      "copyVersion": "prd-v3-r7",
+      "collectible": true,
+      "reviewStatus": "candidate"
+    },
+    {
+      "id": "ASKT03",
+      "pool": "ASKT",
+      "text": "把步子放小一点，给自己留些余地。",
+      "level": "light",
+      "states": [
+        "focus-ready",
+        "focus-running",
+        "focus-paused",
+        "break-ready",
+        "break-running",
+        "break-paused"
+      ],
+      "requiredFacts": [
+        "explicitRequest",
+        "categorySelected"
+      ],
+      "tags": [
+        "patience"
+      ],
+      "copyVersion": "prd-v3-r7",
+      "collectible": true,
+      "reviewStatus": "candidate"
+    },
+    {
+      "id": "ASKT04",
+      "pool": "ASKT",
+      "text": "今天可以按现在的精力来安排。",
+      "level": "light",
+      "states": [
+        "focus-ready",
+        "focus-running",
+        "focus-paused",
+        "break-ready",
+        "break-running",
+        "break-paused"
+      ],
+      "requiredFacts": [
+        "explicitRequest",
+        "categorySelected"
+      ],
+      "tags": [
+        "autonomy"
+      ],
+      "copyVersion": "prd-v3-r7",
+      "collectible": true,
+      "reviewStatus": "candidate"
+    },
+    {
+      "id": "ASKT05",
+      "pool": "ASKT",
+      "text": "想停下时，可以安心停在这里。",
+      "level": "light",
+      "states": [
+        "focus-ready",
+        "focus-running",
+        "focus-paused",
+        "break-ready",
+        "break-running",
+        "break-paused"
+      ],
+      "requiredFacts": [
+        "explicitRequest",
+        "categorySelected"
+      ],
+      "tags": [
+        "rest"
+      ],
+      "copyVersion": "prd-v3-r7",
+      "collectible": true,
+      "reviewStatus": "candidate"
+    },
+    {
+      "id": "ASKT06",
+      "pool": "ASKT",
+      "text": "休息本身，就是一种照顾。",
+      "level": "light",
+      "states": [
+        "focus-ready",
+        "focus-running",
+        "focus-paused",
+        "break-ready",
+        "break-running",
+        "break-paused"
+      ],
+      "requiredFacts": [
+        "explicitRequest",
+        "categorySelected"
+      ],
+      "tags": [
+        "rest"
+      ],
+      "copyVersion": "prd-v3-r7",
+      "collectible": true,
+      "reviewStatus": "candidate"
+    },
+    {
+      "id": "ASKT07",
+      "pool": "ASKT",
+      "text": "给自己一个舒服的暂停吧。",
+      "level": "light",
+      "states": [
+        "focus-ready",
+        "focus-running",
+        "focus-paused",
+        "break-ready",
+        "break-running",
+        "break-paused"
+      ],
+      "requiredFacts": [
+        "explicitRequest",
+        "categorySelected"
+      ],
+      "tags": [
+        "rest"
+      ],
+      "copyVersion": "prd-v3-r7",
+      "collectible": true,
+      "reviewStatus": "candidate"
+    },
+    {
+      "id": "ASKT08",
+      "pool": "ASKT",
+      "text": "先让这一刻轻松一点。",
+      "level": "light",
+      "states": [
+        "focus-ready",
+        "focus-running",
+        "focus-paused",
+        "break-ready",
+        "break-running",
+        "break-paused"
+      ],
+      "requiredFacts": [
+        "explicitRequest",
+        "categorySelected"
+      ],
+      "tags": [
+        "rest"
+      ],
+      "copyVersion": "prd-v3-r7",
+      "collectible": true,
+      "reviewStatus": "candidate"
+    },
+    {
+      "id": "ASKT09",
+      "pool": "ASKT",
+      "text": "你说有点累了。愿意把自己的感受也放进考虑里，是一份很珍贵的自我照顾。",
+      "level": "deep",
+      "states": [
+        "focus-ready",
+        "focus-running",
+        "focus-paused",
+        "break-ready",
+        "break-running",
+        "break-paused"
+      ],
+      "requiredFacts": [
+        "explicitRequest",
+        "categorySelected"
+      ],
+      "tags": [
+        "rest"
+      ],
+      "copyVersion": "prd-v3-r7",
+      "collectible": true,
+      "reviewStatus": "candidate"
+    },
+    {
+      "id": "ASKT10",
+      "pool": "ASKT",
+      "text": "你值得的关心，也包括那些安静、没有产出的时刻。可以安心为自己留出这一段。",
+      "level": "deep",
+      "states": [
+        "focus-ready",
+        "focus-running",
+        "focus-paused",
+        "break-ready",
+        "break-running",
+        "break-paused"
+      ],
+      "requiredFacts": [
+        "explicitRequest",
+        "categorySelected"
+      ],
+      "tags": [
+        "care"
+      ],
+      "copyVersion": "prd-v3-r7",
+      "collectible": true,
+      "reviewStatus": "candidate"
+    },
+    {
+      "id": "ASKT11",
+      "pool": "ASKT",
+      "text": "如果最近把很多力气给了别的事，也可以留一点给自己。你同样值得这份照顾。",
+      "level": "deep",
+      "states": [
+        "focus-ready",
+        "focus-running",
+        "focus-paused",
+        "break-ready",
+        "break-running",
+        "break-paused"
+      ],
+      "requiredFacts": [
+        "explicitRequest",
+        "categorySelected"
+      ],
+      "tags": [
+        "care"
+      ],
+      "copyVersion": "prd-v3-r7",
+      "collectible": true,
+      "reviewStatus": "candidate"
+    },
+    {
+      "id": "ASKT12",
+      "pool": "ASKT",
+      "text": "你在意的事情很重要，承载这些在意的你，也同样重要。",
+      "level": "deep",
+      "states": [
+        "focus-ready",
+        "focus-running",
+        "focus-paused",
+        "break-ready",
+        "break-running",
+        "break-paused"
+      ],
+      "requiredFacts": [
+        "explicitRequest",
+        "categorySelected"
+      ],
+      "tags": [
+        "presence"
+      ],
+      "copyVersion": "prd-v3-r7",
+      "collectible": true,
+      "reviewStatus": "candidate"
+    },
+    {
+      "id": "ASKT13",
+      "pool": "ASKT",
+      "text": "休息的时候，你身上那些珍贵的部分，也在和你一起休息。它们不需要时刻证明自己。",
+      "level": "deep",
+      "states": [
+        "focus-ready",
+        "focus-running",
+        "focus-paused",
+        "break-ready",
+        "break-running",
+        "break-paused"
+      ],
+      "requiredFacts": [
+        "explicitRequest",
+        "categorySelected"
+      ],
+      "tags": [
+        "rest"
+      ],
+      "copyVersion": "prd-v3-r7",
+      "collectible": true,
+      "reviewStatus": "candidate"
+    },
+    {
+      "id": "ASKT14",
+      "pool": "ASKT",
+      "text": "今天可以先被好好照顾。那些还想探索的可能，留给往后的日子慢慢展开。",
+      "level": "deep",
+      "states": [
+        "focus-ready",
+        "focus-running",
+        "focus-paused",
+        "break-ready",
+        "break-running",
+        "break-paused"
+      ],
+      "requiredFacts": [
+        "explicitRequest",
+        "categorySelected"
+      ],
+      "tags": [
+        "possibility"
+      ],
+      "copyVersion": "prd-v3-r7",
+      "collectible": true,
+      "reviewStatus": "candidate"
+    }
+  ],
+  "interfaceCopy": [
+    {
+      "id": "UI01",
+      "text": "先做5分钟",
+      "condition": "仅用于将启动5分钟会话的按钮。"
+    },
+    {
+      "id": "UI02",
+      "text": "开始这段",
+      "condition": "按钮旁显示本段选定时长。"
+    },
+    {
+      "id": "UI03",
+      "text": "暂停",
+      "condition": "点击后保留原会话。"
+    },
+    {
+      "id": "UI04",
+      "text": "继续",
+      "condition": "用户主动点击才恢复运行。"
+    },
+    {
+      "id": "UI05",
+      "text": "结束这段",
+      "condition": "不使用“放弃”“挑战失败”。"
+    },
+    {
+      "id": "UI06",
+      "text": "结束并记录",
+      "condition": "成功后记录真实计时。"
+    },
+    {
+      "id": "UI07",
+      "text": "返回计时",
+      "condition": "返回原状态；原来暂停就继续保持暂停。"
+    },
+    {
+      "id": "UI08",
+      "text": "休息一下",
+      "condition": "随时可用。"
+    },
+    {
+      "id": "UI09",
+      "text": "再开一段",
+      "condition": "按用户主动选择开始，不自动续跑。"
+    },
+    {
+      "id": "UI10",
+      "text": "这一小步",
+      "condition": "可选，不用于评分。"
+    },
+    {
+      "id": "UI11",
+      "text": "接下来，想先做哪一步？",
+      "condition": "允许留空，不能预填成用户已经承诺的任务。"
+    },
+    {
+      "id": "UI12",
+      "text": "先记一下",
+      "condition": "一次点击创建空标记，不先出键盘。"
+    },
+    {
+      "id": "UI13",
+      "text": "加一句",
+      "condition": "用户点击后再打开输入。"
+    },
+    {
+      "id": "UI14",
+      "text": "想法先放这里",
+      "condition": "不显示“分心原因必填”。"
+    },
+    {
+      "id": "UI15",
+      "text": "想记什么都可以，也可以留空。",
+      "condition": "保存失败保留实际草稿。"
+    },
+    {
+      "id": "UI16",
+      "text": "回到这一步",
+      "condition": "只在对应步骤仍存在时使用。"
+    },
+    {
+      "id": "UI17",
+      "text": "回到计时",
+      "condition": "会话之外的独立想法面板用“返回”，不虚构计时上下文。"
+    },
+    {
+      "id": "UI18",
+      "text": "撤销这次记录",
+      "condition": "仅用于撤销最近仍可撤销的标记。"
+    },
+    {
+      "id": "UI19",
+      "text": "给我一句鼓励",
+      "condition": "直接显示ASKG，不强制先分类。"
+    },
+    {
+      "id": "UI20",
+      "text": "换一句",
+      "condition": "不耗币、不记分。"
+    },
+    {
+      "id": "UI21",
+      "text": "收藏这句",
+      "condition": "操作成功后才切换收藏状态。"
+    },
+    {
+      "id": "UI22",
+      "text": "已收藏",
+      "condition": "已经收藏的同一句不重复建条目。"
+    },
+    {
+      "id": "UI23",
+      "text": "取消收藏",
+      "condition": "不询问是否舍得角色，也不删除历史。"
+    },
+    {
+      "id": "UI24",
+      "text": "我的收藏",
+      "condition": "展示主动收藏短句、欢迎小笺与已获长期内容；每段纪念随原记录查看，不另开收藏页。"
+    },
+    {
+      "id": "UI25",
+      "text": "喜欢的句子和小纪念，可以收在这里。",
+      "condition": "静态空状态，不要求收集满。"
+    },
+    {
+      "id": "UI26",
+      "text": "已暂停",
+      "condition": "所有需要显示计时状态的位置保持一致。"
+    },
+    {
+      "id": "UI27",
+      "text": "计时中",
+      "condition": "不写“你正在高效专注”。"
+    },
+    {
+      "id": "UI28",
+      "text": "上次这段已暂停，可继续或结束并记录。",
+      "condition": "仅在恢复完成并确认暂停后显示。"
+    },
+    {
+      "id": "UI29",
+      "text": "这段正在计时。",
+      "condition": "只有确实仍在运行时使用；已到期先结算。"
+    },
+    {
+      "id": "UI30",
+      "text": "本段计时{elapsed}。",
+      "condition": "与END情绪句分工；时长来自真实记录。"
+    },
+    {
+      "id": "UI31",
+      "text": "已开始过这一段。",
+      "condition": "不显示“0分钟成就”或捏造1分钟。"
+    },
+    {
+      "id": "UI32",
+      "text": "已记下一个标记。",
+      "condition": "不说具体想法已保存。"
+    },
+    {
+      "id": "UI33",
+      "text": "想法已保存。",
+      "condition": "只能在持久写入成功后显示。"
+    },
+    {
+      "id": "UI34",
+      "text": "已删除。",
+      "condition": "删除提交成功后显示。"
+    },
+    {
+      "id": "UI35",
+      "text": "已撤销。",
+      "condition": "撤销成功后显示，失败则保留真实状态。"
+    },
+    {
+      "id": "UI36",
+      "text": "休息计时已结束。",
+      "condition": "不声称用户已经休息好。"
+    },
+    {
+      "id": "UI37",
+      "text": "这一天没有计时记录。",
+      "condition": "不追加“赶快补上”；读取失败不得使用此句。"
+    },
+    {
+      "id": "UI38",
+      "text": "累计计时{elapsed}。",
+      "condition": "先对毫秒求和再格式化；与真实注意力区分。"
+    },
+    {
+      "id": "UI39",
+      "text": "已加入我的收藏。",
+      "condition": "仅在对应条目真实存在后显示。"
+    },
+    {
+      "id": "UI40",
+      "text": "当前内容已全部获得。",
+      "condition": "静态状态；不自动预告未制作内容或要求重置。"
+    },
+    {
+      "id": "UI41",
+      "text": "节点鼓励已关闭。",
+      "condition": "成功保存偏好后显示；主动索取仍可用。"
+    },
+    {
+      "id": "UI42",
+      "text": "节点鼓励已开启。",
+      "condition": "不把开启开关当成长或奖励事件。"
+    },
+    {
+      "id": "UI43",
+      "text": "这一段计时结束了。",
+      "condition": "仅在平台支持且用户启用时发送；不带任务、便签或情绪分类。"
+    },
+    {
+      "id": "UI44",
+      "text": "休息计时结束了，下一步按你的节奏来。",
+      "condition": "不自动启动工作；不使用“该努力了”。"
+    }
+  ],
+  "errors": [
+    {
+      "id": "ERR01",
+      "text": "这次记录还没保存成功，可以重试。",
+      "suggestedAction": "重试保存",
+      "condition": "仅说明实际失败；内存结果继续保留，不能庆祝已保存。"
+    },
+    {
+      "id": "ERR02",
+      "text": "暂时无法读取历史，可以重试。",
+      "suggestedAction": "重试读取",
+      "condition": "保留原文；不把历史显示为0，不套普通空状态。"
+    },
+    {
+      "id": "ERR03",
+      "text": "这些记录来自更新的版本，更新应用后再试。",
+      "suggestedAction": "查看更新说明",
+      "condition": "只有确认数据版本不受支持时使用；不承诺更新一定成功。"
+    },
+    {
+      "id": "ERR04",
+      "text": "这条想法还没保存成功，文字暂留在当前页面。",
+      "suggestedAction": "重试保存",
+      "condition": "必须确认草稿确实还在；提示离开可能丢失未保存内容，不能称已备份。"
+    },
+    {
+      "id": "ERR05",
+      "text": "这个标记还没记下来，可以重试。",
+      "suggestedAction": "重试记录",
+      "condition": "重试沿用原ID，不重复计数。"
+    },
+    {
+      "id": "ERR06",
+      "text": "这个文件暂时无法导入，请选择本应用导出的完整备份。",
+      "suggestedAction": "重新选文件",
+      "condition": "仅用于格式或结构校验不通过；未修改现有数据。"
+    },
+    {
+      "id": "ERR07",
+      "text": "备份版本较新，请更新应用后再试。",
+      "suggestedAction": "查看更新说明",
+      "condition": "与无效文件分开，保留待恢复文件。"
+    },
+    {
+      "id": "ERR08",
+      "text": "备份还没生成成功，可以重试。",
+      "suggestedAction": "重新导出",
+      "condition": "不得显示“已备份”或分享不存在的文件。"
+    },
+    {
+      "id": "ERR09",
+      "text": "恢复未完成，原有数据保持不变。",
+      "suggestedAction": "重新尝试",
+      "condition": "仅在验证原数据未改变或回滚成功时使用；状态不明则准确说明无法确认结果。"
+    },
+    {
+      "id": "ERR10",
+      "text": "清理还没完成，暂时无法确认全部删除。",
+      "suggestedAction": "重试清理",
+      "condition": "不称“已全部清空”；不追加角色挽留。"
+    },
+    {
+      "id": "ERR11",
+      "text": "专注时长可以设为1到120之间的整数分钟。",
+      "suggestedAction": "恢复上次值",
+      "condition": "休息时长分别使用自身范围，不能复用120这个上限。"
+    },
+    {
+      "id": "ERR12",
+      "text": "提示音暂时无法播放。",
+      "suggestedAction": "检查声音设置",
+      "condition": "计时状态独立显示；不能在到时后谎称仍在继续，不自动反复响铃。"
+    },
+    {
+      "id": "ERR13",
+      "text": "这份内容还没保存成功，可以重试。",
+      "suggestedAction": "重试保存",
+      "condition": "待发奖励用原ID恢复，不宣布永久获得。"
+    },
+    {
+      "id": "ERR14",
+      "text": "这句话还没收藏成功，可以重试。",
+      "suggestedAction": "重试收藏",
+      "condition": "不提前显示“已收藏”。"
+    }
+  ],
+  "welcomeNote": {
+    "id": "WELCOME_NOTE",
+    "text": "很高兴在这里见到你。选一小段时间，做眼前的一小件事。想暂停、想休息，都可以按自己的节奏来。每一次愿意开始，都值得被温柔地记住。",
+    "copyVersion": "prd-v3-r7",
+    "reviewStatus": "candidate"
+  }
+}

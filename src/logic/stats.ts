@@ -1,5 +1,5 @@
 import { addDays, startOfWeek } from './calendar'
-import type { CompletionRecord, DateKey } from './types'
+import type { FocusRecord, DateKey } from './types'
 
 export interface DayTotal {
   dateKey: DateKey
@@ -9,12 +9,12 @@ export interface DayTotal {
 
 export type DayIndex = ReadonlyMap<DateKey, DayTotal>
 
-/** Groups completions by their recorded date key. */
-export function indexByDay(completions: readonly CompletionRecord[]): DayIndex {
+/** Groups records by their recorded date key. */
+export function indexByDay(records: readonly FocusRecord[]): DayIndex {
   const index = new Map<DateKey, DayTotal>()
-  for (const record of completions) {
+  for (const record of records) {
     const day = index.get(record.dateKey) ?? { dateKey: record.dateKey, count: 0, focusMs: 0 }
-    index.set(record.dateKey, { ...day, count: day.count + 1, focusMs: day.focusMs + record.focusMs })
+    index.set(record.dateKey, { ...day, count: day.count + 1, focusMs: day.focusMs + record.elapsedMs })
   }
   return index
 }

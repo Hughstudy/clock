@@ -1,20 +1,18 @@
-import { applySettingsPatch, sameSettings, type SettingsPatch } from './settings'
+import { applySettingsPatch, isValidDuration, sameSettings, type SettingsPatch } from './settings'
 import type { Spec } from './spec'
-import { expireSession, pauseSession, resetSession, resumeSession, skipBreak, startSession } from './timer'
-import type { AppSnapshot, DateKey, Phase, Settings } from './types'
+import { breakAfterFocus, expireSession, pauseSession, remainingMs, resetSession, resumeSession, skipBreak, startSession } from './timer'
+import type { AppSnapshot, DateKey, FocusRecord, Phase, Settings } from './types'
 
 export type AppAction =
   | { type: 'reconcile' }
-  | { type: 'start'; sessionId: string; timeZone: string }
-  | { type: 'pause' }
-  | { type: 'resume' }
-  | { type: 'reset' }
+  | { type: 'start'; sessionId: string; timeZone: string; durationMinutes?: number; expectedPhase?: Phase }
+  | { type: 'startBreak'; sessionId: string; timeZone: string }
+  | { type: 'pause' | 'resume' | 'end'; sessionId?: string }
   | { type: 'skipBreak' }
   | { type: 'updateSettings'; patch: SettingsPatch }
 
 export interface ActionContext {
   now: number
-  /** Resolves an instant to its calendar date in an IANA zone. Supplied by the calendar adapter. */
   dateKeyOf: (epochMs: number, timeZone: string) => DateKey
 }
 
@@ -22,91 +20,107 @@ export interface Completion {
   sessionId: string
   phase: Phase
   deadline: number
-  /** True when this transition added the focus credit; false for breaks and repeats. */
+  /** True only for a newly recorded full focus session. */
   credited: boolean
-}
-
-/** A focus session reset before its deadline. Breaks are never reported. */
-export interface Abandoned {
-  sessionId: string
 }
 
 export interface Transition {
   snapshot: AppSnapshot
   completion: Completion | null
-  abandoned: Abandoned | null
+  /** Newly recorded focus, whether ended manually or at its deadline. */
+  ended: FocusRecord | null
   changed: boolean
 }
 
-/**
- * Settles an expired running session: readies the next phase and, for focus,
- * records exactly one completion. Safe to call any number of times.
- */
+const unchanged = (snapshot: AppSnapshot): Transition => ({ snapshot, completion: null, ended: null, changed: false })
+
+/** Settle at most one phase, without starting the next phase. */
 export function reconcile(snapshot: AppSnapshot, ctx: ActionContext, spec: Spec): Transition {
+  const active = snapshot.timer.session
+  // A delayed write must not revive a session that already has an end record.
+  const known = active && snapshot.records.find((r) => r.sessionId === active.id)
+  if (known && snapshot.timer.phase === 'focus') {
+    const count = Math.max(snapshot.timer.completedFocusCount, snapshot.records.filter((r) => r.endReason === 'deadline').length)
+    const phase = known.endReason === 'deadline' ? breakAfterFocus(count, spec.timer.longBreakEvery) : 'focus'
+    return { ...unchanged(snapshot), snapshot: { ...snapshot, timer: { phase, session: null, completedFocusCount: count } }, changed: true }
+  }
   const { timer, expired } = expireSession(snapshot.timer, ctx.now, spec.timer.longBreakEvery)
-  if (!expired) return { snapshot, completion: null, abandoned: null, changed: false }
-
-  const alreadyCredited = snapshot.completions.some((r) => r.sessionId === expired.sessionId)
-  const credited = expired.phase === 'focus' && !alreadyCredited
-  const completions = credited
-    ? [
-        ...snapshot.completions,
-        {
-          sessionId: expired.sessionId,
-          completedAt: expired.deadline,
-          dateKey: ctx.dateKeyOf(expired.deadline, expired.timeZone),
-          focusMs: expired.durationMs,
-        },
-      ]
-    : snapshot.completions
-
+  if (!expired) return unchanged(snapshot)
+  const ended: FocusRecord | null = expired.phase === 'focus' ? {
+    sessionId: expired.sessionId,
+    startedAt: expired.startedAt,
+    endedAt: expired.deadline,
+    dateKey: ctx.dateKeyOf(expired.deadline, expired.timeZone),
+    targetMs: expired.durationMs,
+    elapsedMs: expired.durationMs,
+    endReason: 'deadline',
+    source: expired.startedAt === null ? 'legacy' : 'native',
+  } : null
   return {
-    snapshot: { ...snapshot, timer, completions },
-    completion: { sessionId: expired.sessionId, phase: expired.phase, deadline: expired.deadline, credited },
-    abandoned: null,
+    snapshot: { ...snapshot, timer, records: ended ? [...snapshot.records, ended] : snapshot.records },
+    completion: { sessionId: expired.sessionId, phase: expired.phase, deadline: expired.deadline, credited: ended !== null },
+    ended,
     changed: true,
   }
 }
 
-function act(snapshot: AppSnapshot, action: AppAction, now: number, spec: Spec): AppSnapshot {
-  const withTimer = (timer: AppSnapshot['timer']) => (timer === snapshot.timer ? snapshot : { ...snapshot, timer })
+function act(snapshot: AppSnapshot, action: AppAction, ctx: ActionContext, spec: Spec): Transition {
+  const { now } = ctx
+  const withTimer = (timer: AppSnapshot['timer']): Transition => ({ ...unchanged(snapshot), snapshot: { ...snapshot, timer }, changed: timer !== snapshot.timer })
+  if ((action.type === 'pause' || action.type === 'resume' || action.type === 'end') &&
+      action.sessionId !== undefined && snapshot.timer.session?.id !== action.sessionId) return unchanged(snapshot)
   switch (action.type) {
-    case 'reconcile':
-      return snapshot
+    case 'reconcile': return unchanged(snapshot)
     case 'start':
-      return withTimer(startSession(snapshot.timer, snapshot.settings, now, action.sessionId, action.timeZone))
-    case 'pause':
-      return withTimer(pauseSession(snapshot.timer, now))
-    case 'resume':
-      return withTimer(resumeSession(snapshot.timer, now))
-    case 'reset':
-      return withTimer(resetSession(snapshot.timer))
-    case 'skipBreak':
-      return withTimer(skipBreak(snapshot.timer))
+    case 'startBreak': {
+      if (snapshot.timer.session || snapshot.records.some((r) => r.sessionId === action.sessionId) ||
+          snapshot.participations.some((r) => r.sessionId === action.sessionId)) return unchanged(snapshot)
+      if (action.type === 'start' && action.expectedPhase !== undefined && action.expectedPhase !== snapshot.timer.phase) return unchanged(snapshot)
+      const timer = action.type === 'startBreak' ? { ...snapshot.timer, phase: 'shortBreak' as const } : snapshot.timer
+      const duration = action.type === 'start' ? action.durationMinutes : undefined
+      if (duration !== undefined && !isValidDuration(timer.phase, duration, spec)) return unchanged(snapshot)
+      const started = startSession(timer, snapshot.settings, now, action.sessionId, action.timeZone, duration)
+      return {
+        ...unchanged(snapshot), changed: true,
+        snapshot: { ...snapshot, timer: started, participations: timer.phase === 'focus'
+          ? [...snapshot.participations, { sessionId: action.sessionId, participatedAt: now, dateKey: ctx.dateKeyOf(now, action.timeZone), source: 'native' }]
+          : snapshot.participations },
+      }
+    }
+    case 'pause': return withTimer(pauseSession(snapshot.timer, now))
+    case 'resume': return withTimer(resumeSession(snapshot.timer, now))
+    case 'end': {
+      const session = snapshot.timer.session
+      if (!session) return unchanged(snapshot)
+      if (snapshot.timer.phase !== 'focus') return withTimer(skipBreak(snapshot.timer))
+      const ended: FocusRecord = {
+        sessionId: session.id,
+        startedAt: session.startedAt,
+        endedAt: now,
+        dateKey: ctx.dateKeyOf(now, session.timeZone),
+        targetMs: session.durationMs,
+        elapsedMs: session.durationMs - remainingMs(snapshot.timer, snapshot.settings, now),
+        endReason: 'manual',
+        source: session.startedAt === null ? 'legacy' : 'native',
+      }
+      return { snapshot: { ...snapshot, timer: resetSession(snapshot.timer), records: [...snapshot.records, ended] }, completion: null, ended, changed: true }
+    }
+    case 'skipBreak': return withTimer(skipBreak(snapshot.timer))
     case 'updateSettings': {
       const settings = applySettingsPatch(snapshot.settings, action.patch, spec)
-      return sameSettings(settings, snapshot.settings) ? snapshot : { ...snapshot, settings }
+      return sameSettings(settings, snapshot.settings) ? unchanged(snapshot)
+        : { ...unchanged(snapshot), snapshot: { ...snapshot, settings }, changed: true }
     }
   }
 }
 
-/** Reconciles expiry first, then applies the action to the settled state. */
+/** Expiry wins a race with manual end. Guard session actions against stale tabs. */
 export function applyAction(snapshot: AppSnapshot, action: AppAction, ctx: ActionContext, spec: Spec): Transition {
   const settled = reconcile(snapshot, ctx, spec)
-  const next = act(settled.snapshot, action, ctx.now, spec)
-  // After reconciling, any session still present at reset is unexpired.
-  const { timer } = settled.snapshot
-  const abandoned =
-    action.type === 'reset' && timer.session && timer.phase === 'focus' ? { sessionId: timer.session.id } : null
-  return {
-    snapshot: next,
-    completion: settled.completion,
-    abandoned,
-    changed: settled.changed || next !== settled.snapshot,
-  }
+  const next = act(settled.snapshot, action, ctx, spec)
+  return { snapshot: next.snapshot, completion: settled.completion, ended: next.ended ?? settled.ended, changed: settled.changed || next.changed }
 }
 
-/** A completion noticed long after its deadline (e.g. on reopening) stays silent. */
 export function shouldChime(completion: Completion, now: number, settings: Settings, spec: Spec): boolean {
-  return settings.soundEnabled && now - completion.deadline <= spec.timer.completionSoundWindowMs
+  return settings.soundEnabled && now >= completion.deadline && now - completion.deadline <= spec.timer.completionSoundWindowMs
 }

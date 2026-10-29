@@ -1,6 +1,5 @@
 import { spec } from '../data/spec'
 import type { CaptionKey, Pose } from '../logic/spec'
-import type { Reaction } from './useClockApp'
 import type { TimerView } from './useViews'
 
 export interface CharacterView {
@@ -10,20 +9,31 @@ export interface CharacterView {
   alt: string
 }
 
-function idleCaption(view: TimerView): CaptionKey {
+type CompanionTimerView = Pick<TimerView, 'status' | 'isBreak'>
+
+function idleCaption(view: CompanionTimerView): CaptionKey {
   if (view.status === 'paused') return 'paused'
   if (view.isBreak) return view.status === 'running' ? 'breakRunning' : 'breakReady'
   return view.status === 'running' ? 'focusRunning' : 'focusReady'
 }
 
-/** Whale-chan reacts to the latest reward or abandoned session, otherwise reflects the timer. */
-export function useCharacter(view: TimerView, reaction: Reaction | null): CharacterView {
+/** Accept both legacy and new semantic events without coupling presentation to accounting. */
+export interface CompanionReaction {
+  kind: string
+  id: string
+}
+
+/** Every ending gets the same welcome; active state takes priority over stale reactions. */
+export function useCharacter(view: CompanionTimerView, reaction: CompanionReaction | null): CharacterView {
   const { character } = spec
-  const pose: Pose = reaction?.kind ?? 'idle'
+  // The existing smile is a temporary shared pose, not a decision about the final mascot.
+  // An early ending and a fully elapsed session must not receive different affection.
+  const pose: Pose = 'idle'
+  const caption = reaction && view.status === 'ready' ? 'ended' : idleCaption(view)
   return {
     name: character.name,
     pose,
-    caption: character.captions[reaction ? reaction.kind : idleCaption(view)],
+    caption: character.captions[caption],
     alt: character.alt[pose],
   }
 }

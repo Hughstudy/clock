@@ -2,148 +2,118 @@ import { isDateKey } from './calendar'
 import { defaultSettings, sanitizeSettings } from './settings'
 import type { Spec } from './spec'
 import { initialTimer } from './timer'
-import { PHASES, type AppSnapshot, type CompletionRecord, type Phase, type Session, type TimerState } from './types'
+import { PHASES, type AppSnapshot, type FocusRecord, type ParticipationRecord, type Phase, type Session, type TimerState } from './types'
 
-export const SNAPSHOT_VERSION = 2
+export const SNAPSHOT_VERSION = 3
 
 export function createSnapshot(spec: Spec): AppSnapshot {
-  return {
-    version: SNAPSHOT_VERSION,
-    revision: 0,
-    writer: '',
-    settings: defaultSettings(spec),
-    timer: initialTimer(),
-    completions: [],
-  }
+  return { version: SNAPSHOT_VERSION, revision: 0, writer: '', datasetGeneration: 0, settings: defaultSettings(spec), timer: initialTimer(), records: [], participations: [] }
 }
 
-/** Facts a migration may need but cannot compute purely, supplied by the storage adapter. */
-export interface MigrationContext {
-  /** The device's current IANA zone, used where older data recorded none. */
-  timeZone: string
-}
+export interface MigrationContext { timeZone: string }
+type Json = Record<string, unknown>
+export type Migration = (old: Json, context: MigrationContext) => Json
+const isRecord = (value: unknown): value is Json => typeof value === 'object' && value !== null && !Array.isArray(value)
+const isCount = (v: unknown): v is number => typeof v === 'number' && Number.isSafeInteger(v) && v >= 0
+const isInstant = (v: unknown): v is number => typeof v === 'number' && Number.isFinite(v) && v >= 0
+const isPositiveMs = (v: unknown): v is number => isInstant(v) && v > 0
+const isId = (v: unknown): v is string => typeof v === 'string' && v.length > 0 && v.length <= 128
+const isTimeZone = (v: unknown): v is string => typeof v === 'string' && v.length > 0 && v.length <= 64
 
-/** Upgrades a stored object from version N to N + 1. */
-export type Migration = (old: Record<string, unknown>, context: MigrationContext) => Record<string, unknown>
-
-/** Keyed by the version each migration upgrades from. */
 export const MIGRATIONS: Readonly<Record<number, Migration>> = {
-  // v2 records the time zone a session started in. Older sessions get the current zone.
   1: (old, { timeZone }) => {
     const timer = isRecord(old.timer) ? old.timer : null
     const session = timer && isRecord(timer.session) ? timer.session : null
     if (!timer || !session || session.timeZone !== undefined) return { ...old, version: 2 }
     return { ...old, version: 2, timer: { ...timer, session: { ...session, timeZone } } }
   },
+  2: (old) => {
+    const timer = isRecord(old.timer) ? old.timer : null
+    const session = timer && isRecord(timer.session) ? timer.session : null
+    const legacy = Array.isArray(old.completions) ? old.completions : null
+    // Leave malformed entries for validation so their raw source is backed up.
+    const records = legacy?.map((r: unknown) => isRecord(r) ? {
+      sessionId: r.sessionId, startedAt: null, endedAt: r.completedAt, dateKey: r.dateKey,
+      targetMs: r.focusMs, elapsedMs: r.focusMs, endReason: 'deadline', source: 'legacy',
+    } : r)
+    const seen = new Set<string>()
+    const participations: ParticipationRecord[] = []
+    for (const r of legacy ?? []) {
+      if (!isRecord(r) || !isId(r.sessionId) || !isInstant(r.completedAt) || !isDateKey(r.dateKey) || !isPositiveMs(r.focusMs) || seen.has(r.sessionId)) continue
+      seen.add(r.sessionId)
+      participations.push({ sessionId: r.sessionId, participatedAt: null, dateKey: r.dateKey, source: 'legacy-completion' })
+    }
+    if (timer?.phase === 'focus' && session && isId(session.id) && !seen.has(session.id)) {
+      participations.push({ sessionId: session.id, participatedAt: null, dateKey: null, source: 'legacy-active' })
+    }
+    return { ...old, version: 3, datasetGeneration: 0, records, participations,
+      timer: timer && session ? { ...timer, session: { ...session, startedAt: null } } : old.timer }
+  },
 }
 
 export type Decoded =
-  /** `issues` lists fields that were invalid and replaced; empty means intact. */
   | { kind: 'ok'; snapshot: AppSnapshot; issues: string[] }
   | { kind: 'unreadable'; reason: string }
-  /** Written by a newer app version; must not be overwritten by this one. */
   | { kind: 'newer'; version: number }
 
-type Json = Record<string, unknown>
-
-function isRecord(value: unknown): value is Json {
-  return typeof value === 'object' && value !== null && !Array.isArray(value)
-}
-
-function isCount(value: unknown): value is number {
-  return typeof value === 'number' && Number.isSafeInteger(value) && value >= 0
-}
-
-function isPositiveMs(value: unknown): value is number {
-  return typeof value === 'number' && Number.isFinite(value) && value > 0
-}
-
-function isInstant(value: unknown): value is number {
-  return typeof value === 'number' && Number.isFinite(value) && value >= 0
-}
-
-function isId(value: unknown): value is string {
-  return typeof value === 'string' && value.length > 0 && value.length <= 128
-}
-
-function isTimeZone(value: unknown): value is string {
-  return typeof value === 'string' && value.length > 0 && value.length <= 64
-}
-
 function readSession(raw: unknown): Session | null {
-  if (!isRecord(raw) || !isId(raw.id) || !isPositiveMs(raw.durationMs) || !isTimeZone(raw.timeZone)) return null
-  const { id, durationMs, timeZone } = raw
-  if (raw.status === 'running' && isInstant(raw.deadline)) {
-    return { status: 'running', id, durationMs, deadline: raw.deadline, timeZone }
-  }
-  if (raw.status === 'paused' && isInstant(raw.remainingMs) && raw.remainingMs <= durationMs) {
-    return { status: 'paused', id, durationMs, remainingMs: raw.remainingMs, timeZone }
-  }
+  if (!isRecord(raw) || !isId(raw.id) || !isPositiveMs(raw.durationMs) || !isTimeZone(raw.timeZone) || !(raw.startedAt === null || isInstant(raw.startedAt))) return null
+  const { id, durationMs, timeZone, startedAt } = raw
+  if (raw.status === 'running' && isInstant(raw.deadline)) return { status: 'running', id, durationMs, timeZone, startedAt, deadline: raw.deadline }
+  if (raw.status === 'paused' && isInstant(raw.remainingMs) && raw.remainingMs <= durationMs) return { status: 'paused', id, durationMs, timeZone, startedAt, remainingMs: raw.remainingMs }
   return null
 }
 
 function readTimer(raw: unknown, completionCount: number, issues: string[]): TimerState {
-  if (!isRecord(raw)) {
-    issues.push('timer')
-    return { ...initialTimer(), completedFocusCount: completionCount }
-  }
+  if (!isRecord(raw)) { issues.push('timer'); return { ...initialTimer(), completedFocusCount: completionCount } }
   let phase: Phase = 'focus'
   if (PHASES.includes(raw.phase as Phase)) phase = raw.phase as Phase
   else issues.push('timer.phase')
-
-  let session: Session | null = null
-  if (raw.session !== null) {
-    session = readSession(raw.session)
-    if (!session) issues.push('timer.session')
-  }
-
+  const session = raw.session === null ? null : readSession(raw.session)
+  if (raw.session !== null && !session) issues.push('timer.session')
   let completedFocusCount = completionCount
-  if (isCount(raw.completedFocusCount)) completedFocusCount = raw.completedFocusCount
+  if (isCount(raw.completedFocusCount)) completedFocusCount = Math.max(raw.completedFocusCount, completionCount)
   else issues.push('timer.completedFocusCount')
-
   return { phase, session, completedFocusCount }
 }
 
-function readCompletions(raw: unknown, issues: string[]): CompletionRecord[] {
-  if (!Array.isArray(raw)) {
-    issues.push('completions')
-    return []
-  }
+function readRecords(raw: unknown, issues: string[]): FocusRecord[] {
+  if (!Array.isArray(raw)) { issues.push('records'); return [] }
   const seen = new Set<string>()
-  const records: CompletionRecord[] = []
+  const records: FocusRecord[] = []
   let dropped = 0
-  for (const item of raw) {
-    if (
-      isRecord(item) &&
-      isId(item.sessionId) &&
-      isInstant(item.completedAt) &&
-      isDateKey(item.dateKey) &&
-      isPositiveMs(item.focusMs) &&
-      !seen.has(item.sessionId)
-    ) {
-      seen.add(item.sessionId)
-      records.push({
-        sessionId: item.sessionId,
-        completedAt: item.completedAt,
-        dateKey: item.dateKey,
-        focusMs: item.focusMs,
-      })
-    } else {
-      dropped += 1
-    }
+  for (const r of raw) {
+    if (isRecord(r) && isId(r.sessionId) && isInstant(r.endedAt) && (r.startedAt === null || isInstant(r.startedAt)) &&
+        isDateKey(r.dateKey) && isPositiveMs(r.targetMs) && isInstant(r.elapsedMs) && r.elapsedMs <= r.targetMs &&
+        (r.endReason === 'manual' || (r.endReason === 'deadline' && r.elapsedMs === r.targetMs)) &&
+        (r.source === 'native' || r.source === 'legacy') && !seen.has(r.sessionId)) {
+      seen.add(r.sessionId)
+      records.push({ sessionId: r.sessionId, startedAt: r.startedAt, endedAt: r.endedAt, dateKey: r.dateKey,
+        targetMs: r.targetMs, elapsedMs: r.elapsedMs, endReason: r.endReason, source: r.source })
+    } else dropped += 1
   }
-  if (dropped > 0) issues.push(`completions (${dropped} unreadable)`)
+  if (dropped) issues.push(`records (${dropped} unreadable)`)
   return records
 }
 
-/** Applies each migration step in order; null when a step is missing. */
-export function runMigrations(
-  data: Json,
-  from: number,
-  to: number,
-  migrations: Readonly<Record<number, Migration>>,
-  context: MigrationContext,
-): Json | null {
+function readParticipations(raw: unknown, issues: string[]): ParticipationRecord[] {
+  if (!Array.isArray(raw)) { issues.push('participations'); return [] }
+  const seen = new Set<string>()
+  const result: ParticipationRecord[] = []
+  let dropped = 0
+  for (const p of raw) {
+    if (isRecord(p) && isId(p.sessionId) && (p.participatedAt === null || isInstant(p.participatedAt)) &&
+        (p.dateKey === null || isDateKey(p.dateKey)) &&
+        (p.source === 'native' || p.source === 'legacy-completion' || p.source === 'legacy-active') && !seen.has(p.sessionId)) {
+      seen.add(p.sessionId)
+      result.push({ sessionId: p.sessionId, participatedAt: p.participatedAt, dateKey: p.dateKey, source: p.source })
+    } else dropped += 1
+  }
+  if (dropped) issues.push(`participations (${dropped} unreadable)`)
+  return result
+}
+
+export function runMigrations(data: Json, from: number, to: number, migrations: Readonly<Record<number, Migration>>, context: MigrationContext): Json | null {
   let current = data
   for (let v = from; v < to; v += 1) {
     const migrate = migrations[v]
@@ -153,77 +123,53 @@ export function runMigrations(
   return current
 }
 
-/**
- * Validates stored data, migrating supported older versions. Invalid fields
- * are replaced individually so that recoverable progress survives.
- */
-export function decodeSnapshot(
-  text: string,
-  spec: Spec,
-  context: MigrationContext,
-  migrations: Readonly<Record<number, Migration>> = MIGRATIONS,
-): Decoded {
+export function decodeSnapshot(text: string, spec: Spec, context: MigrationContext, migrations: Readonly<Record<number, Migration>> = MIGRATIONS): Decoded {
   let raw: unknown
-  try {
-    raw = JSON.parse(text)
-  } catch {
-    return { kind: 'unreadable', reason: 'Saved data is not valid JSON.' }
-  }
-  if (!isRecord(raw) || !isCount(raw.version) || raw.version < 1) {
-    return { kind: 'unreadable', reason: 'Saved data has no recognizable version.' }
-  }
+  try { raw = JSON.parse(text) } catch { return { kind: 'unreadable', reason: 'Saved data is not valid JSON.' } }
+  if (!isRecord(raw) || !isCount(raw.version) || raw.version < 1) return { kind: 'unreadable', reason: 'Saved data has no recognizable version.' }
   if (raw.version > SNAPSHOT_VERSION) return { kind: 'newer', version: raw.version }
-
   const data = runMigrations(raw, raw.version, SNAPSHOT_VERSION, migrations, context)
   if (!data) return { kind: 'unreadable', reason: `No upgrade path from saved version ${raw.version}.` }
-
+  // A corrupt generation cannot be reset to zero: doing so could revive deleted data.
+  if (!isCount(data.datasetGeneration)) return { kind: 'unreadable', reason: 'Saved data generation is invalid.' }
   const issues: string[] = []
-  const completions = readCompletions(data.completions, issues)
+  const records = readRecords(data.records, issues)
+  const participations = readParticipations(data.participations, issues)
   const { settings, issues: settingIssues } = sanitizeSettings(data.settings, spec)
   issues.push(...settingIssues)
-  const timer = readTimer(data.timer, completions.length, issues)
-
-  return {
-    kind: 'ok',
-    snapshot: {
-      version: SNAPSHOT_VERSION,
-      revision: isCount(data.revision) ? data.revision : 0,
-      writer: typeof data.writer === 'string' ? data.writer : '',
-      settings,
-      timer,
-      completions,
-    },
-    issues,
-  }
+  const timer = readTimer(data.timer, records.filter((r) => r.endReason === 'deadline').length, issues)
+  return { kind: 'ok', issues, snapshot: {
+    version: SNAPSHOT_VERSION, revision: isCount(data.revision) ? data.revision : 0,
+    writer: typeof data.writer === 'string' ? data.writer : '', datasetGeneration: data.datasetGeneration,
+    settings, timer, records, participations,
+  } }
 }
 
-export function encodeSnapshot(snapshot: AppSnapshot): string {
-  return JSON.stringify(snapshot)
-}
+export const encodeSnapshot = (snapshot: AppSnapshot): string => JSON.stringify(snapshot)
 
 function newer(a: AppSnapshot, b: AppSnapshot): AppSnapshot {
   if (a.revision !== b.revision) return a.revision > b.revision ? a : b
   return a.writer >= b.writer ? a : b
 }
 
-/**
- * Combines two views of the same data, e.g. this tab's memory and another
- * tab's write. Settings and timer come from the newer revision; completion
- * records are a grow-only set keyed by session id, so a lost update can never
- * drop or duplicate credit.
- */
+/** Append-only ended sessions and participation. Future editable notes require separate tombstones. */
 export function mergeSnapshots(a: AppSnapshot, b: AppSnapshot): AppSnapshot {
+  if (a.datasetGeneration !== b.datasetGeneration) return a.datasetGeneration > b.datasetGeneration ? a : b
   const base = newer(a, b)
   const other = base === a ? b : a
-  const known = new Set(base.completions.map((r) => r.sessionId))
-  const missing = other.completions.filter((r) => !known.has(r.sessionId))
-  if (missing.length === 0) return base
-  const completions = [...base.completions, ...missing].sort((x, y) => x.completedAt - y.completedAt)
-  return { ...base, completions }
+  const known = new Set(base.records.map((r) => r.sessionId))
+  const missing = other.records.filter((r) => !known.has(r.sessionId))
+  const participated = new Set(base.participations.map((p) => p.sessionId))
+  const missingParticipation = other.participations.filter((p) => !participated.has(p.sessionId))
+  if (!missing.length && !missingParticipation.length) return base
+  const records = [...base.records, ...missing].sort((x, y) => x.endedAt - y.endedAt || x.sessionId.localeCompare(y.sessionId))
+  return { ...base, records, participations: [...base.participations, ...missingParticipation].sort((x, y) => x.sessionId.localeCompare(y.sessionId)),
+    timer: { ...base.timer, completedFocusCount: Math.max(base.timer.completedFocusCount, records.filter((r) => r.endReason === 'deadline').length) } }
 }
 
-/** True when `b` holds completion records that `a` lacks. */
-export function hasMissingCompletions(a: AppSnapshot, b: AppSnapshot): boolean {
-  const known = new Set(a.completions.map((r) => r.sessionId))
-  return b.completions.some((r) => !known.has(r.sessionId))
+export function hasMissingRecords(a: AppSnapshot, b: AppSnapshot): boolean {
+  if (a.datasetGeneration !== b.datasetGeneration) return b.datasetGeneration > a.datasetGeneration
+  const records = new Set(a.records.map((r) => r.sessionId))
+  const participations = new Set(a.participations.map((p) => p.sessionId))
+  return b.records.some((r) => !records.has(r.sessionId)) || b.participations.some((p) => !participations.has(p.sessionId))
 }

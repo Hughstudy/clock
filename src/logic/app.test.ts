@@ -36,7 +36,7 @@ describe('timer actions', () => {
     expect(remainingMs(s.timer, s.settings, T0 + MIN)).toBe(24 * MIN)
 
     s = reconcile(s, ctx(T0 + 25 * MIN), spec).snapshot
-    expect(s.completions[0]?.focusMs).toBe(25 * MIN)
+    expect(s.records[0]?.elapsedMs).toBe(25 * MIN)
     s = run(s, [[T0 + 25 * MIN, { type: 'skipBreak' }]])
     expect(remainingMs(s.timer, s.settings, T0 + 26 * MIN)).toBe(50 * MIN)
   })
@@ -54,8 +54,8 @@ describe('timer actions', () => {
     s = run(s, [[T0 + 600 * MIN, { type: 'resume' }]])
     expect(s.timer.session).toMatchObject({ status: 'running', deadline: T0 + 615 * MIN })
     s = reconcile(s, ctx(T0 + 615 * MIN), spec).snapshot
-    expect(s.completions).toEqual([
-      { sessionId: 'a', completedAt: T0 + 615 * MIN, dateKey: utcKey(T0 + 615 * MIN), focusMs: 25 * MIN },
+    expect(s.records).toMatchObject([
+      { sessionId: 'a', endedAt: T0 + 615 * MIN, dateKey: utcKey(T0 + 615 * MIN), elapsedMs: 25 * MIN },
     ])
   })
 
@@ -75,7 +75,7 @@ describe('settings updates', () => {
       [T0, { type: 'updateSettings', patch: { durationsMinutes: { shortBreak: 6 } } }],
       [T0, { type: 'updateSettings', patch: { soundEnabled: false } }],
     ])
-    expect(s.settings).toEqual({ durationsMinutes: { focus: 30, shortBreak: 6, longBreak: 15 }, soundEnabled: false })
+    expect(s.settings).toEqual({ durationsMinutes: { focus: 30, shortBreak: 6, longBreak: 15 }, soundEnabled: false, motionEnabled: true })
   })
 
   it('ignores out-of-range values', () => {
@@ -93,25 +93,25 @@ describe('completion accounting', () => {
 
     const again = reconcile(first.snapshot, ctx(T0 + 26 * MIN), spec)
     expect(again.changed).toBe(false)
-    expect(again.snapshot.completions).toHaveLength(1)
+    expect(again.snapshot.records).toHaveLength(1)
   })
 
   it('does not credit a session id that is already recorded', () => {
     const started = run(createSnapshot(spec), [[T0, { type: 'start', sessionId: 'a', timeZone: 'UTC' }]])
     const withRecord: AppSnapshot = {
       ...started,
-      completions: [{ sessionId: 'a', completedAt: T0 + 25 * MIN, dateKey: utcKey(T0), focusMs: 25 * MIN }],
+      records: [{ sessionId: 'a', startedAt: T0, endedAt: T0 + 25 * MIN, dateKey: utcKey(T0), elapsedMs: 25 * MIN, targetMs: 25 * MIN, endReason: 'deadline', source: 'native' }],
     }
     const result = reconcile(withRecord, ctx(T0 + 30 * MIN), spec)
-    expect(result.completion?.credited).toBe(false)
-    expect(result.snapshot.completions).toHaveLength(1)
+    expect(result.completion).toBeNull()
+    expect(result.snapshot.records).toHaveLength(1)
     expect(result.snapshot.timer.phase).toBe('shortBreak')
   })
 
   it('completes only one session after a long absence', () => {
     const started = run(createSnapshot(spec), [[T0, { type: 'start', sessionId: 'a', timeZone: 'UTC' }]])
     const later = reconcile(started, ctx(T0 + 3 * 24 * 60 * MIN), spec).snapshot
-    expect(later.completions).toHaveLength(1)
+    expect(later.records).toHaveLength(1)
     expect(later.timer).toEqual({ phase: 'shortBreak', session: null, completedFocusCount: 1 })
   })
 
@@ -119,25 +119,26 @@ describe('completion accounting', () => {
     const lateStart = Date.UTC(2026, 9, 28, 23, 50)
     const started = run(createSnapshot(spec), [[lateStart, { type: 'start', sessionId: 'a', timeZone: 'UTC' }]])
     const reopened = reconcile(started, ctx(Date.UTC(2026, 9, 31, 8, 0)), spec).snapshot
-    expect(reopened.completions[0]).toMatchObject({ completedAt: lateStart + 25 * MIN, dateKey: '2026-10-29' })
+    expect(reopened.records[0]).toMatchObject({ endedAt: lateStart + 25 * MIN, dateKey: '2026-10-29' })
   })
 
-  it('reset abandons an unexpired session without credit and keeps history and cadence', () => {
+  it('ending early records actual effort and keeps full-completion cadence', () => {
     let s = completeFocus(createSnapshot(spec), T0, 'a')
     s = run(s, [
       [T0 + 25 * MIN, { type: 'skipBreak' }],
       [T0 + 26 * MIN, { type: 'start', sessionId: 'b', timeZone: 'UTC' }],
-      [T0 + 40 * MIN, { type: 'reset' }],
+      [T0 + 40 * MIN, { type: 'end' }],
     ])
-    expect(s.completions.map((r) => r.sessionId)).toEqual(['a'])
+    expect(s.records.map((r) => r.sessionId)).toEqual(['a', 'b'])
+    expect(s.records[1]).toMatchObject({ elapsedMs: 14 * MIN, endReason: 'manual' })
     expect(s.timer).toEqual({ phase: 'focus', session: null, completedFocusCount: 1 })
   })
 
-  it('reset after expiry keeps the earned completion', () => {
+  it('ending after expiry keeps the full completion', () => {
     const started = run(createSnapshot(spec), [[T0, { type: 'start', sessionId: 'a', timeZone: 'UTC' }]])
-    const result = applyAction(started, { type: 'reset' }, ctx(T0 + 25 * MIN), spec)
+    const result = applyAction(started, { type: 'end' }, ctx(T0 + 25 * MIN), spec)
     expect(result.completion?.credited).toBe(true)
-    expect(result.snapshot.completions).toHaveLength(1)
+    expect(result.snapshot.records).toHaveLength(1)
     expect(result.snapshot.timer).toEqual({ phase: 'shortBreak', session: null, completedFocusCount: 1 })
   })
 
@@ -145,7 +146,7 @@ describe('completion accounting', () => {
     const started = run(createSnapshot(spec), [[T0, { type: 'start', sessionId: 'a', timeZone: 'UTC' }]])
     const s = run(started, [[T0 + 30 * MIN, { type: 'pause' }]])
     expect(s.timer.session).toBeNull()
-    expect(s.completions).toHaveLength(1)
+    expect(s.records).toHaveLength(1)
   })
 
   it('breaks earn no credit', () => {
@@ -153,7 +154,7 @@ describe('completion accounting', () => {
     s = run(s, [[T0 + 25 * MIN, { type: 'start', sessionId: 'break', timeZone: 'UTC' }]])
     const result = reconcile(s, ctx(T0 + 30 * MIN), spec)
     expect(result.completion).toMatchObject({ phase: 'shortBreak', credited: false })
-    expect(result.snapshot.completions).toHaveLength(1)
+    expect(result.snapshot.records).toHaveLength(1)
     expect(result.snapshot.timer.phase).toBe('focus')
   })
 })
@@ -179,7 +180,7 @@ describe('long-break cadence', () => {
     ])
   })
 
-  it('keeps the cadence when breaks are skipped or sessions reset', () => {
+  it('keeps the cadence when breaks are skipped or sessions ended early', () => {
     let s = createSnapshot(spec)
     for (let i = 1; i <= 3; i += 1) {
       s = completeFocus(s, T0 + i * 60 * MIN, `f${i}`)
@@ -187,7 +188,7 @@ describe('long-break cadence', () => {
     }
     s = run(s, [
       [T0 + 300 * MIN, { type: 'start', sessionId: 'x', timeZone: 'UTC' }],
-      [T0 + 301 * MIN, { type: 'reset' }],
+      [T0 + 301 * MIN, { type: 'end' }],
     ])
     s = completeFocus(s, T0 + 302 * MIN, 'f4')
     expect(s.timer.phase).toBe('longBreak')
@@ -203,7 +204,7 @@ describe('time zones and clock changes', () => {
     let s = applyAction(createSnapshot(spec), { type: 'start', sessionId: 'a', timeZone: 'Asia/Tokyo' }, { now: start, dateKeyOf: zoned }, spec).snapshot
     // Reopened later while the device reports another zone; the stored zone still decides.
     s = reconcile(s, { now: start + 60 * MIN, dateKeyOf: zoned }, spec).snapshot
-    expect(s.completions[0]?.dateKey).toBe('2026-10-29')
+    expect(s.records[0]?.dateKey).toBe('2026-10-29')
   })
 
   it('keeps the zone through pause and resume', () => {
@@ -224,27 +225,6 @@ describe('time zones and clock changes', () => {
   })
 })
 
-describe('abandoned focus sessions', () => {
-  it('reports resetting an unexpired focus session, running or paused', () => {
-    const running = run(createSnapshot(spec), [[T0, { type: 'start', sessionId: 'a', timeZone: 'UTC' }]])
-    expect(applyAction(running, { type: 'reset' }, ctx(T0 + MIN), spec).abandoned).toEqual({ sessionId: 'a' })
-    const paused = run(running, [[T0 + MIN, { type: 'pause' }]])
-    expect(applyAction(paused, { type: 'reset' }, ctx(T0 + 99 * MIN), spec).abandoned).toEqual({ sessionId: 'a' })
-  })
-
-  it('does not report expired sessions, breaks, skips, or resets with nothing running', () => {
-    const running = run(createSnapshot(spec), [[T0, { type: 'start', sessionId: 'a', timeZone: 'UTC' }]])
-    const expired = applyAction(running, { type: 'reset' }, ctx(T0 + 25 * MIN), spec)
-    expect(expired.abandoned).toBeNull()
-    expect(expired.completion?.credited).toBe(true)
-
-    const onBreak = run(expired.snapshot, [[T0 + 26 * MIN, { type: 'start', sessionId: 'b', timeZone: 'UTC' }]])
-    expect(applyAction(onBreak, { type: 'reset' }, ctx(T0 + 27 * MIN), spec).abandoned).toBeNull()
-    expect(applyAction(onBreak, { type: 'skipBreak' }, ctx(T0 + 27 * MIN), spec).abandoned).toBeNull()
-    expect(applyAction(createSnapshot(spec), { type: 'reset' }, ctx(T0), spec).abandoned).toBeNull()
-  })
-})
-
 describe('shouldChime', () => {
   const completion = { sessionId: 'a', phase: 'focus' as const, deadline: T0, credited: true }
   it('chimes for a fresh completion when sound is on', () => {
@@ -252,5 +232,86 @@ describe('shouldChime', () => {
     expect(shouldChime(completion, T0 + 500, settings, spec)).toBe(true)
     expect(shouldChime(completion, T0 + spec.timer.completionSoundWindowMs + 1, settings, spec)).toBe(false)
     expect(shouldChime(completion, T0, { ...settings, soundEnabled: false }, spec)).toBe(false)
+  })
+})
+
+describe('flexible focus and actual effort', () => {
+  it.each([0, 1, 1000, 20_000])('records a manual ending after %s milliseconds, including zero', (elapsed) => {
+    const s = run(createSnapshot(spec), [
+      [T0, { type: 'start', sessionId: 'short', timeZone: 'UTC', durationMinutes: 5 }],
+      [T0 + elapsed, { type: 'end', sessionId: 'short' }],
+      [T0 + elapsed, { type: 'end', sessionId: 'short' }],
+    ])
+    expect(s.records).toHaveLength(1)
+    expect(s.records[0]).toMatchObject({ sessionId: 'short', elapsedMs: elapsed, targetMs: 5 * MIN, endReason: 'manual', startedAt: T0 })
+    expect(s.participations).toHaveLength(1)
+    expect(s.timer.completedFocusCount).toBe(0)
+    expect(s.timer.session).toBeNull()
+    expect(s.settings.durationsMinutes.focus).toBe(25)
+  })
+  it('records 8 minutes + pause of 3 minutes + 2 minutes as 10 minutes', () => {
+    const s = run(createSnapshot(spec), [
+      [T0, { type: 'start', sessionId: 'a', timeZone: 'UTC' }],
+      [T0 + 8 * MIN, { type: 'pause', sessionId: 'a' }],
+      [T0 + 11 * MIN, { type: 'resume', sessionId: 'a' }],
+      [T0 + 13 * MIN, { type: 'end', sessionId: 'a' }],
+    ])
+    expect(s.records[0]?.elapsedMs).toBe(10 * MIN)
+    expect(s.participations).toHaveLength(1)
+    expect(s.timer.completedFocusCount).toBe(0)
+  })
+  it('keeps two 20-second endings as 40 seconds before formatting', () => {
+    const s = run(createSnapshot(spec), [
+      [T0, { type: 'start', sessionId: 'a', timeZone: 'UTC' }],
+      [T0 + 20_000, { type: 'end' }],
+      [T0 + 30_000, { type: 'start', sessionId: 'b', timeZone: 'UTC' }],
+      [T0 + 50_000, { type: 'end' }],
+    ])
+    expect(s.records.reduce((sum, r) => sum + r.elapsedMs, 0)).toBe(40_000)
+    expect(s.participations).toHaveLength(2)
+  })
+  it.each([-1, 0, 0.5, 121, Number.NaN])('rejects invalid one-off duration %s without creating participation', (durationMinutes) => {
+    const s = run(createSnapshot(spec), [[T0, { type: 'start', sessionId: 'a', timeZone: 'UTC', durationMinutes }]])
+    expect(s.timer.session).toBeNull()
+    expect(s.participations).toHaveLength(0)
+  })
+  it('offers rest without any full completion and never counts it as focus', () => {
+    const s = run(createSnapshot(spec), [
+      [T0, { type: 'startBreak', sessionId: 'rest', timeZone: 'UTC' }],
+      [T0 + MIN, { type: 'end', sessionId: 'rest' }],
+    ])
+    expect(s.records).toEqual([])
+    expect(s.participations).toEqual([])
+    expect(s.timer).toEqual({ phase: 'focus', session: null, completedFocusCount: 0 })
+  })
+  it('ignores a stale end or pause aimed at a different session', () => {
+    const s = run(createSnapshot(spec), [
+      [T0, { type: 'start', sessionId: 'a', timeZone: 'UTC' }],
+      [T0 + 1000, { type: 'end', sessionId: 'a' }],
+      [T0 + 2000, { type: 'start', sessionId: 'b', timeZone: 'UTC' }],
+      [T0 + 3000, { type: 'end', sessionId: 'a' }],
+      [T0 + 4000, { type: 'pause', sessionId: 'a' }],
+    ])
+    expect(s.timer.session).toMatchObject({ id: 'b', status: 'running' })
+    expect(s.records.map((r) => r.sessionId)).toEqual(['a'])
+  })
+  it.each([-1, 0, 1])('settles an end %s milliseconds from the deadline exactly once', (offset) => {
+    const s = run(createSnapshot(spec), [
+      [T0, { type: 'start', sessionId: 'a', timeZone: 'UTC', durationMinutes: 5 }],
+      [T0 + 5 * MIN + offset, { type: 'end', sessionId: 'a' }],
+      [T0 + 10 * MIN, { type: 'reconcile' }],
+    ])
+    expect(s.records).toHaveLength(1)
+    expect(s.records[0]?.elapsedMs).toBe(5 * MIN + Math.min(offset, 0))
+    expect(s.records[0]?.endReason).toBe(offset < 0 ? 'manual' : 'deadline')
+    expect(s.timer.completedFocusCount).toBe(offset < 0 ? 0 : 1)
+  })
+  it('does not let a stale start button launch the next phase after expiry', () => {
+    const s = run(createSnapshot(spec), [
+      [T0, { type: 'start', sessionId: 'a', timeZone: 'UTC' }],
+      [T0 + 26 * MIN, { type: 'start', sessionId: 'stale', timeZone: 'UTC', expectedPhase: 'focus' }],
+    ])
+    expect(s.timer.session).toBeNull()
+    expect(s.records).toHaveLength(1)
   })
 })

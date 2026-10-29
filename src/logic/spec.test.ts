@@ -8,6 +8,7 @@ describe('parseSpec', () => {
     expect(spec.timer.longBreakEvery).toBe(4)
     expect(spec.timer.completionSoundWindowMs).toBe(60_000)
     expect(spec.calendar.weekStartsOn).toBe(1)
+    expect(spec.presentation.motionEnabledDefault).toBe(true)
   })
 
   it('names the invalid field', () => {
@@ -19,8 +20,8 @@ describe('parseSpec', () => {
 
   it('rejects a pose that names a missing part', () => {
     const bad = structuredClone(raw)
-    bad.character.poses.cry.push('tail2')
-    expect(() => parseSpec(bad)).toThrow(/character\.poses\.cry: unknown part tail2/)
+    bad.character.poses.rice.push('tail2')
+    expect(() => parseSpec(bad)).toThrow(/character\.poses\.rice: unknown part tail2/)
   })
 
   it('rejects unknown tones and non-path data', () => {

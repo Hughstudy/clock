@@ -5,7 +5,7 @@ export function defaultSettings(spec: Spec): Settings {
   const durationsMinutes = Object.fromEntries(
     PHASES.map((phase) => [phase, spec.timer.durationsMinutes[phase].default]),
   ) as Record<Phase, number>
-  return { durationsMinutes, soundEnabled: spec.timer.soundEnabledDefault }
+  return { durationsMinutes, soundEnabled: spec.timer.soundEnabledDefault, motionEnabled: spec.presentation.motionEnabledDefault }
 }
 
 export type DurationCheck = { ok: true; minutes: number } | { ok: false; message: string }
@@ -14,9 +14,9 @@ export type DurationCheck = { ok: true; minutes: number } | { ok: false; message
 export function checkDuration(phase: Phase, input: string, spec: Spec): DurationCheck {
   const { min, max } = spec.timer.durationsMinutes[phase]
   const text = input.trim()
-  if (!/^\d+$/.test(text)) return { ok: false, message: `Enter whole minutes from ${min} to ${max}.` }
+  if (!/^\d+$/.test(text)) return { ok: false, message: `请输入 ${min} 到 ${max} 之间的整数分钟。` }
   const minutes = Number(text)
-  if (minutes < min || minutes > max) return { ok: false, message: `Choose ${min}–${max} minutes.` }
+  if (minutes < min || minutes > max) return { ok: false, message: `请选择 ${min} 到 ${max} 分钟。` }
   return { ok: true, minutes }
 }
 
@@ -46,7 +46,13 @@ export function sanitizeSettings(raw: unknown, spec: Spec): { settings: Settings
   if (typeof raw.soundEnabled === 'boolean') soundEnabled = raw.soundEnabled
   else issues.push('settings.soundEnabled')
 
-  return { settings: { durationsMinutes, soundEnabled }, issues }
+  // This additive preference was absent in older v1/v2/v3 data. Missing is a
+  // normal upgrade; malformed values still report a repair for raw-data backup.
+  let motionEnabled = defaults.motionEnabled
+  if (typeof raw.motionEnabled === 'boolean') motionEnabled = raw.motionEnabled
+  else if (raw.motionEnabled !== undefined) issues.push('settings.motionEnabled')
+
+  return { settings: { durationsMinutes, soundEnabled, motionEnabled }, issues }
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -57,6 +63,7 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 export interface SettingsPatch {
   durationsMinutes?: Partial<Record<Phase, number>>
   soundEnabled?: boolean
+  motionEnabled?: boolean
 }
 
 /** Applies the valid fields of a patch; invalid fields leave the current value in place. */
@@ -67,9 +74,11 @@ export function applySettingsPatch(current: Settings, patch: SettingsPatch, spec
     if (isValidDuration(phase, value, spec)) durationsMinutes[phase] = value
   }
   const soundEnabled = typeof patch.soundEnabled === 'boolean' ? patch.soundEnabled : current.soundEnabled
-  return { durationsMinutes, soundEnabled }
+  const motionEnabled = typeof patch.motionEnabled === 'boolean' ? patch.motionEnabled : current.motionEnabled
+  return { durationsMinutes, soundEnabled, motionEnabled }
 }
 
 export function sameSettings(a: Settings, b: Settings): boolean {
-  return a.soundEnabled === b.soundEnabled && PHASES.every((p) => a.durationsMinutes[p] === b.durationsMinutes[p])
+  return a.soundEnabled === b.soundEnabled && a.motionEnabled === b.motionEnabled &&
+    PHASES.every((p) => a.durationsMinutes[p] === b.durationsMinutes[p])
 }

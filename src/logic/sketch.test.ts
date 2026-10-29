@@ -43,7 +43,6 @@ describe('Whale-chan', () => {
     const hairOf = (pose: (typeof POSES)[number]) =>
       sketchCharacter({ character: spec.character, pose, frame: 'full', seed }).paths.slice(0, 6)
     expect(hairOf('rice')).toEqual(hairOf('idle'))
-    expect(hairOf('cry')).toEqual(hairOf('idle'))
   })
 
   it('uses the configured framing as its viewBox', () => {

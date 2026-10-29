@@ -1,224 +1,111 @@
-# Clock — development plan
+# 番茄钟改造计划
 
-Status (2026-10-28): Whale Focus is live at **https://hughstudy.github.io/clock/** (repository [Hughstudy/clock](https://github.com/Hughstudy/clock), deployed by GitHub Actions). Milestones 1–3 are done. Remaining: the device-level acceptance checks listed below (install flow, installed-mode offline, real phones, reduced motion).
+本地续作（2026-10-29）：已导入用户提供的 `57ca8697cfa3a694f5e319e00d8dc4ee38b4c907` 完整交接源码，并接通 T30 陪伴模块。用户选择了“柔软、圆润的蓝色小生物，带有表情丰富的小手臂”。当前为原创角色可运行原型；未合并 main、未发布。详见本文末尾及 [验证记录](docs/verification/friendly-companion.md)。
 
-## Goal and release order
+更新基线：2026-10-28，产品PRD v3（读取的文件版本7）。当前分支已实施第一批F1核心；完整新版仍在开发。正式产品名称、角色与最终UI尚未确定，原鲸鱼是候选之一。
 
-Build a mobile-first Pomodoro-style focus timer that runs entirely in the browser, persists locally, and can be installed on a phone home screen. A fan-made chibi whale girl, **Whale-chan**, keeps the user company: finishing a focus session rewards her with a bowl of rice; abandoning one makes her cry. Ship one release on GitHub Pages.
+## 依据与协作入口
 
-| Release | Included |
-| --- | --- |
-| 1 — Clock with Whale-chan | Focus/break timer, today’s count, daily/weekly stats, streak, settings, local persistence, offline PWA, GitHub Pages deployment; Whale-chan with three drawings (idle, eating rice, crying) and a rice counter |
-| Deferred (not planned) | Growth, evolution stages, mood decay, more poses, React Native port. Add only on explicit request. |
+- [产品PRD主稿](https://chatgpt.com/library?file_id=libfile_819c07bf86108191af0be21b4e39123d&account_id=personal)：正文定义目标及确定性；附录描述旧代码与差距。
+- [开发协作文件](https://chatgpt.com/library?file_id=libfile_c81e264086d88191828a7654a36d7421&account_id=personal)：唯一实时任务、认领、文件归属、接口请求与交付登记；这里不复制另一份实时看板。
+- AGENTS.md：工程边界、数据不变量与跨窗口规则。
+- 旧版核对提交：0a57d037bb472bc9f4035196bca2c4c7f0529955。旧计划完整历史可从该Git提交读取；其中哭泣、固定角色与仅完整完成记账不再是现行产品要求。
 
-Use React 18, TypeScript, Vite, rough.js, and localStorage. Web frontend only; keep the existing logic/adapter separation but do no React Native–specific work. Do not add a backend, accounts, cloud sync, social features, purchases, multiple characters, or push notifications.
+## 已有基础与当前差距
 
-## Research review
-
-The clock-first scope is consistent with established focus-timer products. The table separates what the sources document from this project's design choices; product examples are not evidence that this app improves attention or wellbeing.
-
-| Reference | What the source establishes | Decision for this project |
+| 能力 | 当前源码 | 改造目标 |
 | --- | --- | --- |
-| [Pomofocus](https://pomofocus.io/) | A browser focus timer can pair configurable focus/break durations with daily/weekly reports. | Keep the timer, settings, and stats MVP. Task management and integrations are unnecessary for release 1. |
-| [Pomodoro Technique creator](https://www.pomodorotechnique.com/what-is-the-pomodoro-technique/) | The complete method includes planning, breaks, observation, and reflection, beyond its timer. | Describe this as a flexible Pomodoro-style timer. Pause, custom durations, and manual phase starts are app choices. Encourage the scheduled break after focus. |
-| [Finch mission](https://help.finchcare.com/hc/en-us/articles/37935610353293-Our-Mission) and [streaks](https://help.finchcare.com/hc/en-us/articles/37780736136205-Understanding-Streaks) | Finch emphasizes encouragement without pressure; its streak counts app visits and has repair/pause mechanisms. | Our completed-focus streak is intentionally different. Keep the crying reaction brief, cosmetic, and blame-free. Do not add streak currencies or repair mechanics. |
-| [Forest](https://forestapp.cc/) | Focus sessions can produce visible rewards; its product also uses loss of a tree as a consequence. | Keep visible accumulation (rice served). Nothing is ever lost, and switching apps is not treated as failure. |
-| [Vite deployment](https://vite.dev/guide/static-deploy#github-pages) | Static builds can deploy through GitHub Pages with the correct repository base path. | Keep GitHub Pages; no application backend is needed. |
-| [WebKit storage policy](https://webkit.org/blog/14403/updates-to-storage-policy/) | Browser storage is best-effort by default and can be evicted. | Separate the no-loss rule from browser data durability. Do not promise recovery after site data is deleted. |
-| [React Strict Mode](https://react.dev/reference/react/StrictMode) | Development checks repeat rendering and Effects to expose bugs. | Keep Strict Mode enabled and prove that completion effects cannot duplicate rewards. |
-| [AI gijinka guide](https://genderswapai.com/ai-gijinka) and [36Kr on the “whale girl”](https://eu.36kr.com/en/p/3947452108789632) | In Chinese fandom DeepSeek is personified as a blue-haired whale girl (DeepSeek-chan / Whale-chan). The design grew from the original character “溟月” by Bilibili artist 上善无形 (June 2025); ZipZipPipe added DeepSeek elements and a navy-and-white maid outfit (2026-04-25). Lore: she loves white rice and slacks off in standby. | Use the widely shared traits as inspiration for an original drawing. Rice is the reward because it is the character’s signature food. |
-| [Whale-chan spec repo](https://github.com/Neko3000/deepseek-whalechan) and [meme archive](https://github.com/the-beating-light-of-the-nail/deepseek-chan-meme-pack) ([aigengtu.com](https://aigengtu.com/DeepSeek%E5%A8%98)) | Code is MIT; spec text is CC BY-NC-SA 4.0; **images are not licensed** by either project and remain with their original artists. The archive allows only non-commercial fan use and honors takedowns. Both state they are not affiliated with DeepSeek. | Do not copy, trace, bundle, or hotlink these images. Keep them as linked style references only. Credit the original designers and state non-affiliation in the app and README. |
-| [Fast Company on DeepSeek’s logo](https://www.fastcompany.com/91268357/deepseek-logo) | DeepSeek’s brand mark is a plump blue whale with a rounded wordmark. | Do not use DeepSeek’s logo or wordmark, or imply endorsement. The app icon is Whale-chan’s own face. |
+| 计时 | 25/5/15分钟、自定义、暂停恢复、截止时间结算、四段长休息 | 轻量短时开始；提前结束保存实际时间；主动休息 |
+| 数据 | 快照v2、v1迁移、Web Locks、去重、原文保护、稳定历史日期 | 结束与参与记录；想法编辑删除；奖励收藏；恢复清理不复活 |
+| 陪伴 | Whale-chan idle/rice/cry、英文固定话语、饭碗 | 全正向节点、主动鼓励、收藏；可替换角色呈现 |
+| 页面 | Home、Stats、Settings三个主导航 | 当前建议专注与记录两个主导航，独立辅助设置，同页详情 |
+| 记录 | 今日、本周、完整次数、streak | 按日流，时间/步骤/想法/纪念关联，7/30天与集中查找 |
+| 交付 | 静态前端、PWA、GitHub Actions、安装说明 | 数据自主权、生产流程与真实手机验收 |
 
-X.com posts were not reachable through search; the strongest openly browsable sources were the archives above. Weekly boundaries and reaction timing remain proposed defaults, not external standards.
+历史计划记录旧版已部署到 https://hughstudy.github.io/clock/ 、79项Vitest测试和桌面375px检查；本次文档改动没有重跑这些检查，不证明当前线上已满足新版要求。
 
-## Character: Whale-chan
+## 产品方向
 
-A wholesome, fully clothed chibi mascot (about 2 heads tall). Original artwork generated in code; no third-party art is copied.
+最高原则是“只要愿意使用工具，就值得肯定”。开始、暂停、短段结束、分心、休息和回来都被接纳；技术错误真实呈现。角色有自己的兴趣与快乐，不需要用户工作来维持。
 
-- **Look:** long hair with a navy-to-sky-blue gradient and white highlights; one ahoge; navy whale-fin ears on both sides of the head; white frilled headband; blue eyes with highlights; pink blush; navy-and-white maid dress with a white apron; navy whale tail with a white underside.
-- **Idle (default):** gentle smile, waiting. Subtle breathing via CSS transform, disabled under reduced motion.
-- **Success — “free rice”:** eyes closed in a happy ^ ^ shape, eating from a white rice bowl with chopsticks, small floating hearts. Caption such as “Thanks for the rice!”. Shown once for each newly credited focus completion, including one recovered on return, then back to idle when the user starts the break or after a configured time. Style reference: [aigengtu #2534](https://aigengtu.com/zh/meme/2534) (backup [#063](https://aigengtu.com/zh/meme/063)).
-- **Failure — cry:** big teary eyes with streaming tears and a wobbly mouth. Caption such as “Aww… the rice got away. Try again?”. Shown only when the user resets an **unexpired focus** session. Breaks, Skip break, switching tabs/apps, and missed days never trigger it. Brief (proposed 4 s), no penalty, and progress is untouched. Style reference: [aigengtu #874](https://aigengtu.com/zh/meme/874).
-- **Rice counter:** “bowls of rice” equals completed focus sessions (today on Home, total on Stats). It is derived from completion records, so it needs no new stored state and can never double count.
-- **Rendering:** one `sketchCharacter({ pose, size, seed })` in `logic/` produces serializable rough.js paths with named tones; one `<SketchCharacter>` component renders all poses. Shapes, tones, captions, and timings live in a `character` section of `src/data/pet-spec.json`. Cache each pose; never regenerate per tick.
-- **Quality gate:** review all three poses at app size against the references. If rough.js output is not cute enough, stop and ask the user before switching to hand-authored original SVG, since that changes a fixed requirement.
-- **Name and credit (confirmed by the user 2026-10-28):** character “Whale-chan”, app name “Whale Focus”. Settings and README say: “Fan-made, non-commercial character inspired by the community’s DeepSeek Whale-chan (designs by ZipZipPipe and 上善无形). Not affiliated with or endorsed by DeepSeek.” Licensed stickers may replace drawings only with recorded permission from their artists. The user considers the fan art fine to use, since it is not DeepSeek’s trademark; it remains the artists’ copyright, so the repository ships only the original drawing.
+“平静的开心”允许活力、调皮、幽默和探索。蓝色优先，但物种、比例、材质、构图、时间表达和名称开放。旧A/B/C和未通过的UI三案不占据默认候选位置；旧资产按新目标比较。
 
-## Product behavior
+F1轻量计时、F2想法暂存、F3长期回顾构成完整P0。三层奖励、参与纪念、具体阈值及136句文案的选用保留PRD提案/待评审状态。可以先做可调整的功能原型，最终视觉与商业资产另定。
 
-### Clock
+用户后续要求角色/物品与UI有触碰、形变、震动和受限推移关系。先做可点击样例，验证稳定操作和减少动态；不要让所有元素同时运动，不锁定小人或鲸鱼为正式角色。
 
-- Default cycle: 25-minute focus, 5-minute break, and a 15-minute long break after every four completed focus sessions. The cycle count survives reloads and midnight.
-- Home shows Whale-chan, the countdown, current phase, start/pause/resume/reset controls (plus Skip break during breaks), cycle progress as rice bowls, and today’s completed focus sessions.
-- Stats shows daily and weekly completed focus minutes, total rice served, and the current streak. Proposed default: a Monday–Sunday local calendar week.
-- Settings allows editing the three durations and toggling sound, and includes the local-storage note, iPhone install guidance, and the fan-art credit. Duration defaults and validation bounds live in data.
-- Starting a session captures its duration. Settings changes affect subsequent sessions.
-- Reset abandons an unexpired session without awarding credit; it does not erase previously completed sessions or reset the completed-focus cadence. Reconcile an already-expired session first so an earned completion is retained (and shows the rice reaction, not the cry).
-- Completion prepares the next phase. Starting that phase requires an explicit user action. Returning after a long absence must never generate a chain of unattended sessions.
-- Completed focus sessions contribute their captured focus duration to stats, excluding paused time. Incomplete sessions and breaks earn no focus credit.
-- Label these as completed focus minutes, not measured productivity or verified attention. Switching tabs/apps does not invalidate a session.
-- Make the scheduled break the clear next action after focus; rest is part of the routine. Keep accumulated progress more prominent than missed-day messaging.
-- Initialize/resume audio from Start or an explicit sound-setting gesture. Handle blocked playback without errors and always show visual completion. Recovery from an expired saved session should not replay an old alarm. [Browser audio policy](https://developer.mozilla.org/en-US/docs/Web/Media/Guides/Autoplay)
+## 实施顺序
 
-### Reactions
+| 阶段 | 工作 | 完成证据 |
+| --- | --- | --- |
+| 0 规则与接口 | 同步旧文档；共享认领；发布类型、动作结果和视图契约 | 能读取同一任务文件并取得实际接口提交；责任路径清楚 |
+| 1 移除压力 | 清理cry、失饭、保连续、休息资格与误导保存文案，更新旧断言 | 运行/暂停/到期边界/休息结束均无负面反馈；未保存不假称成功 |
+| 2 可信记录核心 | 快照迁移，参与/到期分开，短段记录，一触开始和主动休息 | 1秒合法；8分运行+3分暂停+2分运行记10分；去重与迁移通过 |
+| 3 页面与陪伴并行 | 专注和暂存；记录和设置；文案与可替换角色；统一接线 | 三功能连贯，奖励可保存再查看，汇总可复算，关键状态稿评审 |
+| 4 数据与手机验收 | 备份、替换恢复、清理、离线、更新、真机 | 重复恢复不翻倍，删除不复活，真实设备结果可复现 |
+| 5 有条件商业发行 | 角色品牌、平台、权益和价格 | 销售承诺有验证支持，商业决定明确后再做购买与商店工作 |
 
-- Reactions are transient presentation state, not stored. Pure transitions report a `completion` (with `credited`) or an `abandoned` focus session. The hook shows rice for a credited focus completion and the cry for an abandoned focus session, in the tab that performed the transition.
-- Reloading never replays a reaction or grants rice again; other tabs only refresh counts.
-- The two reactions never conflict: the newest event replaces the current reaction, and starting a session returns Whale-chan to idle.
+阶段1涉及旧页面、Hook与角色配置，由集成窗口先完成再交接。阶段3的状态稿、独立组件与物理样例可在接口任务后并行；正式接线等待对应业务提交。不要为并行分别造计时、存储或奖励系统。
 
-### Timer and calendar rules
+## 新版完成清单
 
-- Persist a session ID, phase, status, captured duration, running deadline or paused remaining time, completed-focus cycle count, and the local time zone captured at session start.
-- Compute remaining time from a supplied timestamp and the deadline, never from a count of interval callbacks. Intervals only request a screen refresh.
-- Reconcile expired sessions before processing new actions and when restoring or returning to the app.
-- Give a completed session credit exactly once, including after reload, repeated React effects, and concurrent tabs.
-- Attribute completion to the stored deadline, not the time the app is reopened. Resolve its calendar date using the session's captured time zone in the adapter and persist that date with the completion record. New sessions use the current local zone; keep historical date keys stable after travel.
-- A day with at least one completed focus session qualifies for the streak. Yesterday’s streak remains active while today is in progress; only a fully missed calendar day breaks it. Use calendar-day operations rather than fixed 24-hour subtraction.
-- Browser suspension may delay completion sounds. Timestamp recovery must remain correct; an exact alarm while the phone suspends the app is not a promised feature.
-- Deadlines use device wall-clock timestamps. Manual system-clock changes are outside the accuracy guarantee; ensure they cannot cause negative countdowns, duplicate credit, or unattended session chains. Time-zone changes alone must not alter a session's elapsed duration. Test travel and daylight-saving boundaries.
+- [ ] 公共契约已发布，各窗口取得一致基线。
+- [ ] 界面、读屏、规则和相关断言已移除哭泣、损失、休息资格和连续打卡催促。
+- [ ] F1轻量开始、暂停、真实短段结束与主动休息完整。
+- [ ] 新模型、旧v1/v2迁移、多窗口与失败重试通过。
+- [ ] F2空标记、文字、草稿、返回、撤销与删除完整。
+- [ ] F3同页记录、7/30天、明细、想法与收藏完整。
+- [ ] 节点/主动鼓励、每段纪念、实际制作的长期内容可保存回看。
+- [ ] 偏好、减少动态、声音、中文与可访问性一致。
+- [ ] JSON备份、替换恢复和清理完成，旧窗口不复活数据。
+- [ ] 角色/UI关键状态稿已评审，物理互动有明确采用范围。
+- [ ] 生产构建和受影响流程已验证。
+- [ ] 真实iPhone/Android的浏览器、安装、离线、锁屏恢复、声音与更新结果已记录。
 
-## Architecture
+旧版完成项不能直接勾选到新版清单。文档、接口、功能、集成与发布分别记录；PRD v2不表示应用或数据schema自动升级。
 
-Implemented structure:
+## 保留的工程基础
 
-```text
-src/
-  logic/                  # Pure domain functions and deterministic sketch generation
-    types.ts, spec.ts     # Domain types; typed validation of pet-spec.json
-    timer.ts, app.ts      # Session transitions; snapshot-level actions and reconciliation
-    settings.ts           # Defaults, input validation, field patches
-    calendar.ts           # Civil-date arithmetic on YYYY-MM-DD keys
-    stats.ts, streak.ts
-    snapshot.ts           # Versioned decode/repair/migrate, cross-tab merge
-    sketch.ts             # Seeded, DOM-free rough.js paths with named tones
-    character.ts          # sketchCharacter for idle/rice/cry
-  data/
-    pet-spec.json         # Timer, calendar, decor seeds, palette, and the character section
-    spec.ts               # Loads and validates the data file once
-  adapters/               # Storage, Web Locks, calendar/time, sound, lifecycle
-  hooks/                  # React coordination between adapters, logic, and UI
-  components/             # UI only; SketchSvg renders every sketch, WhaleChan shows the poses
-  screens/                # Home, Stats, Settings presentation
-  test/                   # Architecture boundary tests; favicon sync test
-  App.tsx
-public/                   # Install icons (generated from favicon.svg by `npm run icons`)
-.github/workflows/        # GitHub Pages deployment workflow
-```
+保留React 18、TypeScript、Vite、Strict Mode、纯逻辑/适配器/Hook/展示分层与有意义的回归。rough.js的稳定种子和缓存可复用，但不绑定最终角色。时长在开始时捕获，显示从deadline派生；先结算到期再动作。
 
-- `logic/` must not import React or browser/DOM APIs. Pass time, date information, configuration, and sketch seeds as inputs. Do not read storage or run timers there.
-- Components consume hooks and render state. They must not implement timer transitions, reaction triggers, or stats/streak calculations.
-- Keep tunable domain and drawing values in `src/data/pet-spec.json`, using named sections (timer, calendar, decor, character). Add typed validation. Ordinary CSS layout values need not be domain configuration.
-- Use the DOM-free rough.js generator to return serializable paths or drawing instructions. Keep SVG rendering outside `logic/`; all character drawing goes through one `<WhaleChan>` component (built on `SketchSvg`).
-- Use stable seeds and cache generated geometry. Animate transforms or opacity without generating a new random outline every second.
-- Pin React and React DOM to compatible 18.x versions and use matching TypeScript types; do not accept a scaffold's newer React major by accident. Record tooling in the lockfile and README.
-- Keep React Strict Mode enabled. Enforce the logic boundary with import checks and run domain tests without a browser/DOM environment.
+保留短时Web Lock、整体快照、字段级偏好patch、原文保护、未来版本不覆盖、开始时区与稳定日期、受阻音频处理。编辑删除和替换恢复必须重做合并语义，不能照搬只增不减的完成集合。
 
-## Persistence
+PWA按真实base path运行，当前为 /clock/。缓存不删除用户数据，活动会话不强制更新。最终名称未定时保留现有技术命名空间；以后改名必须迁移历史。
 
-Store one versioned, validated application snapshot under an app-specific localStorage key. It includes settings, active timer, cycle count, and completion records. Stats, streak, and rice served are derived. Each completion record needs its session ID, completion timestamp, date key, and credited focus duration.
+## 验证与交接
 
-- Use completion records as the accounting source of truth. Derived stats, streak, and rice counts must remain consistent with their source data.
-- Apply timer completion and its stats credit in one state transition and persist the resulting snapshot together.
-- Use a short, stable, app-namespaced Web Lock for every persisted mutation: read the latest state, apply a pure transition, write the snapshot, then release. Include settings writes. Never hold the lock for an entire focus session. [Web Locks](https://developer.mozilla.org/en-US/docs/Web/API/Web_Locks_API)
-- Release 1 targets browsers supporting Web Locks. Feature-detect it; if unavailable, show saved data read-only with a browser-compatibility message. Do not substitute a racy localStorage flag for a lock. A proven alternative can be added later if older-browser support is needed.
-- Update the initiating tab directly and use storage events to refresh other tabs. Retain enough completion identity to prevent duplicate credits. An event notification is not a concurrency lock.
-- Validate stored input and migrate supported old versions. Invalid data must not cause a blank screen or silently erase user progress. Preserve recoverable data and show a useful recovery state.
-- Surface storage failures; do not claim progress is saved if persistence failed. Service-worker updates must not clear user data.
-- Persist on meaningful transitions, not every displayed second, and never rely solely on an unload callback. Store seeds and small state, not generated graphics. Keep history compact; any future compaction must preserve daily totals and completion deduplication. Handle quota exhaustion. [Storage limits](https://developer.mozilla.org/en-US/docs/Web/API/Storage_API/Storage_quotas_and_eviction_criteria)
-- The no-loss promise describes app rules. Clearing site data, private browsing, eviction, or changing browser/install can remove or separate local progress. Explain local-only storage briefly in Settings. Persistent-storage requests are an optional enhancement, not a durability guarantee. [localStorage behavior](https://developer.mozilla.org/en-US/docs/Web/API/Window/localStorage), [WebKit policy](https://webkit.org/blog/14403/updates-to-storage-policy/)
-- Manual export/import is a possible later improvement, not a release 1 requirement; it must not introduce cloud sync.
+文档修改检查引用、冲突规则、依赖和归属即可。应用修改运行相关测试与npm run build，再检查生产流程与console。数据变更覆盖短段、暂停、到期竞争、并发、迁移、存储失败、删除及恢复清理。
 
-## Design and hosting
+页面检查320/375/430宽、200%文字、键盘焦点、软键盘、面板和减少动态。物理反馈不能移动正被操作的目标，不遮状态，不要求等待动画结束。
 
-- Use a clean light rice-cream background, whale-blue accents (navy for ink and outfits, sky blue for highlights, a soft teal for breaks), pink blush touches, rounded friendly typography, and rough.js for the character and decorative artwork. No tomato imagery or wording; say “focus session”, not “pomodoro”. Keep timer digits and controls clearly readable.
-- Design for phone widths first, with comfortable touch targets, keyboard access, visible focus states, accessible labels (each pose has a text alternative), and reduced-motion support.
-- Use in-page navigation for the three screens; avoid a server-side routing dependency.
-- Deploy Vite’s `dist/` using GitHub Actions. Set the actual repository base path consistently across assets, navigation, manifest, icons, and service-worker registration/scope.
-- Include a manifest with stable app identity, icons (Whale-chan’s face, never DeepSeek’s logo), standalone display, start URL, and scope, plus an Apple touch icon. Cache the app shell and required local assets for offline reopening after the first successful caching pass.
-- Provide concise iPhone Add to Home Screen guidance. Test browser and installed modes independently; do not promise that distinct installations share saved state. [Apple installation guidance](https://support.apple.com/guide/iphone/turn-a-website-into-an-app-iph42ab2f3a7/ios), [installation storage differences](https://web.dev/learn/pwa/installation)
-- Limit the service worker to offline/cache/update responsibilities. It is not a persistent timer or alarm process; session recovery belongs in the app. [Service-worker lifecycle](https://web.dev/learn/pwa/service-workers)
-- Namespace service-worker caches and storage for this app. Updates should remove obsolete app caches without interrupting an active timer or removing saved progress.
-- Repository: [Hughstudy/clock](https://github.com/Hughstudy/clock), public because GitHub Pages on a free plan requires it. Pages source is GitHub Actions; the base path is `/clock/`. Pushing workflow files needs SSH or a `gh` token with the `workflow` scope; `origin` uses SSH.
-- At implementation, record tested browser versions: iPhone Safari and home-screen mode, Android Chrome and installed mode, plus a desktop browser for two-tab tests. Do not claim physical-device verification from desktop emulation alone.
+历史未完成的真机、安装离线、声音听感和部分减少动态检查仍未验证。将实际命令、结果、基线、完整SHA与未完成项写回共享文件，不从桌面窄屏推定真机通过。
 
-## Implementation decisions
+## 发布边界
 
-Recorded 2026-10-28.
+现有.github/workflows/deploy.yml在main推送后测试、构建并部署GitHub Pages。使用独立功能与集成分支；准备改造文档或完成局部任务不等于授权上线整个新版。先形成可审查结果，再按用户发布授权处理main。
 
-- **Toolchain:** React 18.3, Vite 8, TypeScript 7 (strict, `exactOptionalPropertyTypes`), Vitest 5, rough.js 4.6, vite-plugin-pwa 2 (Workbox `generateSW`, `registerType: 'prompt'`). Nunito (Latin subset only) is bundled for offline typography. `npm audit` reports a low-severity `deepmerge` advisory inside build-time `workbox-build` only.
-- **Boundary checks:** `tsconfig.logic.json` compiles `src/logic/` without DOM or Node types; `src/test/architecture.test.ts` rejects React/browser/clock/random use in `logic/` and runtime logic/adapter imports in components and screens.
-- **Controls:** besides start/pause/resume/reset, breaks offer Skip break (readies focus, no credit, cadence unchanged). Reset returns the current phase to ready.
-- **Writes:** each mutation runs under the Web Lock `<namespace>:snapshot`, re-reads storage, merges with tab memory (completion records are a grow-only set keyed by session id; timer/settings from the higher revision), then applies the pure action. Settings changes are field-level patches applied inside the lock, so quick edits cannot overwrite each other (found and fixed in browser testing).
-- **No Web Locks:** saved data is shown read-only with a compatibility notice; controls are disabled.
-- **Snapshot v2:** sessions store the IANA zone captured at start, and completion dates resolve in that zone. A v1 → v2 migration gives older sessions the device's current zone instead of dropping them.
-- **Clock changes:** displayed remaining time and paused time are clamped to the captured duration.
-- **Settings form:** shows edits optimistically until the save lands, so quick repeated taps build on the visible value (found in browser testing).
-- **Recovery:** invalid fields are repaired individually after backing up the raw text to `whale-focus:snapshot:backup:<ms>`; if the backup fails (at load or when data turns unreadable mid-session), the original is left untouched and the app runs in memory.
-- **Audio:** rejected `AudioContext.resume()` promises are caught; turning sound on plays a sample chime from that gesture. Newer snapshot versions make the app read-only; blocked storage runs in memory; failed writes show an error and retry on the next action.
-- **Updates:** a new service worker waits; the “new version” notice appears only while no session is active and reloads only when tapped.
-- **Base path:** the workflow passes `actions/configure-pages`’ `base_path` as `BASE_PATH`; Vite derives asset URLs, manifest `start_url`/`scope`/`id`, and service-worker scope from it.
-- **Name and namespace:** “Whale Focus”; storage, lock and cache namespace `whale-focus`. The tomato build was never deployed, so its old keys needed no migration.
-- **Character:** 62 path parts, 3 poses, palette, captions and timings live in `pet-spec.json` and are validated by `spec.ts`. Each part's rough.js seed depends on its name, so shared parts look identical across poses. `npm run icons` redraws the favicon from her face; `src/test/icon.test.ts` fails if it drifts.
-- **Review fixes (2026-10-28):** a build break from the session-zone change, backup-less overwrite of unreadable data, dropped v1 timers, and uncaught audio rejections were all fixed with regression tests.
+开发命令见README.md。当前没有购买、账号或云同步；需要时按平台和商业阶段单独决策。
 
-## Implementation milestones
+## 第一批 F1 实施范围（2026-10-29）
 
-### 1. Foundation and timer
+已接入：可选5分钟开始（不改默认）、暂停/继续、确认提前结束、主动休息、真实毫秒记录与最小记录列表；参与数和完整到期数分离。schema v3迁移v1/v2并保留旧时长、日期和ID；未知开始时间保持空。开始/暂停/继续/结束提交快照，关闭/后台按原deadline恢复，暂停不累计，重开只补记一段且不重播反馈。失败保留内存并显示待保存、自动/手动重试。
 
-- [x] Scaffold React 18 + matching React DOM/types + TypeScript + Vite with a lockfile, strict TypeScript, and React Strict Mode.
-- [x] Add configuration data, domain types, pure timer transitions, and calendar/streak calculations.
-- [x] Add versioned storage and browser adapters, including Web Locks, cross-tab coordination, and gesture-enabled sound.
-- [x] Implement Home, Stats, and Settings with responsive styling and rough.js decorations (tomato theme, superseded).
-- [x] Add focused tests for domain transitions, persistence recovery, and accounting edge cases (61 Vitest tests).
+W-E的角色清理提交7d8469bf147d91fb076a5743ed8ac1c851c04420已合入分支历史，采用同等结束反馈和暂停/运行优先；角色仍未定稿。公共契约为src/contracts/focus.ts（C1-F1），不代表完整C1已冻结。
 
-### 2. Theme, Whale-chan, and review gaps
+待后续：F2想法、可选小步骤、完整7/30天回顾、奖励收藏、数据导出/替换恢复/清理、最终导航和视觉、物理互动、手机安装/锁屏实测。datasetGeneration的合并隔离已实现，但尚无导入或清理命令；便签删除标记留到T05，不虚构已实现。
 
-- [x] Confirm the app and character names, then rename the app, storage/lock/cache namespaces, manifest, README, and title.
-- [x] Replace all tomato visuals and wording: palette, app icon (Whale-chan’s face), cycle markers as rice bowls, “focus sessions” copy.
-- [x] Add the `character` data section and `sketchCharacter` for idle, rice, and cry, plus the shared renderer. Quality gate passed on a rendered contact sheet and in the app.
-- [x] Emit an `abandoned` event when an unexpired focus session is reset. Show the rice/cry reactions with configured durations. Add the rice counters.
-- [x] Add the fan-art credit and non-affiliation note to Settings and the README.
-- [x] Record the session-start time zone and resolve completion dates in that zone (snapshot v2 with migration).
-- [x] Replace the no-Web-Locks fallback with the read-only compatibility state.
-- [x] Clamp displayed remaining time and progress to the captured duration after manual clock changes.
-- [x] Settings: local-only storage note, iPhone Add to Home Screen guidance, sound unlock from the toggle gesture.
-- [x] Tests for the new events, time-zone dates, the read-only fallback, and clock clamping (79 Vitest tests). Visually reviewed all three poses.
+本轮验证证据见docs/verification/focus-records.md；本地实现和检查不等于远端发布，未推送main或部署。
 
-### 3. Publish
+## 友好伙伴续作（2026-10-29）
 
-- [x] Add PWA manifest, install icons (Whale-chan’s face), offline caching, and a safe update strategy.
-- [x] Add a GitHub Actions workflow that installs from the lockfile, runs the tests, builds, and deploys `dist/`.
-- [x] Document local development and deployment commands in a README.
-- [x] Create the GitHub repository, push, and set Pages to deploy from GitHub Actions (first run: tests and build passed, deployed in about a minute).
-- [x] Verify the deployed URL in a browser.
-- [ ] Pass the remaining acceptance checks below (device and install checks).
+- [x] 核对交接：96个文件与版本清单 SHA-256/大小全部一致。当前工作区原为 `0a57d037bb472bc9f4035196bca2c4c7f0529955`，导入完整 F1/T30 版本，保留实际短段、参与记录、schema v3、重试及去重。
+- [x] 接入真实操作反馈：开始、暂停、继续、两类结束、自由休息；保存失败保持真实提示。反馈放在路由之上，导航、重开、同步和倒计时刷新不重播。
+- [x] 按用户选择制作原创蓝色伙伴：轮廓、软渐变、芽状头顶、腮红、小手臂、七种语义姿态。固定 rough.js 几何只生成一次；招手、落地回弹和温柔收尾为有限动作；专注态安静。仅角色及其小底座受力，主按钮、数字不位移。
+- [x] 用户主动点击伙伴可要一句鼓励、换一句、收起；暂不显示尚未实现持久化的收藏能力。
+- [x] 设置增加可保存的动画开关，尊重系统减少动态；旧 v1/v2/v3 设置缺失此字段时兼容默认值，不误报修复。静态状态保留表情。
+- [x] 专注/记录两个主入口、独立设置；计时环显示真实剩余比例；移除旧负面 metadata，统一当前界面的中文提示。
+- [x] 严格类型、纯逻辑架构、回归检查及 `/clock/` 生产构建通过。浏览器实际证据见验证记录。
+- [ ] F2想法、完整F3、收藏/奖励持久化、JSON导出/替换恢复/清理仍待后续；没有将可运行局部原型标作完整P0。
+- [ ] 正式角色/名称/品牌图标、跨控件物理交互的最终选择、物理手机及安装/锁屏/更新验收、公开发布仍待后续。
 
-## Acceptance checks
-
-Evidence (2026-10-28). *Local* = `vite preview` of the `/clock/` production build; *live* = https://hughstudy.github.io/clock/. Both were checked in the desktop app’s Chromium browser pane at a 375 px viewport. Where a check ran on the earlier tomato build, the storage and timer code paths are the same. Not yet tested: real phones (iPhone Safari, Android Chrome), installed home-screen mode, and other desktop browsers.
-
-- [x] `npm run build` passes, and the production app has no console errors during all core flows (local and live: start, reset, expiry, reload, Stats, Settings, update prompt).
-- [x] Focus, short break, and every-fourth-focus long break follow the configured durations (unit tests).
-- [x] Running and paused timers survive reload; changed settings do not alter an active session (unit tests; running reload in the browser).
-- [x] Background expiry credits one session and leaves the next phase waiting to start (unit tests; local, with a simulated past deadline).
-- [x] Reloads, repeated effects, and simultaneous tabs cannot duplicate or overwrite session credit (unit tests; two tabs in the browser on the earlier build).
-- [x] Concurrent settings/completion writes preserve both changes; missing Web Locks produces the documented read-only state (unit tests; fast settings taps in the browser).
-- [x] Resetting or abandoning an unexpired focus session grants no credit; resetting after expiry retains the earned completion (unit tests; local and live reset).
-- [x] Midnight grouping, reopening on a later date, week boundaries, travel/time-zone changes, daylight-saving changes, and streak continuity are correct. Manual clock changes do not produce duplicate credit or invalid display values (unit tests, including New York, Tokyo and Berlin zone cases; not observed live across a real midnight).
-- [x] Older/invalid storage and write failures produce recoverable behavior (unit tests, including v1 → v2 migration and failed backups; corrupted storage in the browser on the earlier build).
-- [x] The production repository subpath loads without missing assets; manifest and service-worker scopes are correct (live: all assets 200 under `/clock/`; manifest `start_url`/`scope`/`id` are `/clock/`; service-worker scope `/clock/`; all four icons 200; all 13 shell files precached in `whale-focus-precache-v2`).
-- [ ] Cold offline reopening works after caching, including installed mode; app updates preserve progress. Done: offline reopening with the server stopped (local, earlier build); a prompt-mode update kept data (local); live page controlled by the service worker with a complete precache. Not done: live offline relaunch and installed mode.
-- [x] Muted or blocked audio produces no error; restoring an old completed session does not replay its alarm (unit tests: blocked audio context, chime window; no reaction replay on reload in the browser).
-- [x] Whale-chan shows rice exactly once per newly credited focus completion and cries only when an unexpired focus session is reset; breaks, Skip break, tab switches, and reloads never trigger or replay a reaction (unit tests; local and live).
-- [ ] All three poses are visually reviewed at phone size, have text alternatives, and respect reduced motion. Done: poses reviewed, alt text present. Not done: `prefers-reduced-motion` was not emulated (CSS rule present).
-- [x] No tomato imagery or wording remains; the repository contains no copied fan art or DeepSeek logo/wordmark; the credit and non-affiliation note are present.
-- [ ] Phone layout, install flow, sound toggle, keyboard use, and reduced motion are checked. Done: 375 px emulated layout, keyboard focus ring, sound toggle persists and raises no errors. Not done: hearing the chime, the install flow, reduced motion, and any physical phone.
-
-## References
-
-- [Vite: GitHub Pages deployment](https://vite.dev/guide/static-deploy.html#github-pages)
-- [rough.js: DOM-free generation and drawing instructions](https://github.com/rough-stuff/rough/wiki/RoughGenerator)
-- [MDN: background page timing behavior](https://developer.mozilla.org/en-US/docs/Web/API/Page_Visibility_API#policies_in_place_to_aid_background_page_performance)
-- [MDN: PWA installability](https://developer.mozilla.org/en-US/docs/Web/Progressive_web_apps/Guides/Making_PWAs_installable)
-- Whale-chan style references (links only, not licensed for reuse): [success #2534](https://aigengtu.com/zh/meme/2534), [success alt #063](https://aigengtu.com/zh/meme/063), [cry #874](https://aigengtu.com/zh/meme/874)
+本次只继续用户提供的本地快照，不覆盖云端协作登记。上述逐项证据优先于前文历史总清单；前文组合条目没有全部实现的继续保留未勾选。

@@ -2,8 +2,9 @@ import {
   createSnapshot,
   decodeSnapshot,
   encodeSnapshot,
-  hasMissingCompletions,
+  hasMissingRecords,
   mergeSnapshots,
+  SNAPSHOT_VERSION,
 } from '../logic/snapshot'
 import type { Spec } from '../logic/spec'
 import type { AppSnapshot } from '../logic/types'
@@ -69,6 +70,7 @@ export class SnapshotStore {
   private persistence: Persistence
   private notice: StoreNotice | null
   private lastBackup: string | null = null
+  private readError: string | null = null
   private readonly options: StoreOptions
 
   constructor(options: StoreOptions) {
@@ -147,11 +149,13 @@ export class SnapshotStore {
 
   /** Reads storage and merges it with memory. `behind` means storage lacks something memory has. */
   private readLatest(): { latest: AppSnapshot; behind: boolean } {
+    this.readError = null
     const { storage, key } = this.options
     let text: string | null
     try {
       text = storage?.getItem(key) ?? null
-    } catch {
+    } catch (error) {
+      this.readError = message(error)
       return { latest: this.memory, behind: true }
     }
     // Empty storage is only behind once this tab has written something.
@@ -172,8 +176,16 @@ export class SnapshotStore {
       }
       return { latest: this.memory, behind: true }
     }
+    if (decoded.issues.length > 0) {
+      const backupKey = this.backup(text)
+      this.notice = { kind: 'repaired', fields: decoded.issues, backupKey }
+      if (!backupKey) {
+        this.persistence = 'memory-only'
+        return { latest: this.memory, behind: false }
+      }
+    }
     const latest = mergeSnapshots(decoded.snapshot, this.memory)
-    return { latest, behind: latest !== decoded.snapshot }
+    return { latest, behind: latest !== decoded.snapshot || decoded.issues.length > 0 || JSON.parse(text).version !== SNAPSHOT_VERSION }
   }
 
   transact<T>(mutate: (latest: AppSnapshot) => Mutation<T>): Promise<Commit<T>> {
@@ -184,6 +196,9 @@ export class SnapshotStore {
         this.persistence === 'saved' ? this.readLatest() : { latest: this.memory, behind: false }
       const result = mutate(latest)
 
+      if (this.persistence === 'read-only') {
+        return { snapshot: this.memory, value: result.value, saved: false, error: null }
+      }
       if (this.persistence !== 'saved') {
         this.memory = result.snapshot
         return { snapshot: this.memory, value: result.value, saved: false, error: null }
@@ -195,6 +210,8 @@ export class SnapshotStore {
 
       const next: AppSnapshot = { ...result.snapshot, revision: latest.revision + 1, writer: this.options.writerId }
       this.memory = next
+      // Never overwrite data when the latest stored revision could not be read.
+      if (this.readError) return { snapshot: next, value: result.value, saved: false, error: this.readError }
       try {
         this.options.storage?.setItem(this.options.key, encodeSnapshot(next))
         return { snapshot: next, value: result.value, saved: true, error: null }
@@ -217,7 +234,7 @@ export class SnapshotStore {
       return { snapshot: this.memory, needsHeal: false }
     }
     if (decoded.kind === 'unreadable') return null
-    const needsHeal = hasMissingCompletions(decoded.snapshot, this.memory)
+    const needsHeal = hasMissingRecords(decoded.snapshot, this.memory)
     this.memory = mergeSnapshots(this.memory, decoded.snapshot)
     return { snapshot: this.memory, needsHeal }
   }

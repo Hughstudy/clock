@@ -3,7 +3,8 @@ import { AppHeader } from './components/AppHeader'
 import { formatClock, PHASE_LABELS } from './components/format'
 import { Notices } from './components/Notices'
 import { TabBar, type Screen } from './components/TabBar'
-import { useCharacter } from './hooks/useCharacter'
+import { useFeedback } from './hooks/companion/useFeedback'
+import { useMotionPreference } from './hooks/companion/useMotionPreference'
 import { useClockApp } from './hooks/useClockApp'
 import { useDocumentTitle } from './hooks/useDocumentTitle'
 import { useNow } from './hooks/useNow'
@@ -26,7 +27,8 @@ export function App() {
   const timerView = useTimerView(app.snapshot, now)
   const statsView = useStatsView(app.snapshot, now)
   const form = useSettingsForm(app.snapshot.settings, app.dispatch)
-  const character = useCharacter(timerView, app.reaction)
+  const companion = useFeedback(app, { active: screen === 'home' })
+  const motion = useMotionPreference(app.snapshot.settings.motionEnabled)
   const pwa = usePwaUpdate()
   const canEdit = app.persistence !== 'read-only'
 
@@ -37,9 +39,11 @@ export function App() {
   )
 
   return (
-    <div className="app">
-      <AppHeader />
+    <div className="app" data-reduced-motion={motion.reducedMotion}>
+      <AppHeader settingsOpen={screen === 'settings'} onSettings={() => setScreen(screen === 'settings' ? 'home' : 'settings')} />
       <Notices
+        announceSaveError={screen !== 'home'}
+        onRetry={() => app.dispatch({ type: 'retrySave' })}
         persistence={app.persistence}
         notice={app.notice}
         saveError={app.saveError}
@@ -50,15 +54,21 @@ export function App() {
         onDismissPwa={pwa.dismiss}
       />
       <main className="app-main">
-        {screen === 'home' && (
-          <HomeScreen view={timerView} character={character} canEdit={canEdit} dispatch={app.dispatch} />
+        {app.notice?.kind === 'newer' ? (
+          <p role="status">历史数据由更新版本保存，当前无法读取。请更新应用后查看。</p>
+        ) : (
+          <>
+            <div hidden={screen !== 'home'}>
+              <HomeScreen view={timerView} companion={companion} reducedMotion={motion.reducedMotion} saveState={app.saveState} canEdit={canEdit} dispatch={app.dispatch} />
+            </div>
+            {screen === 'stats' && <StatsScreen view={statsView} />}
+            {screen === 'settings' && <SettingsScreen form={form} canEdit={canEdit} />}
+          </>
         )}
-        {screen === 'stats' && <StatsScreen view={statsView} />}
-        {screen === 'settings' && <SettingsScreen form={form} canEdit={canEdit} />}
       </main>
       <TabBar active={screen} onSelect={setScreen} />
-      <p className="sr-only" aria-live="polite">
-        {app.announcement}
+      <p className="sr-only" aria-live={companion.feedback.announcement?.priority ?? 'polite'} aria-atomic="true">
+        {companion.feedback.announcement?.text ?? ''}
       </p>
     </div>
   )

@@ -10,10 +10,10 @@ export interface DurationBounds {
 export const DECOR_SEEDS = ['logo', 'dial', 'cycle', 'chart', 'underline', 'character'] as const
 export type DecorSeed = (typeof DECOR_SEEDS)[number]
 
-export const POSES = ['idle', 'rice', 'cry'] as const
+export const POSES = ['idle', 'rice'] as const
 export type Pose = (typeof POSES)[number]
 
-export const CAPTIONS = ['focusReady', 'focusRunning', 'paused', 'breakReady', 'breakRunning', 'rice', 'cry'] as const
+export const CAPTIONS = ['focusReady', 'focusRunning', 'paused', 'breakReady', 'breakRunning', 'rice', 'ended'] as const
 export type CaptionKey = (typeof CAPTIONS)[number]
 
 export const FRAMES = ['full', 'face'] as const
@@ -34,7 +34,7 @@ export interface CharacterSpec {
   outlineWidth: number
   /** viewBox `[x, y, width, height]` per framing. */
   frames: Record<Frame, [number, number, number, number]>
-  reactionSeconds: Record<'rice' | 'cry', number>
+  reactionSeconds: Record<'ended', number>
   captions: Record<CaptionKey, string>
   alt: Record<Pose, string>
   /** Back-to-front part names per pose, with groups already expanded. */
@@ -43,8 +43,12 @@ export interface CharacterSpec {
 }
 
 export interface Spec {
+  presentation: {
+    motionEnabledDefault: boolean
+  }
   timer: {
     durationsMinutes: Record<Phase, DurationBounds>
+    quickFocusMinutes: number
     longBreakEvery: number
     soundEnabledDefault: boolean
     completionSoundWindowMs: number
@@ -189,8 +193,7 @@ function character(raw: unknown): CharacterSpec {
     outlineWidth: positive(c.outlineWidth, 'character.outlineWidth'),
     frames,
     reactionSeconds: {
-      rice: int(seconds.rice, 'character.reactionSeconds.rice', 1, 600),
-      cry: int(seconds.cry, 'character.reactionSeconds.cry', 1, 600),
+      ended: int(seconds.ended, 'character.reactionSeconds.ended', 1, 600),
     },
     captions: Object.fromEntries(CAPTIONS.map((k) => [k, text(captions[k], `character.captions.${k}`)])) as Record<CaptionKey, string>,
     alt: Object.fromEntries(POSES.map((k) => [k, text(alt[k], `character.alt.${k}`)])) as Record<Pose, string>,
@@ -213,10 +216,15 @@ export function parseSpec(raw: unknown): Spec {
   const calendar = section(root.calendar, 'calendar')
   const decor = section(root.decor, 'decor')
   const seeds = section(decor.seeds, 'decor.seeds')
+  const presentation = section(root.presentation, 'presentation')
 
   return {
+    presentation: {
+      motionEnabledDefault: bool(presentation.motionEnabledDefault, 'presentation.motionEnabledDefault'),
+    },
     timer: {
       durationsMinutes,
+      quickFocusMinutes: int(timer.quickFocusMinutes, 'timer.quickFocusMinutes', durationsMinutes.focus.min, durationsMinutes.focus.max),
       longBreakEvery: int(timer.longBreakEvery, 'timer.longBreakEvery', 1),
       soundEnabledDefault: bool(timer.soundEnabledDefault, 'timer.soundEnabledDefault'),
       completionSoundWindowMs:

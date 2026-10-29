@@ -10,9 +10,9 @@ interface Props {
   total: number
 }
 
-/** Progress toward the long break, one bowl per completed focus session. */
+/** A cadence suggestion, never a requirement to earn rest. Legacy artwork is temporary. */
 export function RiceBowls({ done, total }: Props) {
-  const label = done >= total ? 'Long break earned' : `${done} of ${total} focus sessions toward a long break`
+  const label = done >= total ? 'A long break is suggested. Rest whenever you need.' : `${done} of ${total} sessions in this cycle. Rest whenever you need.`
   return (
     <div className="cycle" role="img" aria-label={label}>
       {Array.from({ length: total }, (_, i) => (

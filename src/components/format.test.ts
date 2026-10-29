@@ -10,9 +10,13 @@ describe('formatting', () => {
   })
 
   it('speaks and summarizes durations', () => {
-    expect(spokenClock(61_000)).toBe('1 minute 1 second')
-    expect(spokenClock(0)).toBe('0 seconds')
-    expect(formatMinutes(45 * 60_000)).toBe('45 min')
-    expect(formatMinutes(125 * 60_000)).toBe('2 h 5 min')
+    expect(spokenClock(61_000)).toBe('1 分钟 1 秒')
+    expect(spokenClock(0)).toBe('0 秒')
+    expect(formatMinutes(0)).toBe('0 秒')
+    expect(formatMinutes(1)).toBe('不到 1 秒')
+    expect(formatMinutes(40_000)).toBe('40 秒')
+    expect(formatMinutes(61_999)).toBe('1 分钟 1 秒')
+    expect(formatMinutes(45 * 60_000)).toBe('45 分钟')
+    expect(formatMinutes(125 * 60_000)).toBe('2 小时 5 分钟')
   })
 })
