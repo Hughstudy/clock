@@ -114,6 +114,26 @@ For application changes, run the focused checks, `npm run check` and `BASE_PATH=
 
 ## Handoff and current status
 
+### Touch interaction increment — 2026-10-29
+
+The user authorized upgrading the animation module while Claude handles main
+logic. The isolated `codex/blue-companion-touch` branch adds head pats, belly
+squishes, hand high-fives, bounded gaze and static friendly touch responses to
+the original blue creature. Only internal artwork moves; the existing native
+encouragement button retains its action, focus and bounds. Local touch responses
+never save, start a session or award content.
+
+An independent preview under `preview/animation/` exercises the existing
+`CompanionPresentation` / `cueId` interface and cancellation behavior. The
+renderer props are unchanged. Main-owned contracts, screens, feedback selection,
+root styles, storage and dependencies are untouched. See the
+[verification and integration handoff](../verification/blue-companion-touch.md)
+for exact scope, commands and remaining checks.
+
+This is a delivered touch-interaction slice of A1/A2, not completion of the full
+plan. Shared button/timer contact, thought-saving choreography and reward
+artwork still need main-owned anchors/contracts and the relevant design choices.
+
 A handoff includes changed paths, the shared interface version, supported poses/cues, fixture-versus-real coverage, static variants, contact/interruption recordings, actual verification and remaining decisions. The main owner integrates shared screens/styles and the release candidate.
 
 - [x] Animation responsibilities and main-logic boundary documented.

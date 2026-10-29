@@ -12,7 +12,33 @@ export function useBlueCompanion(presentation: CompanionPresentation, cueId?: st
   useEffect(() => {
     setMotion(previous => nextBlueMotion(previous, { cue, stance, staticOnly }, cueId))
   }, [cue, stance, staticOnly, cueId])
-  const finish = useCallback(() => setMotion(previous => previous.active ? { ...previous, active: null } : previous), [])
+  // A late CSS event must not finish a newer gesture. The timeout also covers
+  // removed styles and browsers that never deliver animationend.
+  const finish = useCallback((id?: string) => setMotion(previous => previous.active && (!id || previous.active.id === id)
+    ? { ...previous, active: null } : previous), [])
+  useEffect(() => {
+    const cancel = () => finish()
+    const visibility = () => { if (document.hidden) cancel() }
+    document.addEventListener('visibilitychange', visibility)
+    window.addEventListener('pagehide', cancel)
+    window.addEventListener('blur', cancel)
+    window.addEventListener('resize', cancel)
+    return () => {
+      document.removeEventListener('visibilitychange', visibility)
+      window.removeEventListener('pagehide', cancel)
+      window.removeEventListener('blur', cancel)
+      window.removeEventListener('resize', cancel)
+    }
+  }, [finish])
+  useEffect(() => {
+    if (!motion.active) return
+    if (document.hidden) { finish(motion.active.id); return }
+    const { id, cue: activeCue } = motion.active
+    const timing = activeCue === 'begin' ? blueCompanionSpec.motion.beginMs
+      : activeCue === 'settle' ? blueCompanionSpec.motion.settleMs : blueCompanionSpec.motion.greetingMs
+    const timer = window.setTimeout(() => finish(id), timing + 100)
+    return () => window.clearTimeout(timer)
+  }, [motion.active, finish])
   const active = !staticOnly && motion.active && motion.active.id === cueId && motion.active.cue === cue && motion.active.stance === stance ? motion.active : null
   return { spec: blueCompanionSpec, sketch, active, finish }
 }
