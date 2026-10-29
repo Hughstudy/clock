@@ -8,16 +8,20 @@
   isolation: isolate;
 }
 .blue-companion__gesture,
+.blue-companion__touch,
+.blue-companion__stance,
 .blue-companion__body { transform-origin: 120px 165px; }
+.blue-companion__touch-surface { pointer-events: all; cursor: pointer; }
+.blue-companion__face { transform: translate(var(--blue-gaze-x, 0px), var(--blue-gaze-y, 0px)); }
 .blue-companion__tuft { transform-origin: 111px 42px; }
 .blue-companion__shadow { transform-origin: 120px 165px; opacity: .55; }
 .blue-companion__arm--left { transform-origin: 71px 105px; }
 .blue-companion__arm--right { transform-origin: 168px 105px; }
 .blue-companion__eyes { transform-origin: 120px 95px; }
 .blue-companion__sparkles { opacity: 0; transform-origin: 120px 95px; }
-.blue-companion[data-stance='resting'] .blue-companion__body { transform: rotate(-4deg) scale(1.035, .97); }
-.blue-companion[data-stance='support'] .blue-companion__body { transform: rotate(-2deg); }
-.blue-companion[data-stance='paused'] .blue-companion__body { transform: scale(1.025, .98); }
+.blue-companion[data-stance='resting'] .blue-companion__stance { transform: rotate(-4deg) scale(1.035, .97); }
+.blue-companion[data-stance='support'] .blue-companion__stance { transform: rotate(-2deg); }
+.blue-companion[data-stance='paused'] .blue-companion__stance { transform: scale(1.025, .98); }
 .blue-companion[data-static='false']:is([data-stance='ready'], [data-stance='paused'], [data-stance='resting']) .blue-companion__body {
   animation: blue-breathe var(--blue-breathing) ease-in-out infinite;
 }
@@ -88,8 +92,57 @@
   25%, 65% { opacity: 1; transform: scale(1); }
   85% { opacity: 0; transform: scale(1.04); }
 }
-/* The same expressive arms and facial poses remain when movement is disabled. */
-.blue-companion[data-static='true'] * { animation: none !important; }
+/* Only the drawing deforms. The surface and the native host button stay still. */
+.blue-companion:not([data-touch='']) .blue-companion__body,
+.blue-companion:not([data-touch='']) .blue-companion__eyes { animation: none; }
+.blue-companion[data-touch-phase='press'][data-static='false'] .blue-companion__touch {
+  transition: transform 140ms ease-out;
+  transform: translateY(2px) scale(1.055, .94);
+}
+.blue-companion[data-touch='pat'][data-touch-phase='press'][data-static='false'] .blue-companion__touch { transform: translateY(2px) scale(1.025, .965); }
+.blue-companion[data-touch='high-five'][data-touch-phase='press'][data-static='false'] .blue-companion__touch { transform: rotate(calc(var(--blue-touch-side) * 3deg)) scale(1.015, .99); }
+.blue-companion[data-touch-phase='release'][data-static='false'] .blue-companion__touch { animation: blue-touch-squish var(--blue-touch-duration) cubic-bezier(.22, .75, .3, 1) both; }
+.blue-companion[data-touch='pat'][data-touch-phase='release'][data-static='false'] .blue-companion__touch { animation-name: blue-touch-pat; }
+.blue-companion[data-touch='high-five'][data-touch-phase='release'][data-static='false'] .blue-companion__touch { animation-name: blue-touch-five; }
+.blue-companion[data-touch='high-five'][data-touch-phase='release'][data-static='false'] .blue-companion__arm { animation: blue-touch-hand var(--blue-touch-duration) ease-in-out both; }
+.blue-companion__contact-ring { fill: #fff; fill-opacity: .18; stroke: #fff; stroke-width: 1.8; opacity: .85; }
+.blue-companion__affection { opacity: 0; }
+.blue-companion[data-touch-phase='release'][data-static='false'] .blue-companion__contact-ring { animation: blue-touch-ring var(--blue-touch-duration) ease-out both; }
+.blue-companion[data-touch-phase='release'][data-static='false'] .blue-companion__affection { animation: blue-touch-heart var(--blue-touch-duration) ease-out both; }
+.blue-companion[data-static='true'] .blue-companion__contact-ring { opacity: 0; }
+.blue-companion[data-static='true'] .blue-companion__affection { opacity: 1; transform: translateY(-12px); }
+@keyframes blue-touch-squish {
+  0% { transform: translateY(2px) scale(1.055, .94); }
+  28% { transform: translateY(-4px) scale(.97, 1.04); }
+  52% { transform: translateY(1px) scale(1.03, .975); }
+  76% { transform: scale(.995, 1.008); }
+  100% { transform: none; }
+}
+@keyframes blue-touch-pat {
+  0% { transform: translateY(2px) scale(1.025, .965); }
+  30% { transform: rotate(-3deg) scale(1.02, .98); }
+  62% { transform: rotate(2deg); }
+  100% { transform: none; }
+}
+@keyframes blue-touch-five {
+  0% { transform: rotate(calc(var(--blue-touch-side) * 3deg)); }
+  28% { transform: translateY(-4px) rotate(calc(var(--blue-touch-side) * -3deg)); }
+  58% { transform: scale(1.025, .98) rotate(calc(var(--blue-touch-side) * 2deg)); }
+  100% { transform: none; }
+}
+@keyframes blue-touch-hand {
+  0%, 100% { transform: rotate(0); }
+  25%, 62% { transform: rotate(calc(var(--blue-touch-side) * -12deg)); }
+  43%, 78% { transform: rotate(calc(var(--blue-touch-side) * 8deg)); }
+}
+@keyframes blue-touch-ring { from { opacity: .85; transform: scale(.75); } to { opacity: 0; transform: scale(1.8); } }
+@keyframes blue-touch-heart {
+  0% { opacity: 0; transform: translateY(-5px) scale(.65); }
+  25%, 60% { opacity: .95; }
+  100% { opacity: 0; transform: translateY(-28px) scale(1.05); }
+}
+/* Static touch still smiles; reduced motion never removes the interaction. */
+.blue-companion[data-static='true'] * { animation: none !important; transition: none !important; }
 @media (prefers-reduced-motion: reduce) {
   .blue-companion * { animation: none !important; transition: none !important; }
 }

@@ -7,6 +7,7 @@
   "bowing": 0.25,
   "outlineWidth": 1.35,
   "motion": { "greetingMs": 1500, "beginMs": 900, "settleMs": 1500, "breathingMs": 4800, "blinkMs": 6800 },
+  "touch": { "patMs": 900, "squishMs": 850, "highFiveMs": 1100, "holdMaxMs": 8000, "contactRadius": 11 },
   "palette": {
     "outline": "#3977AF", "ink": "#204B72", "body": "#79BAF0", "light": "#B7E0FF", "shade": "#5097DC",
     "belly": "#DDF1FF", "bellyShade": "#B8DDFA", "white": "#FFFFFF", "blush": "#FFC3B6", "blushShade": "#F4AE9F",

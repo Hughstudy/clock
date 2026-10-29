@@ -13,6 +13,7 @@ export interface BlueCompanionSpec {
   bowing: number
   outlineWidth: number
   motion: { greetingMs: number; beginMs: number; settleMs: number; breathingMs: number; blinkMs: number }
+  touch: { patMs: number; squishMs: number; highFiveMs: number; holdMaxMs: number; contactRadius: number }
   palette: Record<string, string>
   labels: Record<CompanionStance, string>
   parts: Record<string, BluePart>
@@ -32,10 +33,12 @@ export function validateBlueCompanionSpec(value: unknown): BlueCompanionSpec {
   if (!object(value) || value.version !== 1 || !finite(value.seed, 1, 2147483646) || !Number.isInteger(value.seed)
     || !finite(value.width, 100, 1000) || !finite(value.height, 100, 1000)
     || !finite(value.roughness, 0, 2) || !finite(value.bowing, 0, 2) || !finite(value.outlineWidth, 0.1, 10)) throw new Error('Invalid blue companion geometry settings')
-  const { palette, parts, poses, labels, motion } = value
+  const { palette, parts, poses, labels, motion, touch } = value
   if (!object(palette) || !REQUIRED_PALETTE.every(key => typeof palette[key] === 'string')
     || !Object.values(palette).every(color => typeof color === 'string' && /^#[0-9a-f]{6}$/i.test(color))) throw new Error('Invalid blue companion palette')
   if (!object(motion) || !['greetingMs', 'beginMs', 'settleMs', 'breathingMs', 'blinkMs'].every(key => finite(motion[key], 100, 30000))) throw new Error('Invalid blue companion motion timings')
+  if (!object(touch) || !['patMs', 'squishMs', 'highFiveMs'].every(key => finite(touch[key], 150, 2000))
+    || !finite(touch.holdMaxMs, 1000, 15000) || !finite(touch.contactRadius, 4, 20)) throw new Error('Invalid blue companion touch settings')
   if (!object(parts) || !COMMON_PARTS.every(name => object(parts[name]))) throw new Error('Missing blue companion parts')
   for (const part of Object.values(parts)) {
     if (!object(part) || typeof part.d !== 'string' || !/^M/.test(part.d) || part.d.length > 5000
