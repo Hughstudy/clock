@@ -1,13 +1,18 @@
 import { isDateKey } from './calendar'
-import { defaultSettings, sanitizeSettings } from './settings'
+import { defaultSettings, isValidDuration, sanitizeSettings } from './settings'
 import type { Spec } from './spec'
+import { hasNewerThoughts, mergeThoughts } from './thoughts'
 import { initialTimer } from './timer'
-import { PHASES, type AppSnapshot, type FocusRecord, type ParticipationRecord, type Phase, type Session, type TimerState } from './types'
+import { PHASES, type AppSnapshot, type FocusRecord, type ParticipationRecord, type Phase, type Session, type Thought, type ThoughtDraft, type TimerState } from './types'
 
-export const SNAPSHOT_VERSION = 3
+/** v4 adds session steps, thoughts, a thought draft and the last one-off focus length. */
+export const SNAPSHOT_VERSION = 4
 
 export function createSnapshot(spec: Spec): AppSnapshot {
-  return { version: SNAPSHOT_VERSION, revision: 0, writer: '', datasetGeneration: 0, settings: defaultSettings(spec), timer: initialTimer(), records: [], participations: [] }
+  return {
+    version: SNAPSHOT_VERSION, revision: 0, writer: '', datasetGeneration: 0, settings: defaultSettings(spec), timer: initialTimer(),
+    records: [], participations: [], lastFocusMinutes: null, thoughts: [], thoughtDraft: null,
+  }
 }
 
 export interface MigrationContext { timeZone: string }
@@ -19,6 +24,8 @@ const isInstant = (v: unknown): v is number => typeof v === 'number' && Number.i
 const isPositiveMs = (v: unknown): v is number => isInstant(v) && v > 0
 const isId = (v: unknown): v is string => typeof v === 'string' && v.length > 0 && v.length <= 128
 const isTimeZone = (v: unknown): v is string => typeof v === 'string' && v.length > 0 && v.length <= 64
+const isText = (v: unknown, max: number): v is string => typeof v === 'string' && Array.from(v).length <= max
+const isStep = (v: unknown): v is string | null => v === null || (typeof v === 'string' && v.length > 0 && v.length <= 2000)
 
 export const MIGRATIONS: Readonly<Record<number, Migration>> = {
   1: (old, { timeZone }) => {
@@ -49,6 +56,14 @@ export const MIGRATIONS: Readonly<Record<number, Migration>> = {
     return { ...old, version: 3, datasetGeneration: 0, records, participations,
       timer: timer && session ? { ...timer, session: { ...session, startedAt: null } } : old.timer }
   },
+  // Additive: no step, thought or one-off choice existed before; none is invented.
+  3: (old) => {
+    const timer = isRecord(old.timer) ? old.timer : null
+    const session = timer && isRecord(timer.session) ? timer.session : null
+    const records = Array.isArray(old.records) ? old.records.map((r: unknown) => isRecord(r) ? { ...r, step: null } : r) : old.records
+    return { ...old, version: 4, records, lastFocusMinutes: null, thoughts: [], thoughtDraft: null,
+      timer: timer && session ? { ...timer, session: { ...session, step: null } } : old.timer }
+  },
 }
 
 export type Decoded =
@@ -57,10 +72,10 @@ export type Decoded =
   | { kind: 'newer'; version: number }
 
 function readSession(raw: unknown): Session | null {
-  if (!isRecord(raw) || !isId(raw.id) || !isPositiveMs(raw.durationMs) || !isTimeZone(raw.timeZone) || !(raw.startedAt === null || isInstant(raw.startedAt))) return null
-  const { id, durationMs, timeZone, startedAt } = raw
-  if (raw.status === 'running' && isInstant(raw.deadline)) return { status: 'running', id, durationMs, timeZone, startedAt, deadline: raw.deadline }
-  if (raw.status === 'paused' && isInstant(raw.remainingMs) && raw.remainingMs <= durationMs) return { status: 'paused', id, durationMs, timeZone, startedAt, remainingMs: raw.remainingMs }
+  if (!isRecord(raw) || !isId(raw.id) || !isPositiveMs(raw.durationMs) || !isTimeZone(raw.timeZone) || !(raw.startedAt === null || isInstant(raw.startedAt)) || !isStep(raw.step)) return null
+  const { id, durationMs, timeZone, startedAt, step } = raw
+  if (raw.status === 'running' && isInstant(raw.deadline)) return { status: 'running', id, durationMs, timeZone, startedAt, step, deadline: raw.deadline }
+  if (raw.status === 'paused' && isInstant(raw.remainingMs) && raw.remainingMs <= durationMs) return { status: 'paused', id, durationMs, timeZone, startedAt, step, remainingMs: raw.remainingMs }
   return null
 }
 
@@ -86,10 +101,10 @@ function readRecords(raw: unknown, issues: string[]): FocusRecord[] {
     if (isRecord(r) && isId(r.sessionId) && isInstant(r.endedAt) && (r.startedAt === null || isInstant(r.startedAt)) &&
         isDateKey(r.dateKey) && isPositiveMs(r.targetMs) && isInstant(r.elapsedMs) && r.elapsedMs <= r.targetMs &&
         (r.endReason === 'manual' || (r.endReason === 'deadline' && r.elapsedMs === r.targetMs)) &&
-        (r.source === 'native' || r.source === 'legacy') && !seen.has(r.sessionId)) {
+        (r.source === 'native' || r.source === 'legacy') && isStep(r.step) && !seen.has(r.sessionId)) {
       seen.add(r.sessionId)
       records.push({ sessionId: r.sessionId, startedAt: r.startedAt, endedAt: r.endedAt, dateKey: r.dateKey,
-        targetMs: r.targetMs, elapsedMs: r.elapsedMs, endReason: r.endReason, source: r.source })
+        targetMs: r.targetMs, elapsedMs: r.elapsedMs, endReason: r.endReason, source: r.source, step: r.step })
     } else dropped += 1
   }
   if (dropped) issues.push(`records (${dropped} unreadable)`)
@@ -111,6 +126,39 @@ function readParticipations(raw: unknown, issues: string[]): ParticipationRecord
   }
   if (dropped) issues.push(`participations (${dropped} unreadable)`)
   return result
+}
+
+function readThoughts(raw: unknown, spec: Spec, issues: string[]): Thought[] {
+  if (!Array.isArray(raw)) { issues.push('thoughts'); return [] }
+  const seen = new Set<string>()
+  const result: Thought[] = []
+  let dropped = 0
+  for (const t of raw) {
+    if (isRecord(t) && isId(t.id) && isInstant(t.createdAt) && isDateKey(t.dateKey) && (t.sessionId === null || isId(t.sessionId)) &&
+        isText(t.text, spec.thoughts.maxLength) && (t.status === 'open' || t.status === 'putAway') && isCount(t.rev) && t.rev > 0 &&
+        (t.deletedAt === null || isInstant(t.deletedAt)) && !seen.has(t.id)) {
+      seen.add(t.id)
+      result.push({ id: t.id, createdAt: t.createdAt, dateKey: t.dateKey, sessionId: t.sessionId, text: t.text, status: t.status, rev: t.rev, deletedAt: t.deletedAt })
+    } else dropped += 1
+  }
+  if (dropped) issues.push(`thoughts (${dropped} unreadable)`)
+  return result
+}
+
+function readDraft(raw: unknown, spec: Spec, issues: string[]): ThoughtDraft | null {
+  if (raw === null) return null
+  if (isRecord(raw) && (raw.thoughtId === null || isId(raw.thoughtId)) && isText(raw.text, spec.thoughts.maxLength) && raw.text !== '') {
+    return { thoughtId: raw.thoughtId, text: raw.text }
+  }
+  issues.push('thoughtDraft')
+  return null
+}
+
+function readLastFocus(raw: unknown, spec: Spec, issues: string[]): number | null {
+  if (raw === null) return null
+  if (isValidDuration('focus', raw, spec)) return raw
+  issues.push('lastFocusMinutes')
+  return null
 }
 
 export function runMigrations(data: Json, from: number, to: number, migrations: Readonly<Record<number, Migration>>, context: MigrationContext): Json | null {
@@ -138,10 +186,13 @@ export function decodeSnapshot(text: string, spec: Spec, context: MigrationConte
   const { settings, issues: settingIssues } = sanitizeSettings(data.settings, spec)
   issues.push(...settingIssues)
   const timer = readTimer(data.timer, records.filter((r) => r.endReason === 'deadline').length, issues)
+  const thoughts = readThoughts(data.thoughts, spec, issues)
+  const thoughtDraft = readDraft(data.thoughtDraft, spec, issues)
+  const lastFocusMinutes = readLastFocus(data.lastFocusMinutes, spec, issues)
   return { kind: 'ok', issues, snapshot: {
     version: SNAPSHOT_VERSION, revision: isCount(data.revision) ? data.revision : 0,
     writer: typeof data.writer === 'string' ? data.writer : '', datasetGeneration: data.datasetGeneration,
-    settings, timer, records, participations,
+    settings, timer, records, participations, lastFocusMinutes, thoughts, thoughtDraft,
   } }
 }
 
@@ -152,7 +203,11 @@ function newer(a: AppSnapshot, b: AppSnapshot): AppSnapshot {
   return a.writer >= b.writer ? a : b
 }
 
-/** Append-only ended sessions and participation. Future editable notes require separate tombstones. */
+/**
+ * Ended sessions and participation are append-only. Thoughts merge per ID by
+ * revision with deletion markers winning ties. Settings, timer, draft and
+ * one-off choice come from the newer snapshot. Different generations never merge.
+ */
 export function mergeSnapshots(a: AppSnapshot, b: AppSnapshot): AppSnapshot {
   if (a.datasetGeneration !== b.datasetGeneration) return a.datasetGeneration > b.datasetGeneration ? a : b
   const base = newer(a, b)
@@ -161,15 +216,19 @@ export function mergeSnapshots(a: AppSnapshot, b: AppSnapshot): AppSnapshot {
   const missing = other.records.filter((r) => !known.has(r.sessionId))
   const participated = new Set(base.participations.map((p) => p.sessionId))
   const missingParticipation = other.participations.filter((p) => !participated.has(p.sessionId))
-  if (!missing.length && !missingParticipation.length) return base
+  const thoughts = mergeThoughts(base.thoughts, other.thoughts)
+  if (!missing.length && !missingParticipation.length && thoughts === base.thoughts) return base
   const records = [...base.records, ...missing].sort((x, y) => x.endedAt - y.endedAt || x.sessionId.localeCompare(y.sessionId))
   return { ...base, records, participations: [...base.participations, ...missingParticipation].sort((x, y) => x.sessionId.localeCompare(y.sessionId)),
+    thoughts: [...thoughts],
     timer: { ...base.timer, completedFocusCount: Math.max(base.timer.completedFocusCount, records.filter((r) => r.endReason === 'deadline').length) } }
 }
 
+/** True when `b` holds durable data that `a` lacks, so `a` needs the merge written back. */
 export function hasMissingRecords(a: AppSnapshot, b: AppSnapshot): boolean {
   if (a.datasetGeneration !== b.datasetGeneration) return b.datasetGeneration > a.datasetGeneration
   const records = new Set(a.records.map((r) => r.sessionId))
   const participations = new Set(a.participations.map((p) => p.sessionId))
-  return b.records.some((r) => !records.has(r.sessionId)) || b.participations.some((p) => !participations.has(p.sessionId))
+  return b.records.some((r) => !records.has(r.sessionId)) || b.participations.some((p) => !participations.has(p.sessionId)) ||
+    hasNewerThoughts(a.thoughts, b.thoughts)
 }

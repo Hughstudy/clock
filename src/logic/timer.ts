@@ -47,12 +47,13 @@ export function startSession(
   sessionId: string,
   timeZone: string,
   durationMinutes?: number,
+  step: string | null = null,
 ): TimerState {
   if (timer.session) return timer
   const durationMs = durationMinutes === undefined ? phaseDurationMs(settings, timer.phase) : durationMinutes * MINUTE_MS
   return {
     ...timer,
-    session: { status: 'running', id: sessionId, durationMs, deadline: now + durationMs, timeZone, startedAt: now },
+    session: { status: 'running', id: sessionId, durationMs, deadline: now + durationMs, timeZone, startedAt: now, step },
   }
 }
 
@@ -66,6 +67,7 @@ export function pauseSession(timer: TimerState, now: number): TimerState {
     remainingMs: clampRemaining(session.deadline - now, session.durationMs),
     timeZone: session.timeZone,
     startedAt: session.startedAt,
+    step: session.step,
   }
   return { ...timer, session: paused }
 }
@@ -80,6 +82,7 @@ export function resumeSession(timer: TimerState, now: number): TimerState {
     deadline: now + clampRemaining(session.remainingMs, session.durationMs),
     timeZone: session.timeZone,
     startedAt: session.startedAt,
+    step: session.step,
   }
   return { ...timer, session: running }
 }
@@ -100,6 +103,7 @@ export interface ExpiredSession {
   durationMs: number
   timeZone: string
   startedAt: number | null
+  step: string | null
 }
 
 /**
@@ -122,6 +126,7 @@ export function expireSession(
     durationMs: session.durationMs,
     timeZone: session.timeZone,
     startedAt: session.startedAt,
+    step: session.step,
   }
   if (timer.phase === 'focus') {
     const completedFocusCount = timer.completedFocusCount + 1

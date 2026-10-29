@@ -14,13 +14,13 @@ Updated: 2026-10-29. This plan describes the next work from the current code bas
 
 | Capability | Implemented now | Remaining work | PRD reference |
 | --- | --- | --- | --- |
-| F1: timing and accounting | Deadline timing, pause/resume, actual short and zero-second records, freely available rest, expiry reconciliation before actions, separate participation and full-completion counts | Optional small step; first-use and quick-duration hierarchy; clear actual duration and next actions after ending | Sections 4, 10 |
+| F1: timing and accounting | Deadline timing, pause/resume, actual short and zero-second records, freely available rest, expiry reconciliation before actions, separate participation and full-completion counts; optional small step, remembered one-off length and factual end summary (L1, branch `claude/main-logic-l0-l2`) | First-use “Start with 5 minutes” hierarchy remains a review proposal | Sections 4, 10 |
 | Supportive feedback | Saved start/pause/resume/end/rest events; requested encouragement with next/dismiss; no replay on recovery or synchronization | Welcome/return and F2/F3 events; requested-encouragement categories; bookmarks; saved event-encouragement preference | Section 7 |
 | Blue companion | Original rough.js artwork, seven semantic poses, finite wave/rebound/ending gestures, quiet focus, saved animation preference | Contact with real UI elements, local deformation and cancellable choreography; final artwork and icons | Section 8 |
-| F2: thought capture | No domain model or entry point yet | One-tap empty marker, optional text, drafts, return path, session association, put-away status, deletion and undo | Section 5 |
+| F2: thought capture | One-tap empty marker, optional text, persisted draft, session association, put-away, deletion with undo and cross-tab conflict rules (L2, branch `claude/main-logic-l0-l2`) | Announcement policy for delete/undo results; broader browsing in L3 | Section 5 |
 | F3: records | Actual-time totals and a basic history list | Day-grouped records, proposed 7/30-day views, inline details, thoughts/collections modes and position preservation | Section 6 |
 | Rewards | One participation record per new session and an encouragement library | Visible session mementos that can be revisited, welcome content, bookmarks, permanent content and deduplication; mechanics require review | Section 7 |
-| Persistence | Snapshot v3, v1/v2 migration, Web Locks, pending-save retries, merging within a dataset generation and generation-isolation foundation | Edit/delete conflict rules, full-model migration, JSON backup, replacement restore and clear-all | Section 10 |
+| Persistence | Snapshot v4, v1–v3 migration, Web Locks, pending-save retries, merging within a dataset generation, thought revision/deletion-marker conflict rules | Reward/bookmark model, JSON backup, replacement restore and clear-all | Section 10 |
 | Settings and delivery | Duration/sound/motion controls, two primary destinations, auxiliary Settings, static PWA and GitHub Pages configuration | Clear invalid-input recovery, encouragement/memento preferences, data management; complete physical-device, installation and accessibility acceptance | Sections 9, 12 |
 
 One experience issue deserves early attention: after a successful ending, encouragement hides the factual status containing the actual duration, while Home displays the next ready timer. Accounting is correct, but the user cannot immediately see how much time was just recorded. Present the factual result separately from encouragement within the existing scene.
@@ -77,7 +77,7 @@ This is a responsibility split across the existing architecture. Pure drawing/po
 
 ## 6. Interface between main logic and animation
 
-The current code has `C1-F1` in `src/contracts/focus.ts`, `AppFeedbackEvent`, `FeedbackFrame` and `CompanionPresentation`. They are useful starting points, but they do not yet constitute a complete independent animation contract for F2/rewards/contact scenes. The following is the target interface to publish in L0; names and exact TypeScript fields remain proposed.
+Branch `claude/main-logic-l0-l2` implements the first version as `C2-P1` in `src/contracts/presentation.ts`. It provides a read-only `CompanionView`, a `PresentationCue` whose identity is separate from the announcement, and `CompanionCallbacks`, together with fixtures generated from the real logic in `presentation-fixtures.ts`. Contact anchors and reward content IDs are not yet covered. The table below remains the target; see [the verification report](docs/verification/main-logic-l0-l2.md).
 
 ```mermaid
 flowchart LR
@@ -143,9 +143,9 @@ This is an English documentation split for review, not a source-code refactor. T
 - [x] PRD-to-code gaps and unapproved proposals documented in English.
 - [x] Animation and main-logic plans separated, with ownership, interface, dependencies and acceptance criteria.
 - [ ] User review of the split and proposed product choices.
-- [ ] A1/L0 experience review and shared interface published in code.
+- [ ] A1/L0 experience review and shared interface published in code. (L0 `C2-P1` contract and fixtures implemented on `claude/main-logic-l0-l2`; A1 review pending.)
 - [ ] A2 fixture-driven animation components.
-- [ ] L1/L2 F1, data foundation and thought lifecycle.
+- [ ] L1/L2 F1, data foundation and thought lifecycle. (Implemented and locally verified on `claude/main-logic-l0-l2`; awaiting review/merge. Device, screen-reader and offline checks are still open.)
 - [ ] L3 records, approved rewards, bookmarks and preferences.
 - [ ] A3 real-result integration and approved artwork.
 - [ ] A4 animation, accessibility and device acceptance.

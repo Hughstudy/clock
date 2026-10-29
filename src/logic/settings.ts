@@ -5,7 +5,12 @@ export function defaultSettings(spec: Spec): Settings {
   const durationsMinutes = Object.fromEntries(
     PHASES.map((phase) => [phase, spec.timer.durationsMinutes[phase].default]),
   ) as Record<Phase, number>
-  return { durationsMinutes, soundEnabled: spec.timer.soundEnabledDefault, motionEnabled: spec.presentation.motionEnabledDefault }
+  return {
+    durationsMinutes,
+    soundEnabled: spec.timer.soundEnabledDefault,
+    motionEnabled: spec.presentation.motionEnabledDefault,
+    encouragementEnabled: spec.presentation.encouragementEnabledDefault,
+  }
 }
 
 export type DurationCheck = { ok: true; minutes: number } | { ok: false; message: string }
@@ -46,13 +51,18 @@ export function sanitizeSettings(raw: unknown, spec: Spec): { settings: Settings
   if (typeof raw.soundEnabled === 'boolean') soundEnabled = raw.soundEnabled
   else issues.push('settings.soundEnabled')
 
-  // This additive preference was absent in older v1/v2/v3 data. Missing is a
-  // normal upgrade; malformed values still report a repair for raw-data backup.
-  let motionEnabled = defaults.motionEnabled
-  if (typeof raw.motionEnabled === 'boolean') motionEnabled = raw.motionEnabled
-  else if (raw.motionEnabled !== undefined) issues.push('settings.motionEnabled')
+  // These additive preferences were absent in older data. Missing is a normal
+  // upgrade; malformed values still report a repair for raw-data backup.
+  const optional = (key: 'motionEnabled' | 'encouragementEnabled'): boolean => {
+    const value = raw[key]
+    if (typeof value === 'boolean') return value
+    if (value !== undefined) issues.push(`settings.${key}`)
+    return defaults[key]
+  }
+  const motionEnabled = optional('motionEnabled')
+  const encouragementEnabled = optional('encouragementEnabled')
 
-  return { settings: { durationsMinutes, soundEnabled, motionEnabled }, issues }
+  return { settings: { durationsMinutes, soundEnabled, motionEnabled, encouragementEnabled }, issues }
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -64,6 +74,7 @@ export interface SettingsPatch {
   durationsMinutes?: Partial<Record<Phase, number>>
   soundEnabled?: boolean
   motionEnabled?: boolean
+  encouragementEnabled?: boolean
 }
 
 /** Applies the valid fields of a patch; invalid fields leave the current value in place. */
@@ -75,10 +86,11 @@ export function applySettingsPatch(current: Settings, patch: SettingsPatch, spec
   }
   const soundEnabled = typeof patch.soundEnabled === 'boolean' ? patch.soundEnabled : current.soundEnabled
   const motionEnabled = typeof patch.motionEnabled === 'boolean' ? patch.motionEnabled : current.motionEnabled
-  return { durationsMinutes, soundEnabled, motionEnabled }
+  const encouragementEnabled = typeof patch.encouragementEnabled === 'boolean' ? patch.encouragementEnabled : current.encouragementEnabled
+  return { durationsMinutes, soundEnabled, motionEnabled, encouragementEnabled }
 }
 
 export function sameSettings(a: Settings, b: Settings): boolean {
-  return a.soundEnabled === b.soundEnabled && a.motionEnabled === b.motionEnabled &&
+  return a.soundEnabled === b.soundEnabled && a.motionEnabled === b.motionEnabled && a.encouragementEnabled === b.encouragementEnabled &&
     PHASES.every((p) => a.durationsMinutes[p] === b.durationsMinutes[p])
 }

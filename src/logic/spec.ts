@@ -45,10 +45,14 @@ export interface CharacterSpec {
 export interface Spec {
   presentation: {
     motionEnabledDefault: boolean
+    encouragementEnabledDefault: boolean
   }
   timer: {
     durationsMinutes: Record<Phase, DurationBounds>
     quickFocusMinutes: number
+    /** One-off focus lengths offered on demand; never change the configured default. */
+    quickChoicesMinutes: number[]
+    stepMaxLength: number
     longBreakEvery: number
     soundEnabledDefault: boolean
     completionSoundWindowMs: number
@@ -56,6 +60,15 @@ export interface Spec {
   calendar: {
     /** 0 = Sunday … 6 = Saturday. */
     weekStartsOn: number
+  }
+  thoughts: {
+    maxLength: number
+    /** How long a deleted thought keeps its text for undo. */
+    undoPeriodMs: number
+    /** Repeated mark presses within this period are one accidental press. */
+    markCoalesceMs: number
+    /** Draft text is written after typing pauses for this long. */
+    draftSaveDelayMs: number
   }
   decor: {
     roughness: number
@@ -217,14 +230,25 @@ export function parseSpec(raw: unknown): Spec {
   const decor = section(root.decor, 'decor')
   const seeds = section(decor.seeds, 'decor.seeds')
   const presentation = section(root.presentation, 'presentation')
+  const thoughts = section(root.thoughts, 'thoughts')
+  const focusBounds = durationsMinutes.focus
+  const quickChoices = timer.quickChoicesMinutes
+  if (!Array.isArray(quickChoices) || quickChoices.length === 0 || quickChoices.length > 6) {
+    throw new SpecError('timer.quickChoicesMinutes', 'expected 1 to 6 durations')
+  }
+  const quickChoicesMinutes = quickChoices.map((n, i) => int(n, `timer.quickChoicesMinutes[${i}]`, focusBounds.min, focusBounds.max))
+  if (new Set(quickChoicesMinutes).size !== quickChoicesMinutes.length) throw new SpecError('timer.quickChoicesMinutes', 'expected distinct durations')
 
   return {
     presentation: {
       motionEnabledDefault: bool(presentation.motionEnabledDefault, 'presentation.motionEnabledDefault'),
+      encouragementEnabledDefault: bool(presentation.encouragementEnabledDefault, 'presentation.encouragementEnabledDefault'),
     },
     timer: {
       durationsMinutes,
       quickFocusMinutes: int(timer.quickFocusMinutes, 'timer.quickFocusMinutes', durationsMinutes.focus.min, durationsMinutes.focus.max),
+      quickChoicesMinutes,
+      stepMaxLength: int(timer.stepMaxLength, 'timer.stepMaxLength', 1, 500),
       longBreakEvery: int(timer.longBreakEvery, 'timer.longBreakEvery', 1),
       soundEnabledDefault: bool(timer.soundEnabledDefault, 'timer.soundEnabledDefault'),
       completionSoundWindowMs:
@@ -232,6 +256,12 @@ export function parseSpec(raw: unknown): Spec {
     },
     calendar: {
       weekStartsOn: int(calendar.weekStartsOn, 'calendar.weekStartsOn', 0, 6),
+    },
+    thoughts: {
+      maxLength: int(thoughts.maxLength, 'thoughts.maxLength', 1, 5000),
+      undoPeriodMs: int(thoughts.undoPeriodSeconds, 'thoughts.undoPeriodSeconds', 1, 86_400) * 1000,
+      markCoalesceMs: int(thoughts.markCoalesceMs, 'thoughts.markCoalesceMs', 0, 5000),
+      draftSaveDelayMs: int(thoughts.draftSaveDelayMs, 'thoughts.draftSaveDelayMs', 0, 10_000),
     },
     decor: {
       roughness: positive(decor.roughness, 'decor.roughness'),

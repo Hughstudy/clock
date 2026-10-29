@@ -1,6 +1,6 @@
 # Main Logic Plan
 
-Status: proposed work breakdown for review, 2026-10-29. This document covers application behavior, data and functional screen integration. No application refactor has been performed by this documentation update. Read [PLAN.md](../../PLAN.md) for the shared scope, open decisions, interface and release sequence; see the separate [Animation Plan](ANIMATION_PLAN.md) for character presentation.
+Status: proposed work breakdown for review, 2026-10-29. This document covers application behavior, data and functional screen integration. L0–L2 were first implemented on branch `claude/main-logic-l0-l2`. The [verification report](../verification/main-logic-l0-l2.md) lists what was checked and what remains open; L3–L5 are not started. Read [PLAN.md](../../PLAN.md) for the shared scope, open decisions, interface and release sequence; see the separate [Animation Plan](ANIMATION_PLAN.md) for character presentation.
 
 ## Responsibility
 

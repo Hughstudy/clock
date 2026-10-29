@@ -10,6 +10,8 @@ export interface Settings {
   soundEnabled: boolean
   /** The system's reduced-motion preference always takes priority. */
   motionEnabled: boolean
+  /** Encouragement after start/pause/end and similar events. Explicit requests stay available. */
+  encouragementEnabled: boolean
 }
 
 /**
@@ -24,6 +26,8 @@ export type Session = {
   timeZone: string
   /** Unknown for sessions created before schema v3; never inferred from a deadline. */
   startedAt: number | null
+  /** Optional small step named at start. Never scored; null when left empty. */
+  step: string | null
 } & (
   | { status: 'running'; deadline: number }
   | { status: 'paused'; remainingMs: number }
@@ -48,6 +52,8 @@ export interface FocusRecord {
   elapsedMs: number
   endReason: 'deadline' | 'manual'
   source: 'native' | 'legacy'
+  /** The session's optional small step, copied when it ended. */
+  step: string | null
 }
 
 /** One entry at start, independent of duration and full-completion cadence. */
@@ -57,6 +63,31 @@ export interface ParticipationRecord {
   /** Null for a migrated active session whose original start is unknown. */
   dateKey: DateKey | null
   source: 'native' | 'legacy-completion' | 'legacy-active'
+}
+
+/**
+ * A captured thought. Text is optional: an empty marker is valid. Within one
+ * dataset generation, the copy with the higher `rev` wins a merge; at equal
+ * `rev` a deletion wins, so a stale tab cannot resurrect a deleted thought.
+ */
+export interface Thought {
+  id: string
+  createdAt: number
+  dateKey: DateKey
+  /** Focus session it was captured during; null for a standalone thought (including rest). */
+  sessionId: string | null
+  text: string
+  status: 'open' | 'putAway'
+  rev: number
+  /** Deletion marker. Text is kept briefly for undo, then cleared; the marker remains. */
+  deletedAt: number | null
+}
+
+/** Unsent thought text, persisted so it survives closing the panel or the page. */
+export interface ThoughtDraft {
+  /** Thought the text will be saved to; null creates a new thought. */
+  thoughtId: string | null
+  text: string
 }
 
 export interface AppSnapshot {
@@ -71,4 +102,8 @@ export interface AppSnapshot {
   timer: TimerState
   records: FocusRecord[]
   participations: ParticipationRecord[]
+  /** Last explicitly chosen one-off focus length. Separate from the configured default. */
+  lastFocusMinutes: number | null
+  thoughts: Thought[]
+  thoughtDraft: ThoughtDraft | null
 }

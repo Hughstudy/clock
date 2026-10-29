@@ -59,7 +59,10 @@ export function SettingsScreen({ form, canEdit }: Props) {
                 </div>
                 {field.error && (
                   <p id={errorId} className="field-error">
-                    {field.error}
+                    {field.error}仍按 {field.value} 分钟保存。
+                    <button type="button" className="link-button" onClick={field.restorePrevious}>
+                      恢复为 {field.value} 分钟
+                    </button>
                   </p>
                 )}
               </div>
@@ -97,7 +100,25 @@ export function SettingsScreen({ form, canEdit }: Props) {
             : '关闭后，伙伴用静态表情陪你，鼓励与功能照常。'}
         </p>
 
-        <p className="hint">时长更改从下一段开始生效。</p>
+        <label className="switch-row">
+          <span>节点鼓励</span>
+          <input
+            type="checkbox"
+            role="switch"
+            className="switch"
+            disabled={!canEdit}
+            checked={form.encouragementEnabled}
+            aria-describedby="encouragement-hint"
+            onChange={(e) => form.setEncouragementEnabled(e.target.checked)}
+          />
+        </label>
+        <p id="encouragement-hint" className="hint">
+          {form.encouragementEnabled
+            ? '开始、暂停、结束等时刻会附上一句鼓励。'
+            : '开始、暂停、结束时只显示状态；点伙伴仍可要一句鼓励。'}
+        </p>
+
+        <p className="hint">时长更改从下一段开始生效。单次选择的时长不会改变这里的默认值。</p>
         <button
           type="button"
           className="btn btn-secondary"

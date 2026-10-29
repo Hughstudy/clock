@@ -46,7 +46,7 @@ The exported window assignments are historical for this local continuation. Appl
 - Keep React 18 and matching React DOM/types, strict TypeScript, Vite, the lockfile and Strict Mode. rough.js remains available for appropriate artwork but does not determine the final character medium.
 - src/logic/ is pure and deterministic: no React, browser APIs, storage, audio, scheduling, hidden clocks or unseeded randomness. Inject time, calendar inputs, configuration and seeds.
 - src/adapters/ owns effects and persistence; src/hooks/ coordinates them. Screens/components consume views and dispatch actions, never independently account for time or write localStorage.
-- The implemented C1-F1 contract is src/contracts/focus.ts. It covers the focus slice; notes, rewards and import/export contracts are still pending.
+- The implemented C1-F2 contract is src/contracts/focus.ts (focus and thought slice, snapshot v4); the C2-P1 main → animation contract and its fixtures are src/contracts/presentation.ts and presentation-fixtures.ts. Rewards, bookmarks and import/export contracts are still pending.
 - Keep tunable defaults, bounds, cadence, copy and artwork in validated data. The integrator controls splitting the legacy all-in-one src/data/pet-spec.json; avoid concurrent edits to it.
 - New business interfaces describe semantic events rather than whale/rice/cry identity. Animation neither awards credit nor determines elapsed time or save success.
 - Reuse stable geometry/seeds and caching where suitable. Do not regenerate artwork per timer refresh. Use scoped styles; root CSS and composition have one owner.

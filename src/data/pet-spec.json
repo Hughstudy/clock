@@ -1,7 +1,8 @@
 {
   "specVersion": 1,
   "presentation": {
-    "motionEnabledDefault": true
+    "motionEnabledDefault": true,
+    "encouragementEnabledDefault": true
   },
   "timer": {
     "durationsMinutes": {
@@ -24,10 +25,22 @@
     "longBreakEvery": 4,
     "soundEnabledDefault": true,
     "completionSoundWindowSeconds": 60,
-    "quickFocusMinutes": 5
+    "quickFocusMinutes": 5,
+    "quickChoicesMinutes": [
+      5,
+      15,
+      25
+    ],
+    "stepMaxLength": 80
   },
   "calendar": {
     "weekStartsOn": 1
+  },
+  "thoughts": {
+    "maxLength": 500,
+    "undoPeriodSeconds": 600,
+    "markCoalesceMs": 800,
+    "draftSaveDelayMs": 600
   },
   "decor": {
     "roughness": 1.3,

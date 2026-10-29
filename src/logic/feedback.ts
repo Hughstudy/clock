@@ -129,7 +129,13 @@ export type FeedbackEvent = EventDetails & {
   /** One ID for a save-and-return interaction; share it across its child results. */
   interactionId?: string
 }
-export interface FeedbackMessage { id: string; text: string; kind: 'status' | 'error' }
+export interface FeedbackMessage {
+  id: string
+  text: string
+  kind: 'status' | 'error'
+  /** The factual outcome of an action (recorded time, saved thought). Shown alongside any encouragement, never hidden by it. */
+  result?: true
+}
 export interface FeedbackFrame {
   status: FeedbackMessage
   encouragement: Encouragement | null
@@ -199,11 +205,12 @@ function elapsedText(ms: number): string {
 }
 
 function eventStatus(event: FeedbackEvent, context: FeedbackContext, catalog: FeedbackCatalog): FeedbackMessage {
+  const result = (message: FeedbackMessage): FeedbackMessage => ({ ...message, result: true })
   if (event.kind === 'focus-ended' && Number.isFinite(event.elapsedMs) && event.elapsedMs >= 0 && context.status === 'ready') {
-    return event.elapsedMs === 0 ? ui('UI31', catalog) : { ...ui('UI30', catalog), text: ui('UI30', catalog).text.replace('{elapsed}', elapsedText(event.elapsedMs)) }
+    return result(event.elapsedMs === 0 ? ui('UI31', catalog) : { ...ui('UI30', catalog), text: ui('UI30', catalog).text.replace('{elapsed}', elapsedText(event.elapsedMs)) })
   }
-  if (event.kind === 'note-saved') return ui(event.hasText ? 'UI33' : 'UI32', catalog)
-  if (event.kind === 'break-ended' && context.status === 'ready') return ui('UI36', catalog)
+  if (event.kind === 'note-saved') return result(ui(event.hasText ? 'UI33' : 'UI32', catalog))
+  if (event.kind === 'break-ended' && context.status === 'ready') return result(ui('UI36', catalog))
   if (event.kind === 'records-viewed') {
     if (context.history === 'filtered-empty') return ui('UI37', catalog)
     if (context.history === 'empty') return { id: 'records-empty', text: '还没有计时记录。', kind: 'status' }

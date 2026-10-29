@@ -14,6 +14,8 @@ export interface DurationField {
   onChange: (text: string) => void
   onBlur: () => void
   step: (delta: number) => void
+  /** Discards an invalid entry and shows the saved value again. */
+  restorePrevious: () => void
 }
 
 export interface SettingsForm {
@@ -22,12 +24,16 @@ export interface SettingsForm {
   setSoundEnabled: (on: boolean) => void
   motionEnabled: boolean
   setMotionEnabled: (on: boolean) => void
+  encouragementEnabled: boolean
+  setEncouragementEnabled: (on: boolean) => void
   isDefault: boolean
   restoreDefaults: () => void
 }
 
 /**
- * Saves each valid edit immediately; invalid drafts stay local until fixed or abandoned.
+ * Saves each valid edit immediately. An invalid entry stays on screen with its
+ * range error until the user fixes it or explicitly restores the saved value;
+ * it is never silently replaced.
  * Saves are asynchronous, so the form shows edits optimistically until the saved settings
  * arrive; quick repeated taps then build on what is on screen instead of a stale value.
  */
@@ -67,12 +73,13 @@ export function useSettingsForm(saved: Settings, dispatch: (action: UserAction) 
         const result = checkDuration(phase, text, spec)
         if (result.ok && result.minutes !== value) saveMinutes(phase, result.minutes)
       },
-      onBlur: () => clearDraft(phase),
+      onBlur: () => { if (check.ok) clearDraft(phase) },
       step: (delta) => {
         const minutes = Math.min(max, Math.max(min, value + delta))
         clearDraft(phase)
         if (minutes !== value) saveMinutes(phase, minutes)
       },
+      restorePrevious: () => clearDraft(phase),
     }
   })
 
@@ -83,7 +90,9 @@ export function useSettingsForm(saved: Settings, dispatch: (action: UserAction) 
     setSoundEnabled: (on) => save({ soundEnabled: on }),
     motionEnabled: settings.motionEnabled,
     setMotionEnabled: (on) => save({ motionEnabled: on }),
-    isDefault: sameSettings({ ...defaults, soundEnabled: settings.soundEnabled, motionEnabled: settings.motionEnabled }, settings),
+    encouragementEnabled: settings.encouragementEnabled,
+    setEncouragementEnabled: (on) => save({ encouragementEnabled: on }),
+    isDefault: sameSettings({ ...defaults, soundEnabled: settings.soundEnabled, motionEnabled: settings.motionEnabled, encouragementEnabled: settings.encouragementEnabled }, settings),
     restoreDefaults: () => {
       setDrafts({})
       save({ durationsMinutes: defaults.durationsMinutes })

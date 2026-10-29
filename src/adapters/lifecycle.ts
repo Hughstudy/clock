@@ -12,3 +12,16 @@ export function onAppResume(onResume: () => void): () => void {
     window.removeEventListener('focus', onResume)
   }
 }
+
+/** Calls `onHide` when the page is hidden or put into the back/forward cache. */
+export function onAppHide(onHide: () => void): () => void {
+  const handleVisibility = () => {
+    if (document.visibilityState === 'hidden') onHide()
+  }
+  document.addEventListener('visibilitychange', handleVisibility)
+  window.addEventListener('pagehide', onHide)
+  return () => {
+    document.removeEventListener('visibilitychange', handleVisibility)
+    window.removeEventListener('pagehide', onHide)
+  }
+}
