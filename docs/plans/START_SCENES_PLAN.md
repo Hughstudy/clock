@@ -1,6 +1,6 @@
 # Start Scenes Plan
 
-Status: plan, 2026-10-29. The user's decisions are recorded in §1; the work is not implemented yet. The plan builds on CodeX's current blue companion (rough.js SVG with seven stances, touch reactions and a gentle focus loop) and on the main-owned character stage, where the clock is a small badge in the corner. It follows the workstream split in [PLAN.md](../../PLAN.md), the [Main Logic Plan](MAIN_LOGIC_PLAN.md) and the [Animation Plan](ANIMATION_PLAN.md).
+Status: plan, 2026-10-29. All product decisions are recorded in §1; the work is not implemented yet. The plan builds on CodeX's current blue companion (rough.js SVG with seven stances, touch reactions and a gentle focus loop) and on the main-owned character stage, where the clock is a small badge in the corner. It follows the workstream split in [PLAN.md](../../PLAN.md), the [Main Logic Plan](MAIN_LOGIC_PLAN.md) and the [Animation Plan](ANIMATION_PLAN.md).
 
 ## 1. Decisions (user, 2026-10-29)
 
@@ -11,6 +11,8 @@ Status: plan, 2026-10-29. The user's decisions are recorded in §1; the work is 
 | Clock separate or part of the prop? | **Separate** | The badge stays fixed in the stage corner; scenes may glance at it, never move or cover it |
 | Own scenes for rest? | **Yes** | A separate rest set with no progress prop (§3) |
 | Rewards | **Success unlocks new scenes** | Permanent scene unlocks earned by successful sessions (§6) |
+| What counts as success | **The session reaches its own chosen length** | A deadline ending counts. A 5-minute one-off counts the same as 25 minutes. Early endings record time and get their ending, but don't advance unlocks |
+| Unlock thresholds | **1 / 3 / 6 / 10 / 15 successful sessions** | Kept as validated data so they can be tuned later without removing anything already unlocked |
 | Rendering | **SVG/CSS first** | No new animation dependency; reconsider Rive only if layering becomes unmanageable |
 
 Guardrails from the project rules still apply:
@@ -98,14 +100,14 @@ The ending variant depends on **actual focused time** (the record's `elapsedMs`)
 
 ### What counts as success
 
-**Proposal:** a focus session that reaches **its own chosen length** (a deadline ending). A one-off 5-minute session counts exactly like a 25-minute one, which keeps the smallest start rewarding.
+**Decided:** a focus session that reaches **its own chosen length** (a deadline ending). A one-off 5-minute session counts exactly like a 25-minute one, which keeps the smallest start rewarding.
 
 - Ending early still records the true time and gets its tier ending; it simply doesn't advance an unlock.
-- *Alternative for review:* count any session with at least N minutes of actual time. This is fairer to early endings but encourages longer sessions.
+- A session that expires while the app is closed is settled on return. It counts as a success once, with no replayed celebration.
 
 ### Thresholds
 
-These are configurable data; the user should review them.
+**Decided.** The thresholds are stored as configurable data.
 
 | Successful sessions (cumulative, never reset) | Unlocks |
 | --- | --- |
