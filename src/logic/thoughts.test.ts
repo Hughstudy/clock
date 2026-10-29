@@ -1,0 +1,173 @@
+import { describe, expect, it } from 'vitest'
+import { spec } from '../data/spec'
+import { applyAction, nextFocusMinutes, reconcile, type ActionContext, type AppAction } from './app'
+import { createSnapshot, decodeSnapshot, encodeSnapshot, hasMissingRecords, mergeSnapshots } from './snapshot'
+import type { AppSnapshot } from './types'
+
+const MIN = 60_000
+const T0 = Date.UTC(2026, 9, 29, 9, 0, 0)
+const utcKey = (ms: number) => new Date(ms).toISOString().slice(0, 10)
+const ctx = (now: number): ActionContext => ({ now, dateKeyOf: utcKey })
+const step = (s: AppSnapshot, now: number, action: AppAction) => applyAction(s, action, ctx(now), spec)
+const run = (s: AppSnapshot, steps: [number, AppAction][]) => steps.reduce((acc, [now, a]) => step(acc, now, a).snapshot, s)
+const tz = 'UTC'
+
+describe('thought capture', () => {
+  it('saves an empty marker then text during a running session without touching the timer, and links it to the ended record', () => {
+    let s = run(createSnapshot(spec), [[T0, { type: 'start', sessionId: 'f1', timeZone: tz }]])
+    const before = s.timer
+    const marked = step(s, T0 + MIN, { type: 'markThought', thoughtId: 'n1', timeZone: tz })
+    expect(marked.thought).toEqual({ id: 'n1', change: 'marked' })
+    s = marked.snapshot
+    expect(s.timer).toEqual(before)
+    expect(s.thoughts).toMatchObject([{ id: 'n1', text: '', sessionId: 'f1', status: 'open', rev: 1, deletedAt: null }])
+
+    const texted = step(s, T0 + 2 * MIN, { type: 'saveThoughtText', thoughtId: 'n2', text: '  Pick up the parcel tonight ', timeZone: tz })
+    expect(texted.thought).toEqual({ id: 'n2', change: 'text' })
+    s = run(texted.snapshot, [[T0 + 3 * MIN, { type: 'end', sessionId: 'f1' }]])
+    expect(s.timer.session).toBeNull()
+    expect(s.records).toMatchObject([{ sessionId: 'f1', elapsedMs: 3 * MIN }])
+    expect(s.thoughts.filter((t) => t.sessionId === 'f1').map((t) => t.text)).toEqual(['', 'Pick up the parcel tonight'])
+  })
+
+  it('is idempotent for a repeated delivery of the same marker', () => {
+    const s = run(createSnapshot(spec), [[T0, { type: 'markThought', thoughtId: 'n1', timeZone: tz }]])
+    const again = step(s, T0 + 10, { type: 'markThought', thoughtId: 'n1', timeZone: tz })
+    expect(again.changed).toBe(false)
+    expect(again.snapshot.thoughts).toHaveLength(1)
+  })
+
+  it('keeps thoughts outside focus standalone and adds no focus time', () => {
+    let s = run(createSnapshot(spec), [[T0, { type: 'startBreak', sessionId: 'b1', timeZone: tz }]])
+    s = run(s, [[T0 + MIN, { type: 'markThought', thoughtId: 'n1', timeZone: tz }]])
+    expect(s.thoughts[0]).toMatchObject({ sessionId: null, dateKey: utcKey(T0) })
+    expect(s.records).toEqual([])
+    expect(s.participations).toEqual([])
+  })
+
+  it('adds text to an existing marker, clears the matching draft in the same change, and rejects edits to deleted thoughts', () => {
+    let s = run(createSnapshot(spec), [
+      [T0, { type: 'markThought', thoughtId: 'n1', timeZone: tz }],
+      [T0 + 1, { type: 'saveThoughtDraft', thoughtId: 'n1', text: 'half typed' }],
+    ])
+    expect(s.thoughtDraft).toEqual({ thoughtId: 'n1', text: 'half typed' })
+    s = run(s, [[T0 + 2, { type: 'saveThoughtText', thoughtId: 'n1', text: 'half typed, now done', timeZone: tz }]])
+    expect(s.thoughts[0]).toMatchObject({ text: 'half typed, now done', rev: 2 })
+    expect(s.thoughtDraft).toBeNull()
+
+    s = run(s, [[T0 + 3, { type: 'deleteThought', thoughtId: 'n1' }]])
+    const edit = step(s, T0 + 4, { type: 'saveThoughtText', thoughtId: 'n1', text: 'again', timeZone: tz })
+    expect(edit.thought).toEqual({ id: 'n1', change: 'rejected' })
+    expect(edit.changed).toBe(false)
+  })
+
+  it('keeps a draft aimed at a deleted thought as text for a new one', () => {
+    const s = run(createSnapshot(spec), [
+      [T0, { type: 'markThought', thoughtId: 'n1', timeZone: tz }],
+      [T0 + 1, { type: 'saveThoughtDraft', thoughtId: 'n1', text: 'keep me' }],
+      [T0 + 2, { type: 'deleteThought', thoughtId: 'n1' }],
+    ])
+    expect(s.thoughtDraft).toEqual({ thoughtId: null, text: 'keep me' })
+  })
+
+  it('puts away, reopens, deletes and restores within the undo period, then clears deleted text', () => {
+    let s = run(createSnapshot(spec), [
+      [T0, { type: 'saveThoughtText', thoughtId: 'n1', text: 'call back', timeZone: tz }],
+      [T0 + 1, { type: 'putAwayThought', thoughtId: 'n1' }],
+    ])
+    expect(s.thoughts[0]).toMatchObject({ status: 'putAway', rev: 2 })
+    s = run(s, [[T0 + 2, { type: 'reopenThought', thoughtId: 'n1' }], [T0 + 3, { type: 'deleteThought', thoughtId: 'n1' }]])
+    expect(s.thoughts[0]).toMatchObject({ deletedAt: T0 + 3, text: 'call back', rev: 4 })
+    const restored = step(s, T0 + 4, { type: 'restoreThought', thoughtId: 'n1' })
+    expect(restored.thought).toEqual({ id: 'n1', change: 'restored' })
+    expect(restored.snapshot.thoughts[0]).toMatchObject({ deletedAt: null, text: 'call back', rev: 5 })
+
+    s = run(restored.snapshot, [[T0 + 5, { type: 'deleteThought', thoughtId: 'n1' }]])
+    const late = T0 + 5 + spec.thoughts.undoPeriodMs
+    const expired = step(s, late, { type: 'restoreThought', thoughtId: 'n1' })
+    expect(expired.thought).toEqual({ id: 'n1', change: 'rejected' })
+    expect(expired.snapshot.thoughts[0]).toMatchObject({ text: '', deletedAt: T0 + 5 })
+    expect(expired.changed).toBe(true)
+  })
+})
+
+describe('thought synchronization', () => {
+  const base = () => run(createSnapshot(spec), [[T0, { type: 'saveThoughtText', thoughtId: 'n1', text: 'one', timeZone: tz }]])
+
+  it('lets a deletion win over a stale edit at the same revision, and a stale tab cannot resurrect it', () => {
+    const deleted = { ...run(base(), [[T0 + 1, { type: 'deleteThought', thoughtId: 'n1' }]]), revision: 3, writer: 'a' }
+    const edited = { ...run(base(), [[T0 + 1, { type: 'saveThoughtText', thoughtId: 'n1', text: 'two', timeZone: tz }]]), revision: 4, writer: 'b' }
+    const merged = mergeSnapshots(deleted, edited)
+    expect(merged.thoughts[0]).toMatchObject({ deletedAt: T0 + 1 })
+    expect(mergeSnapshots(edited, deleted).thoughts).toEqual(merged.thoughts)
+    expect(hasMissingRecords(edited, deleted)).toBe(true)
+    expect(hasMissingRecords(merged, edited)).toBe(false)
+    // The stale tab's next edit runs on the merged state and is rejected.
+    expect(step(merged, T0 + 2, { type: 'saveThoughtText', thoughtId: 'n1', text: 'three', timeZone: tz }).thought?.change).toBe('rejected')
+  })
+
+  it('unions thoughts captured in different tabs and never merges across generations', () => {
+    const a = { ...run(base(), [[T0 + 1, { type: 'markThought', thoughtId: 'a1', timeZone: tz }]]), revision: 5, writer: 'a' }
+    const b = { ...run(base(), [[T0 + 2, { type: 'markThought', thoughtId: 'b1', timeZone: tz }]]), revision: 6, writer: 'b' }
+    expect(mergeSnapshots(a, b).thoughts.map((t) => t.id)).toEqual(['n1', 'a1', 'b1'])
+    const cleared = { ...createSnapshot(spec), datasetGeneration: 1 }
+    expect(mergeSnapshots(a, cleared)).toEqual(cleared)
+    expect(hasMissingRecords(cleared, a)).toBe(false)
+  })
+
+  it('round-trips thoughts and drafts, and reports unreadable entries without dropping the rest', () => {
+    const s = run(base(), [[T0 + 1, { type: 'saveThoughtDraft', thoughtId: null, text: 'draft' }]])
+    expect(decodeSnapshot(encodeSnapshot(s), spec, { timeZone: tz })).toEqual({ kind: 'ok', snapshot: s, issues: [] })
+    const broken = decodeSnapshot(JSON.stringify({ ...s, thoughts: [...s.thoughts, { id: 'x', rev: 0 }] }), spec, { timeZone: tz })
+    if (broken.kind !== 'ok') throw Error(broken.kind)
+    expect(broken.snapshot.thoughts).toEqual(s.thoughts)
+    expect(broken.issues).toEqual(['thoughts (1 unreadable)'])
+  })
+})
+
+describe('session step and one-off focus length', () => {
+  it('captures an optional step at start and keeps it on manual and deadline endings', () => {
+    let s = run(createSnapshot(spec), [[T0, { type: 'start', sessionId: 'f1', timeZone: tz, step: '  outline   the intro ' }]])
+    expect(s.timer.session?.step).toBe('outline the intro')
+    s = run(s, [[T0 + MIN, { type: 'end', sessionId: 'f1' }], [T0 + MIN, { type: 'skipBreak' }]])
+    expect(s.records[0]).toMatchObject({ step: 'outline the intro', elapsedMs: MIN })
+
+    s = run(s, [[T0 + 2 * MIN, { type: 'start', sessionId: 'f2', timeZone: tz, step: '   ' }]])
+    expect(s.timer.session?.step).toBeNull()
+    s = reconcile(s, ctx(T0 + 27 * MIN), spec).snapshot
+    expect(s.records[1]).toMatchObject({ sessionId: 'f2', step: null, endReason: 'deadline' })
+  })
+
+  it('remembers an explicit one-off length without changing the configured default', () => {
+    let s = run(createSnapshot(spec), [[T0, { type: 'start', sessionId: 'f1', timeZone: tz, durationMinutes: 15 }]])
+    expect(s.settings.durationsMinutes.focus).toBe(25)
+    expect(s.lastFocusMinutes).toBe(15)
+    s = run(s, [[T0 + MIN, { type: 'end', sessionId: 'f1' }], [T0 + MIN, { type: 'skipBreak' }]])
+    expect(nextFocusMinutes(s, spec)).toBe(15)
+    s = run(s, [[T0 + 2 * MIN, { type: 'start', sessionId: 'f2', timeZone: tz }]])
+    expect(s.timer.session?.durationMs).toBe(15 * MIN)
+  })
+
+  it('lets a new default supersede the remembered length and rejects invalid lengths', () => {
+    let s = run(createSnapshot(spec), [
+      [T0, { type: 'start', sessionId: 'f1', timeZone: tz, durationMinutes: 5 }],
+      [T0, { type: 'end', sessionId: 'f1' }],
+      [T0, { type: 'updateSettings', patch: { durationsMinutes: { focus: 30 } } }],
+    ])
+    expect(s.lastFocusMinutes).toBeNull()
+    expect(nextFocusMinutes(s, spec)).toBe(30)
+    s = run(s, [[T0, { type: 'updateSettings', patch: { soundEnabled: false } }]])
+    const rejected = step({ ...s, timer: { ...s.timer, phase: 'focus' } }, T0, { type: 'start', sessionId: 'f2', timeZone: tz, durationMinutes: 500 })
+    expect(rejected.changed).toBe(false)
+  })
+
+  it('records eight running, three paused and two running minutes as ten minutes', () => {
+    const s = run(createSnapshot(spec), [
+      [T0, { type: 'start', sessionId: 'f1', timeZone: tz }],
+      [T0 + 8 * MIN, { type: 'pause', sessionId: 'f1' }],
+      [T0 + 11 * MIN, { type: 'resume', sessionId: 'f1' }],
+      [T0 + 13 * MIN, { type: 'end', sessionId: 'f1' }],
+    ])
+    expect(s.records[0]?.elapsedMs).toBe(10 * MIN)
+  })
+})

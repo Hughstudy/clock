@@ -86,3 +86,32 @@ body { background: radial-gradient(ellipse at 50% 15%, #fff 0%, var(--paper) 65%
 .brand-dot, .settings-entry { flex-shrink: 0; }
 .settings-entry { margin-left: 8px; }
 .home .btn-primary { padding-inline: 16px; }
+/* Optional small step, one-off lengths and thought capture. Targets stay at least 44px. */
+.step-field { width: min(320px, 100%); display: grid; gap: 4px; text-align: start; }
+.step-field label { font-size: .8125rem; font-weight: 650; color: var(--ink); }
+.step-optional { font-weight: 500; color: var(--muted); }
+.step-field input, .thought-form textarea { width: 100%; min-height: 44px; padding: 10px 14px; border: 1px solid var(--line); border-radius: 14px; background: #fff; color: var(--ink); font: inherit; font-size: 1rem; }
+.session-step { margin: 0; max-width: 320px; font-size: .875rem; color: var(--ink); overflow-wrap: anywhere; }
+.session-step span { margin-right: 6px; color: var(--muted); font-size: .75rem; }
+.duration-choices { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px; }
+.home .duration-choices .btn[aria-pressed='true'] { background: var(--whale-soft); color: var(--whale-deep); }
+.thought-panel { width: min(340px, 100%); display: grid; gap: 6px; justify-items: center; }
+.thought-actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 2px; }
+.thought-form { width: 100%; display: grid; gap: 8px; padding: 12px; border: 1px solid var(--line); border-radius: 18px; background: #fff; text-align: start; }
+.thought-title { font-size: .875rem; font-weight: 700; }
+.thought-form textarea { resize: vertical; }
+.thought-form-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 4px; }
+.thought-status { margin: 0; font-size: .8125rem; color: var(--muted); text-align: center; overflow-wrap: anywhere; }
+.thought-status--error { color: var(--whale-deep); font-weight: 650; }
+.link-button { min-height: 44px; margin-left: 6px; padding: 0 8px; border: 0; background: transparent; color: var(--whale-deep); font: inherit; font-weight: 700; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
+.link-button:disabled { opacity: .5; cursor: default; }
+.field-error .link-button { margin-left: 0; display: inline-block; }
+.stats .record-step { color: var(--ink) !important; }
+.stats .record-thoughts { margin: 0; padding-left: 1.1rem; font-size: .875rem; }
+.stats .thoughts { list-style: none; margin: 0; padding: 0; }
+.stats .thoughts > li { display: grid; gap: 2px; padding: .75rem 0; border-bottom: 1px solid var(--line); overflow-wrap: anywhere; }
+.stats .thoughts > li[data-status='putAway'] p { color: var(--muted); }
+.stats .thoughts p { margin: 0; }
+.thought-meta { color: var(--muted); font-size: .75rem; }
+.thought-row-actions { display: flex; flex-wrap: wrap; }
+.thought-row-actions .link-button { margin-left: 0; }

@@ -75,7 +75,7 @@ describe('settings updates', () => {
       [T0, { type: 'updateSettings', patch: { durationsMinutes: { shortBreak: 6 } } }],
       [T0, { type: 'updateSettings', patch: { soundEnabled: false } }],
     ])
-    expect(s.settings).toEqual({ durationsMinutes: { focus: 30, shortBreak: 6, longBreak: 15 }, soundEnabled: false, motionEnabled: true })
+    expect(s.settings).toEqual({ durationsMinutes: { focus: 30, shortBreak: 6, longBreak: 15 }, soundEnabled: false, motionEnabled: true, encouragementEnabled: true })
   })
 
   it('ignores out-of-range values', () => {
@@ -100,7 +100,7 @@ describe('completion accounting', () => {
     const started = run(createSnapshot(spec), [[T0, { type: 'start', sessionId: 'a', timeZone: 'UTC' }]])
     const withRecord: AppSnapshot = {
       ...started,
-      records: [{ sessionId: 'a', startedAt: T0, endedAt: T0 + 25 * MIN, dateKey: utcKey(T0), elapsedMs: 25 * MIN, targetMs: 25 * MIN, endReason: 'deadline', source: 'native' }],
+      records: [{ sessionId: 'a', startedAt: T0, endedAt: T0 + 25 * MIN, dateKey: utcKey(T0), elapsedMs: 25 * MIN, targetMs: 25 * MIN, endReason: 'deadline', source: 'native', step: null }],
     }
     const result = reconcile(withRecord, ctx(T0 + 30 * MIN), spec)
     expect(result.completion).toBeNull()

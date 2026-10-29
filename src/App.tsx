@@ -10,6 +10,7 @@ import { useDocumentTitle } from './hooks/useDocumentTitle'
 import { useNow } from './hooks/useNow'
 import { usePwaUpdate } from './hooks/usePwaUpdate'
 import { useSettingsForm } from './hooks/useSettingsForm'
+import { useThoughts } from './hooks/useThoughts'
 import { useStatsView, useTimerView } from './hooks/useViews'
 import { HomeScreen } from './screens/HomeScreen'
 import { SettingsScreen } from './screens/SettingsScreen'
@@ -28,6 +29,7 @@ export function App() {
   const statsView = useStatsView(app.snapshot, now)
   const form = useSettingsForm(app.snapshot.settings, app.dispatch)
   const companion = useFeedback(app, { active: screen === 'home' })
+  const thoughts = useThoughts(app)
   const motion = useMotionPreference(app.snapshot.settings.motionEnabled)
   const pwa = usePwaUpdate()
   const canEdit = app.persistence !== 'read-only'
@@ -59,9 +61,9 @@ export function App() {
         ) : (
           <>
             <div hidden={screen !== 'home'}>
-              <HomeScreen view={timerView} companion={companion} reducedMotion={motion.reducedMotion} saveState={app.saveState} canEdit={canEdit} dispatch={app.dispatch} />
+              <HomeScreen view={timerView} companion={companion} thoughts={thoughts} reducedMotion={motion.reducedMotion} saveState={app.saveState} canEdit={canEdit} dispatch={app.dispatch} />
             </div>
-            {screen === 'stats' && <StatsScreen view={statsView} />}
+            {screen === 'stats' && <StatsScreen view={statsView} thoughts={thoughts} canEdit={canEdit} />}
             {screen === 'settings' && <SettingsScreen form={form} canEdit={canEdit} />}
           </>
         )}

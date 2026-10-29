@@ -1,5 +1,6 @@
 import type { AppAction, Transition } from './app'
 import { createFeedbackMemory, transitionFeedback, type FeedbackCatalog, type FeedbackContext, type FeedbackEvent, type FeedbackOptions, type FeedbackResult } from './feedback'
+import { cueFor, type PresentationCue } from './presentation'
 import type { AppSnapshot } from './types'
 
 /** Identifies the actual committed state that produced a presentation event. */
@@ -26,6 +27,12 @@ export function feedbackFromTransition(before: AppSnapshot, transition: Transiti
     const ended = transition.ended
     return { ...base, sessionId: ended.sessionId, kind: 'focus-ended', elapsedMs: ended.elapsedMs, reason: ended.endReason === 'deadline' ? 'elapsed' : 'manual' }
   }
+  const noted = transition.thought
+  const thought = noted && (noted.change === 'marked' || noted.change === 'text') ? after.thoughts.find((t) => t.id === noted.id) : undefined
+  if (thought) {
+    // Marking and then adding text to the same thought is one interaction: one phrase at most.
+    return { ...base, ...(thought.sessionId ? { sessionId: thought.sessionId } : {}), kind: 'note-saved', hasText: thought.text !== '', interactionId: thought.id }
+  }
   if (previous && active?.id === previous.id && previous.status !== active.status) {
     return { ...base, sessionId: active.id, kind: active.status === 'paused' ? 'paused' : 'resumed' }
   }
@@ -50,6 +57,8 @@ export function feedbackContext(snapshot: AppSnapshot, persistence: FeedbackCont
 
 export interface FeedbackHostState {
   feedback: FeedbackResult
+  /** Visual cue for the latest fresh result; its identity is separate from the announcement's. */
+  cue: PresentationCue | null
   lastEventKey: string | null
   signature: string
 }
@@ -71,7 +80,7 @@ export function feedbackSignature(input: FeedbackHostInput): string {
 
 export function createFeedbackHost(input: FeedbackHostInput, catalog: FeedbackCatalog): FeedbackHostState {
   const feedback = transitionFeedback(createFeedbackMemory(), { kind: 'reconcile', id: 'initial-view', atMs: 0, origin: 'restore' }, feedbackContext(input.snapshot, input.persistence, input.event), catalog)
-  return { feedback, lastEventKey: null, signature: '' }
+  return { feedback, cue: null, lastEventKey: null, signature: '' }
 }
 
 /** Consumes each operation once, including while its screen is hidden. */
@@ -88,11 +97,12 @@ export function updateFeedbackHost(previous: FeedbackHostState, input: FeedbackH
   const feedback = transitionFeedback(previous.feedback.state, event, feedbackContext(input.snapshot, input.persistence, candidate), catalog, options)
   // The current phrase may remain visible, but navigation never replays its cue or announcement.
   if (!input.active || (!fresh && feedback.frame.status.kind !== 'error')) feedback.announcement = null
-  return { feedback, signature, lastEventKey: eventKey ?? previous.lastEventKey }
+  const cue = current ? cueFor(candidate, feedback, input.active) : null
+  return { feedback, cue, signature, lastEventKey: eventKey ?? previous.lastEventKey }
 }
 
 export function interactWithFeedback(previous: FeedbackHostState, input: FeedbackHostInput, event: FeedbackEvent, catalog: FeedbackCatalog): FeedbackHostState {
   const feedback = transitionFeedback(previous.feedback.state, event, feedbackContext(input.snapshot, input.persistence, input.event), catalog, { nodeEncouragement: input.nodeEncouragement })
   if (!input.active) feedback.announcement = null
-  return { ...previous, feedback }
+  return { ...previous, feedback, cue: cueFor(event, feedback, input.active) }
 }

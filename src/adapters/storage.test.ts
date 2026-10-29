@@ -70,12 +70,12 @@ describe('SnapshotStore persistence', () => {
     const first = tab(storage, 'a')
     await act(first, { type: 'start', sessionId: 's1', timeZone: 'UTC' }, T0)
     expect(tab(storage, 'b').snapshot.timer.session).toEqual({
-      status: 'running', id: 's1', durationMs: 25 * MIN, deadline: T0 + 25 * MIN, timeZone: 'UTC', startedAt: T0,
+      status: 'running', id: 's1', durationMs: 25 * MIN, deadline: T0 + 25 * MIN, timeZone: 'UTC', startedAt: T0, step: null,
     })
 
     await act(first, { type: 'pause' }, T0 + 5 * MIN)
     expect(tab(storage, 'c').snapshot.timer.session).toEqual({
-      status: 'paused', id: 's1', durationMs: 25 * MIN, remainingMs: 20 * MIN, timeZone: 'UTC', startedAt: T0,
+      status: 'paused', id: 's1', durationMs: 25 * MIN, remainingMs: 20 * MIN, timeZone: 'UTC', startedAt: T0, step: null,
     })
   })
 
@@ -222,7 +222,7 @@ describe('SnapshotStore recovery', () => {
     const store = tab(storage, 'a')
     expect(store.status).toEqual({ persistence: 'saved', notice: null })
     expect(store.snapshot.timer.session).toEqual({
-      status: 'running', id: 's1', durationMs: 25 * MIN, deadline: T0 + 25 * MIN, timeZone: 'Europe/Berlin', startedAt: null,
+      status: 'running', id: 's1', durationMs: 25 * MIN, deadline: T0 + 25 * MIN, timeZone: 'Europe/Berlin', startedAt: null, step: null,
     })
   })
 
@@ -231,7 +231,7 @@ describe('SnapshotStore recovery', () => {
     const raw = { version: 2, revision: 3, writer: 'x', settings: { durationsMinutes: { focus: 30, shortBreak: 5, longBreak: 15 }, soundEnabled: 'yes' }, timer: { phase: 'focus', session: null, completedFocusCount: 0 }, completions: [] }
     storage.data.set(KEY, JSON.stringify(raw))
     const store = tab(storage, 'a')
-    expect(store.snapshot.settings).toEqual({ durationsMinutes: { focus: 30, shortBreak: 5, longBreak: 15 }, soundEnabled: true, motionEnabled: true })
+    expect(store.snapshot.settings).toEqual({ durationsMinutes: { focus: 30, shortBreak: 5, longBreak: 15 }, soundEnabled: true, motionEnabled: true, encouragementEnabled: true })
     expect(store.status.notice).toEqual({ kind: 'repaired', fields: ['settings.soundEnabled'], backupKey: `${KEY}:backup:${T0}` })
   })
 
@@ -350,7 +350,7 @@ describe('durable early ends and recovery', () => {
     }))
     const upgraded = tab(storage, 'new')
     await act(upgraded, { type: 'reconcile' }, T0)
-    expect(stored(storage).version).toBe(3)
+    expect(stored(storage).version).toBe(4)
     expect(stored(storage).settings.soundEnabled).toBe(false)
   })
   it('prevents a stale tab from reviving older-generation data on its next action', async () => {

@@ -6,34 +6,41 @@ import type { AppSnapshot, FocusRecord } from './types'
 const ctx = { timeZone: 'Asia/Tokyo' }
 const record = (sessionId: string, endedAt = 1000): FocusRecord => ({
   sessionId, endedAt, dateKey: '2026-10-28', elapsedMs: 1_500_000,
-  targetMs: 1_500_000, startedAt: null, endReason: 'deadline', source: 'legacy',
+  targetMs: 1_500_000, startedAt: null, endReason: 'deadline', source: 'legacy', step: null,
 })
 function sample(): AppSnapshot {
   return { ...createSnapshot(spec), revision: 7, writer: 'tab-a',
-    timer: { phase: 'focus', session: { status: 'paused', id: 's2', durationMs: 1_500_000, remainingMs: 600_000, timeZone: 'Europe/Berlin', startedAt: null }, completedFocusCount: 1 },
+    timer: { phase: 'focus', session: { status: 'paused', id: 's2', durationMs: 1_500_000, remainingMs: 600_000, timeZone: 'Europe/Berlin', startedAt: null, step: null }, completedFocusCount: 1 },
     records: [record('s1')], participations: [
       { sessionId: 's1', participatedAt: null, dateKey: '2026-10-28', source: 'legacy-completion' },
       { sessionId: 's2', participatedAt: null, dateKey: null, source: 'legacy-active' },
     ],
   }
 }
+/** A v3 snapshot as the previous app version wrote it. */
+function v3(): Record<string, unknown> {
+  const { lastFocusMinutes: _l, thoughts: _t, thoughtDraft: _d, ...rest } = sample()
+  const { step: _s, ...session } = rest.timer.session!
+  return { ...rest, version: 3, timer: { ...rest.timer, session }, records: rest.records.map(({ step: _, ...r }) => r) }
+}
 function legacy(version: number) {
-  const { motionEnabled: _, ...settings } = createSnapshot(spec).settings
+  const { motionEnabled: _, encouragementEnabled: __, ...settings } = createSnapshot(spec).settings
   return { version, revision: 4, writer: 'old', settings,
     timer: { phase: 'focus', completedFocusCount: 1, session: { status: 'paused', id: 's2', durationMs: 1_500_000, remainingMs: 600_000, ...(version === 2 ? { timeZone: 'Europe/Berlin' } : {}) } },
     completions: [{ sessionId: 's1', completedAt: 5000, dateKey: '2026-10-28', focusMs: 1_500_000 }],
   }
 }
 
-describe('snapshot v3 and migration', () => {
+describe('snapshot v4 and migration', () => {
   it('round-trips without replacing valid fields', () => {
     const s = sample()
     expect(decodeSnapshot(encodeSnapshot(s), spec, ctx)).toEqual({ kind: 'ok', snapshot: s, issues: [] })
   })
-  it('upgrades an existing v3 snapshot without motion preference and preserves its session/history', () => {
+  it('upgrades a v3 snapshot without new preferences, steps or thoughts and preserves its session/history', () => {
     const before = sample()
-    const { motionEnabled: _, ...oldSettings } = before.settings
-    const decoded = decodeSnapshot(JSON.stringify({ ...before, settings: oldSettings }), spec, ctx)
+    const old = v3()
+    const { motionEnabled: _, encouragementEnabled: __, ...oldSettings } = before.settings
+    const decoded = decodeSnapshot(JSON.stringify({ ...old, settings: oldSettings }), spec, ctx)
     expect(decoded).toEqual({ kind: 'ok', snapshot: before, issues: [] })
     const quiet = { ...before, settings: { ...before.settings, motionEnabled: false } }
     expect(decodeSnapshot(encodeSnapshot(quiet), spec, ctx)).toEqual({ kind: 'ok', snapshot: quiet, issues: [] })
@@ -42,7 +49,7 @@ describe('snapshot v3 and migration', () => {
     const decoded = decodeSnapshot(JSON.stringify(legacy(version)), spec, ctx)
     if (decoded.kind !== 'ok') throw Error(decoded.kind)
     expect(decoded.issues).toEqual([])
-    expect(decoded.snapshot.version).toBe(3)
+    expect(decoded.snapshot.version).toBe(4)
     expect(decoded.snapshot.records).toEqual([{ ...record('s1', 5000) }])
     expect(decoded.snapshot.participations).toEqual(sample().participations)
     expect(decoded.snapshot.timer.session).toMatchObject({ status: 'paused', remainingMs: 600_000, startedAt: null, timeZone: version === 1 ? 'Asia/Tokyo' : 'Europe/Berlin' })

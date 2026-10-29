@@ -43,7 +43,7 @@ export function CompanionFeedback({ feedback, reducedMotion, motionEnabled = fal
         </button>
       ) : <div className="companion-feedback__character" aria-hidden="true">{renderCharacter ? renderCharacter(presentation) : <Placeholder />}</div>}
       <div className="companion-feedback__content">
-        {(frame.persistence !== 'saved' || frame.status.kind === 'error' || !frame.encouragement) && <p className={`companion-feedback__status${frame.status.kind === 'error' ? ' companion-feedback__status--error' : ''}`}>{frame.status.text}</p>}
+        {(frame.persistence !== 'saved' || frame.status.kind === 'error' || frame.status.result || !frame.encouragement) && <p className={`companion-feedback__status${frame.status.kind === 'error' ? ' companion-feedback__status--error' : ''}`}>{frame.status.text}</p>}
         {frame.encouragement && <p className="companion-feedback__copy">{frame.encouragement.text}</p>}
         <div className="companion-feedback__actions">
           {requested && onNext && <button type="button" onClick={onNext}>{labels.next}</button>}

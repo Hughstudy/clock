@@ -48,6 +48,7 @@ const record = (sessionId: string, dateKey: string, minutes = 25): FocusRecord =
   startedAt: null,
   endReason: 'deadline',
   source: 'legacy',
+  step: null,
 })
 
 describe('stats', () => {
