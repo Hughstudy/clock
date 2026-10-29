@@ -1,6 +1,6 @@
 # Focus App: Next Implementation Plan (Review Draft)
 
-Updated: 2026-10-29. This plan describes the next work from the current code baseline and awaits user review. It is not a new PRD revision or a claim that the planned features already exist. This update splits the work into animation and main logic; it changes documentation only, not the source-code structure. Maintain this plan and active project documentation in English; the app's launch language remains a separate product decision.
+Updated: 2026-10-30. This plan distinguishes implemented scope from the remaining review proposals. The user authorized start-scene implementation and integration: all 11 scenes, C2-P2 and snapshot v5 are implemented and pass the recorded desktop browser checks. This is not a new PRD revision or a claim of physical-device acceptance or completion of P0. Maintain this plan and active project documentation in English; the app's launch language remains a separate product decision.
 
 ## 1. Sources and current baseline
 
@@ -8,22 +8,22 @@ Updated: 2026-10-29. This plan describes the next work from the current code bas
 - Subsequent user choice: friendly, cute animation with “a soft, round blue creature with expressive little arms.” Continue this prototype direction. The final name, brand icons, material and individual gestures remain open.
 - Implementation baseline: `e6daa66`, containing the complete handoff source and blue companion integration. On 2026-10-29 the user requested committing and pushing this implementation together with the English workstream plans. A fresh fetch found remote main at `0a57d03` with no divergent commits. This publication covers the current prototype, not the unfinished P0 plan; deployment results are tracked in [GitHub Actions](https://github.com/Hughstudy/clock/actions).
 - Handoff source baseline: `57ca8697cfa3a694f5e319e00d8dc4ee38b4c907`. Preserve the original PRD and [collaboration register snapshot](docs/handoff-20261029/番茄钟_开发协作.md) as historical references. Do not overwrite the cloud register or turn this plan into a duplicate cross-window ownership board.
-- Existing evidence: the [friendly companion verification report](docs/verification/friendly-companion.md). That implementation passed strict type checks, 193 tests, a `/clock/` production build, and desktop Chromium checks at phone widths, including offline reopening. Branch statements in that report describe its original verification point; the current Git baseline is above. Application tests were not rerun for this documentation update.
+- Existing evidence: the [friendly companion verification report](docs/verification/friendly-companion.md). Its counts and branch statements describe that historical verification point. Current [session-scene verification](docs/verification/blue-companion-touch.md#session-scenes-integrated-verification) records strict TypeScript, 284 tests, the `/clock/` build, 60 app assertions, 30 touch checks and 67 scene checks in desktop Chrome, including offline recovery. Physical-device acceptance remains separate.
 
 ## 2. Current differences from the PRD
 
 | Capability | Implemented now | Remaining work | PRD reference |
 | --- | --- | --- | --- |
 | F1: timing and accounting | Deadline timing, pause/resume, actual short and zero-second records, freely available rest, expiry reconciliation before actions, separate participation and full-completion counts; optional small step, remembered one-off length and factual end summary (L1, branch `claude/main-logic-l0-l2`) | First-use “Start with 5 minutes” hierarchy remains a review proposal | Sections 4, 10 |
-| Supportive feedback | Saved start/pause/resume/end/rest events; requested encouragement with next/dismiss; no replay on recovery or synchronization | Welcome/return and F2/F3 events; requested-encouragement categories; bookmarks; saved event-encouragement preference | Section 7 |
-| Blue companion | Original rough.js artwork, seven semantic poses, finite wave/rebound/ending gestures, quiet focus, saved animation preference | Contact with real UI elements, local deformation and cancellable choreography; final artwork and icons | Section 8 |
+| Supportive feedback | Saved start/pause/resume/end/rest and thought-save events; requested encouragement with next/dismiss; saved event-encouragement preference; factual result kept separate; no replay on recovery or synchronization | Welcome/return coverage, requested-encouragement categories and bookmarks | Section 7 |
+| Blue companion | Original rough.js artwork, seven semantic poses, direct pat/squish/high-five responses, quiet focus, saved motion preference; all eight focus and three rest activities with cancellable entrances/beats/endings and static states (C2-P2, current working tree) | Final integrated visual/device acceptance; contact with external UI surfaces; final artwork and icons | Section 8 |
 | F2: thought capture | One-tap empty marker, optional text, persisted draft, session association, put-away, deletion with undo and cross-tab conflict rules (L2, branch `claude/main-logic-l0-l2`) | Announcement policy for delete/undo results; broader browsing in L3 | Section 5 |
 | F3: records | Actual-time totals and a basic history list | Day-grouped records, proposed 7/30-day views, inline details, thoughts/collections modes and position preservation | Section 6 |
-| Rewards | One participation record per new session and an encouragement library | Visible session mementos that can be revisited, welcome content, bookmarks, permanent content and deduplication; mechanics require review | Section 7 |
-| Persistence | Snapshot v4, v1–v3 migration, Web Locks, pending-save retries, merging within a dataset generation, thought revision/deletion-marker conflict rules | Reward/bookmark model, JSON backup, replacement restore and clear-all | Section 10 |
-| Settings and delivery | Duration/sound/motion controls, two primary destinations, auxiliary Settings, static PWA and GitHub Pages configuration | Clear invalid-input recovery, encouragement/memento preferences, data management; complete physical-device, installation and accessibility acceptance | Sections 9, 12 |
+| Rewards | One participation record per new session and an encouragement library; approved scene unlocks at 1/3/6/10/15 unique deadline-ended sessions, with a saved local-dataset notice claim before optional display | Revisitable session mementos, welcome content, bookmarks and other permanent illustrations; these separate mechanics still require review | Section 7 |
+| Persistence | Snapshot v5 with earlier migrations, retained session/record scene assignments, separate focus/rest rotation cursors, silent historical scene grants; Web Locks, retries, dataset-scoped merge and thought revision/deletion-marker rules | Remaining reward/bookmark model, JSON backup, replacement restore and clear-all | Section 10 |
+| Settings and delivery | Duration/sound/motion/event-encouragement and scene-variety controls, two primary destinations, auxiliary Settings, static PWA and GitHub Pages configuration | Memento preferences and data management; complete physical-device, installation and accessibility acceptance | Sections 9, 12 |
 
-One experience issue deserves early attention: after a successful ending, encouragement hides the factual status containing the actual duration, while Home displays the next ready timer. Accounting is correct, but the user cannot immediately see how much time was just recorded. Present the factual result separately from encouragement within the existing scene.
+The factual end result is now presented separately from encouragement. The scene ending reads the saved record's actual elapsed time; its illustration never replaces that factual line or serves as evidence of persistence.
 
 ## 3. Product goal and scope
 
@@ -37,7 +37,7 @@ Month/arbitrary-date filtering, individual focus-record deletion, CSV, backup me
 
 ## 4. Concrete proposals for this review
 
-These are recommendations, not individually approved decisions. Continue the selected round blue creature instead of reopening unrelated character directions.
+The table contains recommendations that are not individually approved, except where later user decisions below explicitly supersede them. Continue the selected round blue creature instead of reopening unrelated character directions.
 
 | Decision | Recommendation | Status and tradeoff |
 | --- | --- | --- |
@@ -49,11 +49,11 @@ These are recommendations, not individually approved decisions. Continue the sel
 | Physical interaction | Start with option A: stationary controls with surfaces that react to contact. Nudge an edge on start, put away a saved thought, lean against the timer during rest | Compare B, coordinated scene interaction, and C, actual control movement, using the same task. No physics engine or freely draggable world is needed initially |
 | Records | Default to the last 7 days, switchable to 30; one range total, collapsed trend and day-grouped list; thoughts and collections in the same page | A PRD structure proposal. Thoughts and collections are not restricted to the 7-day window |
 | Reward format | One original illustration style showing the companion's everyday life: small session mementos attached to real records; welcome content, bookmarked phrases and a few permanent illustrations in Collections | Review acquisition, saving and later viewing together. No separate reward room or claim step |
-| Permanent rewards | Prepare three illustrations in a consistent style; use 3/8/20 distinct sessions only as candidate review parameters | Quantity, thresholds and whether to use cumulative unlocking are unapproved. The initial design review (A1/L0) must settle the rule before production implementation; these numbers are not scientific guidance |
+| Other permanent illustrations | Prepare three illustrations in a consistent style; use 3/8/20 distinct sessions only as candidate review parameters | This separate illustration proposal is unapproved. It does not describe or override the approved 1/3/6/10/15 scene-unlock rule below; these numbers are not scientific guidance |
 
 **User decision, 2026-10-29:** each focus start plays an automatically chosen scene. Endings reflect actual focused time, rest has its own scenes, and successful sessions permanently unlock new scenes. The clock stays a separate badge, and rendering stays SVG/CSS. Success means a session reaches its own chosen length, and scenes unlock at 1/3/6/10/15 successful sessions. See [Start Scenes Plan](docs/plans/START_SCENES_PLAN.md).
 
-For session mementos, propose retaining the current participation rule: one per newly started logical session, with equal treatment for zero-second and fully elapsed sessions. This is separate from permanent-content unlocking. Hiding mementos must not stop accounting or remove rewards. If cumulative unlocking is rejected, define the alternative way permanent content becomes available and update the milestones rather than silently dropping that part of reward design.
+For session mementos, propose retaining the current participation rule: one per newly started logical session, with equal treatment for zero-second and fully elapsed sessions. This remains separate from the approved scene unlocks and any future permanent illustrations. Hiding mementos must not stop accounting or remove rewards. The remaining illustration acquisition/viewing design still needs a decision.
 
 ## 5. Two independent workstreams
 
@@ -79,7 +79,9 @@ This is a responsibility split across the existing architecture. Pure drawing/po
 
 ## 6. Interface between main logic and animation
 
-Branch `claude/main-logic-l0-l2` implements the first version as `C2-P1` in `src/contracts/presentation.ts`. It provides a read-only `CompanionView`, a `PresentationCue` whose identity is separate from the announcement, and `CompanionCallbacks`, together with fixtures generated from the real logic in `presentation-fixtures.ts`. Contact anchors and reward content IDs are not yet covered. The table below remains the target; see [the verification report](docs/verification/main-logic-l0-l2.md).
+The implementation uses `C2-P2` in `src/contracts/presentation.ts`, extending the earlier C2-P1 boundary with an optional read-only `CompanionScene`. It preserves `CompanionView`, independently identified `PresentationCue` and explicit `CompanionCallbacks`. Real-transition fixtures live in `presentation-fixtures.ts`; the standalone animation preview adds all-catalog presentation controls. The [C2-P1 verification report](docs/verification/main-logic-l0-l2.md) remains historical evidence; C2-P2 has its own [integrated verification](docs/verification/blue-companion-touch.md#session-scenes-integrated-verification). General measured contact anchors and other reward artwork contracts are not covered by C2-P2.
+
+`CompanionScene` carries a dataset/session/selection-version key, scene ID, session ID, phase/status, completed progress (0–1 in 1/100 steps; zero for rest), an attention gate, the permitted cue and an optional ending bound to that cue. Focus ending tiers come from the saved record, while rest has no tier. Retained v5 scene state cannot replay an ending without a fresh eligible result. The clock badge retains its own remaining-time fraction; it is not the scene's completed progress.
 
 ```mermaid
 flowchart LR
@@ -95,7 +97,7 @@ flowchart LR
 | --- | --- | --- |
 | Read-only view | Main supplies phase/status, true time/progress, factual persistence/error state, selected content IDs and presentation preferences; only the data needed by the renderer | Render the latest state. No access to mutable snapshots or storage and no recalculation of elapsed time/reward eligibility |
 | Transient visual cue | Main validates the operation identity, generation/revision, origin and persistence, then supplies a stable cue identity and allowed semantic result | One permitted gesture at most. Renderer may cancel or omit it; doing so has no effect on accounting or saved content |
-| Scene inputs | Main's layout exposes stable target refs/anchors; animation measures and coordinates contact within its UI hooks | No DOM measurements in pure logic. Adapt to resize/keyboard changes; cancel safely if a target is absent or moves |
+| Scene inputs | Main supplies the saved scene selection, completed progress and attention gate. C2-P2 uses the existing stationary stage/SVG footprint; general target refs/anchors remain future contact work | No elapsed-time calculation or selection in animation. Suppress motion for input/panels; preserve clock, feedback and native target areas. DOM measurement belongs in hooks if later contact work requires it |
 | User callbacks | Main supplies explicit request/next/dismiss/bookmark or other approved controls | Dispatch only on real user intent. Touching a button in a character animation must not dispatch a click |
 | Accessibility output | Main selects factual messages, announcement identity and priority; native controls keep accessible names and focus | Animation adds no duplicate live announcements. Reduced motion retains a useful static expression and all semantic controls |
 | Local completion/cancellation | Animation clears only its own transient motion state | `animationend`, timeouts and cancellation must never save, grant rewards, start/end sessions or enable a waiting business action |
@@ -108,6 +110,9 @@ flowchart LR
 - Explicit requests for encouragement do not require a data write. Bookmark/save success does. Distinguish the two rather than gating every visual event on persistence.
 - Main decides error priority and which cues may be shown. Animation can suppress motion for reduced motion, hidden/unmounted screens, input stability or missing anchors, but cannot upgrade an ineligible result into success.
 - Give visual cues an identity independent of screen-reader announcement identity. Main owns durable reward/notification deduplication; animation owns only transient gesture consumption. Do not persist animation replay queues.
+- Scene selection is saved with each accepted session and retained on its focus record. Focus and rest have independent persisted rotation cursors; pause, resume, reload, settings edits and rejected starts do not select again. Newly unlocked activities are introduced one per subsequent focus start while preserving the remaining bag.
+- Scene unlocks use unique deadline-ended records and merge additively within a dataset generation. Migration grants historical eligibility silently. Main claims a new inline notice under the local dataset's Web Lock before optional display, after a 3 s visible ready-state quiet interval. A claim can be consumed without display; it is not a cross-device delivery promise. Reduced motion keeps the text notice, and absent confirmed saved persistence suppresses it.
+- `allowBeats` is the host's attention gate for all scene motion, including entrances/endings. Touch, typing/panels, pause, hide, errors and reduced motion cancel transient motion; returning starts a fresh quiet beat interval. Focus `begin`, rest `rest` and matching `settle` cues are the existing semantic mappings. No additional unlock animation cue is used.
 - Rapid operations, errors, navigation, backgrounding, generation changes and reduced motion cancel stale choreography. Latest state wins; no delayed playback queue and no waiting for a gesture before the next action.
 - Publish fixtures for ready/running/paused/resting, early/full/zero endings, empty/text thought saves, requested encouragement, pending/failure/retry, restore/sync, stale IDs and reduced motion. Animation can develop against fixtures; main must pass the same functional outcomes with a static or absent renderer.
 
@@ -139,18 +144,20 @@ Review boundaries are product choices and concrete deliverables. Once a workstre
 
 ## 9. Current review status and next step
 
-This is an English documentation split for review, not a source-code refactor. The next product deliverables are A1's character/contact/reward samples and L0's shared contract with explicit fixtures. Subsequent visual work and core functionality can then proceed in parallel.
+The authorized start-scene model, artwork and integration pass the recorded production-browser checks. Physical-device acceptance and the wider records/rewards/data-management plan remain open; completed scene work does not complete those milestones. The deployment workflow also runs the reproducible E2E suite before publishing Pages.
 
 - [x] Handoff source, F1 foundation and blue companion committed to local main (`e6daa66`).
 - [x] PRD-to-code gaps and unapproved proposals documented in English.
 - [x] Animation and main-logic plans separated, with ownership, interface, dependencies and acceptance criteria.
 - [ ] User review of the split and proposed product choices.
-- [ ] A1/L0 experience review and shared interface published in code. (L0 `C2-P1` contract and fixtures are published on main; A1 review remains pending.)
-- [ ] Start scenes S0–S5 per [Start Scenes Plan](docs/plans/START_SCENES_PLAN.md).
+- [ ] A1/L0 full experience review. (C2-P1 is the published historical contract; C2-P2 and scene fixtures are implemented in the working tree. Broader contact/reward design review remains open.)
+- [x] Authorized start-scene implementation and integration: all 11 scenes, C2-P2, v5, selection, unlock claims and settings. See [Start Scenes Plan](docs/plans/START_SCENES_PLAN.md).
+- [x] Start-scene production-browser validation and report, including actual limits.
+- [ ] Physical-device acceptance. Desktop browser evidence does not establish mobile-device behavior.
 - [ ] A2 fixture-driven animation components. (Direct touch and calm countdown motion are published on main; shared-surface contact remains pending.)
 - [ ] L1/L2 F1, data foundation and thought lifecycle. (Implemented, locally verified and published on main. Device, screen-reader and offline acceptance checks are still open.)
 - [ ] L3 records, approved rewards, bookmarks and preferences.
-- [ ] A3 real-result integration and approved artwork.
+- [ ] A3 broader real-result integration and approved artwork. (The authorized scene catalogue is connected to actual saved results; other reward/contact work remains.)
 - [ ] A4 animation, accessibility and device acceptance.
 - [ ] L4 complete backup/restore/clear.
 - [ ] L5 integrated phone/PWA release candidate.

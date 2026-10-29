@@ -75,7 +75,7 @@ describe('settings updates', () => {
       [T0, { type: 'updateSettings', patch: { durationsMinutes: { shortBreak: 6 } } }],
       [T0, { type: 'updateSettings', patch: { soundEnabled: false } }],
     ])
-    expect(s.settings).toEqual({ durationsMinutes: { focus: 30, shortBreak: 6, longBreak: 15 }, soundEnabled: false, motionEnabled: true, encouragementEnabled: true })
+    expect(s.settings).toEqual({ durationsMinutes: { focus: 30, shortBreak: 6, longBreak: 15 }, soundEnabled: false, motionEnabled: true, encouragementEnabled: true, sceneVarietyEnabled: true })
   })
 
   it('ignores out-of-range values', () => {

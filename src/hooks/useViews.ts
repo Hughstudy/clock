@@ -26,6 +26,8 @@ export interface TimerView {
   totalMs: number
   /** Remaining proportion: full at the start, empty when the session is due. */
   progress: number
+  /** Elapsed focus proportion, 0 at start, 1 at deadline; pauses retain the value. */
+  completedProgress: number
   cycle: CycleProgress
   today: DayTotal
 }
@@ -50,6 +52,8 @@ export function useTimerView(snapshot: AppSnapshot, now: number): TimerView {
     remainingMs: remaining,
     totalMs: total,
     progress: total > 0 ? remaining / total : 0,
+    completedProgress: timer.session && !isBreak(timer.phase) && total > 0
+      ? Math.floor(Math.min(1, Math.max(0, 1 - remaining / total)) * 100) / 100 : 0,
     cycle: cycleProgress(timer, spec.timer.longBreakEvery),
     today: dayTotal(index, localDateKey(now)),
   }

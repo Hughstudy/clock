@@ -21,9 +21,28 @@ describe('motion preference', () => {
   it('merges the preference as one field and preserves newer duration and sound edits', () => {
     const changedDuration = applySettingsPatch(defaultSettings(spec), { durationsMinutes: { focus: 15 }, soundEnabled: false }, spec)
     const quiet = applySettingsPatch(changedDuration, { motionEnabled: false }, spec)
-    expect(quiet).toEqual({ durationsMinutes: { focus: 15, shortBreak: 5, longBreak: 15 }, soundEnabled: false, motionEnabled: false, encouragementEnabled: true })
+    expect(quiet).toEqual({ durationsMinutes: { focus: 15, shortBreak: 5, longBreak: 15 }, soundEnabled: false, motionEnabled: false, encouragementEnabled: true, sceneVarietyEnabled: true })
     expect(sameSettings(changedDuration, quiet)).toBe(false)
     expect(applySettingsPatch(quiet, { durationsMinutes: { longBreak: 20 } }, spec).motionEnabled).toBe(false)
+  })
+})
+
+describe('scene variety preference', () => {
+  it('upgrades absent values without a repair warning and validates malformed data', () => {
+    const { sceneVarietyEnabled: _, ...legacy } = defaultSettings(spec)
+    expect(sanitizeSettings(legacy, spec)).toEqual({ settings: defaultSettings(spec), issues: [] })
+    expect(sanitizeSettings({ ...legacy, sceneVarietyEnabled: 'false' }, spec)).toEqual({
+      settings: defaultSettings(spec), issues: ['settings.sceneVarietyEnabled'],
+    })
+  })
+
+  it('patches only display preference while retaining sound, duration and motion edits', () => {
+    const latest = applySettingsPatch(defaultSettings(spec), { durationsMinutes: { focus: 15 }, soundEnabled: false, motionEnabled: false }, spec)
+    const hidden = applySettingsPatch(latest, { sceneVarietyEnabled: false }, spec)
+    expect(hidden).toEqual({ ...latest, sceneVarietyEnabled: false })
+    expect(sanitizeSettings(hidden, spec)).toEqual({ settings: hidden, issues: [] })
+    expect(sameSettings(latest, hidden)).toBe(false)
+    expect(applySettingsPatch(hidden, { encouragementEnabled: false }, spec).sceneVarietyEnabled).toBe(false)
   })
 })
 

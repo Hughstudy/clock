@@ -2,7 +2,8 @@
   "specVersion": 1,
   "presentation": {
     "motionEnabledDefault": true,
-    "encouragementEnabledDefault": true
+    "encouragementEnabledDefault": true,
+    "sceneVarietyEnabledDefault": true
   },
   "timer": {
     "durationsMinutes": {

@@ -22,21 +22,21 @@
 .blue-companion[data-stance='resting'] .blue-companion__stance { transform: rotate(-4deg) scale(1.035, .97); }
 .blue-companion[data-stance='support'] .blue-companion__stance { transform: rotate(-2deg); }
 .blue-companion[data-stance='paused'] .blue-companion__stance { transform: scale(1.025, .98); }
-.blue-companion[data-static='false'][data-touch=''][data-cue='']:is([data-stance='ready'], [data-stance='paused'], [data-stance='resting']) .blue-companion__body {
+.blue-companion[data-static='false'][data-touch=''][data-cue='']:is([data-scene=''], [data-scene-motion='true']):is([data-stance='ready'], [data-stance='paused'], [data-stance='resting']) .blue-companion__body {
   animation: blue-breathe var(--blue-breathing) ease-in-out infinite;
 }
-.blue-companion[data-static='false'][data-touch=''][data-cue='']:is([data-stance='ready'], [data-stance='support'], [data-stance='focused']) .blue-companion__eyes {
+.blue-companion[data-static='false'][data-touch=''][data-cue='']:is([data-scene=''], [data-scene-motion='true']):is([data-stance='ready'], [data-stance='support'], [data-stance='focused']) .blue-companion__eyes {
   animation: blue-blink var(--blue-blink) linear infinite;
 }
 /* A quiet presence throughout focus. CSS owns the rhythm, so countdown
    rerenders never schedule a gesture or restart the breathing cycle. */
-.blue-companion[data-stance='focused'][data-static='false'][data-touch=''][data-cue=''] .blue-companion__body {
+.blue-companion[data-stance='focused'][data-static='false'][data-touch=''][data-cue='']:is([data-scene=''], [data-scene-motion='true']) .blue-companion__body {
   animation: blue-focus-breathe var(--blue-breathing) ease-in-out infinite;
 }
-.blue-companion[data-stance='focused'][data-static='false'][data-touch=''][data-cue=''] .blue-companion__arm--left {
+.blue-companion[data-scene=''][data-stance='focused'][data-static='false'][data-touch=''][data-cue=''] .blue-companion__arm--left {
   animation: blue-focus-hand-left var(--blue-breathing) ease-in-out infinite;
 }
-.blue-companion[data-stance='focused'][data-static='false'][data-touch=''][data-cue=''] .blue-companion__arm--right {
+.blue-companion[data-scene=''][data-stance='focused'][data-static='false'][data-touch=''][data-cue=''] .blue-companion__arm--right {
   animation: blue-focus-hand-right var(--blue-breathing) ease-in-out infinite;
 }
 .blue-companion[data-cue='welcome'] .blue-companion__gesture,

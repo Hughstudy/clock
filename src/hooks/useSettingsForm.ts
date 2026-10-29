@@ -26,6 +26,8 @@ export interface SettingsForm {
   setMotionEnabled: (on: boolean) => void
   encouragementEnabled: boolean
   setEncouragementEnabled: (on: boolean) => void
+  sceneVarietyEnabled: boolean
+  setSceneVarietyEnabled: (on: boolean) => void
   isDefault: boolean
   restoreDefaults: () => void
 }
@@ -92,7 +94,9 @@ export function useSettingsForm(saved: Settings, dispatch: (action: UserAction) 
     setMotionEnabled: (on) => save({ motionEnabled: on }),
     encouragementEnabled: settings.encouragementEnabled,
     setEncouragementEnabled: (on) => save({ encouragementEnabled: on }),
-    isDefault: sameSettings({ ...defaults, soundEnabled: settings.soundEnabled, motionEnabled: settings.motionEnabled, encouragementEnabled: settings.encouragementEnabled }, settings),
+    sceneVarietyEnabled: settings.sceneVarietyEnabled,
+    setSceneVarietyEnabled: (on) => save({ sceneVarietyEnabled: on }),
+    isDefault: sameSettings({ ...defaults, soundEnabled: settings.soundEnabled, motionEnabled: settings.motionEnabled, encouragementEnabled: settings.encouragementEnabled, sceneVarietyEnabled: settings.sceneVarietyEnabled }, settings),
     restoreDefaults: () => {
       setDrafts({})
       save({ durationsMinutes: defaults.durationsMinutes })

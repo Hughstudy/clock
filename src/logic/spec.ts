@@ -46,6 +46,7 @@ export interface Spec {
   presentation: {
     motionEnabledDefault: boolean
     encouragementEnabledDefault: boolean
+    sceneVarietyEnabledDefault: boolean
   }
   timer: {
     durationsMinutes: Record<Phase, DurationBounds>
@@ -243,6 +244,7 @@ export function parseSpec(raw: unknown): Spec {
     presentation: {
       motionEnabledDefault: bool(presentation.motionEnabledDefault, 'presentation.motionEnabledDefault'),
       encouragementEnabledDefault: bool(presentation.encouragementEnabledDefault, 'presentation.encouragementEnabledDefault'),
+      sceneVarietyEnabledDefault: bool(presentation.sceneVarietyEnabledDefault, 'presentation.sceneVarietyEnabledDefault'),
     },
     timer: {
       durationsMinutes,

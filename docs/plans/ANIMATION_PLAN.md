@@ -18,7 +18,7 @@ Continue this blue prototype. Final proportions, material, branded name/icons an
 
 ## Session activities: research and proposal — 2026-10-29
 
-**Status: research complete; proposed scenes await review. No application changes in this increment.** The latest user direction is to keep the current style and small clock on the right, while giving each new focus session a different animation activity. The food-waiting example is a starting point for a small story that continues during the countdown.
+**Historical research proposal.** This section records the research-only increment. The user subsequently authorized implementation and integration of the catalogue in the [Start Scenes Plan](START_SCENES_PLAN.md), which supersedes this section's candidate list, rotation proposal and absence of duration-based progress/unlocks. The current direction keeps the existing style and small clock on the right, while giving each new focus session a different animation activity.
 
 This is the next proposed animation increment within A1–A3. It does not require the earlier button/timer-contact experiments to ship first. Keep the original blue silhouette, expressive arms, existing sketch outlines, soft shading, palette, ground and touch behavior. Add a few matching props and poses inside the current scene. The current layout remains the baseline for review.
 
@@ -196,6 +196,29 @@ Pure drawing modules may remain under `src/logic/`: the workstream split does no
 For application changes, run the focused checks, `npm run check` and `BASE_PATH=/clock/ npm run build`, then inspect the production experience. Visual inspection covers all poses and the four contact frames; screenshots alone do not prove cancellation or accounting correctness. Coordinate complete phone/PWA acceptance with the main workstream rather than claiming an animation-only preview validates the whole app.
 
 ## Handoff and current status
+
+### Session activity increment
+
+The authorized catalogue now implements eight focus activities (food, plant,
+book, tea, bubbles, paper boat, blocks and stars) and three rest activities
+(stretch, clouds and warm drink). Original props reuse the blue creature's
+validated rough.js geometry, palette and cached SVG paths. Each has a distinct
+entrance, quiet presence, sparse 60–90-second action, paused state and complete
+ending. Touch and explicit encouragement take priority; reduced motion retains
+static scenes. Food endings distinguish the four host-selected time tiers;
+other scenes share their ending composition with different timing/flourishes.
+
+At the user's explicit request this increment includes integration: C2-P2's
+read-only scene descriptor, snapshot v5 assignments and independent focus/rest
+rotation, saved ending identity, unlock rules, atomic local-dataset notice
+claims and scene-variety settings. Animation never owns accounting or saves.
+The clock stays in its corner. Feedback keeps its 44px minimum slot and grows
+below the artwork when long, preventing enlarged messages from covering props.
+
+Strict TypeScript, 284 tests, the production build and desktop Chrome E2E
+checks pass. The reproducible suite covers 60 app assertions, 30 touch checks
+and 67 scene checks. See the [appended verification record](../verification/blue-companion-touch.md#session-scenes-integrated-verification)
+for commands, browser version and remaining physical-device limitations.
 
 ### Touch interaction increment — 2026-10-29
 

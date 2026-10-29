@@ -124,3 +124,74 @@ Physical iPhone/Android, OS reduced-motion changes, real screen-reader listening
 soft keyboard, installed mode, locked-screen and cold offline checks were not
 performed for this increment. Desktop layouts and synthetic events do not
 substitute for those checks.
+
+## Session scenes: integrated verification
+
+This later increment was explicitly authorized for implementation and full
+integration. Earlier sections remain the historical touch/countdown record.
+The current change adds all eight focus and three rest scenes from the
+[Start Scenes Plan](../plans/START_SCENES_PLAN.md), C2-P2, snapshot v5, retained
+scene assignments, independent focus/rest rotation, saved ending tiers and
+permanent scene unlocks at 1/3/6/10/15 fully elapsed focus sessions.
+
+All artwork remains original cached rough.js/SVG. No animation runtime was
+added. Playwright 1.62.1 is a development-only dependency for repeatable E2E
+checks. Main owns time, persistence, unlocks and one live region; animation
+completion has no business effect. Unlock claims are scoped to one local
+browser dataset, with no cross-device synchronization claim.
+
+### Verified commands and environment
+
+- `npm run check`: strict TypeScript and **284 tests across 24 files passed**.
+  Coverage includes scene selection, bag boundaries, simultaneous starts,
+  independent rest rotation, v4 migration, corruption recovery, confirmed
+  endings, failed writes/retries, atomic two-tab claims, settings merges,
+  encouragement-off cues, pure architecture and motion cancellation.
+- `./node_modules/.bin/tsc -p preview/animation/tsconfig.json`: passed.
+- `BASE_PATH=/clock/ npm run build`: passed. The E2E command also builds and
+  tests the app at `/clock/`, including its service worker and offline recovery.
+- `SCENE_BROWSER_CHANNEL=chrome SCENE_E2E_OUTPUT=/private/tmp/clock-scenes-e2e npm run test:e2e`:
+  **60 app assertions, 30/30 touch checks and 67/67 scene checks passed**.
+- Actual desktop browser: **Chrome 156.0.8078.48**, headless on macOS through
+  Playwright 1.62.1. Node 26.12.1; npm 11.20.0. Phone widths and reduced motion
+  are browser emulation, not physical-device verification.
+
+The browser suite uses fresh isolated profiles and actual built UI actions.
+Playwright's clock advances deadline tests; it does not replace application
+accounting or issue saved records directly. It verified real pointer contact,
+unchanged Start/Pause bounds, pause exclusion, pause/reload/resume identity,
+thought-input motion suppression, short and deadline endings, all five unlock
+thresholds, next-start introduction, notice claim/reload behavior, starting
+during a pending notice, second-tab scene agreement, independent rest scenes,
+scene/motion preferences, keyboard activation and cached offline reload.
+
+The fixture uses production components/styles and covers all 11 scenes in
+running, paused, ended and restored static states, all food tiers, exact cue
+identity, rest cues, timer fallback, input/touch/hide cancellation, consumed-cue
+replay prevention, cross-session touch cancellation and explicit greeting waves.
+
+No console errors or uncaught runtime errors were captured in the final run.
+The app has no horizontal overflow at 320/375/430 CSS pixels or 200% root text.
+The clock and primary control remain inside the viewport width. Enlarged
+feedback grows below the SVG, preserving the face and held props; longer pages
+can scroll. All 11 static scene compositions, the 375px reading scene and the
+200% text layout were visually inspected.
+
+![The eleven original blue-companion activities](assets/session-scenes-gallery.png)
+
+### Repeating the checks
+
+Run `npm ci`, then `npx playwright install chromium` once and `npm run test:e2e`.
+On a machine with Chrome installed, `SCENE_BROWSER_CHANNEL=chrome` uses that
+browser instead. The script builds both app and fixture, starts temporary local
+servers, writes a JSON report and screenshots to a temporary directory, and
+closes its browser/servers. `SCENE_E2E_OUTPUT` selects an artifact directory.
+The main deployment workflow runs the same E2E suite before publishing Pages.
+
+### Limits and delivery
+
+Physical iPhone/Android, actual mobile soft keyboards, screen-reader listening,
+installed-PWA mode and locked-screen alerts remain unverified. The unrelated
+backup/restore/clear feature and broader P0 plan remain future work. The tested
+source is prepared for the authorized direct-to-main commit; publication and
+the GitHub Pages workflow are verified separately after pushing.

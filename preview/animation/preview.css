@@ -50,6 +50,9 @@ input[type='checkbox'] { width: 19px; height: 19px; accent-color: #397fba; }
 .preview__pose { margin: 0; padding: 12px 6px; background: #fbfdff; border: 1px solid #d3e2ee; border-radius: 17px; text-align: center; }
 .preview__pose * { pointer-events: none !important; }
 .preview__pose figcaption { font-size: .75rem; font-weight: 650; text-transform: capitalize; }
+.preview__scene-grid { grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); }
+.preview__scene-checks-heading { margin-top: 30px; border-top: 1px solid #d3e2ee; padding-top: 26px; }
+input[type='range'] { width: 100%; accent-color: #397fba; }
 @media (max-width: 760px) {
   .preview { padding: 30px 16px; }
   .preview__workspace { grid-template-columns: minmax(0, 1fr); gap: 24px; }

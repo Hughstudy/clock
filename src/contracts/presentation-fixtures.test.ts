@@ -25,7 +25,7 @@ const EXPECTED: Record<FixtureName, { cue: CueKind | null; announced: boolean; s
   'motion-disabled': { cue: 'begin', announced: true, status: 'UI27' },
 }
 
-describe('C2-P1 presentation fixtures', () => {
+describe('C2-P2 presentation fixtures', () => {
   const fixtures = presentationFixtures()
 
   it('covers every published scenario once', () => {
@@ -60,5 +60,26 @@ describe('C2-P1 presentation fixtures', () => {
     const text = fixtures.find((x) => x.name === 'thought-text')!
     expect(text.cue).toMatchObject({ thoughtId: 'n1', sessionId: 'f1' })
     expect(fixtures.find((x) => x.name === 'motion-disabled')!.view.preferences.motionEnabled).toBe(false)
+  })
+
+  it('publishes stable saved scene identity independently of replay permission', () => {
+    const started = fixtures.find((f) => f.name === 'focus-started')!.scene!
+    expect(started).toMatchObject({ sessionId: 'f1', phase: 'focus', status: 'running', completedProgress: 0, ending: null })
+    for (const name of ['restored', 'synchronized'] as const) {
+      const scene = fixtures.find((f) => f.name === name)!.scene!
+      expect(scene.key).toBe(started.key)
+      expect(scene.id).toBe(started.id)
+      expect(scene.cue).toBeNull()
+    }
+    expect(fixtures.find((f) => f.name === 'save-pending')!.scene).toMatchObject({ allowBeats: false, cue: null, ending: null })
+  })
+
+  it('binds saved ending tiers to their original scene and handles rest without a focus tier', () => {
+    const early = fixtures.find((f) => f.name === 'ended-early')!
+    expect(early.scene).toMatchObject({ sessionId: 'f1', status: 'ended', ending: { cueId: early.cue!.id, tier: 'snack' } })
+    const zero = fixtures.find((f) => f.name === 'ended-zero')!
+    expect(zero.scene?.ending?.tier).toBe('hello')
+    const rest = fixtures.find((f) => f.name === 'break-ended')!
+    expect(rest.scene).toMatchObject({ sessionId: 'b1', phase: 'break', completedProgress: 0, ending: { cueId: rest.cue!.id, tier: null } })
   })
 })

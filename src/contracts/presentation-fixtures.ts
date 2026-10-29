@@ -3,8 +3,9 @@ import { spec } from '../data/spec'
 import { applyAction, type AppAction } from '../logic/app'
 import type { FeedbackEvent, FeedbackResult, Persistence } from '../logic/feedback'
 import { createFeedbackHost, feedbackFromTransition, interactWithFeedback, updateFeedbackHost, type FeedbackHostInput, type FeedbackHostState } from '../logic/feedback-host'
-import { companionViewOf, type CompanionView, type PresentationCue } from '../logic/presentation'
+import { companionSceneOf, companionViewOf, type CompanionScene, type CompanionView, type PresentationCue } from '../logic/presentation'
 import { createSnapshot } from '../logic/snapshot'
+import { remainingMs } from '../logic/timer'
 import type { AppSnapshot } from '../logic/types'
 
 /**
@@ -17,6 +18,7 @@ export interface PresentationFixture {
   view: CompanionView
   feedback: Pick<FeedbackResult, 'frame' | 'announcement'>
   cue: PresentationCue | null
+  scene: CompanionScene | null
 }
 
 export const FIXTURE_NAMES = [
@@ -37,6 +39,8 @@ function scenario(preferences = { motionEnabled: true, encouragementEnabled: tru
   let snapshot: AppSnapshot = { ...createSnapshot(spec), settings: { ...createSnapshot(spec).settings, ...preferences } }
   let persistence: Persistence = 'saved'
   let n = 0
+  let now = T0
+  let visible = true
   const input = (event: FeedbackHostInput['event'], active = true): FeedbackHostInput =>
     ({ snapshot, persistence, event, active, nodeEncouragement: snapshot.settings.encouragementEnabled })
   let host: FeedbackHostState = createFeedbackHost(input(null), feedbackCatalog)
@@ -47,8 +51,14 @@ function scenario(preferences = { motionEnabled: true, encouragementEnabled: tru
     view: companionViewOf(host.feedback.frame, { motionEnabled: snapshot.settings.motionEnabled, encouragementEnabled: snapshot.settings.encouragementEnabled }),
     feedback: { frame: host.feedback.frame, announcement: host.feedback.announcement },
     cue: host.cue,
+    scene: companionSceneOf(snapshot, host.cue, {
+      completedProgress: snapshot.timer.session ? 1 - remainingMs(snapshot.timer, snapshot.settings, now) / snapshot.timer.session.durationMs : 0,
+      visible, persistence, hasError: host.feedback.frame.status.kind === 'error',
+    }),
   })
   const act = (action: AppAction, { at, origin = 'user', saved = true, id = `op-${++n}`, active = true }: StepOptions) => {
+    now = at
+    visible = active
     const before = snapshot
     const t = applyAction(before, action, { now: at, dateKeyOf }, spec)
     snapshot = t.changed ? { ...t.snapshot, revision: before.revision + 1, writer: 'fixture' } : t.snapshot

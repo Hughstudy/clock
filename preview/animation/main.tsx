@@ -6,6 +6,9 @@ import { blueCompanionSpec } from '../../src/data/blue-companion'
 import { useMotionPreference } from '../../src/hooks/companion/useMotionPreference'
 import { BLUE_STANCES } from '../../src/logic/blue-companion'
 import type { CompanionPresentation, CompanionStance } from '../../src/logic/companion'
+import type { SceneId } from '../../src/contracts/presentation'
+import { sceneMotionSpec } from '../../src/data/scene-motion'
+import { activityFixture, activityPresentation, SCENE_IDS, SCENE_LABELS, type SceneFixtureState, type SceneFixtureTier } from './scene-fixtures'
 import '../../src/styles/companion.css'
 import './preview.css'
 
@@ -26,11 +29,23 @@ function Preview() {
   const [checks, setChecks] = useState<Check[]>([])
   const [running, setRunning] = useState(false)
   const [frame, setFrame] = useState('Live interaction')
+  const [sceneId, setSceneId] = useState<SceneId | ''>('F1')
+  const [sceneState, setSceneState] = useState<SceneFixtureState>('loop')
+  const [sceneSerial, setSceneSerial] = useState(0)
+  const [sceneProgress, setSceneProgress] = useState(0.45)
+  const [sceneTier, setSceneTier] = useState<SceneFixtureTier>('snack')
+  const [attentionAllowed, setAttentionAllowed] = useState(true)
+  const [sceneChecks, setSceneChecks] = useState<Check[]>([])
   const scene = useRef<HTMLDivElement>(null)
   const serial = useRef(0)
   const intents = useRef(0)
   const { reducedMotion, systemReducedMotion } = useMotionPreference(motionEnabled)
   const presentation: CompanionPresentation = { stance, cue, staticOnly: reducedMotion }
+  const activity = sceneId ? activityFixture(sceneId, sceneState, sceneSerial, sceneTier, sceneProgress, attentionAllowed) : null
+  const renderedPresentation: CompanionPresentation = activity ? {
+    ...activityPresentation(activity, sceneState, reducedMotion),
+    ...(cue === 'support' && sceneState !== 'error' ? { stance: 'support', cue: 'support' } as const : {}),
+  } : presentation
 
   function emit(nextCue: Cue = 'support') {
     setStance(nextCue === 'begin' ? 'focused' : nextCue === 'settle' ? 'settled' : nextCue === 'welcome' ? 'ready' : 'support')
@@ -83,7 +98,7 @@ function Preview() {
     const phase = () => svg().dataset.touchPhase
     const initialIntents = intents.current
     try {
-      flushSync(() => { setStance('ready'); setCue(null); setMotionEnabled(true); setFrame('Running pointer-only checks') })
+      flushSync(() => { setSceneId(''); setStance('ready'); setCue(null); setMotionEnabled(true); setFrame('Running pointer-only checks') })
       pointer('pointercancel')
       await wait(100)
       const nativeButton = scene.current!.querySelector('button')!
@@ -184,13 +199,120 @@ function Preview() {
     finally { setRunning(false) }
   }
 
+  async function runSceneChecks() {
+    if (running) return
+    setRunning(true)
+    setSceneChecks([])
+    const results: Check[] = []
+    const check = (label: string, passed: boolean) => { results.push({ label, passed }); setSceneChecks([...results]) }
+    const phase = () => svg().dataset.scenePhase
+    const initialIntents = intents.current
+    const choose = (id: SceneId, state: SceneFixtureState, tier: SceneFixtureTier = 'snack') => {
+      flushSync(() => { setSceneId(id); setSceneState(state); setSceneTier(tier); setCue(null); setSceneSerial(value => value + 1) })
+    }
+    try {
+      flushSync(() => { setMotionEnabled(false); setAttentionAllowed(true); setFrame('Checking all scene fixtures') })
+      for (const id of SCENE_IDS) {
+        for (const state of ['loop', 'paused', 'ending', 'restored'] as const) {
+          choose(id, state)
+          await wait()
+          check(`${id} ${state}: correct scene, finite SVG geometry and static motion`, svg().dataset.scene === id && !/NaN|Infinity/.test(svg().outerHTML) && svg().getAnimations({ subtree: true }).length === 0)
+        }
+      }
+      for (const tier of ['hello', 'snack', 'meal', 'feast'] as const) {
+        choose('F1', 'ending', tier)
+        await wait()
+        check(`Saved ${tier} ending retains its static tableau`, svg().dataset.sceneTier === tier && svg().dataset.sceneStatus === 'ended')
+      }
+
+      flushSync(() => { setMotionEnabled(true); setAttentionAllowed(true) })
+      window.dispatchEvent(new Event('focus'))
+      choose('F1', 'opening')
+      await wait()
+      if (!systemReducedMotion) {
+        check('A permitted fresh start plays its entrance', phase() === 'open')
+        flushSync(() => setRepeatCount(value => value + 1))
+        await wait()
+        check('Countdown rerenders retain the entrance identity', phase() === 'open')
+        await wait(sceneMotionSpec.openMs + 120)
+        check('Entrance settles using a finite fallback timer', phase() === 'idle')
+        flushSync(() => setRepeatCount(value => value + 1))
+        await wait()
+        check('Consumed entrance does not replay', phase() === 'idle')
+
+        choose('F2', 'opening')
+        await wait()
+        flushSync(() => setAttentionAllowed(false))
+        await wait()
+        check('Thought input attention stops every scene animation', phase() === 'idle' && svg().dataset.sceneMotion === 'false' && svg().getAnimations({ subtree: true }).length === 0)
+        flushSync(() => setAttentionAllowed(true))
+        await wait()
+        check('Finishing input never replays the cancelled entrance', phase() === 'idle')
+
+        choose('F3', 'opening')
+        await wait()
+        pointer('pointerdown', 'squish')
+        await wait()
+        check('Direct touch takes priority over the entrance', phase() === 'idle' && svg().dataset.touch === 'squish')
+        pointer('pointercancel')
+        await wait()
+
+        choose('F2', 'loop')
+        await wait()
+        pointer('pointerdown', 'pat')
+        await wait()
+        check('A running scene can hold a direct head pat', svg().dataset.touch === 'pat' && svg().dataset.touchPhase === 'press')
+        choose('F3', 'loop')
+        await wait()
+        check('Replacing the session settles touch even when the stance stays focused', svg().dataset.stance === 'focused' && svg().dataset.scene === 'F3' && svg().dataset.touch === '')
+
+        flushSync(() => emit('support'))
+        await wait()
+        check('An explicit greeting keeps its arm wave while scene motion yields', phase() === 'idle' && svg().getAnimations({ subtree: true }).some(animation => animation instanceof CSSAnimation && animation.animationName === 'blue-wave'))
+
+        choose('F1', 'ending', 'feast')
+        await wait()
+        check('A saved, matching ending plays once', phase() === 'ending')
+        window.dispatchEvent(new Event('pagehide'))
+        await wait()
+        check('Page hiding cancels an ending', phase() === 'idle')
+        window.dispatchEvent(new Event('pageshow'))
+        await wait()
+        check('Returning does not catch up the cancelled ending', phase() === 'idle')
+
+        choose('R1', 'opening')
+        await wait()
+        check('Rest uses its permitted rest entrance cue', phase() === 'open')
+        choose('R1', 'ending')
+        await wait()
+        check('Rest ending needs no focus-time tier', phase() === 'ending' && svg().dataset.sceneTier === '')
+      } else check('OS reduced motion suppresses scene choreography', phase() === 'idle')
+
+      choose('F2', 'opening')
+      await wait()
+      flushSync(() => setMotionEnabled(false))
+      await wait()
+      check('Disabling motion cancels every scene animation', phase() === 'idle' && svg().getAnimations({ subtree: true }).length === 0)
+      choose('F3', 'error')
+      await wait()
+      check('Errors keep the scene neutral and static', svg().dataset.stance === 'neutral' && svg().getAnimations({ subtree: true }).length === 0)
+      choose('F3', 'restored')
+      flushSync(() => setMotionEnabled(true))
+      await wait()
+      check('Restored activity appears without replaying a start', phase() === 'idle')
+      check('Scene motions never dispatch a host intent', intents.current === initialIntents)
+      setFrame('Scene checks complete')
+    } catch (error) { check(error instanceof Error ? error.message : String(error), false) }
+    finally { setRunning(false) }
+  }
+
   return <main className="preview">
-    <header className="preview__header"><span className="preview__eyebrow">Animation workbench · isolated fixtures</span><h1>A little hello, in blue.</h1><p>The production character with a tiny fixture host. Pat its head, squish its belly or touch a hand. No timer, records, rewards or storage are simulated here.</p></header>
+    <header className="preview__header"><span className="preview__eyebrow">Animation workbench · C2-P2 fixtures</span><h1>A little company, in blue.</h1><p>The production character and its everyday activities. Pat its head, squish its belly or touch a hand. These fixtures select read-only views; they never save a session, record time or grant an unlock.</p></header>
     <div className="preview__workspace">
       <section className="preview__canvas" aria-label="Character fixture">
         <div ref={scene} className="preview__phone" style={{ width, fontSize: largeText ? '200%' : '100%' }} data-text-scale={largeText ? '200' : '100'}>
           <p className="preview__eyebrow">Fixture · {stance}</p>
-          <div className="companion-feedback"><button type="button" className="companion-feedback__greeting" aria-label="Say hello to the blue companion" onClick={request}><span className="companion-feedback__character" aria-hidden="true"><BlueCompanion presentation={presentation} cueId={cueId} /></span><span className="preview__invite">Say hello <span aria-hidden="true">↗</span></span></button></div>
+          <div className="companion-feedback"><button type="button" className="companion-feedback__greeting" aria-label="Say hello to the blue companion" onClick={request}><span className="companion-feedback__character" aria-hidden="true"><BlueCompanion presentation={renderedPresentation} cueId={cueId} scene={activity} /></span><span className="preview__invite">Say hello <span aria-hidden="true">↗</span></span></button></div>
           <p className="preview__hint">A head pat, a belly squish, a tiny high-five.</p>
           <p className="preview__facts">Explicit host intents: <strong>{intentCount}</strong></p>
           <p className="preview__facts">{reducedMotion ? 'Static expression' : 'Motion enabled'}{systemReducedMotion ? ' · OS reduced motion' : ''}</p>
@@ -198,6 +320,15 @@ function Preview() {
         </div>
       </section>
       <aside className="preview__controls" aria-label="Fixture controls">
+        <fieldset disabled={running}><legend>Session activity</legend>
+          <label>Scene<select value={sceneId} onChange={event => { setSceneId(event.target.value as SceneId | ''); setSceneState('loop') }}><option value="">Plain character / legacy cues</option>{SCENE_IDS.map(id => <option key={id} value={id}>{id} · {SCENE_LABELS[id]}</option>)}</select></label>
+          <label>Scene state<select value={sceneState} onChange={event => { setSceneState(event.target.value as SceneFixtureState); setSceneSerial(value => value + 1) }}>{(['opening', 'loop', 'paused', 'ending', 'restored', 'error'] as const).map(value => <option key={value}>{value}</option>)}</select></label>
+          <label>Saved ending tier<select value={sceneTier} onChange={event => setSceneTier(event.target.value as SceneFixtureTier)}>{(['hello', 'snack', 'meal', 'feast'] as const).map(value => <option key={value}>{value}</option>)}</select></label>
+          <label>Completed progress: {Math.round(sceneProgress * 100)}%<input type="range" min="0" max="100" value={Math.round(sceneProgress * 100)} onChange={event => setSceneProgress(Number(event.target.value) / 100)} /></label>
+          <label className="preview__toggle"><input type="checkbox" checked={!attentionAllowed} onChange={event => setAttentionAllowed(!event.target.checked)} /> Thought editor needs attention</label>
+          <div className="preview__buttons"><button type="button" onClick={() => { setSceneState('opening'); setSceneSerial(value => value + 1) }}>New entrance cue</button><button type="button" onClick={() => { setSceneState('ending'); setSceneSerial(value => value + 1) }}>New ending cue</button></div>
+          <p className="preview__small">Focus progress is completed proportion; rest has no progress prop. Rest endings have no focus-time tier.</p>
+        </fieldset>
         <fieldset disabled={running}><legend>Presentation</legend>
           <label>Semantic stance<select value={stance} onChange={event => { setStance(event.target.value as CompanionStance); setCue(null) }}>{BLUE_STANCES.map(value => <option key={value}>{value}</option>)}</select></label>
           <label>Scene width<select value={width} onChange={event => setWidth(Number(event.target.value))}>{[320, 375, 430].map(value => <option key={value} value={value}>{value} CSS pixels</option>)}</select></label>
@@ -216,6 +347,14 @@ function Preview() {
         </fieldset>
       </aside>
     </div>
+    <section className="preview__poses" aria-label="All static session activities">
+      <h2>Eleven activities, same little companion</h2>
+      <p className="preview__small">Every shipped scene remains recognizable without motion. Select a scene above to inspect its opening, pause, ending or restored state.</p>
+      <div className="preview__pose-grid preview__scene-grid">{SCENE_IDS.map(id => {
+        const example = activityFixture(id, 'loop', 0, 'snack', 0.6, true)
+        return <figure key={id} className="preview__pose"><div aria-hidden="true"><BlueCompanion presentation={activityPresentation(example, 'loop', true)} scene={example} /></div><figcaption>{id} · {SCENE_LABELS[id]}</figcaption></figure>
+      })}</div>
+    </section>
     <section className="preview__poses" aria-label="Seven static poses">
       <h2>Seven expressions, with no motion</h2>
       <p className="preview__small">The same production drawing and semantic poses, held still for comparison.</p>
@@ -225,7 +364,10 @@ function Preview() {
       <div className="preview__checks-heading"><div><h2>Browser lifecycle checks</h2><p>Real React handlers, fixed SVG contact surface and production styles. Keep this tab visible while checks run.</p></div><button type="button" className="preview__run" disabled={running} onClick={() => void runChecks()}>{running ? 'Checking…' : 'Run interaction checks'}</button></div>
       {checks.length > 0 && <p className="preview__result" data-result={checks.some(check => !check.passed) ? 'fail' : running ? 'running' : 'pass'}>{checks.filter(check => check.passed).length}/{checks.length} checks passed{running ? ' · running' : ''}</p>}
       <ol className="preview__check-list">{checks.map((check, index) => <li key={index} data-passed={check.passed}><span>{check.passed ? 'PASS' : 'FAIL'}</span> {check.label}</li>)}</ol>
-      <p className="preview__small">Synthetic checks do not establish physical-device, screen-reader or installed-PWA verification. Main-owned screen contact, thought-save and reward scenes remain future integration work.</p>
+      <div className="preview__checks-heading preview__scene-checks-heading"><div><h2>Scene lifecycle checks</h2><p>Checks every scene in static running, paused, ended and restored states, then verifies finite cue cancellation and replay protection.</p></div><button type="button" className="preview__run" disabled={running} onClick={() => void runSceneChecks()}>{running ? 'Checking…' : 'Run scene checks'}</button></div>
+      {sceneChecks.length > 0 && <p className="preview__result" data-scene-result={sceneChecks.some(check => !check.passed) ? 'fail' : running ? 'running' : 'pass'}>{sceneChecks.filter(check => check.passed).length}/{sceneChecks.length} scene checks passed{running ? ' · running' : ''}</p>}
+      <ol className="preview__check-list">{sceneChecks.map((check, index) => <li key={index} data-passed={check.passed}><span>{check.passed ? 'PASS' : 'FAIL'}</span> {check.label}</li>)}</ol>
+      <p className="preview__small">Synthetic checks do not establish physical-device, screen-reader or installed-PWA verification. Actual app accounting, unlock and recovery flows are tested separately.</p>
       <p className="preview__small">Browser: {navigator.userAgent}</p>
     </section>
   </main>

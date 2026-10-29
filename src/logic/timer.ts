@@ -68,6 +68,7 @@ export function pauseSession(timer: TimerState, now: number): TimerState {
     timeZone: session.timeZone,
     startedAt: session.startedAt,
     step: session.step,
+    ...(session.scene ? { scene: session.scene } : {}),
   }
   return { ...timer, session: paused }
 }
@@ -83,6 +84,7 @@ export function resumeSession(timer: TimerState, now: number): TimerState {
     timeZone: session.timeZone,
     startedAt: session.startedAt,
     step: session.step,
+    ...(session.scene ? { scene: session.scene } : {}),
   }
   return { ...timer, session: running }
 }

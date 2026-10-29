@@ -28,8 +28,8 @@ export function App() {
   const timerView = useTimerView(app.snapshot, now)
   const statsView = useStatsView(app.snapshot, now)
   const form = useSettingsForm(app.snapshot.settings, app.dispatch)
-  const companion = useFeedback(app, { active: screen === 'home' })
   const thoughts = useThoughts(app)
+  const companion = useFeedback(app, { active: screen === 'home', completedProgress: timerView.completedProgress, allowSceneNotice: !thoughts.open })
   const motion = useMotionPreference(app.snapshot.settings.motionEnabled)
   const pwa = usePwaUpdate()
   const canEdit = app.persistence !== 'read-only'

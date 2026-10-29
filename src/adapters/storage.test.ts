@@ -69,12 +69,12 @@ describe('SnapshotStore persistence', () => {
     const storage = new MemoryStorage()
     const first = tab(storage, 'a')
     await act(first, { type: 'start', sessionId: 's1', timeZone: 'UTC' }, T0)
-    expect(tab(storage, 'b').snapshot.timer.session).toEqual({
+    expect(tab(storage, 'b').snapshot.timer.session).toMatchObject({
       status: 'running', id: 's1', durationMs: 25 * MIN, deadline: T0 + 25 * MIN, timeZone: 'UTC', startedAt: T0, step: null,
     })
 
     await act(first, { type: 'pause' }, T0 + 5 * MIN)
-    expect(tab(storage, 'c').snapshot.timer.session).toEqual({
+    expect(tab(storage, 'c').snapshot.timer.session).toMatchObject({
       status: 'paused', id: 's1', durationMs: 25 * MIN, remainingMs: 20 * MIN, timeZone: 'UTC', startedAt: T0, step: null,
     })
   })
@@ -93,6 +93,81 @@ describe('SnapshotStore persistence', () => {
 })
 
 describe('SnapshotStore across tabs', () => {
+  it('assigns only one ordinal when two tabs start at once', async () => {
+    const storage = new MemoryStorage()
+    const lock = sharedLock()
+    const a = tab(storage, 'a', lock)
+    const b = tab(storage, 'b', lock)
+    const results = await Promise.all([
+      act(a, { type: 'start', sessionId: 'first', timeZone: 'UTC' }, T0),
+      act(b, { type: 'start', sessionId: 'second', timeZone: 'UTC' }, T0),
+    ])
+    expect(results[0]?.snapshot.timer.session?.scene).toEqual(results[1]?.snapshot.timer.session?.scene)
+    expect(stored(storage).scenes.focus.ordinal).toBe(1)
+    expect(stored(storage).participations.map(p => p.sessionId)).toEqual(['first'])
+  })
+
+  it('atomically records a deadline and unlock, then grants one announcement claim across tabs', async () => {
+    const storage = new MemoryStorage()
+    const lock = sharedLock()
+    const a = tab(storage, 'a', lock)
+    const b = tab(storage, 'b', lock)
+    await act(a, { type: 'start', sessionId: 'scenes', timeZone: 'UTC', durationMinutes: 5 }, T0)
+    const assignment = a.snapshot.timer.session?.scene
+    await Promise.all([act(a, { type: 'reconcile' }, T0 + 5 * MIN), act(b, { type: 'reconcile' }, T0 + 5 * MIN)])
+    const saved = stored(storage)
+    expect(saved.records).toHaveLength(1)
+    expect(saved.records[0]?.scene).toEqual(assignment)
+    expect(saved.scenes.unlocked).toEqual([{ sceneId: 'F4', unlockedAt: T0 + 5 * MIN, bySessionId: 'scenes', ruleVersion: 1 }])
+    const claim = (store: SnapshotStore) => store.transact(latest => {
+      const transition = applyAction(latest, { type: 'claimSceneAnnouncement', sceneId: 'F4' }, { now: T0 + 5 * MIN, dateKeyOf: utcKey }, spec)
+      return { snapshot: transition.snapshot, changed: transition.changed, value: transition.sceneAnnouncement }
+    })
+    const claims = await Promise.all([claim(a), claim(b)])
+    expect(claims.filter(result => result.saved && result.value === 'F4')).toHaveLength(1)
+    expect(stored(storage).scenes.announced).toEqual(['F4'])
+    expect((await claim(tab(storage, 'reloaded', lock))).value).toBeUndefined()
+  })
+
+  it('retains the provisional assignment after a failed start write and retry', async () => {
+    const storage = new MemoryStorage()
+    const a = tab(storage, 'a')
+    storage.failWrites = true
+    const failed = await act(a, { type: 'start', sessionId: 'provisional', timeZone: 'UTC' }, T0)
+    expect(failed.saved).toBe(false)
+    const assignment = failed.snapshot.timer.session?.scene
+    expect(assignment).toBeDefined()
+    storage.failWrites = false
+    const retried = await act(a, { type: 'start', sessionId: 'provisional', timeZone: 'UTC' }, T0 + 1000)
+    expect(retried.saved).toBe(true)
+    expect(retried.snapshot.timer.session?.scene).toEqual(assignment)
+    expect(retried.snapshot.scenes.focus.ordinal).toBe(1)
+    expect(tab(storage, 'reloaded').snapshot.timer.session?.scene).toEqual(assignment)
+  })
+
+  it('does not report a failed announcement claim as durable or display it twice', async () => {
+    const storage = new MemoryStorage()
+    const lock = sharedLock()
+    const a = tab(storage, 'a', lock)
+    await act(a, { type: 'start', sessionId: 'earned', timeZone: 'UTC', durationMinutes: 5 }, T0)
+    await act(a, { type: 'reconcile' }, T0 + 5 * MIN)
+    const b = tab(storage, 'b', lock)
+    const claim = (store: SnapshotStore) => store.transact(latest => {
+      const t = applyAction(latest, { type: 'claimSceneAnnouncement', sceneId: 'F4' }, { now: T0 + 5 * MIN, dateKeyOf: utcKey }, spec)
+      return { snapshot: t.snapshot, changed: t.changed, value: t.sceneAnnouncement }
+    })
+    storage.failWrites = true
+    const failed = await claim(a)
+    expect(failed.saved).toBe(false)
+    expect(failed.error).toContain('QuotaExceededError')
+    expect(stored(storage).scenes.announced).toEqual([])
+    storage.failWrites = false
+    const claimed = await claim(b)
+    expect(claimed.saved && claimed.value === 'F4').toBe(true)
+    expect((await claim(a)).value).toBeUndefined()
+    expect(stored(storage).scenes.announced).toEqual(['F4'])
+  })
+
   it('serializes concurrent reconciles so only one credits the session', async () => {
     const storage = new MemoryStorage()
     const lock = sharedLock()
@@ -221,7 +296,7 @@ describe('SnapshotStore recovery', () => {
     storage.data.set(KEY, JSON.stringify(v1))
     const store = tab(storage, 'a')
     expect(store.status).toEqual({ persistence: 'saved', notice: null })
-    expect(store.snapshot.timer.session).toEqual({
+    expect(store.snapshot.timer.session).toMatchObject({
       status: 'running', id: 's1', durationMs: 25 * MIN, deadline: T0 + 25 * MIN, timeZone: 'Europe/Berlin', startedAt: null, step: null,
     })
   })
@@ -231,7 +306,7 @@ describe('SnapshotStore recovery', () => {
     const raw = { version: 2, revision: 3, writer: 'x', settings: { durationsMinutes: { focus: 30, shortBreak: 5, longBreak: 15 }, soundEnabled: 'yes' }, timer: { phase: 'focus', session: null, completedFocusCount: 0 }, completions: [] }
     storage.data.set(KEY, JSON.stringify(raw))
     const store = tab(storage, 'a')
-    expect(store.snapshot.settings).toEqual({ durationsMinutes: { focus: 30, shortBreak: 5, longBreak: 15 }, soundEnabled: true, motionEnabled: true, encouragementEnabled: true })
+    expect(store.snapshot.settings).toEqual({ durationsMinutes: { focus: 30, shortBreak: 5, longBreak: 15 }, soundEnabled: true, motionEnabled: true, encouragementEnabled: true, sceneVarietyEnabled: true })
     expect(store.status.notice).toEqual({ kind: 'repaired', fields: ['settings.soundEnabled'], backupKey: `${KEY}:backup:${T0}` })
   })
 
@@ -350,7 +425,7 @@ describe('durable early ends and recovery', () => {
     }))
     const upgraded = tab(storage, 'new')
     await act(upgraded, { type: 'reconcile' }, T0)
-    expect(stored(storage).version).toBe(4)
+    expect(stored(storage).version).toBe(5)
     expect(stored(storage).settings.soundEnabled).toBe(false)
   })
   it('prevents a stale tab from reviving older-generation data on its next action', async () => {

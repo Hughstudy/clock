@@ -4,6 +4,7 @@ import { spec } from '../data/spec'
 import { applyAction, type AppAction } from './app'
 import { companionPresentation } from './companion'
 import { createFeedbackHost, feedbackContext, feedbackFromTransition, interactWithFeedback, updateFeedbackHost, type AppFeedbackEvent, type FeedbackHostInput } from './feedback-host'
+import { companionSceneOf } from './presentation'
 import { createSnapshot } from './snapshot'
 import type { AppSnapshot } from './types'
 
@@ -178,5 +179,41 @@ describe('feedback host lifecycle', () => {
     expect(initial.feedback.frame.encouragement).toBeNull()
     const requested = interactWithFeedback(initial, i, { kind: 'encouragement-requested', id: 'ask', atMs: T0, origin: 'user' }, feedbackCatalog)
     expect(requested.feedback.frame.encouragement?.pool).toBe('ASKG')
+  })
+
+  it.each([0, 1, 1000])('keeps a fresh scene entrance and %s ms ending when node copy is disabled', elapsedMs => {
+    const running = start()
+    const i = { ...input(running.snapshot, running.event), nodeEncouragement: false }
+    const first = render(i)
+    expect(first.feedback.frame.encouragement).toBeNull()
+    expect(first.cue).toMatchObject({ kind: 'begin', sessionId: 'session' })
+    const ended = commit(running.snapshot, { type: 'end', sessionId: 'session' }, T0 + elapsedMs)
+    const endingInput = { ...input(ended.snapshot, ended.event), nodeEncouragement: false }
+    const settled = updateFeedbackHost(first, endingInput, feedbackCatalog)
+    expect(settled.feedback.frame.encouragement).toBeNull()
+    expect(settled.cue).toMatchObject({ kind: 'settle', sessionId: 'session' })
+    expect(companionSceneOf(ended.snapshot, settled.cue, {
+      completedProgress: 0, visible: true, persistence: 'saved', hasError: false,
+    })?.ending).toEqual({ cueId: settled.cue!.id, tier: 'hello' })
+    expect(updateFeedbackHost(settled, endingInput, feedbackCatalog)).toBe(settled)
+    const hidden = updateFeedbackHost(settled, { ...endingInput, active: false }, feedbackCatalog)
+    expect(hidden.cue).toBeNull()
+    expect(updateFeedbackHost(hidden, endingInput, feedbackCatalog).cue).toBeNull()
+    const noOp = commit(ended.snapshot, { type: 'end', sessionId: 'session' }, T0 + elapsedMs + 1)
+    expect(render({ ...input(noOp.snapshot, noOp.event), nodeEncouragement: false }).cue).toBeNull()
+    expect(render({ ...endingInput, snapshot: { ...ended.snapshot, revision: ended.snapshot.revision + 1 } }).cue).toBeNull()
+  })
+
+  it('keeps rest entrance and untiered ending when node copy is disabled', () => {
+    const rest = commit(createSnapshot(spec), { type: 'startBreak', sessionId: 'rest', timeZone: 'Asia/Singapore' })
+    const first = render({ ...input(rest.snapshot, rest.event), nodeEncouragement: false })
+    expect(first.feedback.frame.encouragement).toBeNull()
+    expect(first.cue).toMatchObject({ kind: 'rest', sessionId: 'rest' })
+    const ended = commit(rest.snapshot, { type: 'end', sessionId: 'rest' }, T0)
+    const settled = updateFeedbackHost(first, { ...input(ended.snapshot, ended.event), nodeEncouragement: false }, feedbackCatalog)
+    expect(settled.cue).toMatchObject({ kind: 'settle', sessionId: 'rest' })
+    expect(companionSceneOf(ended.snapshot, settled.cue, {
+      completedProgress: 0, visible: true, persistence: 'saved', hasError: false,
+    })?.ending).toEqual({ cueId: settled.cue!.id, tier: null })
   })
 })

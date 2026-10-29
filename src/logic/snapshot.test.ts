@@ -31,7 +31,7 @@ function legacy(version: number) {
   }
 }
 
-describe('snapshot v4 and migration', () => {
+describe('snapshot v5 and migration', () => {
   it('round-trips without replacing valid fields', () => {
     const s = sample()
     expect(decodeSnapshot(encodeSnapshot(s), spec, ctx)).toEqual({ kind: 'ok', snapshot: s, issues: [] })
@@ -41,7 +41,13 @@ describe('snapshot v4 and migration', () => {
     const old = v3()
     const { motionEnabled: _, encouragementEnabled: __, ...oldSettings } = before.settings
     const decoded = decodeSnapshot(JSON.stringify({ ...old, settings: oldSettings }), spec, ctx)
-    expect(decoded).toEqual({ kind: 'ok', snapshot: before, issues: [] })
+    if (decoded.kind !== 'ok') throw Error(decoded.kind)
+    expect(decoded.issues).toEqual([])
+    expect({ ...decoded.snapshot, scenes: before.scenes, timer: before.timer }).toEqual(before)
+    expect(decoded.snapshot.timer).toMatchObject(before.timer)
+    expect(decoded.snapshot.timer.session?.scene).toEqual({ sceneId: 'F4', ordinal: 1, selectionVersion: 1 })
+    expect(decoded.snapshot.scenes.unlocked).toEqual([{ sceneId: 'F4', unlockedAt: 1000, bySessionId: 's1', ruleVersion: 1 }])
+    expect(decoded.snapshot.scenes.announced).toEqual(['F4'])
     const quiet = { ...before, settings: { ...before.settings, motionEnabled: false } }
     expect(decodeSnapshot(encodeSnapshot(quiet), spec, ctx)).toEqual({ kind: 'ok', snapshot: quiet, issues: [] })
   })
@@ -49,7 +55,7 @@ describe('snapshot v4 and migration', () => {
     const decoded = decodeSnapshot(JSON.stringify(legacy(version)), spec, ctx)
     if (decoded.kind !== 'ok') throw Error(decoded.kind)
     expect(decoded.issues).toEqual([])
-    expect(decoded.snapshot.version).toBe(4)
+    expect(decoded.snapshot.version).toBe(5)
     expect(decoded.snapshot.records).toEqual([{ ...record('s1', 5000) }])
     expect(decoded.snapshot.participations).toEqual(sample().participations)
     expect(decoded.snapshot.timer.session).toMatchObject({ status: 'paused', remainingMs: 600_000, startedAt: null, timeZone: version === 1 ? 'Asia/Tokyo' : 'Europe/Berlin' })

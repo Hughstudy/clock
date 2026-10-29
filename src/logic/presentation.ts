@@ -1,7 +1,9 @@
 import type { FeedbackEvent, FeedbackFrame, FeedbackResult, Persistence, Pool } from './feedback'
+import { endingTierForElapsed } from './scenes'
+import type { AppSnapshot, SceneId } from './types'
 
 /** Contract version for the main → animation boundary. Bump when a field's meaning changes. */
-export const PRESENTATION_CONTRACT = 'C2-P1'
+export const PRESENTATION_CONTRACT = 'C2-P2'
 
 /** Semantic results a renderer may react to. No species, asset, reward or ranking identity. */
 export const CUE_KINDS = ['welcome', 'begin', 'pause', 'resume', 'settle', 'rest', 'thought-saved', 'support'] as const
@@ -17,6 +19,24 @@ export interface PresentationCue {
   kind: CueKind
   sessionId: string | null
   thoughtId: string | null
+}
+
+/** One host-assigned activity. Keys are stable across countdown updates and recovery. */
+export interface CompanionScene {
+  /** Dataset generation, logical session and scene-selection version. */
+  key: string
+  id: SceneId
+  sessionId: string
+  phase: 'focus' | 'break'
+  status: 'running' | 'paused' | 'ended'
+  /** Completed proportion, clamped and quantized to 1/100; rest always uses zero. */
+  completedProgress: number
+  /** The host suppresses beats while another input/panel needs attention. */
+  allowBeats: boolean
+  /** Main permits a transient cue independently of the read-only activity. */
+  cue: PresentationCue | null
+  /** Present only for the saved ending identified by this scene and settle cue. */
+  ending: { cueId: string; tier: 'hello' | 'snack' | 'meal' | 'feast' | null } | null
 }
 
 /** Read-only state for a renderer. Never a mutable snapshot, never elapsed-time accounting. */
@@ -65,5 +85,42 @@ export function companionViewOf(frame: FeedbackFrame, preferences: CompanionView
     hasError: frame.status.kind === 'error',
     encouragement: frame.encouragement ? { id: frame.encouragement.id, pool: frame.encouragement.pool, placement: frame.placement } : null,
     preferences,
+  }
+}
+
+/** Main resolves identity and saved results. Animation receives no mutable snapshot. */
+export function companionSceneOf(snapshot: AppSnapshot, cue: PresentationCue | null, options: {
+  completedProgress: number
+  visible: boolean
+  persistence: Persistence
+  hasError: boolean
+}): CompanionScene | null {
+  if (!snapshot.settings.sceneVarietyEnabled) return null
+  const session = snapshot.timer.session
+  const allowed = options.visible && !options.hasError
+  const keyFor = (id: string, version: number) => `${snapshot.datasetGeneration}:${id}:scene-v${version}`
+  if (session?.scene) {
+    const phase = snapshot.timer.phase === 'focus' ? 'focus' : 'break'
+    const progress = Number.isFinite(options.completedProgress) ? Math.floor(Math.min(1, Math.max(0, options.completedProgress)) * 100) / 100 : 0
+    const matchedCue = allowed && cue && (cue.sessionId === session.id || cue.kind === 'support') ? cue : null
+    return {
+      key: keyFor(session.id, session.scene.selectionVersion), id: session.scene.sceneId,
+      sessionId: session.id, phase, status: session.status,
+      completedProgress: phase === 'focus' ? progress : 0, allowBeats: allowed,
+      cue: matchedCue, ending: null,
+    }
+  }
+  // Never attach an old ending to a new session, including a legacy session without scene data.
+  if (session || !allowed || options.persistence !== 'saved' || cue?.kind !== 'settle') return null
+  const ended = snapshot.scenes.lastEnded
+  if (!ended || ended.sessionId !== cue.sessionId) return null
+  const record = ended.phase === 'focus' ? snapshot.records.find(item => item.sessionId === ended.sessionId) : null
+  if (ended.phase === 'focus' && !record) return null
+  return {
+    key: keyFor(ended.sessionId, ended.scene.selectionVersion), id: ended.scene.sceneId,
+    sessionId: ended.sessionId, phase: ended.phase === 'focus' ? 'focus' : 'break', status: 'ended',
+    completedProgress: record && record.targetMs > 0 ? Math.floor(Math.min(1, record.elapsedMs / record.targetMs) * 100) / 100 : 0,
+    allowBeats: true, cue,
+    ending: { cueId: cue.id, tier: record ? endingTierForElapsed(record.elapsedMs) : null },
   }
 }

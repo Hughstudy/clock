@@ -101,6 +101,14 @@ export function SettingsScreen({ form, canEdit }: Props) {
         </p>
 
         <label className="switch-row">
+          <span>伙伴小场景</span>
+          <input type="checkbox" role="switch" className="switch" disabled={!canEdit}
+            checked={form.sceneVarietyEnabled} aria-describedby="scene-hint"
+            onChange={(e) => form.setSceneVarietyEnabled(e.target.checked)} />
+        </label>
+        <p id="scene-hint" className="hint">每段会自动换一个小活动。关闭后保留伙伴和已获得的场景；减少动态时展示静态画面。</p>
+
+        <label className="switch-row">
           <span>节点鼓励</span>
           <input
             type="checkbox"

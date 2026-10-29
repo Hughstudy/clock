@@ -31,15 +31,25 @@ export function HomeScreen({ view, companion, thoughts, reducedMotion, canEdit, 
   useEffect(() => { setConfirmEnd(false); setChoosing(false) }, [view.sessionId])
   const label = PHASE_LABELS[view.phase]
   const readyFocus = view.status === 'ready' && !view.isBreak
+  const scene = companion.scene ? { ...companion.scene,
+    allowBeats: companion.scene.allowBeats && !thoughts.open && !stepOpen && !choosing && !confirmEnd,
+  } : null
   // A one-off start takes the typed step with it; the field clears only once the session exists.
   useEffect(() => { if (view.sessionId) { setStep(''); setStepOpen(false) } }, [view.sessionId])
-  const start = (durationMinutes?: number) => dispatch({ type: 'start', step, ...(durationMinutes ? { durationMinutes } : {}) })
+  const closeStartPanels = () => { setChoosing(false); setStepOpen(false); setConfirmEnd(false) }
+  const start = (durationMinutes?: number) => {
+    // Close local inputs before the saved begin cue arrives, so the scene's
+    // one permitted entrance is not consumed behind an obsolete panel.
+    closeStartPanels()
+    dispatch({ type: 'start', step, ...(durationMinutes ? { durationMinutes } : {}) })
+  }
+  const startBreak = () => { closeStartPanels(); dispatch({ type: 'startBreak' }) }
   const primary = view.status === 'running'
     ? { text: view.isBreak ? '暂停休息' : uiText('UI03'), run: () => dispatch({ type: 'pause' }) }
     : view.status === 'paused'
       ? { text: view.isBreak ? '继续休息' : uiText('UI04'), run: () => dispatch({ type: 'resume' }) }
       : view.isBreak
-        ? { text: '开始休息', run: () => dispatch({ type: 'start' }) }
+        ? { text: '开始休息', run: () => { closeStartPanels(); dispatch({ type: 'start' }) } }
         : { text: `${uiText('UI02')} · ${view.nextFocusMinutes} 分钟`, run: () => start() }
 
   return (
@@ -57,7 +67,9 @@ export function HomeScreen({ view, companion, thoughts, reducedMotion, canEdit, 
           onDismiss={companion.dismiss}
           announce={false}
           quietStatus
-          renderCharacter={(presentation) => <BlueCompanion presentation={presentation} cueId={companion.cue?.id} />}
+          renderCharacter={(presentation) => <BlueCompanion presentation={presentation} cueId={companion.cue?.id} scene={scene} />}
+          sceneNotice={companion.sceneNotice}
+          onDismissSceneNotice={companion.dismissSceneNotice}
         />
       </div>
       {/* One fixed-height row in every state, so Pause appears exactly where Start was. */}
@@ -92,7 +104,7 @@ export function HomeScreen({ view, companion, thoughts, reducedMotion, canEdit, 
             </button>
 
             <span className="control-divider" aria-hidden="true" />
-            <button type="button" className="btn btn-secondary" disabled={!canEdit} onClick={() => dispatch({ type: 'startBreak' })}>{uiText('UI08')}</button>
+            <button type="button" className="btn btn-secondary" disabled={!canEdit} onClick={startBreak}>{uiText('UI08')}</button>
           </>}
           {view.status !== 'ready' && !view.isBreak && !confirmEnd && (
             <button type="button" className="btn btn-secondary" disabled={!canEdit} onClick={() => setConfirmEnd(true)}>{uiText('UI06')}</button>

@@ -28,6 +28,10 @@ jobs:
         uses: actions/configure-pages@v6
       - run: npm ci
       - run: npm test
+      - name: Install browser for end-to-end checks
+        run: npx playwright install --with-deps chromium
+      - name: Check scene flows in the production build
+        run: npm run test:e2e
       - name: Build
         run: npm run build
         env:

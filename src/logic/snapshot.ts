@@ -1,17 +1,18 @@
 import { isDateKey } from './calendar'
 import { defaultSettings, isValidDuration, sanitizeSettings } from './settings'
+import { grantSceneUnlocks, hasMissingScenes, initialScenes, isFocusSceneId, isSceneId, mergeSceneStates, selectScene } from './scenes'
 import type { Spec } from './spec'
 import { hasNewerThoughts, mergeThoughts } from './thoughts'
 import { initialTimer } from './timer'
-import { PHASES, type AppSnapshot, type FocusRecord, type ParticipationRecord, type Phase, type Session, type Thought, type ThoughtDraft, type TimerState } from './types'
+import { PHASES, type AppSnapshot, type FocusRecord, type FocusSceneId, type ParticipationRecord, type Phase, type SceneAssignment, type SceneRotation, type SceneState, type SceneUnlock, type Session, type Thought, type ThoughtDraft, type TimerState } from './types'
 
-/** v4 adds session steps, thoughts, a thought draft and the last one-off focus length. */
-export const SNAPSHOT_VERSION = 4
+/** v5 retains session scenes, separate rotation cursors and durable unlock/announcement sets. */
+export const SNAPSHOT_VERSION = 5
 
 export function createSnapshot(spec: Spec): AppSnapshot {
   return {
     version: SNAPSHOT_VERSION, revision: 0, writer: '', datasetGeneration: 0, settings: defaultSettings(spec), timer: initialTimer(),
-    records: [], participations: [], lastFocusMinutes: null, thoughts: [], thoughtDraft: null,
+    records: [], participations: [], lastFocusMinutes: null, thoughts: [], thoughtDraft: null, scenes: initialScenes(),
   }
 }
 
@@ -64,6 +65,8 @@ export const MIGRATIONS: Readonly<Record<number, Migration>> = {
     return { ...old, version: 4, records, lastFocusMinutes: null, thoughts: [], thoughtDraft: null,
       timer: timer && session ? { ...timer, session: { ...session, step: null } } : old.timer }
   },
+  // Historical eligibility is granted silently after records have passed validation.
+  4: (old) => ({ ...old, version: 5, scenes: initialScenes() }),
 }
 
 export type Decoded =
@@ -71,11 +74,19 @@ export type Decoded =
   | { kind: 'unreadable'; reason: string }
   | { kind: 'newer'; version: number }
 
-function readSession(raw: unknown): Session | null {
+function readSceneAssignment(raw: unknown): SceneAssignment | null {
+  return isRecord(raw) && isSceneId(raw.sceneId) && isCount(raw.ordinal) && raw.ordinal > 0 && raw.selectionVersion === 1
+    ? { sceneId: raw.sceneId, ordinal: raw.ordinal, selectionVersion: 1 } : null
+}
+
+function readSession(raw: unknown, issues: string[]): Session | null {
   if (!isRecord(raw) || !isId(raw.id) || !isPositiveMs(raw.durationMs) || !isTimeZone(raw.timeZone) || !(raw.startedAt === null || isInstant(raw.startedAt)) || !isStep(raw.step)) return null
   const { id, durationMs, timeZone, startedAt, step } = raw
-  if (raw.status === 'running' && isInstant(raw.deadline)) return { status: 'running', id, durationMs, timeZone, startedAt, step, deadline: raw.deadline }
-  if (raw.status === 'paused' && isInstant(raw.remainingMs) && raw.remainingMs <= durationMs) return { status: 'paused', id, durationMs, timeZone, startedAt, step, remainingMs: raw.remainingMs }
+  const scene = raw.scene === undefined ? null : readSceneAssignment(raw.scene)
+  if (raw.scene !== undefined && !scene) issues.push('timer.session.scene')
+  const art = scene ? { scene } : {}
+  if (raw.status === 'running' && isInstant(raw.deadline)) return { status: 'running', id, durationMs, timeZone, startedAt, step, deadline: raw.deadline, ...art }
+  if (raw.status === 'paused' && isInstant(raw.remainingMs) && raw.remainingMs <= durationMs) return { status: 'paused', id, durationMs, timeZone, startedAt, step, remainingMs: raw.remainingMs, ...art }
   return null
 }
 
@@ -84,7 +95,12 @@ function readTimer(raw: unknown, completionCount: number, issues: string[]): Tim
   let phase: Phase = 'focus'
   if (PHASES.includes(raw.phase as Phase)) phase = raw.phase as Phase
   else issues.push('timer.phase')
-  const session = raw.session === null ? null : readSession(raw.session)
+  let session = raw.session === null ? null : readSession(raw.session, issues)
+  if (session?.scene && isFocusSceneId(session.scene.sceneId) !== (phase === 'focus')) {
+    issues.push('timer.session.scene.phase')
+    const { scene: _scene, ...withoutScene } = session
+    session = withoutScene
+  }
   if (raw.session !== null && !session) issues.push('timer.session')
   let completedFocusCount = completionCount
   if (isCount(raw.completedFocusCount)) completedFocusCount = Math.max(raw.completedFocusCount, completionCount)
@@ -103,8 +119,11 @@ function readRecords(raw: unknown, issues: string[]): FocusRecord[] {
         (r.endReason === 'manual' || (r.endReason === 'deadline' && r.elapsedMs === r.targetMs)) &&
         (r.source === 'native' || r.source === 'legacy') && isStep(r.step) && !seen.has(r.sessionId)) {
       seen.add(r.sessionId)
+      const scene = r.scene === undefined ? null : readSceneAssignment(r.scene)
+      if (r.scene !== undefined && (!scene || !isFocusSceneId(scene.sceneId))) issues.push(`record.scene (${r.sessionId})`)
       records.push({ sessionId: r.sessionId, startedAt: r.startedAt, endedAt: r.endedAt, dateKey: r.dateKey,
-        targetMs: r.targetMs, elapsedMs: r.elapsedMs, endReason: r.endReason, source: r.source, step: r.step })
+        targetMs: r.targetMs, elapsedMs: r.elapsedMs, endReason: r.endReason, source: r.source, step: r.step,
+        ...(scene && isFocusSceneId(scene.sceneId) ? { scene } : {}) })
     } else dropped += 1
   }
   if (dropped) issues.push(`records (${dropped} unreadable)`)
@@ -161,6 +180,52 @@ function readLastFocus(raw: unknown, spec: Spec, issues: string[]): number | nul
   return null
 }
 
+function readSceneRotation(raw: unknown, phase: 'focus' | 'rest', issues: string[]): SceneRotation {
+  const validId = (id: unknown) => isSceneId(id) && (isFocusSceneId(id) === (phase === 'focus'))
+  if (isRecord(raw) && isCount(raw.ordinal) && isCount(raw.cycle) && Array.isArray(raw.remaining) &&
+      raw.remaining.every(validId) && new Set(raw.remaining).size === raw.remaining.length &&
+      (raw.last === null || validId(raw.last))) {
+    return { ordinal: raw.ordinal, cycle: raw.cycle, remaining: raw.remaining as SceneRotation['remaining'], last: raw.last as SceneRotation['last'] }
+  }
+  issues.push(`scenes.${phase}`)
+  return initialScenes()[phase]
+}
+
+function readSceneIds(raw: unknown, name: string, issues: string[]): FocusSceneId[] {
+  if (!Array.isArray(raw)) { issues.push(name); return [] }
+  const valid = raw.filter(isFocusSceneId)
+  if (valid.length !== raw.length) issues.push(name)
+  return [...new Set(valid)]
+}
+
+function readScenes(raw: unknown, issues: string[]): SceneState {
+  if (!isRecord(raw)) { issues.push('scenes'); return initialScenes() }
+  const unlocked: SceneUnlock[] = []
+  const seen = new Set<string>()
+  if (!Array.isArray(raw.unlocked)) issues.push('scenes.unlocked')
+  else for (const unlock of raw.unlocked) {
+    if (isRecord(unlock) && isFocusSceneId(unlock.sceneId) && isInstant(unlock.unlockedAt) &&
+        isId(unlock.bySessionId) && isCount(unlock.ruleVersion) && unlock.ruleVersion > 0 && !seen.has(unlock.sceneId)) {
+      seen.add(unlock.sceneId)
+      unlocked.push({ sceneId: unlock.sceneId, unlockedAt: unlock.unlockedAt, bySessionId: unlock.bySessionId, ruleVersion: unlock.ruleVersion })
+    } else issues.push('scenes.unlocked')
+  }
+  let lastEnded: SceneState['lastEnded'] = null
+  if (raw.lastEnded !== null) {
+    const end = raw.lastEnded
+    const scene = isRecord(end) ? readSceneAssignment(end.scene) : null
+    if (isRecord(end) && isId(end.sessionId) && (end.phase === 'focus' || end.phase === 'rest') &&
+        scene && isFocusSceneId(scene.sceneId) === (end.phase === 'focus') && isInstant(end.elapsedMs) && isInstant(end.endedAt)) {
+      lastEnded = { sessionId: end.sessionId, phase: end.phase, scene, elapsedMs: end.elapsedMs, endedAt: end.endedAt }
+    } else issues.push('scenes.lastEnded')
+  }
+  return {
+    focus: readSceneRotation(raw.focus, 'focus', issues), rest: readSceneRotation(raw.rest, 'rest', issues),
+    unlocked, introduced: readSceneIds(raw.introduced, 'scenes.introduced', issues),
+    announced: readSceneIds(raw.announced, 'scenes.announced', issues), lastEnded,
+  }
+}
+
 export function runMigrations(data: Json, from: number, to: number, migrations: Readonly<Record<number, Migration>>, context: MigrationContext): Json | null {
   let current = data
   for (let v = from; v < to; v += 1) {
@@ -185,14 +250,24 @@ export function decodeSnapshot(text: string, spec: Spec, context: MigrationConte
   const participations = readParticipations(data.participations, issues)
   const { settings, issues: settingIssues } = sanitizeSettings(data.settings, spec)
   issues.push(...settingIssues)
-  const timer = readTimer(data.timer, records.filter((r) => r.endReason === 'deadline').length, issues)
+  let timer = readTimer(data.timer, records.filter((r) => r.endReason === 'deadline').length, issues)
   const thoughts = readThoughts(data.thoughts, spec, issues)
   const thoughtDraft = readDraft(data.thoughtDraft, spec, issues)
   const lastFocusMinutes = readLastFocus(data.lastFocusMinutes, spec, issues)
+  let scenes = readScenes(data.scenes, issues)
+  if (raw.version < 5) {
+    scenes = grantSceneUnlocks(scenes, records, true)
+    // An upgraded active timer gets one durable assignment without a fresh begin cue.
+    if (timer.session) {
+      const selected = selectScene(scenes, timer.phase === 'focus' ? 'focus' : 'rest')
+      scenes = selected.scenes
+      timer = { ...timer, session: { ...timer.session, scene: selected.assignment } }
+    }
+  }
   return { kind: 'ok', issues, snapshot: {
     version: SNAPSHOT_VERSION, revision: isCount(data.revision) ? data.revision : 0,
     writer: typeof data.writer === 'string' ? data.writer : '', datasetGeneration: data.datasetGeneration,
-    settings, timer, records, participations, lastFocusMinutes, thoughts, thoughtDraft,
+    settings, timer, records, participations, lastFocusMinutes, thoughts, thoughtDraft, scenes,
   } }
 }
 
@@ -217,10 +292,11 @@ export function mergeSnapshots(a: AppSnapshot, b: AppSnapshot): AppSnapshot {
   const participated = new Set(base.participations.map((p) => p.sessionId))
   const missingParticipation = other.participations.filter((p) => !participated.has(p.sessionId))
   const thoughts = mergeThoughts(base.thoughts, other.thoughts)
-  if (!missing.length && !missingParticipation.length && thoughts === base.thoughts) return base
+  const scenes = mergeSceneStates(base.scenes, other.scenes)
+  if (!missing.length && !missingParticipation.length && thoughts === base.thoughts && scenes === base.scenes) return base
   const records = [...base.records, ...missing].sort((x, y) => x.endedAt - y.endedAt || x.sessionId.localeCompare(y.sessionId))
   return { ...base, records, participations: [...base.participations, ...missingParticipation].sort((x, y) => x.sessionId.localeCompare(y.sessionId)),
-    thoughts: [...thoughts],
+    thoughts: [...thoughts], scenes: grantSceneUnlocks(scenes, records),
     timer: { ...base.timer, completedFocusCount: Math.max(base.timer.completedFocusCount, records.filter((r) => r.endReason === 'deadline').length) } }
 }
 
@@ -230,5 +306,5 @@ export function hasMissingRecords(a: AppSnapshot, b: AppSnapshot): boolean {
   const records = new Set(a.records.map((r) => r.sessionId))
   const participations = new Set(a.participations.map((p) => p.sessionId))
   return b.records.some((r) => !records.has(r.sessionId)) || b.participations.some((p) => !participations.has(p.sessionId)) ||
-    hasNewerThoughts(a.thoughts, b.thoughts)
+    hasNewerThoughts(a.thoughts, b.thoughts) || hasMissingScenes(a.scenes, b.scenes)
 }

@@ -12,6 +12,26 @@ export interface Settings {
   motionEnabled: boolean
   /** Encouragement after start/pause/end and similar events. Explicit requests stay available. */
   encouragementEnabled: boolean
+  /** Scene art may be hidden without changing timing, scene choice or unlocks. */
+  sceneVarietyEnabled: boolean
+}
+
+export type FocusSceneId = 'F1' | 'F2' | 'F3' | 'F4' | 'F5' | 'F6' | 'F7' | 'F8'
+export type RestSceneId = 'R1' | 'R2' | 'R3'
+export type SceneId = FocusSceneId | RestSceneId
+export interface SceneAssignment { sceneId: SceneId; ordinal: number; selectionVersion: 1 }
+export interface SceneRotation { ordinal: number; cycle: number; remaining: SceneId[]; last: SceneId | null }
+export interface SceneUnlock { sceneId: FocusSceneId; unlockedAt: number; bySessionId: string; ruleVersion: number }
+export interface SceneEnding { sessionId: string; phase: 'focus' | 'rest'; scene: SceneAssignment; elapsedMs: number; endedAt: number }
+export interface SceneState {
+  focus: SceneRotation
+  rest: SceneRotation
+  unlocked: SceneUnlock[]
+  /** Append-only IDs already introduced on a focus start. */
+  introduced: FocusSceneId[]
+  /** Durable claims, written before an optional unlock announcement is shown. */
+  announced: FocusSceneId[]
+  lastEnded: SceneEnding | null
 }
 
 /**
@@ -28,6 +48,8 @@ export type Session = {
   startedAt: number | null
   /** Optional small step named at start. Never scored; null when left empty. */
   step: string | null
+  /** Absent only for old records/sessions with no historical scene assignment. */
+  scene?: SceneAssignment
 } & (
   | { status: 'running'; deadline: number }
   | { status: 'paused'; remainingMs: number }
@@ -54,6 +76,7 @@ export interface FocusRecord {
   source: 'native' | 'legacy'
   /** The session's optional small step, copied when it ended. */
   step: string | null
+  scene?: SceneAssignment
 }
 
 /** One entry at start, independent of duration and full-completion cadence. */
@@ -106,4 +129,5 @@ export interface AppSnapshot {
   lastFocusMinutes: number | null
   thoughts: Thought[]
   thoughtDraft: ThoughtDraft | null
+  scenes: SceneState
 }

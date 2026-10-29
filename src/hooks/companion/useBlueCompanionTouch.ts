@@ -12,7 +12,7 @@ interface Touch {
 }
 
 /** Local play only. Never captures a pointer, suppresses a click or calls the host. */
-export function useBlueCompanionTouch(presentation: CompanionPresentation, spec: BlueCompanionSpec, hostMotionId?: string, finishHost?: (id: string) => void) {
+export function useBlueCompanionTouch(presentation: CompanionPresentation, spec: BlueCompanionSpec, hostMotionId?: string, finishHost?: (id: string) => void, sceneKey?: string) {
   const ref = useRef<SVGSVGElement>(null)
   const sequence = useRef(0)
   const [touch, setTouch] = useState<Touch | null>(null)
@@ -33,6 +33,7 @@ export function useBlueCompanionTouch(presentation: CompanionPresentation, spec:
     if (stance !== 'support' || (cue && cue !== 'support')) cancel()
   }, [stance, cue, cancel])
   useEffect(() => { cancel() }, [staticOnly, cancel])
+  useEffect(() => { cancel() }, [sceneKey, cancel])
   useEffect(() => {
     const hidden = () => { if (document.hidden) cancel() }
     document.addEventListener('visibilitychange', hidden)
