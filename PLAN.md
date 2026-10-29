@@ -51,6 +51,8 @@ These are recommendations, not individually approved decisions. Continue the sel
 | Reward format | One original illustration style showing the companion's everyday life: small session mementos attached to real records; welcome content, bookmarked phrases and a few permanent illustrations in Collections | Review acquisition, saving and later viewing together. No separate reward room or claim step |
 | Permanent rewards | Prepare three illustrations in a consistent style; use 3/8/20 distinct sessions only as candidate review parameters | Quantity, thresholds and whether to use cumulative unlocking are unapproved. The initial design review (A1/L0) must settle the rule before production implementation; these numbers are not scientific guidance |
 
+**User decision, 2026-10-29:** each focus start plays an automatically chosen scene. Endings reflect actual focused time, rest has its own scenes, and successful sessions permanently unlock new scenes. The clock stays a separate badge, and rendering stays SVG/CSS. See [Start Scenes Plan](docs/plans/START_SCENES_PLAN.md); its success definition and thresholds still need review.
+
 For session mementos, propose retaining the current participation rule: one per newly started logical session, with equal treatment for zero-second and fully elapsed sessions. This is separate from permanent-content unlocking. Hiding mementos must not stop accounting or remove rewards. If cumulative unlocking is rejected, define the alternative way permanent content becomes available and update the milestones rather than silently dropping that part of reward design.
 
 ## 5. Two independent workstreams
@@ -144,6 +146,7 @@ This is an English documentation split for review, not a source-code refactor. T
 - [x] Animation and main-logic plans separated, with ownership, interface, dependencies and acceptance criteria.
 - [ ] User review of the split and proposed product choices.
 - [ ] A1/L0 experience review and shared interface published in code. (L0 `C2-P1` contract and fixtures are published on main; A1 review remains pending.)
+- [ ] Start scenes S0–S5 per [Start Scenes Plan](docs/plans/START_SCENES_PLAN.md).
 - [ ] A2 fixture-driven animation components. (Direct touch and calm countdown motion are published on main; shared-surface contact remains pending.)
 - [ ] L1/L2 F1, data foundation and thought lifecycle. (Implemented, locally verified and published on main. Device, screen-reader and offline acceptance checks are still open.)
 - [ ] L3 records, approved rewards, bookmarks and preferences.
