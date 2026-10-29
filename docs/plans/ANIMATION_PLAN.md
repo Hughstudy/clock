@@ -16,6 +16,89 @@ The baseline includes original rough.js artwork with seven semantic stances, sta
 
 Continue this blue prototype. Final proportions, material, branded name/icons and individual gestures remain review decisions. Prefer physical option A, stationary controls with deforming visual surfaces. Compare option B, a coordinated prop/scene, and option C, actual control movement, with the same task; neither is automatically in scope. Start with bounded SVG/CSS choreography. A general physics engine requires a demonstrated need.
 
+## Session activities: research and proposal — 2026-10-29
+
+**Status: research complete; proposed scenes await review. No application changes in this increment.** The latest user direction is to keep the current style and small clock on the right, while giving each new focus session a different animation activity. The food-waiting example is a starting point for a small story that continues during the countdown.
+
+This is the next proposed animation increment within A1–A3. It does not require the earlier button/timer-contact experiments to ship first. Keep the original blue silhouette, expressive arms, existing sketch outlines, soft shading, palette, ground and touch behavior. Add a few matching props and poses inside the current scene. The current layout remains the baseline for review.
+
+### References and what they suggest
+
+These are design references, not evidence that a particular motion improves concentration. The scenes below are original proposals; their timings and suitability need inspection in our own preview.
+
+| Reference inspected | What the source describes | Application to this prototype |
+| --- | --- | --- |
+| [Cats & Soup — official website](https://www.catsnsoup.com/en-us) | Watching small characters cook soup in a quiet setting | Give waiting a visible activity: a covered pot, a steam curl and a curious glance. Keep one compact prop arrangement in our existing drawing style. |
+| [Spirit City: Lofi Sessions — developer's Steam page](https://store.steampowered.com/app/2113850/Spirit_City_Lofi_Sessions/) | A focus tool with room activities and companions that can be petted | Let the character occupy itself alongside the user, then briefly acknowledge deliberate touch and return to its activity. |
+| [Animal Crossing: New Horizons — Nintendo's guide to The Roost](https://www.nintendo.com/jp/ichikara/acbaa/03_en.html) | A café where characters enjoy coffee and conversation | Use a small drink ritual: hold, blow gently, sip, settle. The prop can communicate comfort without extra UI or dialogue. |
+| [Spiritfarer — Thunder Lotus](https://thunderlotusgames.com/games/spiritfarer/) | Everyday activities including farming, cooking and crafting | Give the hands purposeful gestures and a clear relationship to a prop, such as holding a page or pressing a paper fold. |
+
+Adapt the activity ideas, with original drawings and choreography. These references do not introduce their currencies, unlock systems, care obligations, soundtracks or worlds into this app.
+
+### Six candidate scenes
+
+All scenes use the same character and current stage. A new scene changes its activity, not its identity. All endings receive the same warmth, including a zero-second or early ending.
+
+| Scene | Short entrance | During the countdown | Deliberate touch | Pause and any ending |
+| --- | --- | --- | --- | --- |
+| **1. Waiting for soup** — first set | Places a little covered pot beside itself, rubs its hands once and settles | A single steam curl; an occasional sniff or gentle stir, with long quiet intervals | A head pat produces happy eyes and a curious lid peek; a hand touch offers a small wave | Pause: rests the spoon and relaxes. End: lifts the lid for a friendly reveal. Food is never withheld for ending early. |
+| **2. Picture-book company** — first set | Opens a small picture book and finds a comfortable pose | Eyes follow the page; an occasional page turn; familiar breathing continues | Peeks over the book, smiles and raises one hand; then returns to reading | Pause: rests a hand between pages. End: inserts a ribbon and closes the book gently. |
+| **3. Paper-plane workshop** — first set | Brings out a partly folded sheet and presses a crease | Smooths a fold, examines the shape, then quietly holds it; no endless rapid folding | Tilts the plane toward the user or makes its nose bob, keeping the face visible | Pause: sets the paper safely down. End: a short glide lands beside the character, entirely inside the scene. |
+| **4. Warm cup** — later variety | Lifts a small mug with both hands and blows one tiny puff | Slow steam, a small sip and a comfortable exhale | A soft squint followed by a tiny toast; the mug stays secure during a belly squish | Pause: rests the mug nearby. End: a warm toast, then a settled pose. |
+| **5. Little leaf** — later variety | Turns a small potted plant toward itself and admires a leaf | Gently brushes or watches a leaf; one occasional droplet catches its attention | Touching the character prompts a happy lean and a small leaf spring | Pause: rests beside the plant. End: gives the pot a contented pat. The plant never wilts or depends on focus time. |
+| **6. Tiny sketchbook** — later variety | Opens a small pad and draws the first line of a star or cloud | A short pencil stroke, a thoughtful head tilt, then quiet observation | Holds up its doodle for a moment and smiles | Pause: rests the pencil. End: lays the pad down with the sketch visible; this is decorative, not a saved note or earned item. |
+
+**Recommended first set: soup, picture book and paper plane.** They provide three distinct actions and silhouettes—waiting, reading and making—using a small number of props. The cup, plant and sketchbook expand the catalog after the first set feels good at phone size. Scene names are planning labels, not proposed new UI copy or a selection menu.
+
+### Timing and interaction rules
+
+The following numbers are preview starting points, not approved final motion specifications:
+
+1. **Entrance, approximately 1.5–2.5 seconds:** acknowledge a permitted fresh start, bring the prop into place and settle. The timer and controls respond immediately. No camera movement, large entrance across the page or wait for a gesture to finish.
+2. **Quiet presence:** retain the existing subtle breath and blink. Give the scene one small secondary action approximately every 20–40 seconds, followed by stillness. Avoid making breath, arms, steam and a prop all compete for attention. No action is driven by each countdown tick.
+3. **Touch, approximately 0.6–1.0 seconds:** keep head pat, belly squish and hand high-five as the common vocabulary. The selected scene adds one appropriate prop response and yields the arms to the direct interaction. Release settles into the same activity; repeated input replaces rather than queues reactions. Props are decorative and add no nested buttons or drag requirements.
+4. **Pause/resume:** adopt the paused pose with the same prop. Resume returns to the activity without a new entrance or scene choice. The current truthful paused status stays visible.
+5. **Ending, approximately 1.0–1.8 seconds:** use the same friendly ending for manual and deadline endings when the host permits a cue. Never imply that food, happiness or a pleasant ending must be earned. The factual result is always immediately available.
+6. **Interruption:** errors, incompatible state changes, hidden pages and disabled motion cancel the active sequence. On return, show the current scene without catching up missed gestures. Reduced motion retains a static pose, prop and friendly response to deliberate interaction.
+
+The scene has its own quiet rhythm; it is not a second progress indicator. Food readiness, page count, plant growth and completed drawings do not measure elapsed time, attention, rewards or persistence. Short and long configured sessions use the same relaxed treatment, without a frantic final-minute sequence. No new sound is proposed.
+
+### A different activity on each start, with continuity
+
+- Select once for each **new logical focus session**. For the first set, recommend a three-scene rotation with a stable seeded initial position. Consecutive new sessions use different scenes; all three appear before the cycle repeats. A three-scene catalog necessarily repeats over time.
+- Keep the choice through countdown updates, pause/resume, thought capture, encouragement requests, save retries, navigation, reload and synchronization. A rest start does not consume the next focus scene.
+- Persist or otherwise durably reconstruct the assignment through the main owner. A random choice on mount, or a plain hash of the session ID, cannot guarantee both continuity and no immediate repetition.
+- A rejected/no-op or repeated start command must not advance the rotation. If a session starts in memory while saving is pending or fails, retain that session's provisional scene through retries rather than selecting again. Main owns session identity and reconciliation. Selection must also stay coherent across tabs and dataset replacement.
+- A permitted start cue controls whether the short entrance plays. The read-only scene choice determines which prop/pose is present even when there is no cue, such as after reload or while persistence is pending. Static presence never claims a successful save.
+- The rotation is presentation metadata, separate from full-completion totals, reward thresholds and streaks. Do not use focus duration or completion as access criteria. If only one scene is available, or metadata is absent, use a safe static/default scene without blocking the timer.
+
+### Fit the current stage
+
+The implementation inspected on local main at `2c80f99` gives the character up to 360 CSS pixels, places `ClockBadge` at the upper right and overlays feedback across the lower character area. These are the concrete layout constraints for the prototype:
+
+- Reserve the top-right clock, its digits/ring and the full lower factual-message area. Props should sit beside the torso or in the hands where those zones remain clear. The plane's glide stays within that safe area.
+- Keep the current scene footprint, character scale and controls below it stable. At narrow widths or 200% text, simplify or hide secondary props before compromising the character's face, status or controls.
+- Show each scene with a long encouragement, factual error, open thought panel and soft keyboard. The scene must remain readable without moving the timer or changing main-owned typography.
+- Preserve the existing stable native character button and touch surface. Decorative movement cannot move its hit area, take focus, capture scrolling or dispatch a timer action. Keyboard activation gets an equivalent friendly response through the existing host interaction.
+- Use the existing vector/sketch approach and cached geometry. New props use the same outline, shading and palette conventions. No replacement mascot, full room background, external asset service or physics dependency is proposed.
+
+### Integration request and work order
+
+**Observed interface gap:** `C2-P1` exposes phase/status/preferences and permitted cues; only a transient `PresentationCue` contains `sessionId`. `BlueCompanion` currently receives `presentation` and `cueId`. Neither input gives the renderer a durable active-session scene choice after a reload. `cueFor` also requires host eligibility and confirmed persistence for a begin cue. The renderer must not fabricate a fresh entrance to bypass those rules.
+
+Before production integration, main/Claude should publish the smallest agreed read-only addition that supplies a stable session identity and assigned scene key, plus the catalog/selection version needed for recovery. Main owns retention, cross-tab consistency and cue permission. Animation can supply a pure deterministic rotation helper and scene catalog, tested with explicit seeds/previous selections. This is a contract request for review, not a new API or snapshot migration in this documentation change.
+
+The permitted ending presentation must retain the just-ended session's scene after the active session clears, so its prop does not disappear or change before the ending gesture. A newer session or incompatible state supersedes it immediately. Animation completion only clears local motion; it never writes or holds open the ended session, and reload does not replay its ending.
+
+| Step | Animation contribution | Main/integration dependency | Completion evidence |
+| --- | --- | --- | --- |
+| 1. Review the concepts | Storyboards for the first three scenes, each showing entrance, quiet activity, touch and ending in the current layout | Existing layout and factual-message constraints | Confirm the activities and visual density before application implementation |
+| 2. Build a fixture preview after review | Original props, poses, static variants and cancellable motion in animation-owned modules; extend the existing `preview/animation/` | Mock agreed scene inputs; no live timer/storage additions | Inspect 320/375/430 widths, 200% text, touch/keyboard, interruptions and reduced motion |
+| 3. Agree and connect the contract | Renderer consumes assigned scene and permitted cues | Main owns scene retention, root wiring, shared styles/contracts and any persistence change | New-session variety and pause/reload continuity work with real host state |
+| 4. Validate and publish the approved increment | Focused motion/geometry tests, preview and production-flow checks | Main verifies any affected persistence/recovery behavior | `npm run check`, `/clock/` build, console checks and recorded browser/device evidence; push authorized work directly to main |
+
+The current commit contains this research and plan only. Application implementation, visual acceptance, a scene-selection contract and device validation remain future work. The earlier shared-control contact proposals remain separate candidates; this activity set can progress within the character stage first.
+
 ## Interface with main logic
 
 The shared interface is defined in [PLAN.md](../../PLAN.md). The following describes responsibilities, not a new TypeScript API already present in the repository:
