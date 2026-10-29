@@ -122,7 +122,7 @@ The earlier M1–M6 sequence is replaced by the following two workstreams. Scope
 
 For traceability, previous M1 maps to A1/L0; M2 to L1 plus the L0 contracts; M3 to L2; M4 to L3 and A2/A3 assets; M5 to L4; M6 to A4/L5. There is one application and one release candidate, not separate animation and timer products.
 
-Review boundaries are product choices and concrete deliverables. Once a workstream's scope and contract are agreed, routine technical decisions within it do not require repeated permission. New code should use `codex/` feature branches; this documentation change does not create or claim implementation branches.
+Review boundaries are product choices and concrete deliverables. Once a workstream's scope and contract are agreed, routine technical decisions within it do not require repeated permission. Per the user's 2026-10-29 direction, develop authorized work in `/Users/hughqiao/Code/clock` directly on `main`, validate, commit and push. Use branch isolation only when requested. After verifying that all commits are in `origin/main`, delete merged branches and archive unused worktrees where the app permits; preserve unmerged commits and uncommitted work.
 
 ## 8. Shared acceptance and handoff
 
@@ -133,7 +133,7 @@ Review boundaries are product choices and concrete deliverables. Once a workstre
 - For application changes, run relevant tests, `npm run check`, `BASE_PATH=/clock/ npm run build`, then affected production-browser flows and console inspection. Pure geometry/domain checks remain DOM-free. Documentation-only work requires content, link and diff checks, not application tests.
 - Inspect 320/375/430 widths, 200% text, landscape/safe areas, soft keyboard, stable touch targets, real screen readers and blocked audio. Record actual versions; iPhone/Android browsers and installed modes require separate evidence. Unavailable device checks stay explicitly unverified.
 - Keep `/clock/` asset/manifest/service-worker paths correct. Never force-update an active or paused session, use the worker as a persistent alarm, or clear progress with caches. Branding changes preserve namespaces or supply a migration.
-- Publish a reviewable release candidate only after both workstreams' required checks and integrated acceptance. Pushing main deploys; follow the user's actual release instruction separately.
+- Push completed, authorized prototype work directly to main after relevant checks; verify its GitHub Pages deployment separately. Full release-candidate acceptance still requires both workstreams' required checks and integrated acceptance. The publishing workflow does not approve pending product decisions.
 
 ## 9. Current review status and next step
 
@@ -143,9 +143,9 @@ This is an English documentation split for review, not a source-code refactor. T
 - [x] PRD-to-code gaps and unapproved proposals documented in English.
 - [x] Animation and main-logic plans separated, with ownership, interface, dependencies and acceptance criteria.
 - [ ] User review of the split and proposed product choices.
-- [ ] A1/L0 experience review and shared interface published in code. (L0 `C2-P1` contract and fixtures implemented on `claude/main-logic-l0-l2`; A1 review pending.)
-- [ ] A2 fixture-driven animation components.
-- [ ] L1/L2 F1, data foundation and thought lifecycle. (Implemented and locally verified on `claude/main-logic-l0-l2`; awaiting review/merge. Device, screen-reader and offline checks are still open.)
+- [ ] A1/L0 experience review and shared interface published in code. (L0 `C2-P1` contract and fixtures are published on main; A1 review remains pending.)
+- [ ] A2 fixture-driven animation components. (Direct touch and calm countdown motion are published on main; shared-surface contact remains pending.)
+- [ ] L1/L2 F1, data foundation and thought lifecycle. (Implemented, locally verified and published on main. Device, screen-reader and offline acceptance checks are still open.)
 - [ ] L3 records, approved rewards, bookmarks and preferences.
 - [ ] A3 real-result integration and approved artwork.
 - [ ] A4 animation, accessibility and device acceptance.

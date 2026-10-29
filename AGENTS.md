@@ -6,6 +6,8 @@ Local continuation (2026-10-29): the user supplied the exported `57ca8697cfa3a69
 
 Maintain PLAN.md and ongoing local project documentation in English. Preserve supplied source snapshots and historical verification reports as records of their original content. This documentation-language preference does not change application UI copy or approve the plan's open product decisions.
 
+Current Git workflow (user direction, 2026-10-29): work in `/Users/hughqiao/Code/clock` on `main`, validate authorized changes, then commit and push directly to `main`. Do not create task branches or worktrees unless the user requests isolation. Coordinate edits to shared files and preserve other contributors' work. Delete merged branches only after verifying their commits are contained in `origin/main`; archive unused managed worktrees where the app permits it, preserving unmerged commits and uncommitted files. An app-protected primary worktree may remain detached, but is not the development checkout. This workflow supersedes earlier branch-isolation instructions and does not approve pending product proposals.
+
 Read PLAN.md and these current sources:
 
 - [Product PRD](https://chatgpt.com/library?file_id=libfile_819c07bf86108191af0be21b4e39123d&account_id=personal). Reviewed baseline: document v3, file revision 7; check for later updates.
@@ -26,7 +28,7 @@ Local main implements the first F1 focus/actual-records slice and the blue compa
 
 ## Multi-window coordination
 
-The exported window assignments are historical for this local continuation. Apply the following live-register workflow if shared multi-window development resumes; do not treat the archived register as a new claim or overwrite it with current local status.
+The exported window assignments are historical for this local continuation. The following branch-based live-register workflow is dormant and applies only if the user explicitly requests isolated multi-window development again; do not treat the archived register as a new claim or overwrite it with current local status.
 
 - Read the shared register at task start, before public-interface changes, after milestones, before handoff and after context recovery. It does not automatically notify other windows.
 - Claim work with the latest real file version and a conditional update. A failed version check is not a claim. Reload and preserve intervening work; never omit the guard to force an update.
@@ -92,4 +94,4 @@ The exported window assignments are historical for this local continuation. Appl
 - Application changes require relevant tests, a production build, and affected production-flow/console checks. Model/storage changes cover short sessions, pause, expiry races, multiple tabs, migration, failures, deletion and restore/clear.
 - Check 320/375/430 CSS-pixel layouts, 200% text, keyboard/focus, soft keyboard, reduced motion and stable targets. Record actual device/browser versions; desktop emulation is not physical-device verification.
 - Documentation-only changes need no dependency installation or app tests. Keep implementation, integration, validation and deployment status separate.
-- Feature branches/draft review do not imply production release. Pushing main currently deploys through GitHub Actions; follow the user's actual release authorization.
+- Commit and push completed, authorized prototype work directly to main after relevant checks. Pushing main triggers GitHub Pages deployment; verify publication and deployment separately. This does not approve unfinished product proposals or establish full P0 acceptance.
