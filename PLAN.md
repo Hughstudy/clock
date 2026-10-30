@@ -4,6 +4,8 @@ Updated: 2026-10-30. This plan distinguishes implemented scope from the remainin
 
 **Latest review request, 2026-10-30 — plan first:** improve animation clarity/smoothness, show activities developing with session progress, prepare critical storyboards, and make every scene available immediately through random selection. This supersedes the earlier completion-based scene unlock direction. The current code still contains that earlier behavior. See the [Animation Refinement Plan](docs/plans/ANIMATION_REFINEMENT_PLAN.md) for the proposed progression, consistent motion system, migration and validation sequence; application implementation has not started.
 
+**Storyboard follow-up, 2026-10-30:** the user requested a tea table and more natural placement, with the same design work across the other activities. The refinement review pack now includes four-frame composition sheets for all eleven scenes, with appropriate tables, trays, mats or cushions and shared contact/perspective rules. These remain schematic design drafts; application implementation and motion verification are separate next steps.
+
 ## 1. Sources and current baseline
 
 - Requirements: the supplied [PRD v3, file revision 7](docs/handoff-20261029/番茄钟_产品PRD_v3.md), especially sections 3–10 and 12–14. Its appendix describes older code, so it must not be treated as the current implementation. The PRD body takes precedence over conflicting appendix descriptions.
