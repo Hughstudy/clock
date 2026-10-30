@@ -8,6 +8,8 @@ Updated: 2026-10-30. This plan distinguishes implemented scope from the remainin
 
 **Tea correction, 2026-10-30:** use exactly one cup and a small side table. The user rejected the previous hand poses as unnatural. The revised tea sheet uses short relaxed arms, a nearby cup-handle grip and a close-to-body hold; it remains a design for review, not accepted production animation.
 
+**Catalogue hand and food correction, 2026-10-30:** following the tea reference, all ten other scene sheets now use original short resting arms or action-specific curved poses. Shoulders stay attached through leaning, nearby props meet rounded palms, and the generic endpoint-based arm helper has been removed from the design generator. Food now develops into three dishes—vegetables, rice and soup—on a preparation table, replacing the confusing pot/lid arrangement. These revised keyframes are for visual review; the application and its existing unlock behavior are unchanged.
+
 ## 1. Sources and current baseline
 
 - Requirements: the supplied [PRD v3, file revision 7](docs/handoff-20261029/番茄钟_产品PRD_v3.md), especially sections 3–10 and 12–14. Its appendix describes older code, so it must not be treated as the current implementation. The PRD body takes precedence over conflicting appendix descriptions.

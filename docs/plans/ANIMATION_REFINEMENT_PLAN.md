@@ -9,6 +9,7 @@ Status: review draft, 2026-10-30. **Plan and concept artwork only; application c
 - Prepare critical animation storyboards before application implementation.
 - Give the tea activity a real table and natural object placement, and apply the same composition work to every scene rather than refining tea alone.
 - Latest tea revision: **one cup and a small table**. The user found the previous hands unnatural; replace the stretched generic arm shapes with short, rounded poses and a readable cup grip. The revised tea title is “A quiet cup of tea.”
+- Latest catalogue revision: redraw the hands in every other scene using the tea reference. Replace the food scene's confusing right-side pot/lid shapes with **preparing several dishes**: vegetables, rice and soup.
 - Remove completion-based scene restrictions. Every shipped scene is available immediately and a scene is selected randomly for each new session.
 
 The final point supersedes the 2026-10-29 scene-unlock decision and the 1/3/6/10/15 thresholds in the existing Start Scenes Plan. Those rules still describe the current code, not the desired next behavior. Other reward, bookmark and memento proposals are outside this change.
@@ -44,6 +45,10 @@ The user's table request establishes a catalogue-wide composition rule: every ob
 
 Each scene sheet presents four readable states using these same rules. Focus sheets use 0/40/75/100% landmarks; rest sheets use four unhurried action beats rather than a completion target. Actual tabletop geometry, grip trajectories, animation timing and small-screen fit remain subject to visual review and later motion validation.
 
+The latest catalogue pass replaces the shared endpoint-based arm generator in all ten non-tea sheets. Resting poses reuse the creature's original short arms; active poses have rounded elbows/palms drawn for the action. Body lean and resting-arm transforms match, while page/ribbon and cup-lift poses keep their shoulder roots fixed. Bring the plant pot, wand and block tower into reach rather than stretching a limb. Book and paper have broad supporting palms; warm drink uses a close two-handed hold. The tower's final hand relaxes after placement so the flag remains visible. These are new review drawings, not a claim that the user's naturalness concern is resolved without review.
+
+Food now has three clearly separated places on its table: vegetables on the left, rice in front, and soup on the right. A small utensil rest replaces the large ambiguous right-side objects. The four landmarks show laying out the ingredients, preparing the vegetables, plating the rice, and the three finished dishes. The motion pass must connect these states with visible utensil/serving actions; the soup must not simply appear at the last threshold.
+
 | Critical sequence | Keyframes to draw | What review must establish |
 | --- | --- | --- |
 | Tea progression | Setup → first wisps → fuller steam → cup ready | Change is clear at phone size; the kettle never becomes frantic or threatening |
@@ -65,7 +70,7 @@ Percentages are storyboard landmarks, not new business thresholds or hard visual
 | Around 75% | Fuller steam; one arm makes a short curved reach to the near cup handle, while the other stays relaxed |
 | 100% | The same cup is held close to the torso, with a palm beneath/alongside the base and the other hand at the handle; the kettle stays on the table |
 
-The table is beside the creature rather than spanning the full stage. The cup's parked position is within a short arm's reach, so neither shoulder nor hand must stretch to meet it. Preserve a continuous rounded shoulder–elbow–palm silhouette and intentional overlap at the grip. Do not mistake mere endpoint contact for a natural pose. The new tea poses remain for user review; they are a reference for refining the rest of the catalogue, not blanket approval of its existing hand geometry. Pouring remains a separate motion-detail sheet before implementation.
+The table is beside the creature rather than spanning the full stage. The cup's parked position is within a short arm's reach, so neither shoulder nor hand must stretch to meet it. Preserve a continuous rounded shoulder–elbow–palm silhouette and intentional overlap at the grip. Do not mistake mere endpoint contact for a natural pose. The tea poses serve as the reference for the revised catalogue; the user's continuation to other keyframes does not approve production motion or all other hand geometry. Pouring remains a separate motion-detail sheet before implementation.
 
 Between the reach and lifted hold, show a deliberate two-hand transfer: the right hand joins the handle while the left slides beneath the cup. The cup remains supported throughout; do not jump from the left-hand grip in the reach drawing to the right-hand grip in the final drawing. The four static landmarks do not replace this intermediate motion.
 
@@ -88,17 +93,17 @@ Preview starting values: 120–220 ms anticipation, 450–900 ms main action, 25
 
 | Scene sheet | Natural support | Four-state progression |
 | --- | --- | --- |
-| [F1 Food](assets/scene-storyboards/F1-food.svg) | Low table, pot trivet/warmer and spoon rest | Covered pot → soft steam/stir → fuller steam/lid peek → serve |
+| [F1 Food](assets/scene-storyboards/F1-food.svg) | Preparation table, three separate dishes and a small utensil rest | Lay out ingredients → prepare vegetables → plate rice → vegetables, rice and warm soup ready |
 | [F2 Plant](assets/scene-storyboards/F2-plant.svg) | Pot on a bench or planting tray; leaves clear of the face | Shoot → unfolding leaves → bud → flower and pot pat |
-| [F3 Book](assets/scene-storyboards/F3-book.svg) | Book supported by desk/lap and one steady hand | First spread → distinct page illustration → bookmark prepared → close and hug |
+| [F3 Book](assets/scene-storyboards/F3-book.svg) | Book supported by a reading table and broad, rounded palms | Open spread → turn page → place ribbon → close book on table |
 | [F4 Tea](assets/scene-storyboards/F4-tea.svg) | Small side table, kettle base and exactly one cup/saucer; short arms stay within reach | Resting hands → growing steam → near-handle grip → cup held close |
 | [F5 Bubbles](assets/scene-storyboards/F5-bubbles.svg) | Bubble jar rests on a mat; wand is held visibly | Wand dip → small bubble → wider calm composition → heart bubble |
 | [F6 Boat](assets/scene-storyboards/F6-boat.svg) | Folding table/tray, then a shallow water tray | Sheet → triangle → folded hull → boat afloat |
-| [F7 Blocks](assets/scene-storyboards/F7-blocks.svg) | Stable floor mat with visible block-to-block contact | Base → deliberate placements → stable tower → flag |
+| [F7 Blocks](assets/scene-storyboards/F7-blocks.svg) | Stable floor mat; nearby tower with visible block-to-block contact | Base → deliberate placements → stable tower → flag visible, hands relaxed |
 | [F8 Stars](assets/scene-storyboards/F8-stars.svg) | Grounded cushion/blanket; sky remains behind the character | Sparse sky → constellation reveal → fuller sky → shooting star |
 | [R1 Stretch](assets/scene-storyboards/R1-stretch.svg) | Feet and seated weight remain on a soft mat | Settle → reach → slow stretch → relaxed breathing |
 | [R2 Clouds](assets/scene-storyboards/R2-clouds.svg) | Cushion or lawn supports a relaxed seated pose | Settle → watch → slow cloud change → comfortable observation |
-| [R3 Warm drink](assets/scene-storyboards/R3-drink.svg) | Side table/coaster and a cup supported by both hands | Hold → blow gently → sip → comfortable hold/return |
+| [R3 Warm drink](assets/scene-storyboards/R3-drink.svg) | Side table/coaster nearby; both hands support one cup close to the body | Hold → blow gently → sip → comfortable hold |
 
 Focus scenes develop against the chosen session's progress. Rest scenes remain leisurely activities available immediately, with no completion requirement or earned readiness. Their motion language matches focus; they need not act as a second countdown. All scenes must be recognizable in their static form.
 
@@ -147,6 +152,8 @@ Meaningful verification after implementation:
 ### Static review pack checks — 2026-10-30
 
 The supplied pack contains 11 scene sheets and 44 frame drawings, with shared data for the in-chat scene selector. All SVG fragments/sheets parse and the plan's asset links resolve. The gallery was checked in desktop Chrome 156.0.8078.74 at 320/375/430/736 CSS-pixel viewport widths in light and dark appearance: all 88 scene/width/appearance combinations showed four frames, responded to selection and had no horizontal overflow or page errors. Static visual review covers prop support, hand contact, labels and preservation of the rounded creature across the catalogue.
+
+After the catalogue hand/food correction, all 44 frame fragments and 11 SVG sheets parse; all ten non-tea scene drawings changed and the revised tea sheet is preserved. The new ten-scene selector passed 80 scene/width/appearance combinations in the same desktop Chrome version and widths, with four frames per scene, working selection, no horizontal overflow and no page errors. Static review also caught and corrected an obscured tower flag and a moving shoulder in the bookmark pose. The generic endpoint-arm helper is no longer used by the design generator.
 
 These are checks of the design artifacts, not the production app, animation smoothness, 200% app text, physical phones or final design acceptance. Detailed motion trajectories and app integration still follow review.
 

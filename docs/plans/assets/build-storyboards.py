@@ -36,11 +36,12 @@ def actor(x=42,y=38,eyes='open',gaze=0,lean=0,gazeY=0):
     else:s+=part('eyesResting','sb-face')
     s+=part('mouth','sb-face')
     return g(s,f'translate({x} {y}) rotate({lean} 120 160)')
-def arms(l=(140,175),r=(202,177),shoulders=((110,144),(213,144))):
-    def one(a,b):
-        x,y=a;u,v=b
-        return path(f'M{x-5} {y} Q{x-12} {y+19} {u-5} {v+5} Q{u+3} {v+11} {u+7} {v+3} Q{u+10} {v-4} {u+1} {v-7} Q{x+7} {y+15} {x+6} {y+2} Q{x} {y-5} {x-5} {y}','sb-body')
-    return one(shoulders[0],l)+one(shoulders[1],r)
+def rest_arm(side,x=42,y=38,lean=0):
+    """Original short relaxed silhouette, attached in the actor's coordinates."""
+    name='armLeftPaused' if side in ('left','l') else 'armRightPaused'
+    return g(part(name,'sb-body'),f'translate({x} {y}) rotate({lean} 120 160)')
+def rest_arms(x=42,y=38,lean=0):
+    return rest_arm('left',x,y,lean)+rest_arm('right',x,y,lean)
 def table():
     return (path('M55 185 L54 220 Q59 224 65 220 L70 187 M248 187 L254 220 Q260 224 266 220 L265 185','sb-edge')+
        path('M35 180 L35 187 Q159 210 285 187 L285 180','sb-edge')+ellipse(160,180,125,17,'sb-table')+path('M47 181 Q159 200 274 181','sb-softline'))
@@ -95,39 +96,86 @@ def pot(x=81,y=178,lid=True):
     if lid:z+=g(path('M-35 -35 Q0 -60 35 -35 Z','sb-green')+rect(-6,-54,12,7,'sb-edge',4),f'translate({x} {y})')
     return z
 
-def food(s):
-    z=ground()+actor(eyes='happy' if s==3 else 'open')+table()
-    # The spoon always has a visible support: either its rest or the hand.
-    z+=ellipse(231,184,31,4,'sb-paper')
-    if s!=1:
-        z+=path('M211 181 L250 180','sb-line')+ellipse(254,180,7,3,'sb-table')
-    z+=pot(lid=s==0)
-    if s>0:
-        # Removed lid stays on the rear-right tabletop, never disappears.
-        z+=g(path('M-31 0 Q0 -22 31 0 Z','sb-green')+rect(-6,-20,12,7,'sb-edge',4), 'translate(244 169)')
-    if s==1:
-        z+=path('M81 160 L122 127','sb-line')+ellipse(80,161,7,3,'sb-paper')
-        z+=arms((115,133),(205,173))
-        # A small thumb lies across the handle to make the grip legible.
-        z+=path('M111 132 Q116 127 120 133 Q117 139 112 137','sb-body')
+def craft_press_left():
+    # A relaxed shoulder, rounded elbow and broad palm resting on a work surface.
+    return path('M111 141 C102 141 103 158 116 170 C124 179 136 181 143 175 C147 171 143 166 139 166 C132 168 124 164 120 157 C117 150 120 141 111 141 Z','sb-body')
+
+
+def craft_press_right():
+    return g(craft_press_left(),'translate(324 0) scale(-1 1)')
+
+
+def craft_page_hand(bookmark=False):
+    # The shoulder stays fixed while the rounded palm follows the page/ribbon.
+    if bookmark:
+        return path('M213 143 C224 146 222 161 213 170 C205 174 194 164 184 156 C179 152 180 146 185 145 C191 146 198 155 204 156 C210 157 205 141 213 143 Z','sb-body')
+    return path('M213 143 C223 146 222 158 213 165 C205 169 194 159 184 151 C179 147 180 141 185 140 C191 141 198 150 204 151 C210 152 205 141 213 143 Z','sb-body')
+
+
+def food_dish(x,y,kind,prepared=False):
+    # Three recognisable dishes, each visibly supported on its own plate/bowl.
+    z=ellipse(0,1,25,4)
+    if kind=='rice':
+        z+=ellipse(0,-1,30,7,'sb-paper')+ellipse(0,-2,24,4,'sb-edge')
+        if prepared:
+            z+=path('M-20 -5 Q-19 -14 -11 -15 Q-8 -23 0 -20 Q10 -24 13 -15 Q21 -13 21 -5 Z','sb-paper')
+            z+=path('M-10 -11 l3 1 m4 -6 l3 1 m6 5 l3 -1 m-12 5 l3 1','sb-softline')
+            z+=path('M-4 -20 Q-8 -28 2 -26 Q6 -23 3 -19 Z','sb-green')
+        else:
+            z+=ellipse(-9,-7,7,3,'sb-paper')+ellipse(5,-7,9,3,'sb-paper')
     else:
-        z+=arms((122,173),(189,166) if s==3 else (210,173))
-    z+=steam(80,122 if s==0 else 136,[1,2,3,2][s])
-    if s==3:z+=g(path('M-25 -17 Q0 6 25 -17 L20 -3 Q0 11 -20 -3Z','sb-paper')+ellipse(0,-17,25,5,'sb-edge'), 'translate(170 173)')
+        z+=path('M-24 -12 L24 -12 Q21 4 0 5 Q-21 4 -24 -12 Z','sb-paper')+ellipse(0,-12,24,6,'sb-paper')
+        if kind=='greens':
+            z+=path('M-18 -13 Q-24 -25 -13 -24 Q-12 -33 -4 -25 Q5 -33 9 -23 Q20 -26 20 -16 Q9 -8 -18 -13 Z','sb-green')
+            z+=path('M-10 -23 L-5 -14 M8 -24 L6 -14','sb-softline')
+            if prepared:
+                z+=ellipse(-11,-13,5,4,'sb-pink')+ellipse(10,-16,5,4,'sb-pink')
+        elif prepared:
+            z+=ellipse(0,-12,21,4.5,'sb-edge')
+            z+=ellipse(-7,-13,4,2,'sb-green')+ellipse(7,-11,3,1.8,'sb-green')
+    return g(z,f'translate({x} {y})')
+
+def food(s):
+    z=ground()+actor(eyes='happy' if s==3 else 'open',gaze=-2 if s==1 else 0)
+    z+=rest_arm('right')
+    if s in (0,3):z+=rest_arm('left')
+    z+=table()
+    z+=food_dish(100,177,'greens',s>=1)
+    z+=food_dish(162,188,'rice',s>=2)
+    z+=food_dish(225,177,'soup',s>=3)
+    # A small utensil rest, not a large lid-shaped object at the right edge.
+    z+=rect(241,188,21,5,'sb-edge',2)
+    if s in (0,3):
+        z+=path('M238 190 L260 189','sb-line')+ellipse(263,189,5,2.5,'sb-paper')
+    elif s==1:
+        # Spoon is held in a compact curved left arm, close to its shoulder.
+        z+=path('M102 160 L128 146','sb-line')+ellipse(100,161,6,3,'sb-paper')
+        z+=path('M110 141 C102 141 100 150 105 158 C110 166 120 165 128 158 C132 154 132 148 127 147 C122 147 120 153 116 153 C114 150 119 143 110 141 Z','sb-body')
+        z+=path('M126 150 L129 148','sb-softline')
+    else:
+        z+=path('M135 160 L160 174','sb-line')+ellipse(164,175,7,3,'sb-paper')
+        z+=path('M110 141 C101 142 103 156 112 166 C119 174 131 174 139 168 C144 164 141 158 136 158 C130 161 125 160 121 156 C118 151 119 142 110 141 Z','sb-body')
+        z+=path('M135 161 L138 163','sb-softline')
+    if s==3:z+=steam(225,157,1)
     return z
 
 def plant(s):
-    z=ground()+actor(gaze=-3,eyes='happy' if s==3 else 'open')+table()+ellipse(81,180,33,5,'sb-edge')
-    z+=arms((93,143) if s==1 else (117,174),(214,176))
-    z+=g(path('M-24 -33 L24 -33 L18 -3 Q0 5 -18 -3Z','sb-table')+ellipse(0,-33,26,6,'sb-edge')+ellipse(0,-33,21,3,'sb-shadow'), 'translate(80 177)')
+    # Bring the pot inside a short arm's reach; the shoulder never stretches.
+    z=ground()+actor(gaze=-3,eyes='happy' if s==3 else 'open')+table()+ellipse(92,180,32,5,'sb-edge')
+    z+=rest_arm('right')
+    if s in [0,2]:z+=rest_arm('left')
+    z+=g(path('M-24 -33 L24 -33 L18 -3 Q0 5 -18 -3Z','sb-table')+ellipse(0,-33,26,6,'sb-edge')+ellipse(0,-33,21,3,'sb-shadow'),'translate(92 177)')
     h=[13,28,43,55][s]
-    z+=path(f'M80 143 Q83 {141-h/2} 79 {143-h}','sb-line')
-    z+=path(f'M80 {139-h*.3} Q55 {134-h*.7} 58 {128-h*.7} Q79 {125-h*.5} 80 {139-h*.3} Z','sb-green')
-    z+=path(f'M80 {135-h*.6} Q101 {127-h} 106 {132-h} Q104 {147-h*.5} 80 {135-h*.6} Z','sb-green')
-    if s==2:z+=ellipse(79,98,8,11,'sb-pink')
-    if s==3:
-        z+=''.join(ellipse(79+dx,88+dy,8,9,'sb-pink') for dx,dy in [(-9,0),(9,0),(0,-9),(0,9)])+ellipse(79,88,5,5,'sb-edge')
+    z+=path(f'M92 143 Q95 {141-h/2} 91 {143-h}','sb-line')
+    z+=path(f'M92 {139-h*.3} Q67 {134-h*.7} 70 {128-h*.7} Q91 {125-h*.5} 92 {139-h*.3} Z','sb-green')
+    z+=path(f'M92 {135-h*.6} Q113 {127-h} 118 {132-h} Q116 {147-h*.5} 92 {135-h*.6} Z','sb-green')
+    if s==2:z+=ellipse(91,98,8,11,'sb-pink')
+    if s==3:z+=''.join(ellipse(91+dx,88+dy,8,9,'sb-pink') for dx,dy in [(-9,0),(9,0),(0,-9),(0,9)])+ellipse(91,88,5,5,'sb-edge')
+    if s in [1,3]:
+        # Near palm overlaps the pot wall directly below its rim.
+        z+=path('M111 141 C103 140 101 147 102 154 C102 161 106 167 111 168 C117 169 120 164 116 161 C112 159 111 155 113 151 C116 146 117 143 111 141 Z','sb-body')
     return z
+
 
 def book_shape(s):
     if s==3:return path('M125 149 L190 149 L190 178 L125 178Z','sb-green')+path('M129 173 L187 173','sb-paper')+path('M179 175 L179 184 L174 181 L169 184 L169 175','sb-pink')
@@ -138,88 +186,156 @@ def book_shape(s):
     return z
 
 def book(s):
-    z=ground()+actor(eyes='happy' if s==3 else 'open',gaze=0)+table()
-    z+=arms((121,171),(185,146) if s==1 else (204,172))
-    z+=book_shape(s)
+    z=ground()+actor(eyes='happy' if s==3 else 'open')+table()
+    if s==3:
+        # Book is supported on the table, with both short hands at its sides.
+        z+=craft_press_left()+craft_press_right()+book_shape(s)
+    else:
+        z+=book_shape(s)+craft_press_left()
+        if s==0:z+=craft_press_right()
+        elif s==1:z+=craft_page_hand()
+        else:
+            # Bookmark comes to the hand rather than asking the arm to reach far.
+            z+=craft_page_hand(bookmark=True)
     return z
 
+
 def bubbles(s):
-    z=ground()+mat()+actor(eyes='happy' if s==3 else 'open')
+    z=ground()+mat()+actor(eyes='happy' if s==3 else 'open')+rest_arm('left')
     z+=ellipse(242,212,21,4)+rect(226,178,32,33,'sb-green',7)+ellipse(242,180,16,5,'sb-edge')
-    z+=arms((123,178),(242,136) if s else (242,162))
-    if s:
-        z+=path('M242 141 L242 113','sb-line')+ellipse(242,108,11,12,'sb-line')
-    else:
+    if s==0:
         z+=path('M242 155 L242 187','sb-line')+ellipse(242,193,9,10,'sb-line')
+        z+=path('M213 141 C223 140 226 151 230 157 C234 161 240 159 245 160 C252 162 249 169 244 171 C233 177 223 171 217 164 C209 157 206 146 213 141 Z','sb-body')
+    else:
+        z+=path('M236 141 L236 113','sb-line')+ellipse(236,108,11,12,'sb-line')
+        z+=path('M213 143 C224 146 230 142 232 134 C233 129 238 127 241 131 C246 137 242 148 234 154 C224 161 214 156 210 150 C207 146 209 141 213 143 Z','sb-body')
     spots=[[],[(262,90,16)],[(262,80,20),(69,91,14),(234,38,10)],[(265,69,25),(60,86,15)]]
     for x,y,r in spots[s]:z+=ellipse(x,y,r,r,'sb-water',extra='opacity=".58"')+path(f'M{x-r*.6} {y-r*.2} Q{x-r*.6} {y-r*.65} {x-r*.2} {y-r*.7}','sb-paper')
     if s==3:z+=path('M265 66 C250 52 244 72 265 82 C286 72 280 52 265 66Z','sb-pink')
     return z
 
+
 def boat(s):
     z=ground()+actor(eyes='happy' if s==3 else 'open')+table()
-    z+=arms((135,171),(190,171))
     if s==0:z+=path('M112 169 L173 157 L210 178 L146 191Z','sb-paper')+path('M134 167 L190 180','sb-softline')
     if s==1:z+=path('M120 179 L164 145 L205 179Z','sb-paper')+path('M164 145 L164 179','sb-line')
     if s==2:z+=path('M119 177 L164 155 L208 177 L189 188 L138 188Z','sb-paper')+path('M119 177 L164 181 L208 177 M164 155 L164 181','sb-line')
-    if s==3:
+    if s<3:z+=craft_press_left()+craft_press_right()
+    else:
+        z+=rest_arms()
         z+=ellipse(166,183,65,11,'sb-edge')+ellipse(166,180,62,10,'sb-water')+path('M129 173 L199 173 L183 185 L145 185Z','sb-paper')+path('M145 172 L164 148 L183 172Z','sb-paper')+path('M164 150 L164 173','sb-softline')+path('M116 185 Q130 188 140 186 M192 187 L210 184','sb-softline')
     return z
 
+
 def block(x,y,c='sb-green'):return path(f'M{x} {y-22} L{x+25} {y-22} L{x+25} {y} L{x} {y}Z',c)+path(f'M{x} {y-22} L{x+7} {y-28} L{x+31} {y-28} L{x+25} {y-22} M{x+25} {y-22} L{x+31} {y-28} L{x+31} {y-6} L{x+25} {y}','sb-line')
 def blocks(s):
-    z=ground()+mat()+actor(eyes='happy' if s==3 else 'open',gaze=-3)
-    z+=arms((84,160) if s>0 else (118,178),(218,178))
-    z+=block(62,211,'sb-green')+block(91,211,'sb-table')
-    if s>=1:z+=block(77,184,'sb-light')
-    if s>=2:z+=block(77,156,'sb-green')
-    if s==3:z+=path('M91 129 L91 105','sb-line')+path('M91 105 L113 112 L91 118Z','sb-pink')
-    else:z+=block(240,211,'sb-light')
+    # Move the tower close to the body. Each action is a short placement, not a reach.
+    z=ground()+mat()+actor(eyes='happy' if s==3 else 'open',gaze=-3)+rest_arm('right')
+    z+=block(88,211,'sb-green')+block(117,211,'sb-table')
+    if s>=1:z+=block(100,183,'sb-light')
+    if s>=2:z+=block(100,155,'sb-green')
+    if s==0:
+        z+=rest_arm('left')+block(240,211,'sb-light')
+    elif s==1:
+        z+=path('M111 141 C102 140 100 149 104 158 C108 166 118 169 125 165 C130 162 127 157 123 156 C116 157 114 152 115 148 C117 143 115 141 111 141 Z','sb-body')
+        z+=block(240,211,'sb-light')
+    elif s==2:
+        z+=path('M110 140 C102 139 100 147 104 155 C109 160 119 157 124 151 C127 147 126 141 122 140 C119 141 116 145 113 144 C113 142 114 140 110 140 Z','sb-body')
+        z+=block(240,211,'sb-light')
+    else:
+        z+=path('M110 127 L110 105','sb-line')+path('M110 105 L132 112 L110 118Z','sb-pink')
+        # This is the settled pose after placement; keep the flag unobscured.
+        z+=rest_arm('left')
     return z
+
 
 def star(x,y,r=5):return path(f'M{x} {y-r} L{x+1.8} {y-1.5} L{x+r} {y} L{x+1.8} {y+1.5} L{x} {y+r} L{x-1.8} {y+1.5} L{x-r} {y} L{x-1.8} {y-1.5}Z','sb-edge')
 def stars(s):
-    z=ground()+mat('blue')+cushion()+actor(eyes='open' if s<3 else 'happy',gaze=-2,gazeY=-3,lean=-5)+arms((135,177),(204,178))
-    z+=path('M44 42 C19 49 28 75 49 70 C30 67 32 49 44 42Z','sb-paper')
-    spots=[(260,44),(75,31),(285,105),(224,23),(36,116),(252,85)]
-    for x,y in spots[:[2,3,5,6][s]]:z+=star(x,y)
-    if s>0:z+=path('M260 44 L252 85 L285 105','sb-softline')
-    if s==3:z+=path('M211 32 L174 51 M214 37 L187 53','sb-softline')+star(216,31,7)
+    # Body and relaxed arms share the same lean; shoulders never drift apart.
+    lean = -5
+    z = ground() + mat('blue') + cushion()
+    z += actor(eyes='open' if s < 3 else 'happy', gaze=-2, gazeY=-3, lean=lean)
+    z += rest_arms(lean=lean)
+    z += path('M44 42 C19 49 28 75 49 70 C30 67 32 49 44 42Z', 'sb-paper')
+    spots = [(260,44),(75,31),(285,105),(224,23),(36,116),(252,85)]
+    for x,y in spots[:[2,3,5,6][s]]:
+        z += star(x,y)
+    if s > 0:
+        z += path('M260 44 L252 85 L285 105', 'sb-softline')
+    if s == 3:
+        z += path('M211 32 L174 51 M214 37 L187 53', 'sb-softline') + star(216,31,7)
     return z
 
+
 def stretch(s):
-    z=ground()+mat('blue')+actor(eyes='closed',lean=[0,-3,3,0][s])
-    if s==0 or s==3:z+=arms((135,178),(202,178))
+    lean = [0,-3,3,0][s]
+    z = ground() + mat('blue') + actor(eyes='closed', lean=lean)
+    if s in [0,3]:
+        z += rest_arms(lean=lean)
     else:
-        # Retain the original rounded arm mass rather than stretching a thin rod.
-        angle=20 if s==1 else -15
-        left=g(part('armLeftHappy','sb-body'),f'rotate({angle} 68 104)')
-        right=g(part('armRightHappy','sb-body'),f'rotate({-angle} 171 104)')
-        z+=g(left+right,'translate(42 38)')
+        # Original short mitten arms rotate at their own shoulder anchors.
+        # Apply the torso lean to both arms after their local shoulder turn.
+        angle = 15 if s == 1 else -10
+        left = g(part('armLeftHappy','sb-body'), f'rotate({angle} 68 104)')
+        right = g(part('armRightHappy','sb-body'), f'rotate({-angle} 171 104)')
+        z += g(left + right, f'translate(42 38) rotate({lean} 120 160)')
     return z
+
 
 def cloud(x,y,w=1):return g(path('M-31 8 C-48 7 -44 -10 -31 -9 C-29 -31 -8 -30 -1 -15 C13 -24 29 -15 27 -2 C48 -5 47 13 31 13 L-29 13Z','sb-paper'),f'translate({x} {y}) scale({w})')
 def clouds(s):
-    z=ground()+mat('blue')+cushion()+actor(eyes='open' if s in [0,2] else 'closed',gaze=-2,lean=-5)+arms((135,178),(203,177))
-    z+=cloud(53+s*9,58,.67)+cloud(252-s*6,91,.5)
-    if s==2:z+=cloud(247,37,.34)
+    lean = -5
+    z = ground() + mat('blue') + cushion()
+    z += actor(eyes='open' if s in [0,2] else 'closed', gaze=-2, lean=lean)
+    z += rest_arms(lean=lean)
+    z += cloud(53+s*9,58,.67) + cloud(252-s*6,91,.5)
+    if s == 2:
+        z += cloud(247,37,.34)
     return z
+
 
 def drink(s):
-    z=ground()+mat('blue')+cushion()+actor(eyes='happy' if s==3 else 'closed')+small_table()+saucer(266,183)
-    cy=[174,160,149,175][s]
-    z+=arms((144,cy-7),(190,cy-7))+cup(166,cy,.9)+steam(165,cy-25,1)
-    if s==1:z+=path('M159 147 Q145 145 142 139','sb-softline')
+    z = ground() + mat('blue') + cushion()
+    z += actor(eyes='happy' if s == 3 else 'closed') + small_table() + saucer(266,183)
+    # Three deliberately drawn close-to-body holds. Shoulder roots remain fixed
+    # while the elbows curl inward a little more as the cup reaches the mouth.
+    poses = [
+        (
+            175,
+            'M112 142 C103 143 106 162 117 174 C125 183 138 185 148 180 C153 177 151 171 146 171 C138 173 129 168 125 162 C120 154 122 143 112 142 Z',
+            'M211 143 C221 146 218 165 205 176 C199 181 189 181 183 175 C179 171 182 165 187 165 C193 167 199 164 201 158 C203 150 205 142 211 143 Z',
+        ),
+        (
+            168,
+            'M112 142 C103 143 106 160 117 170 C125 178 139 179 148 173 C152 170 150 164 145 164 C139 166 130 164 125 159 C120 153 122 143 112 142 Z',
+            'M211 143 C221 146 217 162 205 171 C198 176 189 173 183 167 C180 164 182 158 187 157 C193 159 198 158 201 153 C203 147 205 142 211 143 Z',
+        ),
+        (
+            162,
+            'M112 142 C104 143 105 155 115 163 C123 171 138 171 148 166 C152 163 151 157 146 157 C139 159 131 156 126 151 C121 146 121 141 112 142 Z',
+            'M211 143 C219 147 216 159 207 166 C199 172 189 169 183 163 C179 160 182 154 187 153 C193 155 199 153 201 148 C204 142 207 140 211 143 Z',
+        ),
+    ]
+    cy,left,right = poses[s if s < 3 else 0]
+    z += path(left,'sb-body') + path(right,'sb-body')
+    # Left palm sits under the base; the cup overlaps the forearms. A small,
+    # connected right mitten overlaps its handle rather than floating beside it.
+    z += cup(156,cy,.82)
+    z += path(f'M183 {cy-7} C179 {cy-10} 176 {cy-7} 178 {cy-3} C180 {cy} 185 {cy} 187 {cy-2}', 'sb-body')
+    z += steam(155,cy-24,1)
+    if s == 1:
+        z += path('M163 147 Q154 145 150 150', 'sb-softline')
     return z
 
+
 meta=[
-('F1','Food together','focus','A low table supports the pot on a trivet, with a spoon rest and serving bowl.',['Set the pot','Gentle stir','Let it simmer','Serve together'],['Pot and spoon supported','Hand grips the spoon','Lid rests beside the pot','Bowl held over table'],food,'food'),
+('F1','Prepare a little meal','focus','Vegetables, a rice dish and soup share a compact preparation table.',['Lay out ingredients','Prepare the vegetables','Plate the rice','Three dishes ready'],['Three dishes have their places','A short, relaxed spoon grip','The main dish joins the table','Vegetables, rice and warm soup'],food,'food'),
 ('F2','Little plant','focus','The flowerpot rests in a tray on a low potting bench.',['Small shoot','Leaves unfold','A new bud','Flower opens'],['Pot stays in its tray','Hand steadies the pot','Bud grows above leaves','A gentle pot pat'],plant,'plant'),
 ('F3','Picture book','focus','An open book rests on a reading table while one hand supports each action.',['Open spread','Turn a page','Place ribbon','Close the book'],['Book rests on table','Fingers follow the corner','Ribbon marks the place','Book stays supported'],book,'book'),
 ('F4','A quiet cup of tea','focus','One cup on a small side table; short, relaxed arms reach only as far as the cup.',['Settle beside the table','Tea is warming','Take the cup','Enjoy the tea'],['Hands rest close to the body','One cup stays on its saucer','A small reach to the handle','Cup held close, base supported'],tea,'tea'),
-('F5','Bubble play','focus','The soap jar stands on a floor mat; the wand moves from the jar into open air.',['Dip the wand','One small bubble','Bubbles drift','A heart bubble'],['Jar anchored on mat','Wand held at the ring','Clear space for bubbles','A playful final shape'],bubbles,'bubbles'),
+('F5','Bubble play','focus','The soap jar stands on a floor mat; the wand moves from the jar into open air.',['Dip the wand','One small bubble','Bubbles drift','A heart bubble'],['Jar anchored on mat','Short grip on the handle','Clear space for bubbles','A playful final shape'],bubbles,'bubbles'),
 ('F6','Paper boat','focus','Paper folds on a craft table; the finished boat rests in a shallow water tray.',['Lay out paper','Press a crease','Open the hull','Float the boat'],['Sheet rests flat','Both hands shape paper','Edges form a boat','Water held in a tray'],boat,'boat'),
-('F7','Block tower','focus','Each block is supported by a stable base on a floor mat.',['Place the base','Add one block','A taller tower','Set the flag'],['Wide base on the mat','Hand places the next block','Blocks remain aligned','No unstable wobble'],blocks,'blocks'),
+('F7','Block tower','focus','Each block is supported by a stable base on a floor mat.',['Place the base','Add one block','A taller tower','Flag on the tower'],['Wide base on the mat','Hand places the next block','Blocks remain aligned','Hands relax after placement'],blocks,'blocks'),
 ('F8','Stargazing','focus','A cushion and blanket support the companion beneath a gradually fuller sky.',['Settle in','Find a pattern','More stars','A shooting star'],['Cushion meets the ground','A small constellation','Sky grows gently','One quiet streak'],stars,'stars'),
 ('R1','Stretch and relax','rest','A soft floor mat supports the feet throughout the stretch.',['Settle','Reach upward','Open the arms','Relax'],['Feet planted on mat','Slow comfortable reach','A broad easy stretch','Return to resting hands'],stretch,'stretch'),
 ('R2','Watch the clouds','rest','The companion rests on a cushion and blanket while clouds cross the open sky.',['Look up','Watch a cloud','A new shape','Rest quietly'],['Cushion supports body','Cloud drifts slowly','Shapes change softly','Nothing to complete'],clouds,'clouds'),
