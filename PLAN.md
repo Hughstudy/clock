@@ -6,6 +6,8 @@ Updated: 2026-10-30. This plan distinguishes implemented scope from the remainin
 
 **Storyboard follow-up, 2026-10-30:** the user requested a tea table and more natural placement, with the same design work across the other activities. The refinement review pack now includes four-frame composition sheets for all eleven scenes, with appropriate tables, trays, mats or cushions and shared contact/perspective rules. These remain schematic design drafts; application implementation and motion verification are separate next steps.
 
+**Tea correction, 2026-10-30:** use exactly one cup and a small side table. The user rejected the previous hand poses as unnatural. The revised tea sheet uses short relaxed arms, a nearby cup-handle grip and a close-to-body hold; it remains a design for review, not accepted production animation.
+
 ## 1. Sources and current baseline
 
 - Requirements: the supplied [PRD v3, file revision 7](docs/handoff-20261029/番茄钟_产品PRD_v3.md), especially sections 3–10 and 12–14. Its appendix describes older code, so it must not be treated as the current implementation. The PRD body takes precedence over conflicting appendix descriptions.

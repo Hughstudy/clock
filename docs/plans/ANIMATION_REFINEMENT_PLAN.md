@@ -8,6 +8,7 @@ Status: review draft, 2026-10-30. **Plan and concept artwork only; application c
 - Show meaningful change as session time passes. Tea is the reference: a quiet kettle develops more steam, then becomes ready to pour and drink.
 - Prepare critical animation storyboards before application implementation.
 - Give the tea activity a real table and natural object placement, and apply the same composition work to every scene rather than refining tea alone.
+- Latest tea revision: **one cup and a small table**. The user found the previous hands unnatural; replace the stretched generic arm shapes with short, rounded poses and a readable cup grip. The revised tea title is “A quiet cup of tea.”
 - Remove completion-based scene restrictions. Every shipped scene is available immediately and a scene is selected randomly for each new session.
 
 The final point supersedes the 2026-10-29 scene-unlock decision and the 1/3/6/10/15 thresholds in the existing Start Scenes Plan. Those rules still describe the current code, not the desired next behavior. Other reward, bookmark and memento proposals are outside this change.
@@ -29,7 +30,7 @@ Code inspection and the existing static gallery identify concrete continuity and
 
 ## Storyboards before implementation
 
-The revised [tea progression drawing](assets/tea-progression-storyboard.svg) adds a low tea table, supported kettle and cups, and a deliberate hand-to-handle relationship. The review pack now covers all eleven activities with four-frame scene sheets, linked in the catalogue below, and shared [storyboard data](assets/scene-storyboards.json). These are schematic composition and progression drafts, not replacement mascot artwork, implemented scenes or evidence of smooth playback. Keep the selected blue creature and existing SVG/sketch direction.
+The revised [tea progression drawing](assets/tea-progression-storyboard.svg) uses one cup on a small side table beside the companion. The kettle stays supported on its base. Idle arms use the original relaxed curves; separate reach and lift poses keep the elbow soft, the palm at the cup handle and the lifted cup close to the torso. This replaces the prior wide table/two-cup composition and generic stretched arm paths, which the user rejected as unnatural. The review pack covers all eleven activities with four-frame scene sheets, linked in the catalogue below, and shared [storyboard data](assets/scene-storyboards.json). These are schematic composition and progression drafts, not replacement mascot artwork, implemented scenes or evidence of smooth playback. Keep the selected blue creature and existing SVG/sketch direction.
 
 ### Natural placement across every scene
 
@@ -59,10 +60,14 @@ Percentages are storyboard landmarks, not new business thresholds or hard visual
 
 | Session progress | Visible state |
 | --- | --- |
-| 0% | Kettle rests on the low tea table/tray; cups sit beside it; a relaxed companion; little or no steam |
+| 0% | Kettle and one cup rest on a small side table; both short arms rest close to the body; little or no steam |
 | Around 40% | Two soft steam wisps; occasional glance at the kettle; table and resting objects stay fixed |
-| Around 75% | Fuller, slightly taller steam; hand reaches the handle and prepares the cup without lifting unsupported props |
-| 100% | Tea ready; a permitted ending can lift, pour and offer a cup, then return the kettle to its resting place |
+| Around 75% | Fuller steam; one arm makes a short curved reach to the near cup handle, while the other stays relaxed |
+| 100% | The same cup is held close to the torso, with a palm beneath/alongside the base and the other hand at the handle; the kettle stays on the table |
+
+The table is beside the creature rather than spanning the full stage. The cup's parked position is within a short arm's reach, so neither shoulder nor hand must stretch to meet it. Preserve a continuous rounded shoulder–elbow–palm silhouette and intentional overlap at the grip. Do not mistake mere endpoint contact for a natural pose. The new tea poses remain for user review; they are a reference for refining the rest of the catalogue, not blanket approval of its existing hand geometry. Pouring remains a separate motion-detail sheet before implementation.
+
+Between the reach and lifted hold, show a deliberate two-hand transfer: the right hand joins the handle while the left slides beneath the cup. The cup remains supported throughout; do not jump from the left-hand grip in the reach drawing to the right-hand grip in the final drawing. The four static landmarks do not replace this intermediate motion.
 
 Steam grows in amount and shape, not simply in speed. A completed five-minute session reaches the same readiness as a completed twenty-five-minute session. The exact timer remains a separate factual badge; the artwork is a metaphor for session progress, not a claim about attention or real boiling time.
 
@@ -86,7 +91,7 @@ Preview starting values: 120–220 ms anticipation, 450–900 ms main action, 25
 | [F1 Food](assets/scene-storyboards/F1-food.svg) | Low table, pot trivet/warmer and spoon rest | Covered pot → soft steam/stir → fuller steam/lid peek → serve |
 | [F2 Plant](assets/scene-storyboards/F2-plant.svg) | Pot on a bench or planting tray; leaves clear of the face | Shoot → unfolding leaves → bud → flower and pot pat |
 | [F3 Book](assets/scene-storyboards/F3-book.svg) | Book supported by desk/lap and one steady hand | First spread → distinct page illustration → bookmark prepared → close and hug |
-| [F4 Tea](assets/scene-storyboards/F4-tea.svg) | Low tea table/tray, kettle base and cups on the same plane | Quiet kettle → growing steam → handle/cup prepared → pour and offer |
+| [F4 Tea](assets/scene-storyboards/F4-tea.svg) | Small side table, kettle base and exactly one cup/saucer; short arms stay within reach | Resting hands → growing steam → near-handle grip → cup held close |
 | [F5 Bubbles](assets/scene-storyboards/F5-bubbles.svg) | Bubble jar rests on a mat; wand is held visibly | Wand dip → small bubble → wider calm composition → heart bubble |
 | [F6 Boat](assets/scene-storyboards/F6-boat.svg) | Folding table/tray, then a shallow water tray | Sheet → triangle → folded hull → boat afloat |
 | [F7 Blocks](assets/scene-storyboards/F7-blocks.svg) | Stable floor mat with visible block-to-block contact | Base → deliberate placements → stable tower → flag |

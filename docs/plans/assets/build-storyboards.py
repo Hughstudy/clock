@@ -56,14 +56,37 @@ def steam(x,y,stage=1):
     curves=['M0 0 C12 -9 -9 -17 1 -28','M13 0 C27 -13 3 -22 15 -37','M-12 1 C0 -12 -22 -23 -9 -43']
     return g(''.join(path(d,'sb-steam',f'opacity="{.28+.18*stage}"') for d in curves[:max(0,min(stage,3))]),f'translate({x} {y})')
 def small_table():return path('M244 184 L244 220 M288 184 L288 218','sb-line')+ellipse(266,184,32,10,'sb-table')
+
+def tea_table():
+    # A side table, approximately half the former full-width tabletop.
+    return (path('M37 188 L39 220 Q43 223 48 219 L50 190 M141 190 L147 219 Q151 223 156 219 L153 188','sb-edge')+
+            path('M25 184 L25 189 Q94 205 165 189 L165 184','sb-edge')+
+            ellipse(95,184,70,13,'sb-table'))
+
 def tea(s):
-    a=ground()+actor(eyes='happy' if s==3 else 'open',gaze=-3 if s==2 else 0)+table()
-    a+=ellipse(78,180,33,5,'sb-edge')+saucer(244,180)+saucer(167,182)
-    a+=arms((109,151) if s==2 else (120,174),(182,170) if s==3 else (218,173)) if s!=3 else arms((147,164),(190,164))
-    a+=kettle()+cup(243,176,.62)
-    if s==3:a+=cup(167,171,.88)+steam(164,146,1)
-    else:a+=cup(167,179,.65)
-    a+=steam(76,117,[1,2,3,1][s])
+    # Dedicated short arm silhouettes. The generic endpoint arm helper makes
+    # rigid tubes here and is deliberately not used for this reviewed pose.
+    a=ground()+actor(x=90,y=45,eyes='happy' if s==3 else 'open',gaze=-3 if s in [1,2] else 0)
+    left_rest=g(part('armLeftPaused','sb-body'),'translate(90 45)')
+    right_rest=g(part('armRightPaused','sb-body'),'translate(90 45)')
+    if s<2:a+=left_rest+right_rest
+    elif s==2:a+=right_rest
+    a+=tea_table()+ellipse(72,182,26,4,'sb-edge')+g(saucer(0,0),'translate(137 183) scale(.78)')
+    a+=g(kettle(0,0),'translate(72 179) scale(.72)')
+    a+=steam(71,135,[1,2,3,1][s])
+    if s<3:
+        a+=cup(137,180,.64)
+        if s==2:
+            # Shoulder -> rounded elbow -> mitten at the near cup handle.
+            a+=path('M159 148 C151 147 149 154 150 161 C150 168 154 174 159 175 C165 176 168 171 164 168 C160 166 159 162 161 158 C164 153 165 150 159 148 Z','sb-body')
+            a+=path('M157 167 Q160 165 162 168','sb-softline')
+    else:
+        # The cup comes close to the torso: one palm supports the base and
+        # the other meets the handle. Its silhouette overlaps both forearms.
+        a+=path('M160 149 C151 150 154 167 165 177 C173 185 187 186 196 180 C200 177 198 171 193 171 C187 173 178 171 173 166 C168 160 170 150 160 149 Z','sb-body')
+        a+=path('M259 150 C269 153 265 169 253 178 C246 183 237 180 231 174 C228 171 230 165 235 164 C241 166 246 165 249 160 C251 154 253 149 259 150 Z','sb-body')
+        a+=cup(204,174,.82)+steam(204,151,1)
+        a+=path('M231 167 C227 164 224 167 226 171 C228 174 233 174 235 172','sb-body')
     return a
 
 def pot(x=81,y=178,lid=True):
@@ -193,7 +216,7 @@ meta=[
 ('F1','Food together','focus','A low table supports the pot on a trivet, with a spoon rest and serving bowl.',['Set the pot','Gentle stir','Let it simmer','Serve together'],['Pot and spoon supported','Hand grips the spoon','Lid rests beside the pot','Bowl held over table'],food,'food'),
 ('F2','Little plant','focus','The flowerpot rests in a tray on a low potting bench.',['Small shoot','Leaves unfold','A new bud','Flower opens'],['Pot stays in its tray','Hand steadies the pot','Bud grows above leaves','A gentle pot pat'],plant,'plant'),
 ('F3','Picture book','focus','An open book rests on a reading table while one hand supports each action.',['Open spread','Turn a page','Place ribbon','Close the book'],['Book rests on table','Fingers follow the corner','Ribbon marks the place','Book stays supported'],book,'book'),
-('F4','Tea for two','focus','A low tea table supports the kettle, tray and two cups; hands meet the handle or cup.',['Set the table','Tea is warming','Prepare the cup','Ready to share'],['Kettle on its trivet','Two soft steam curls','Hand reaches the handle','Lift a cup, kettle stays'],tea,'tea'),
+('F4','A quiet cup of tea','focus','One cup on a small side table; short, relaxed arms reach only as far as the cup.',['Settle beside the table','Tea is warming','Take the cup','Enjoy the tea'],['Hands rest close to the body','One cup stays on its saucer','A small reach to the handle','Cup held close, base supported'],tea,'tea'),
 ('F5','Bubble play','focus','The soap jar stands on a floor mat; the wand moves from the jar into open air.',['Dip the wand','One small bubble','Bubbles drift','A heart bubble'],['Jar anchored on mat','Wand held at the ring','Clear space for bubbles','A playful final shape'],bubbles,'bubbles'),
 ('F6','Paper boat','focus','Paper folds on a craft table; the finished boat rests in a shallow water tray.',['Lay out paper','Press a crease','Open the hull','Float the boat'],['Sheet rests flat','Both hands shape paper','Edges form a boat','Water held in a tray'],boat,'boat'),
 ('F7','Block tower','focus','Each block is supported by a stable base on a floor mat.',['Place the base','Add one block','A taller tower','Set the flag'],['Wide base on the mat','Hand places the next block','Blocks remain aligned','No unstable wobble'],blocks,'blocks'),
