@@ -1,5 +1,7 @@
 # Start Scenes Plan
 
+**2026-10-30 follow-up, plan first:** the user requested clearer/smoother consistent animation, visible time progression (for example increasing kettle steam and tea readiness), critical storyboards, and random selection with no completion-based unlocking. The [Animation Refinement Plan](ANIMATION_REFINEMENT_PLAN.md) is the current review draft. It supersedes the unlock/access requirements below; the remainder of this document records the implemented C2-P2/v5 baseline. The new behavior is not implemented yet.
+
 Status: implementation and desktop production-browser validation complete, 2026-10-30. The user authorized implementation and integration of the §1 decisions. All eight focus scenes and three rest scenes use the existing blue companion's rough.js/SVG style, touch reactions and main-owned stage, with the clock kept as a separate corner badge. The implementation uses C2-P2 and snapshot v5. See the [verification record](../verification/blue-companion-touch.md#session-scenes-integrated-verification) for passing checks and limitations; this does not establish physical-device acceptance or completion of the wider P0 plan. Responsibilities remain in [PLAN.md](../../PLAN.md), the [Main Logic Plan](MAIN_LOGIC_PLAN.md) and the [Animation Plan](ANIMATION_PLAN.md).
 
 ## 1. Decisions (user, 2026-10-29)

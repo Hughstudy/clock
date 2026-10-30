@@ -1,5 +1,7 @@
 # Main Logic Plan
 
+**Animation follow-up, 2026-10-30 — review draft only:** the [Animation Refinement Plan](ANIMATION_REFINEMENT_PLAN.md) proposes main-owned full-pool scene selection without completion gates, retirement of unlock notices, safe snapshot compatibility and precise read-only progress. This supersedes the earlier scene-unlock direction, not the independent break cadence or other pending rewards. The user requested planning before implementation.
+
 Status: proposed work breakdown for review, 2026-10-29. This document covers application behavior, data and functional screen integration. L0–L2 were first implemented on branch `claude/main-logic-l0-l2`. The [verification report](../verification/main-logic-l0-l2.md) lists what was checked and what remains open; L3–L5 are not started. Read [PLAN.md](../../PLAN.md) for the shared scope, open decisions, interface and release sequence; see the separate [Animation Plan](ANIMATION_PLAN.md) for character presentation.
 
 ## Responsibility

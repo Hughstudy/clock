@@ -1,0 +1,95 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 300" width="960" height="300" id="tea-progress-storyboard" role="img" aria-labelledby="title description">
+  <title id="title">Tea for two — concept storyboard</title>
+  <desc id="description">Proposed session progress, with the same blue companion and kettle at setup, warming, brewing and ready-to-drink stages. This is a design sketch, not animation performance evidence. Companion silhouette paths derive from the project’s original companion-spec.json.</desc>
+  <style>
+    #tea-progress-storyboard { --tea-blue: color-mix(in srgb, var(--blue) 62%, var(--background)); --tea-light: color-mix(in srgb, var(--blue) 20%, var(--background)); --tea-shade: color-mix(in srgb, var(--blue) 85%, var(--background)); --tea-line: color-mix(in srgb, var(--blue) 55%, var(--foreground)); --tea-ink: var(--foreground); --tea-blush: color-mix(in srgb, var(--orange) 32%, var(--background)); --tea-prop: color-mix(in srgb, var(--green) 35%, var(--background)); --tea-steam: color-mix(in srgb, var(--foreground) 65%, var(--background)); }
+    #tea-progress-storyboard .tea-heading { display: flex; flex-wrap: wrap; align-items: baseline; gap: calc(14px * .5); padding-right: 90px; }
+    #tea-progress-storyboard .tea-label { margin-top: calc(14px * .25); }
+    #tea-progress-storyboard .tea-frames { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: calc(14px * .75); margin-top: calc(14px * 1); }
+    #tea-progress-storyboard figure { margin: 0; min-width: 0; }
+    #tea-progress-storyboard .tea-drawing { display: block; width: 100%; height: auto; }
+    #tea-progress-storyboard .tea-caption { display: flex; flex-direction: column; gap: calc(14px * .25); }
+    #tea-progress-storyboard .tea-stage { font-weight: 500; }
+    #tea-progress-storyboard .tea-blue { fill: var(--tea-blue); stroke: var(--tea-line); stroke-width: 1.35; }
+    #tea-progress-storyboard .tea-ground { fill: var(--tea-light); opacity: .65; }
+    #tea-progress-storyboard .tea-belly { fill: var(--tea-light); }
+    #tea-progress-storyboard .tea-foot { fill: var(--tea-shade); stroke: var(--tea-line); stroke-width: 1.35; }
+    #tea-progress-storyboard .tea-eye { fill: var(--tea-ink); }
+    #tea-progress-storyboard .tea-mouth { fill: none; stroke: var(--tea-ink); stroke-width: 2.4; }
+    #tea-progress-storyboard .tea-cheek { fill: var(--tea-blush); }
+    #tea-progress-storyboard .tea-kettle { fill: var(--tea-prop); stroke: var(--tea-line); stroke-width: 1.7; }
+    #tea-progress-storyboard .tea-cup { fill: var(--tea-light); stroke: var(--tea-line); stroke-width: 1.7; }
+    #tea-progress-storyboard .tea-liquid { fill: color-mix(in srgb, var(--orange) 40%, var(--background)); }
+    #tea-progress-storyboard .tea-steam { fill: none; stroke: var(--tea-steam); stroke-width: 2.2; }
+    #tea-progress-storyboard .tea-art { stroke-linecap: round; stroke-linejoin: round; }
+    @media (max-width: 560px) { #tea-progress-storyboard .tea-frames { grid-template-columns: repeat(2, minmax(0, 1fr)); row-gap: calc(14px * 1.5); } }
+  
+#tea-progress-storyboard { --background:#f6faff; --foreground:#204b72; --blue:#79baf0; --orange:#ffc3b6; --green:#90bea7; font-family:system-ui,sans-serif; } @media(prefers-color-scheme:dark) { #tea-progress-storyboard { --background:#142638; --foreground:#dceeff; --blue:#79baf0; --orange:#ffc3b6; --green:#90bea7; } } text { fill:var(--foreground); }</style>
+  <rect width="960" height="300" fill="var(--background)" />
+  <defs>
+    <g id="tea-companion-base" class="tea-art" stroke-linecap="round" stroke-linejoin="round">
+      <ellipse class="tea-ground" cx="117" cy="168" rx="100" ry="8" fill="var(--tea-light)" opacity=".65" />
+      <path class="tea-foot" d="M87 151 C78 153 75 161 79 166 C82 171 104 170 108 164 L108 152 Z M135 151 C142 150 158 157 159 164 C159 170 139 171 133 166 L131 156 Z" fill="var(--tea-shade)" stroke="var(--tea-line)" stroke-width="1.35" />
+      <path class="tea-blue" d="M99 44 C80 43 75 29 82 24 C88 18 103 26 111 34 C108 20 115 12 122 17 C129 22 127 33 124 42 Z" fill="var(--tea-blue)" stroke="var(--tea-line)" stroke-width="1.35" />
+      <path class="tea-blue" d="M120 38 C147 37 167 54 173 81 C178 104 185 121 173 143 C163 161 143 165 121 164 C95 166 74 161 64 145 C53 126 62 103 66 82 C71 56 91 39 120 38 Z" fill="var(--tea-blue)" stroke="var(--tea-line)" stroke-width="1.35" />
+      <path class="tea-belly" d="M82 72 C86 58 99 51 110 50 C99 56 92 64 89 75 C87 79 81 77 82 72 Z M88 133 C90 111 149 107 155 133 C160 153 139 158 122 158 C104 158 85 153 88 133 Z" fill="var(--tea-light)" />
+      <path class="tea-cheek" d="M80 111 C80 105 97 105 97 111 C97 117 80 117 80 111 Z M145 111 C145 105 162 105 162 111 C162 117 145 117 145 111 Z" fill="var(--tea-blush)" />
+      <path class="tea-mouth" d="M113 108 Q120 116 128 108" fill="none" stroke="var(--tea-ink)" stroke-width="2.4" />
+    </g>
+    <g id="tea-eyes" class="tea-art tea-eye" stroke-linecap="round" stroke-linejoin="round" fill="var(--tea-ink)">
+      <ellipse cx="100" cy="94" rx="3.6" ry="7" />
+      <ellipse cx="140" cy="94" rx="3.6" ry="7" />
+    </g>
+    <g id="tea-rest-arms" class="tea-art" stroke-linecap="round" stroke-linejoin="round">
+      <path class="tea-blue" d="M69 105 C61 99 48 104 42 112 C37 120 42 124 49 120 C57 116 67 119 72 114 Z M171 106 C178 111 174 123 164 130 C153 138 146 134 147 128 C148 123 158 123 161 116 C164 108 167 104 171 106 Z" fill="var(--tea-blue)" stroke="var(--tea-line)" stroke-width="1.35" />
+    </g>
+    <g id="tea-kettle" class="tea-art" stroke-linecap="round" stroke-linejoin="round">
+      <path class="tea-kettle" d="M55 130 C78 123 78 151 57 149 L57 143 C69 145 70 132 57 136 Z M25 137 L11 121 L11 113 L31 128 Z" fill="var(--tea-prop)" stroke="var(--tea-line)" stroke-width="1.7" />
+      <path class="tea-kettle" d="M26 125 C23 134 21 147 28 153 C36 159 57 157 61 152 C65 145 62 130 57 125 Z" fill="var(--tea-prop)" stroke="var(--tea-line)" stroke-width="1.7" />
+      <path class="tea-kettle" d="M27 124 Q42 113 58 124 Z M38 118 C36 112 47 112 47 118" fill="var(--tea-prop)" stroke="var(--tea-line)" stroke-width="1.7" />
+    </g>
+    <g id="tea-held-cup" class="tea-art" stroke-linecap="round" stroke-linejoin="round">
+      <path class="tea-cup" d="M135 131 C154 126 157 147 137 146 L137 141 C148 143 149 132 136 136 Z M104 129 L139 129 L136 148 Q122 158 107 148 Z" fill="var(--tea-light)" stroke="var(--tea-line)" stroke-width="1.7" />
+      <ellipse class="tea-liquid" cx="121.5" cy="130" rx="16" ry="3.2" fill="color-mix(in srgb, var(--orange) 40%, var(--background))" />
+      <path class="tea-blue" d="M69 105 C64 108 65 121 76 129 C87 138 103 141 106 135 C108 128 86 124 80 116 C77 109 73 104 69 105 Z M171 106 C178 111 174 123 164 130 C153 138 137 141 136 135 C135 128 158 123 161 116 C164 108 167 104 171 106 Z" fill="var(--tea-blue)" stroke="var(--tea-line)" stroke-width="1.35" />
+    </g>
+  </defs>
+  <text x="20" y="29" font-size="22" font-weight="500">Tea for two · concept storyboard</text>
+  <text x="20" y="51" font-size="14">Proposed session progress</text>
+  <svg class="tea-drawing tea-art" viewBox="0 0 240 190" role="img" aria-label="Setup. The companion places a kettle beside itself, with one faint steam curl." x="12" y="64" width="216" height="171" stroke-linecap="round" stroke-linejoin="round">
+    <use href="#tea-companion-base" />
+    <use href="#tea-eyes" />
+    <use href="#tea-rest-arms" />
+    <use href="#tea-kettle" />
+    <path class="tea-steam" opacity=".25" d="M41 105 C48 99 35 97 42 91" fill="none" stroke="var(--tea-steam)" stroke-width="2.2" />
+  </svg>
+  <text x="20" y="252" font-size="16" font-weight="500">0% · Settle in</text>
+  <text x="20" y="276" font-size="13">Kettle placed · faint steam</text>
+  <svg class="tea-drawing tea-art" viewBox="0 0 240 190" role="img" aria-label="Warming. The same kettle produces two rising steam curls." x="252" y="64" width="216" height="171" stroke-linecap="round" stroke-linejoin="round">
+    <use href="#tea-companion-base" />
+    <use href="#tea-eyes" />
+    <use href="#tea-rest-arms" />
+    <use href="#tea-kettle" />
+    <path class="tea-steam" opacity=".55" d="M34 105 C46 96 25 91 37 81 M49 106 C60 98 41 91 53 83" fill="none" stroke="var(--tea-steam)" stroke-width="2.2" />
+  </svg>
+  <text x="260" y="252" font-size="16" font-weight="500">40% · Warming</text>
+  <text x="260" y="276" font-size="13">Two soft steam curls</text>
+  <svg class="tea-drawing tea-art" viewBox="0 0 240 190" role="img" aria-label="Brewing. Steam is fuller and taller. The companion glances toward the kettle." x="492" y="64" width="216" height="171" stroke-linecap="round" stroke-linejoin="round">
+    <use href="#tea-companion-base" />
+    <use href="#tea-eyes" transform="translate(-4 1)" />
+    <use href="#tea-rest-arms" />
+    <use href="#tea-kettle" />
+    <path class="tea-steam" opacity=".8" d="M29 105 C45 93 15 87 31 73 C43 64 24 59 35 50 M43 105 C61 94 30 85 46 74 C61 62 40 57 50 48 M57 105 C72 95 47 86 61 76" fill="none" stroke="var(--tea-steam)" stroke-width="2.2" />
+  </svg>
+  <text x="500" y="252" font-size="16" font-weight="500">75% · Brewing</text>
+  <text x="500" y="276" font-size="13">Fuller steam · curious glance</text>
+  <svg class="tea-drawing tea-art" viewBox="0 0 240 190" role="img" aria-label="Ready. The smiling companion offers a warm cup with soft steam. The kettle stays beside it." x="732" y="64" width="216" height="171" stroke-linecap="round" stroke-linejoin="round">
+    <use href="#tea-companion-base" />
+    <path class="tea-mouth" d="M94 97 Q100 87 107 97 M134 97 Q141 87 148 97" fill="none" stroke="var(--tea-ink)" stroke-width="2.4" />
+    <use href="#tea-kettle" />
+    <use href="#tea-held-cup" />
+    <path class="tea-steam" opacity=".5" d="M114 122 C123 117 108 113 117 107 M128 122 C137 117 122 113 131 107 M42 105 C50 98 36 95 44 88" fill="none" stroke="var(--tea-steam)" stroke-width="2.2" />
+  </svg>
+  <text x="740" y="252" font-size="16" font-weight="500">100% · Ready</text>
+  <text x="740" y="276" font-size="13">Offer a cup · calm steam</text>
+</svg>
