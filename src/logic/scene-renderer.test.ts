@@ -65,4 +65,14 @@ describe('scene artwork rendering', () => {
       expect(html).toContain('data-scene-phase="idle"')
     }
   })
+  it('draws the opaque jar front over the dipped ring and fills every exposed block face', () => {
+    const bubbles = render('F5', 'running', 'hello', 0)
+    const wand = bubbles.indexOf('data-scene-part="wand"')
+    expect(wand).toBeGreaterThan(-1)
+    expect(bubbles.indexOf('data-scene-part="jar-front"')).toBeGreaterThan(wand)
+    const blocks = render('F7', 'running', 'hello', 1)
+    const firstBlock = blocks.slice(blocks.indexOf('data-block="0"'), blocks.indexOf('data-block="1"'))
+    const solidFaces = [...firstBlock.matchAll(/class="scene-draw-(paper|green)" d="[^"]*Z"/g)]
+    expect(solidFaces).toHaveLength(3)
+  })
 })

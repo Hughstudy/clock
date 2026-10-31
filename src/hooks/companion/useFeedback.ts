@@ -49,5 +49,5 @@ export function useFeedback(app: ClockApp, options: { active?: boolean; nodeEnco
     persistence: app.saveState, hasError: view.hasError,
   }), [app.snapshot, state.cue, options.completedProgress, input.active, app.saveState, view.hasError])
   // `cue` has its own identity; it is not derived from the screen-reader announcement.
-  return { feedback: state.feedback, view, scene, cue: state.cue, request, next, dismiss }
+  return { feedback: state.feedback, view, scene, sceneryEnabled: app.snapshot.settings.sceneVarietyEnabled, cue: state.cue, request, next, dismiss }
 }

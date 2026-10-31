@@ -7,14 +7,16 @@ import { useCompanionScene } from '../../hooks/companion/useCompanionScene'
 import { sampleScenePose } from '../../logic/scene-pose'
 import type { SceneMotionKind } from '../../logic/scene-motion'
 import { CompanionSceneArt } from './CompanionSceneArt'
+import { CompanionScenery } from './CompanionScenery'
+import { CompanionPaint } from './CompanionPaint'
 import '../../styles/blue-companion.css'
 import '../../styles/companion-scenes.css'
 
 export interface SceneInspection { actionKind: SceneMotionKind | 'idle'; actionProgress: number }
-interface Props { presentation: CompanionPresentation; cueId?: string | undefined; scene?: CompanionScene | null | undefined; inspection?: SceneInspection | undefined }
+interface Props { presentation: CompanionPresentation; cueId?: string | undefined; scene?: CompanionScene | null | undefined; inspection?: SceneInspection | undefined; panelOpen?: boolean; sceneryEnabled?: boolean }
 
 /** Original, replaceable prototype art. Only semantic presentation cues enter this layer. */
-export function BlueCompanion({ presentation, cueId, scene, inspection }: Props) {
+export function BlueCompanion({ presentation, cueId, scene, inspection, panelOpen = false, sceneryEnabled = true }: Props) {
   // Scene entrances/endings have their own bound identities. Keep greeting and
   // requested encouragement, but don't play two start/end gestures together.
   const legacyPresentation = scene && (presentation.cue === 'begin' || presentation.cue === 'settle')
@@ -22,7 +24,7 @@ export function BlueCompanion({ presentation, cueId, scene, inspection }: Props)
   const { spec, sketch, active, finish } = useBlueCompanion(legacyPresentation, cueId)
   const play = useBlueCompanionTouch(presentation, spec, active?.id, finish, scene?.key)
   const { touch } = play
-  const sceneMotion = useCompanionScene(scene, { staticOnly: presentation.staticOnly || presentation.stance === 'neutral', touching: !!touch || !!active })
+  const sceneMotion = useCompanionScene(scene, { staticOnly: presentation.staticOnly || presentation.stance === 'neutral', touching: !!touch || !!active, panelOpen })
   const gradientId = useId().replace(/:/g, '')
   const scenePose = spec.poses[presentation.stance]
   const sceneFrame = scene ? sampleScenePose({
@@ -67,16 +69,9 @@ export function BlueCompanion({ presentation, cueId, scene, inspection }: Props)
       data-scene-progress={inspection ? scene?.completedProgress : sceneMotion.presentedProgress}
       data-scene-activity-progress={inspection ? scene?.completedProgress : sceneMotion.activityProgress}
       data-scene-action={inspection?.actionKind ?? sceneMotion.sampleKind} data-scene-action-progress={inspection?.actionProgress ?? sceneMotion.actionProgress}>
-      <defs>
-        <linearGradient id={`${gradientId}-body`} x1="20%" y1="0%" x2="85%" y2="100%">
-          <stop offset="0%" stopColor={spec.palette.light} /><stop offset="46%" stopColor={spec.palette.body} /><stop offset="100%" stopColor={spec.palette.shade} />
-        </linearGradient>
-        <linearGradient id={`${gradientId}-belly`} x1="10%" y1="0%" x2="65%" y2="100%">
-          <stop offset="0%" stopColor={spec.palette.white} /><stop offset="100%" stopColor={spec.palette.belly} />
-        </linearGradient>
-      </defs>
       {scene && sceneFrame ? <CompanionSceneArt key={scene.key} scene={scene} frame={sceneFrame} /> : <>
-      {part('ground')}{part('groundEdge')}
+      <CompanionPaint id={gradientId}/>
+      {sceneryEnabled ? <g transform="scale(.75)"><CompanionScenery/></g> : <>{part('ground')}{part('groundEdge')}</>}
       <g className="blue-companion__shadow">{part('shadow')}</g>
       <g key={active?.id ?? 'at-rest'} className="blue-companion__gesture" onAnimationEnd={event => { if (event.target === event.currentTarget && active) finish(active.id) }}>
         <g key={touch?.id ?? 'no-touch'} className="blue-companion__touch" onAnimationEnd={event => { if (event.target === event.currentTarget && touch) play.finish(touch.id) }}>

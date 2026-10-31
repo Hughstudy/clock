@@ -4,10 +4,10 @@ import { sceneMotionSpec } from '../../data/scene-motion'
 import { emptySceneMotion, finishSceneMotion, nextSceneMotion, sceneBeatDelay, sceneCanMove, sceneMotionDuration, startSceneBeat } from '../../logic/scene-motion'
 import { advanceScenePlayback, emptyScenePlayback, scenePlaybackNeedsFrame, type ScenePlaybackInput } from '../../logic/scene-playback'
 
-interface Options { staticOnly: boolean; touching: boolean }
+interface Options { staticOnly: boolean; touching: boolean; panelOpen: boolean }
 
 /** Cancellable local presentation. It never advances the host's session fraction. */
-export function useCompanionScene(scene: CompanionScene | null | undefined, { staticOnly, touching }: Options) {
+export function useCompanionScene(scene: CompanionScene | null | undefined, { staticOnly, touching, panelOpen }: Options) {
   const [visible, setVisible] = useState(() => typeof document === 'undefined' || !document.hidden)
   const visibility = useRef(visible)
   const [recovering, setRecovering] = useState(false)
@@ -15,6 +15,7 @@ export function useCompanionScene(scene: CompanionScene | null | undefined, { st
   const [motion, setMotion] = useState(() => nextSceneMotion(emptySceneMotion(), scene, conditions))
   const [playback, setPlayback] = useState(emptyScenePlayback)
   const cursor = useRef(playback)
+  const lastFrameAt = useRef<number | null>(null)
   const currentScene = useRef(scene)
   currentScene.current = scene
   const key = scene?.key ?? null
@@ -78,8 +79,8 @@ export function useCompanionScene(scene: CompanionScene | null | undefined, { st
   // Finite gestures no longer stop/restart independent ambient loops.
   const ambientAllowed = moving && !recovering && status === 'running'
   const durationMs = active && scene ? sceneMotionDuration(active.kind, scene, sceneMotionSpec) : 0
-  const mode: ScenePlaybackInput['mode'] = !scene || staticOnly || !visible || recovering || !allowBeats ? 'settle'
-    : status === 'paused' || touching ? 'hold' : 'run'
+  const mode: ScenePlaybackInput['mode'] = !scene || staticOnly || !visible || recovering || (!allowBeats && !panelOpen) ? 'settle'
+    : status === 'paused' || touching || panelOpen ? 'hold' : 'run'
   const input = useMemo<ScenePlaybackInput>(() => ({
     key, progress: scene?.completedProgress ?? 0, mode, handlingMs: sceneMotionSpec.handlingMs,
     // Hiding already consumed old cues. A new main-permitted cue arriving on
@@ -87,19 +88,23 @@ export function useCompanionScene(scene: CompanionScene | null | undefined, { st
     action: active && !recovering ? { id: active.id, kind: active.kind, durationMs } : null,
   }), [key, scene?.completedProgress, mode, active?.id, active?.kind, durationMs, recovering])
 
+  // A new session or an interruption starts a fresh local frame interval.
+  // Ordinary host progress readings keep the last painted frame's timestamp.
+  useEffect(() => { lastFrameAt.current = null }, [key, mode])
   useEffect(() => {
     let frame = 0
-    let last: number | null = null
     cursor.current = advanceScenePlayback(cursor.current, input, 0)
     setPlayback(cursor.current)
     const step = (now: number) => {
-      const delta = last === null ? 0 : now - last
-      last = now
+      const delta = lastFrameAt.current === null ? 0 : now - lastFrameAt.current
+      lastFrameAt.current = now
       cursor.current = advanceScenePlayback(cursor.current, input, delta)
       setPlayback(cursor.current)
       if (scenePlaybackNeedsFrame(cursor.current, input)) frame = window.requestAnimationFrame(step)
+      else lastFrameAt.current = null
     }
     if (scenePlaybackNeedsFrame(cursor.current, input)) frame = window.requestAnimationFrame(step)
+    else lastFrameAt.current = null
     return () => window.cancelAnimationFrame(frame)
   }, [input])
 

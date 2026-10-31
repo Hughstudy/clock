@@ -8,6 +8,7 @@ import { BLUE_STANCES } from '../../src/logic/blue-companion'
 import type { CompanionPresentation, CompanionStance } from '../../src/logic/companion'
 import type { SceneId } from '../../src/contracts/presentation'
 import { sceneMotionSpec } from '../../src/data/scene-motion'
+import { sceneMotionDuration } from '../../src/logic/scene-motion'
 import { activityFixture, activityPresentation, SCENE_IDS, SCENE_LABELS, type SceneFixtureState, type SceneFixtureTier } from './scene-fixtures'
 import '../../src/styles/companion.css'
 import './preview.css'
@@ -47,6 +48,7 @@ function Preview() {
   const { reducedMotion, systemReducedMotion } = useMotionPreference(motionEnabled)
   const presentation: CompanionPresentation = { stance, cue, staticOnly: reducedMotion }
   const activity = sceneId ? activityFixture(sceneId, sceneState, sceneSerial, sceneTier, sceneProgress, attentionAllowed) : null
+  const inspectionMs = inspectKind === 'idle' ? 12000 : activity ? sceneMotionDuration(inspectKind, activity, sceneMotionSpec) : sceneMotionSpec.beatMs
   const renderedPresentation: CompanionPresentation = activity ? {
     ...activityPresentation(activity, sceneState, reducedMotion),
     ...(cue === 'support' && sceneState !== 'error' ? { stance: 'support', cue: 'support' } as const : {}),
@@ -57,9 +59,8 @@ function Preview() {
     let animation = 0
     let last: number | null = null
     let position = inspectKind === 'idle' ? sceneProgress : inspectPosition
-    const duration = inspectKind === 'idle' ? 12000 : sceneMotionSpec.beatMs
     const step = (now: number) => {
-      if (last !== null) position = Math.min(1, position + (now - last) * playbackSpeed / duration)
+      if (last !== null) position = Math.min(1, position + (now - last) * playbackSpeed / inspectionMs)
       last = now
       if (inspectKind === 'idle') setSceneProgress(position)
       else setInspectPosition(position)
@@ -68,7 +69,7 @@ function Preview() {
     }
     animation = requestAnimationFrame(step)
     return () => cancelAnimationFrame(animation)
-  }, [playInspection, inspectMotion, inspectKind, playbackSpeed, reducedMotion])
+  }, [playInspection, inspectMotion, inspectKind, playbackSpeed, inspectionMs, reducedMotion])
 
   function emit(nextCue: Cue = 'support') {
     setStance(nextCue === 'begin' ? 'focused' : nextCue === 'settle' ? 'settled' : nextCue === 'welcome' ? 'ready' : 'support')
@@ -337,7 +338,7 @@ function Preview() {
       <section className="preview__canvas" aria-label="Character fixture">
         <div ref={scene} className="preview__phone" style={{ width, fontSize: largeText ? '200%' : '100%' }} data-text-scale={largeText ? '200' : '100'}>
           <p className="preview__eyebrow">Fixture · {stance}</p>
-          <div className="companion-feedback"><button type="button" className="companion-feedback__greeting" aria-label="Say hello to the blue companion" onClick={request}><span className="companion-feedback__character" aria-hidden="true"><BlueCompanion presentation={renderedPresentation} cueId={cueId} scene={activity} inspection={inspectMotion ? { actionKind: inspectKind, actionProgress: inspectPosition } : undefined} /></span><span className="preview__invite">Say hello <span aria-hidden="true">↗</span></span></button></div>
+          <div className="companion-feedback"><button type="button" className="companion-feedback__greeting" aria-label="Say hello to the blue companion" onClick={request}><span className="companion-feedback__character" aria-hidden="true"><BlueCompanion presentation={renderedPresentation} cueId={cueId} scene={activity} panelOpen={!attentionAllowed} inspection={inspectMotion ? { actionKind: inspectKind, actionProgress: inspectPosition } : undefined} /></span><span className="preview__invite">Say hello <span aria-hidden="true">↗</span></span></button></div>
           <p className="preview__hint">A head pat, a belly squish, a tiny high-five.</p>
           <p className="preview__facts">Explicit host intents: <strong>{intentCount}</strong></p>
           <p className="preview__facts">{reducedMotion ? 'Static expression' : 'Motion enabled'}{systemReducedMotion ? ' · OS reduced motion' : ''}</p>

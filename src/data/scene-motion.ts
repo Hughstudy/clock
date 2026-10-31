@@ -4,6 +4,7 @@ export const sceneMotionSpec = validateSceneMotionSpec({
   // 160 ms anticipation + 640 ms action + 320 ms settle.
   openMs: 1120,
   beatMs: 1120,
+  stretchMs: 3200,
   handlingMs: 2600,
   beatMinMs: 60_000,
   beatMaxMs: 90_000,

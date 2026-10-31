@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import type { CompanionScene } from '../contracts/presentation'
 import { sceneMotionSpec } from '../data/scene-motion'
+import { sampleScenePose } from './scene-pose'
 import { emptySceneMotion, finishSceneMotion, nextSceneMotion, sceneBeatDelay, sceneMotionDuration, startSceneBeat, validateSceneMotionSpec } from './scene-motion'
 
 const enabled = { staticOnly: false, touching: false, visible: true }
@@ -88,7 +89,23 @@ describe('companion scene choreography', () => {
       expect(sceneMotionDuration('ending', scene({ ending: { cueId: 'end', tier } }), sceneMotionSpec)).toBeLessThanOrEqual(2400)
     }
     expect(() => validateSceneMotionSpec({ ...sceneMotionSpec, beatMinMs: 500 })).toThrow()
+    expect(() => validateSceneMotionSpec({ ...sceneMotionSpec, stretchMs: 500 })).toThrow()
     expect(() => validateSceneMotionSpec({ ...sceneMotionSpec, beatMaxMs: 59_000 })).toThrow()
     expect(() => validateSceneMotionSpec({ ...sceneMotionSpec, endingMs: { ...sceneMotionSpec.endingMs, feast: Infinity } })).toThrow()
+  })
+
+  it('raises the arms, holds the stretch, and lowers them gently on planted feet', () => {
+    const rest = scene({ id: 'R1', phase: 'break' })
+    const duration = sceneMotionDuration('beat', rest, sceneMotionSpec)
+    expect(sceneMotionDuration('open', rest, sceneMotionSpec)).toBe(duration)
+    const pose = (ms: number) => sampleScenePose({ id: 'R1', progress: 0, actionKind: 'beat', actionProgress: ms / duration })
+    const initial = pose(0), raised = pose(1250)
+    expect(raised.left.palm.x).toBeLessThan(raised.left.points[0]!)
+    expect(raised.left.palm.y).toBeLessThan(raised.left.points[1]!)
+    expect(pose(1750).left).toEqual(raised.left)
+    expect(pose(2400).stretch).toBeGreaterThan(.5)
+    expect(pose(2400).stretch).toBeLessThan(1)
+    expect(pose(duration).left).toEqual(initial.left)
+    expect(raised.body).toEqual(initial.body)
   })
 })

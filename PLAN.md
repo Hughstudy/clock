@@ -1,8 +1,10 @@
 # Focus App: Next Implementation Plan (Review Draft)
 
+The [companion scenery and motion review](docs/plans/COMPANION_SCENERY_AND_MOTION.md) records the baseline findings, visual research and implemented corrections. The ready view and eleven activities now share an orchard workroom, garden terrace and dusk setting. See the [browser verification](docs/verification/companion-scenery.md).
+
 Updated: 2026-10-31. This plan distinguishes implemented scope from remaining product proposals. The user explicitly authorized the complete animation-refinement plan, integration and publication. All eleven activities now use the shared production pose system, C2-P3 precise progress and snapshot v6 immediate scene access. See the [refinement implementation](docs/plans/ANIMATION_REFINEMENT_PLAN.md) and [verification evidence](docs/verification/animation-refinement.md). Physical-device acceptance and the wider P0 work remain separate.
 
-The selected direction is the soft blue creature with rounded hands. Tea has one constant-sized cup and a small side table; food develops into vegetables, rice and soup. The 44 catalogue keyframes and 40 contact drawings are exported from the same geometry used by the application. Main still owns time, persistence, selection and announcements; animation owns only cancellable presentation.
+The selected direction is the soft blue creature with rounded hands. Tea has one constant-sized cup and a small side table; food develops into vegetables, rice and soup. The 44 catalogue keyframes and 47 contact drawings are exported from the same geometry used by the application. Main still owns time, persistence, selection and announcements; animation owns only cancellable presentation.
 
 ## 1. Sources and current baseline
 
@@ -114,7 +116,7 @@ flowchart LR
 - Give visual cues an identity independent of screen-reader announcement identity. Main owns durable reward/notification deduplication; animation owns only transient gesture consumption. Do not persist animation replay queues.
 - Scene selection is saved with each accepted session and retained on its focus record. Focus and rest have independent persisted rotation cursors; pause, resume, reload, settings edits and rejected starts do not select again. Every focus/rest pool is available from the first start. The saved session identity seeds new bags, and adjacent repeats are avoided.
 - Scene completion never grants access or creates a notice. Snapshot v6 preserves legacy unlock metadata only as inert history; v5 clients encountering v6 become read-only. Full-completion counts still drive long-break suggestions.
-- `allowBeats` is the host's attention gate for all scene motion, including entrances/endings. Pause and touch preserve supported poses; their unfinished local handling path can settle on return without replaying a cue. Typing/panels, hide, errors and reduced motion resolve to a supported static state; returning starts a fresh quiet beat interval. Focus `begin`, rest `rest` and matching `settle` cues are the existing semantic mappings. No additional unlock animation cue is used.
+- `allowBeats` gates entrances, endings and quiet gestures. Pause, direct touch and visible panels hold the current pose. The local handling path can continue on return. Hidden pages, errors and reduced motion resolve to the supported static state. Focus `begin`, rest `rest` and matching `settle` are the existing semantic cue mappings.
 - Rapid operations, errors, navigation, backgrounding, generation changes and reduced motion cancel stale choreography. Latest state wins; no delayed playback queue and no waiting for a gesture before the next action.
 - Publish fixtures for ready/running/paused/resting, early/full/zero endings, empty/text thought saves, requested encouragement, pending/failure/retry, restore/sync, stale IDs and reduced motion. Animation can develop against fixtures; main must pass the same functional outcomes with a static or absent renderer.
 

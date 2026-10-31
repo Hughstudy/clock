@@ -31,10 +31,10 @@ const definitions = [
  ['tea-pour','F4','Tea · grasp, pour and return',[.4,.58,.68,.75],['Supported kettle','Grasp the top handle','Pour into the same cup','Return to the trivet']],
  ['tea-cup','F4','Tea · supported cup lift',[.8,.86,.93,1],['Reach the cup handle','Support the base','Lift the same cup','Settle close to the body']],
  ['food-serving','F1','Food · prepare three dishes',[0,.2,.5,.8,1],['Ingredients on the table','Prepare the vegetables','Plate the rice','Finish the soup','Three dishes ready']],
- ['book-page','F3','Book · turn, mark and close',[.1,.2,.32,.58,1],['Reach the page corner','Guide a single page','Let the page settle','Place the ribbon','Close on the table']],
+ ['book-page','F3','Book · turn, mark and close',[.1,.2,.32,.58,.82,.885,.945,1],['Reach the page corner','Guide a single page','Let the page settle','Place the ribbon','Lift the cover edge','Guide the cover together','Lower onto the page stack','Release the closed book']],
  ['boat-fold','F6','Boat · fold and lower',[0,.3,.6,.82,.9,1],['Dry paper beside the tray','Press the crease','Open the hull','Lift with support','Lower into water','Release the boat']],
- ['wand-turn','F5','Bubbles · dip, turn and blow',[0,.08,.14,.2,.28,.4],['Dip the ring','Lift clear of the jar','Turn the rigid wand','Settle the grip','Blow through the ring','Let bubbles drift']],
- ['block-place','F7','Blocks · pickup and placement',[.12,.22,.32,.4],['Grasp a nearby block','Carry with support','Guide onto the base','Release the block']],
+ ['wand-turn','F5','Bubbles · dip, turn and blow',[0,.10,.18,.26,.295,.4],['Dip the ring','Lift clear of the jar','Turn the rigid wand','Bring the ring to the mouth','Blow through the ring','Let the first bubble drift']],
+ ['block-place','F7','Blocks · stack and top with a flag',[.12,.22,.32,.4,.75,.80,.88,1],['Grasp a nearby block','Carry with support','Guide onto the base','Release the block','Stack the solid faces','Grasp the stored flag','Carry the flag clear','Seat and release the flag']],
  ['drink-sip','R3','Warm drink · sip and set down',[0,.22,.5,.8,.65,1],['Hold the cup close','Blow gently','Tilt toward the mouth','Return to a comfortable hold','Lower onto the table','Release the resting cup']],
 ]
 const sequences=definitions.map(([id,sceneId,title,positions,labels])=>({id,title,frames:positions.map((p,i)=>{const rest=sceneId==='R3',ended=rest&&i>=4,kind=rest?(ended?'ending':'beat'):'idle';return {label:labels[i],caption:rest?(ended?'Supported closing action':'Relaxed action cycle'):`Scene pose ${Math.round(p*100)}%`,sample:{progress:rest?0:p,actionKind:kind,actionProgress:rest?p:0,status:ended?'ended':'running'},svg:draw(sceneId,rest?0:p,kind,rest?p:0,ended)}})}))

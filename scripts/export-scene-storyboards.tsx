@@ -10,5 +10,9 @@ export function renderStoryboardFrame(id: SceneId, progress: number, actionProgr
     key: `storyboard:${id}`, id, sessionId: `storyboard-${id}`, phase: id.startsWith('R') ? 'break' : 'focus',
     status: ended ? 'ended' : 'running', completedProgress: progress, allowBeats: false, cue: null, ending: null,
   }
-  return renderToStaticMarkup(<CompanionSceneArt scene={scene} frame={sampleScenePose({ id, status: scene.status, progress, activityProgress: progress, actionProgress, actionKind, staticOnly: true })}/> )
+  const identifierPrefix = [id, progress, actionKind, actionProgress, scene.status].join('-').replaceAll('.', '_')
+  return renderToStaticMarkup(
+    <CompanionSceneArt scene={scene} frame={sampleScenePose({ id, status: scene.status, progress, activityProgress: progress, actionProgress, actionKind, staticOnly: true })}/>,
+    { identifierPrefix },
+  )
 }

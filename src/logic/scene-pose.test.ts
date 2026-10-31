@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { sampleScenePose, sceneArmPath, simpleGesturePulse, SCENE_CUP_BASE, SCENE_CUP_HANDLE, transformScenePoint, type SceneArm, type ScenePoint } from './scene-pose'
+import { BLOCK_HEIGHT, sampleScenePose, sceneArmPath, simpleGesturePulse, SCENE_CUP_BASE, SCENE_CUP_HANDLE, transformScenePoint, type SceneArm, type ScenePoint } from './scene-pose'
+import { achievedSceneLandmark } from './scene-playback'
 import type { SceneId } from './types'
 const ids:SceneId[]=['F1','F2','F3','F4','F5','F6','F7','F8','R1','R2','R3']
 const distance=(a:ScenePoint,b:ScenePoint)=>Math.hypot(a.x-b.x,a.y-b.y)
@@ -68,6 +69,67 @@ describe('sampled scene contact and silhouette',()=>{
     }
     const end=sampleScenePose({id:'F6',progress:1})
     expect(end.boat.x).toBe(242);expect(end.boat.y).toBeCloseTo(0)
+  })
+  it('supports the rotating cover edge throughout closure, including the handoff',()=>{
+    for(let i=0;i<=1000;i++){
+      const frame=sampleScenePose({id:'F3',progress:i/1000})
+      if(frame.book.close===0||frame.book.close===1)continue
+      const { x,y }=frame.book.coverEdge
+      // The projected front corner is 8 units to the right and 14 down.
+      const rightGrip={x:x+8*.12,y:y+14*.12},leftGrip={x:x+8*.94,y:y+14*.94}
+      expect(Math.min(distance(frame.right.palm,rightGrip),distance(frame.left.palm,leftGrip))).toBeLessThan(.001)
+    }
+    const closed=sampleScenePose({id:'F3',progress:1})
+    expect(closed.book.coverEdge).toEqual({x:114,y:161})
+    expect(closed.contacts.some(c=>c.name.startsWith('cover'))).toBe(false)
+  })
+  it('lifts the ring through the opening and makes each bubble at the ring, on the real handling clock',()=>{
+    const at=(host:number,activity=achievedSceneLandmark(host))=>sampleScenePose({id:'F5',progress:host,activityProgress:activity}).wand
+    for(const host of [0,.12,.25,.399]){
+      const wand=at(host)
+      expect(wand.ring).toEqual({x:240,y:193})
+      expect(wand.breath).toBe(0)
+      expect(wand.bubbles.every(b=>b.radius===0)).toBe(true)
+    }
+    for(let i=0;i<=400;i++){
+      const p=i/1000,wand=at(.4,p)
+      if(wand.angle>0)expect(wand.ring.y+10).toBeLessThan(175)
+      else expect(wand.ring.x).toBe(240)
+      if(p<.265)expect(wand.breath).toBe(0)
+    }
+    for(const [i,start] of [.265,.49,.79].entries()){
+      const wand=at(1,start+.015),bubble=wand.bubbles[i]!
+      expect(wand.breath).toBeGreaterThan(0)
+      expect(bubble.radius).toBeGreaterThan(0)
+      expect(distance(bubble,wand.ring)).toBeLessThan(bubble.radius)
+      expect(bubble.x).toBeGreaterThan(wand.ring.x)
+    }
+    expect([.4,.75,1].map(p=>at(p).bubbles.filter(b=>b.travel===1).length)).toEqual([1,2,3])
+  })
+  it('retains a rounded palm and comparable limb area during the boat and tower carries',()=>{
+    for(const id of ['F6','F7'] as const){
+      const areas={left:[] as number[],right:[] as number[]}
+      for(let i=0;i<=1000;i++){
+        const frame=sampleScenePose({id,progress:i/1000})
+        for(const side of ['left','right'] as const){
+          const a=frame[side],p=a.points
+          areas[side].push(outlineArea(a))
+          expect(Math.hypot(p[12]!-p[18]!,p[13]!-p[19]!)).toBeGreaterThan(8)
+        }
+      }
+      for(const samples of Object.values(areas))expect(Math.max(...samples)/Math.min(...samples)).toBeLessThan(2.1)
+    }
+  })
+  it('rests each block on the solid face below and sets the flag inside the top footprint',()=>{
+    const frame=sampleScenePose({id:'F7',progress:1})
+    const [base,,middle,top]=frame.blocks
+    expect(middle!.y).toBe(base!.y-BLOCK_HEIGHT)
+    expect(top!.y).toBe(middle!.y-BLOCK_HEIGHT)
+    expect(top!.x).toBe(middle!.x)
+    expect(frame.flag.y).toBeGreaterThan(top!.y-BLOCK_HEIGHT-6)
+    expect(frame.flag.y).toBeLessThan(top!.y-BLOCK_HEIGHT)
+    expect(frame.flag.x).toBeGreaterThan(top!.x+6)
+    expect(frame.flag.x).toBeLessThan(top!.x+25)
   })
   it('relaxes interrupted plant, wand and stretch actions from their current pose',()=>{
     for(const id of ['F2','F5','R1'] as const)for(const status of ['running','paused'] as const)for(const actionProgress of [.2,.5,.75]){

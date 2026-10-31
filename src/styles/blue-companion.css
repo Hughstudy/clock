@@ -15,6 +15,7 @@
 .blue-companion__face { transform: translate(var(--blue-gaze-x, 0px), var(--blue-gaze-y, 0px)); }
 .blue-companion__tuft { transform-origin: 111px 42px; }
 .blue-companion__shadow { transform-origin: 120px 165px; opacity: .55; }
+.blue-companion__shadow [data-part='shadow'] path { fill: #947f70; opacity: .5; }
 .blue-companion__arm--left { transform-origin: 71px 105px; }
 .blue-companion__arm--right { transform-origin: 168px 105px; }
 .blue-companion__eyes { transform-origin: 120px 95px; }

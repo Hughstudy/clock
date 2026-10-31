@@ -6,7 +6,7 @@ Status: implemented and validated in desktop Chrome, 2026-10-31. The user explic
 
 All eleven scenes use one deterministic pose sampler and persistent SVG renderer. Shoulders, rounded arm outlines, hand grips and held objects are sampled together. Each object keeps its identity and physical scale; tables, mats, cushions and trays supply stable support. No physics dependency or business-state callback was added.
 
-The earlier concept generator has been replaced by an exporter of the actual production geometry. `python3 docs/plans/assets/build-storyboards.py` now runs that exporter. The [catalogue data](assets/scene-storyboards.json) contains 44 landmarks and the [contact data](assets/scene-contact-storyboards.json) contains 40 intermediate drawings. Labels and sample definitions remain design data; geometry comes from the same renderer as the app.
+The earlier concept generator has been replaced by an exporter of the actual production geometry. `python3 docs/plans/assets/build-storyboards.py` now runs that exporter. The [catalogue data](assets/scene-storyboards.json) contains 44 landmarks and the [contact data](assets/scene-contact-storyboards.json) contains 47 intermediate drawings. Labels and sample definitions remain design data; geometry comes from the same renderer as the app.
 
 | Scene | Implemented progression and contact |
 | --- | --- |
@@ -28,10 +28,10 @@ Contact sheets cover [pouring](assets/scene-contact-storyboards/tea-pour.svg), [
 
 - C2-P3 supplies clamped, unquantized completed focus progress. Rest continues to receive zero; its unhurried actions are presentation only.
 - Growth, steam and sky detail use precise supplied progress. Handling has supported destinations at 0/40/75/100%. Once a landmark is achieved, the local handling cursor moves to it over 2,600 ms. A cup lift therefore takes seconds instead of stretching across minutes. The cursor never goes beyond main's supplied progress.
-- Simple entrances/beats use 160 ms anticipation + 640 ms action + 320 ms settling, with smooth zero-velocity phase boundaries. Breathing is 5 seconds; steam is 4 seconds. Sparse beats retain the 60–90-second cadence. Ending lengths retain validated main-independent presentation parameters.
+- Simple entrances/beats use 160 ms anticipation + 640 ms action + 320 ms settling, with smooth zero-velocity phase boundaries. The rest stretch has a 3.2-second lift, hold and return. Breathing takes 5 seconds and steam takes 4 seconds. Sparse beats retain the 60–90-second cadence. Ending lengths retain validated main-independent presentation parameters.
 - Scene nodes remain mounted for their saved scene identity. Ambient loops do not restart for finite actions; paused loops keep their playback position.
-- Pause/touch freezes the current supported configuration. On return, an unfinished local path can settle without replaying a semantic cue. A held cup retains support; greetings/touch use an available limb or expression. Endings capture the current local action position, so an interrupted sip or stretch continues from its visible pose.
-- Attention suppression, hidden pages, errors and reduced motion settle to the current meaningful static state. Returning never catches up missed gestures. Controls remain usable throughout.
+- Pausing, touching the character or opening a visible panel freezes the current supported configuration. On return, an unfinished local path can settle without replaying a semantic cue. A held cup retains support; greetings/touch use an available limb or expression. Endings capture the current local action position, so an interrupted sip or stretch continues from its visible pose.
+- Hidden pages, errors and reduced motion settle to the current meaningful static state. Visible panels freeze the displayed pose. Returning never catches up missed gestures. Controls remain usable throughout.
 - Completed short and long sessions reach the final state. Early endings retain achieved progress and receive a warm closing response. Rendering never asserts that a save succeeded or awards credit.
 
 ## Immediate scene access and compatibility

@@ -1,0 +1,103 @@
+{
+  "browser": "151.0.7922.34",
+  "widths": [
+    320,
+    375,
+    430
+  ],
+  "productionScreenshots": {
+    "colorScheme": "light",
+    "reducedMotion": "reduce"
+  },
+  "scenes": [
+    {
+      "id": "F1",
+      "scenery": [
+        "workroom"
+      ]
+    },
+    {
+      "id": "F2",
+      "scenery": [
+        "garden"
+      ]
+    },
+    {
+      "id": "F3",
+      "scenery": [
+        "workroom"
+      ]
+    },
+    {
+      "id": "F4",
+      "scenery": [
+        "workroom"
+      ]
+    },
+    {
+      "id": "F5",
+      "scenery": [
+        "garden"
+      ]
+    },
+    {
+      "id": "F6",
+      "scenery": [
+        "garden"
+      ]
+    },
+    {
+      "id": "F7",
+      "scenery": [
+        "workroom"
+      ]
+    },
+    {
+      "id": "F8",
+      "scenery": [
+        "dusk"
+      ]
+    },
+    {
+      "id": "R1",
+      "scenery": [
+        "garden"
+      ]
+    },
+    {
+      "id": "R2",
+      "scenery": [
+        "garden"
+      ]
+    },
+    {
+      "id": "R3",
+      "scenery": [
+        "workroom"
+      ]
+    }
+  ],
+  "checks": [
+    "Every focus and rest activity contains one recognizable setting",
+    "Ready has a static, decorative layer behind the character",
+    "Tea has a static, decorative layer behind the character",
+    "Plant has a static, decorative layer behind the character",
+    "Stars has a static, decorative layer behind the character",
+    "Reduced motion retains the dusk illustration and stops scene animation",
+    "Ready at 320px fits without clock overlap",
+    "Ready at 375px fits without clock overlap",
+    "Ready at 430px fits without clock overlap",
+    "Pause and keyboard resume retain the same scene and backdrop",
+    "Tea at 320px fits without clock overlap",
+    "Tea at 375px fits without clock overlap",
+    "Tea at 430px fits without clock overlap",
+    "Plant at 320px fits without clock overlap",
+    "Plant at 375px fits without clock overlap",
+    "Plant at 430px fits without clock overlap",
+    "Stars at 320px fits without clock overlap",
+    "Stars at 375px fits without clock overlap",
+    "Stars at 430px fits without clock overlap",
+    "Captured ready, workroom, garden and dusk from the actual timer"
+  ],
+  "errors": []
+}

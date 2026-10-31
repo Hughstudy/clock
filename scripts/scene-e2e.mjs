@@ -206,7 +206,7 @@ try {
   await page.getByRole('button', { name: '设置', exact: true }).click()
   await page.getByRole('switch', { name: '伙伴小场景', exact: true }).uncheck()
   await page.getByRole('button', { name: '关闭设置，回到专注', exact: true }).click()
-  check('Scene variety off retains the plain companion', await sceneAttribute(page, '') === '')
+  check('Scene variety off retains the plain companion', await sceneAttribute(page, '') === '' && await svg.locator('[data-scenery]').count() === 0)
   await page.getByRole('button', { name: '设置', exact: true }).click()
   await page.getByRole('switch', { name: '伙伴小场景', exact: true }).check()
   await page.getByRole('switch', { name: '伙伴动画', exact: true }).uncheck()

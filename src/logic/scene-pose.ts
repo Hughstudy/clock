@@ -29,9 +29,9 @@ export interface ScenePoseFrame {
   right: SceneArm
   cup: SceneObject & { scale: number; held: number; liquid: number }
   kettle: SceneObject & { grip: ScenePoint; spout: ScenePoint; pour: number }
-  book: { turn: number; close: number; ribbon: number; corner: ScenePoint }
+  book: { turn: number; close: number; ribbon: number; corner: ScenePoint; coverEdge: ScenePoint; coverFront: ScenePoint }
   boat: { fold: number; transfer: number; x: number; y: number; scale: number; left: ScenePoint; right: ScenePoint }
-  wand: SceneObject & { ring: ScenePoint }
+  wand: SceneObject & { ring: ScenePoint; breath: number; bubbles: readonly { x: number; y: number; radius: number; travel: number }[] }
   blocks: readonly SceneObject[]
   flag: SceneObject
   food: { greens: number; rice: number; soup: number; spoon: ScenePoint; tip: ScenePoint; soupSpoon: ScenePoint; soupTip: ScenePoint; leftHeld: number; rightHeld: number }
@@ -104,6 +104,36 @@ function movePalm(a: SceneArm, x: number, y: number): SceneArm {
   }
   return {points,palm:point(a.palm.x+x,a.palm.y+y)}
 }
+
+/** A folding elbow and a round, fixed-width palm for carries across the body. */
+function bentReach(side: 'left' | 'right', palm: ScenePoint): SceneArm {
+  const left = side === 'left'
+  const shoulder = point(left ? 111 : 213, 143)
+  const dx = palm.x - shoulder.x, dy = palm.y - shoulder.y
+  const distance = Math.max(.001, Math.hypot(dx, dy))
+  const direction = point(dx / distance, dy / distance)
+  const outside = left ? point(-direction.y, direction.x) : point(direction.y, -direction.x)
+  const bend = mix(23, 6, span(distance, 16, 60))
+  const offset = (p: ScenePoint, axis: ScenePoint, amount: number) => point(p.x + axis.x * amount, p.y + axis.y * amount)
+  const elbow = offset(pointMix(shoulder, palm, .5), outside, bend)
+  const unitFrom = (a: ScenePoint, b: ScenePoint) => {
+    const x = b.x - a.x, y = b.y - a.y, length = Math.hypot(x, y)
+    return point(x / length, y / length)
+  }
+  const upper = unitFrom(shoulder, elbow), forearm = unitFrom(elbow, palm)
+  const normal = (axis: ScenePoint) => left ? point(-axis.y, axis.x) : point(axis.y, -axis.x)
+  const elbowOut = offset(elbow, outside, 6), elbowIn = offset(elbow, outside, -6)
+  const palmOut = offset(palm, normal(forearm), 5.5), palmIn = offset(palm, normal(forearm), -5.5)
+  const points = [
+    shoulder,
+    offset(shoulder, normal(upper), 8), offset(elbowOut, direction, -7), elbowOut,
+    offset(elbowOut, direction, 7), offset(palmOut, forearm, -6), palmOut,
+    offset(palmOut, forearm, 7), offset(palmIn, forearm, 7), palmIn,
+    offset(palmIn, forearm, -6), offset(elbowIn, direction, 6), elbowIn,
+    offset(elbowIn, direction, -6), offset(shoulder, normal(upper), -7), shoulder,
+  ]
+  return { points: points.flatMap(p => [p.x, p.y]), palm }
+}
 function rotateArm(a: SceneArm, degrees:number):SceneArm {
   const x=a.points[0]??0,y=a.points[1]??0,r=degrees*Math.PI/180,c=Math.cos(r),s=Math.sin(r)
   const rotate=(px:number,py:number)=>point(x+(px-x)*c-(py-y)*s,y+(px-x)*s+(py-y)*c)
@@ -118,6 +148,7 @@ export function transformScenePoint(p: ScenePoint, object: SceneObject): ScenePo
 export const SCENE_CUP_SCALE = .72
 export const SCENE_CUP_BASE = {x:-8,y:2}
 export const SCENE_CUP_HANDLE = {x:29,y:-9}
+export const BLOCK_HEIGHT = 22
 function cupAnchor(local: ScenePoint, cup: SceneObject & {scale:number}): ScenePoint { return transformScenePoint(point(local.x*cup.scale,local.y*cup.scale),cup) }
 const contact = (name: string, hand: ScenePoint, prop: ScenePoint, active = true): SceneContact => ({ name, hand, prop, active })
 
@@ -149,11 +180,11 @@ export function sampleScenePose(input: ScenePoseInput): ScenePoseFrame {
   const contacts: SceneContact[] = []
   const cup = { x: 156, y: 175, angle: 0, scale: SCENE_CUP_SCALE, held: 1, liquid: 1 }
   const kettle = { x: 131, y: 179, angle: 0, grip: point(131,135), spout: point(166,153), pour: 0 }
-  const book = { turn: 0, close: 0, ribbon: span(p,.66,.76), corner: point(204,157) }
+  const book = { turn: 0, close: 0, ribbon: span(p,.66,.74), corner: point(206,161), coverEdge: point(206,161), coverFront: point(214,175) }
   const boat = { fold: p, transfer: span(p,.78,1), x:150, y:0, scale:.71, left: point(135,173), right: point(189,174) }
-  const wand = { x: 240, y: 165, angle: 0, ring: point(240,193) }
+  const wand: ScenePoseFrame['wand'] = { x: 240, y: 165, angle: 0, ring: point(240,193), breath: 0, bubbles: [] }
   const blocks: SceneObject[] = [{x:68,y:211,angle:0},{x:97,y:211,angle:0},{x:144,y:211,angle:0},{x:176,y:211,angle:0}]
-  const flag = { x: 161, y: 206, angle: -90 }
+  const flag = { x: 132, y: 214, angle: 0 }
   const food = { greens: span(p,.16,.29), rice: span(p,.43,.58), soup: span(p,.76,.88), spoon: point(129,188), tip: point(104,195), soupSpoon: point(222,188), soupTip: point(248,193), leftHeld: 0, rightHeld: 0 }
   let stretch = 0
   const gaze = point(0,0)
@@ -186,29 +217,41 @@ export function sampleScenePose(input: ScenePoseInput): ScenePoseFrame {
   } else if(input.id==='F3') {
     left=pressLeft;right=mirror(pressLeft)
     const turn=span(p,.12,.34)
-    book.turn=turn;book.close=span(p,.88,.99)
+    book.turn=turn;book.close=span(p,.815,.957)
     const theta=turn*Math.PI
-    book.corner=point(160+44*Math.cos(theta),157-27*Math.sin(theta))
-    const pageHand=movePalm(pageRight,book.corner.x-185,book.corner.y-146)
+    book.corner=point(160+46*Math.cos(theta),161-24*Math.sin(theta))
+    const pageHand=bentReach('right',book.corner)
     const grasp=span(p,.08,.12)*(1-span(p,.21,.26))
     right=blendSceneArm(right,pageHand,grasp)
     if(grasp>.999)contacts.push(contact('page-corner',right.palm,book.corner))
     const ribbon=span(p,.5,.56)*(1-span(p,.68,.74))
-    const ribbonHand=movePalm(pageRight,0,8)
+    const ribbonHand=movePalm(pageRight,-2,19)
     right=blendSceneArm(right,ribbonHand,ribbon)
-    if(ribbon>.999)contacts.push(contact('bookmark',right.palm,point(185,154)))
-    left=blendSceneArm(left,restLeft,book.close);right=blendSceneArm(right,mirror(restLeft),book.close)
+    if(ribbon>.999)contacts.push(contact('bookmark',right.palm,point(183,165)))
+    // The right hand lifts the near edge. The left hand meets the other end
+    // of that edge before lowering the cover onto the stationary page stack.
+    const close = book.close
+    book.coverEdge = point(160 + 46*Math.cos(Math.PI*close), 161 - 20*Math.sin(Math.PI*close))
+    book.coverFront = point(book.coverEdge.x+8, book.coverEdge.y+14)
+    const rightGrip = pointMix(book.coverEdge,book.coverFront,.12)
+    const leftGrip = pointMix(book.coverEdge,book.coverFront,.94)
+    const rightHold = span(p,.75,.815) * (1-span(close,.48,.72))
+    const leftHold = span(close,.23,.45) * (1-span(p,.957,1))
+    left = blendSceneArm(blendSceneArm(left, restLeft, close), bentReach('left', leftGrip), leftHold)
+    right = blendSceneArm(blendSceneArm(right, mirror(restLeft), close), bentReach('right', rightGrip), rightHold)
+    if (rightHold === 1) contacts.push(contact('cover-right',right.palm,rightGrip))
+    if (leftHold === 1) contacts.push(contact('cover-left',left.palm,leftGrip))
   } else if(input.id==='F6') {
     const fold1=span(p,.12,.39),fold2=span(p,.43,.73),t=boat.transfer
     const travel=span(t,.2,.85)
-    boat.x=mix(150,242,travel);boat.y=-22*Math.sin(travel*Math.PI)
+    boat.x=mix(162,242,travel);boat.y=-9*Math.sin(travel*Math.PI)
     const leftPaper=point(boat.x+(135+fold1*10-160)*.71,180+(173-fold1*8+fold2*8-180)*.71+boat.y)
     const rightPaper=point(boat.x+(189-fold1*4-fold2*8-160)*.71,180+(174-fold2*6-180)*.71+boat.y)
     // Before lifting, the right palm slides under the lightweight hull.
-    boat.left=leftPaper;boat.right=pointMix(rightPaper,point(boat.x+5,186+boat.y),span(t,0,.2))
+    boat.left=leftPaper;boat.right=pointMix(rightPaper,point(boat.x+10,185+boat.y),span(t,0,.2))
     const leftRelease=span(t,.2,.38),rightRelease=span(t,.87,1)
-    left=blendSceneArm(movePalm(pressLeft,boat.left.x-141,boat.left.y-172),restLeft,leftRelease)
-    right=blendSceneArm(movePalm(mirror(pressLeft),boat.right.x-183,boat.right.y-172),mirror(restLeft),rightRelease)
+    left=blendSceneArm(bentReach('left',boat.left),restLeft,leftRelease)
+    right=blendSceneArm(bentReach('right',boat.right),mirror(restLeft),rightRelease)
     contacts.push(contact('paper-left',left.palm,boat.left,leftRelease<.001),contact('paper-right',right.palm,boat.right,rightRelease<.001))
   } else if(input.id==='R3') {
     const ending=input.status==='ended'
@@ -251,39 +294,71 @@ export function sampleScenePose(input: ScenePoseInput): ScenePoseFrame {
     left=blendSceneArm(left,potHand,pat)
     if(pat>.999)contacts.push(contact('pot-rim',left.palm,point(114,155)))
   } else if(input.id==='F5') {
-    const lift=span(p,.05,.18)
-    wand.x=mix(240,218,lift);wand.y=mix(165,169,lift)-pulse*2;wand.angle=mix(0,160,lift)+pulse*3
+    // Lift vertically out of the bottle, turn in clear air, then bring the
+    // ring to the mouth. Each achieved milestone leaves a supported pose.
+    const lift = span(p,.015,.10), turn = span(p,.10,.19), approach = span(p,.19,.26)
+    wand.x = 240 - 4*turn - 23*approach
+    wand.y = 165 - 32*lift + 12*turn + 24*approach
+    wand.angle = 148*turn + 2*pulse*span(p,.26,.28)
     wand.ring=transformScenePoint(point(0,28),wand)
-    right=movePalm(mirror(pressLeft),wand.x-183,wand.y-172)
+    const launches = [
+      { start:.265, end:.4, x:258, y:88, radius:17 },
+      { start:.49, end:.74, x:228, y:54, radius:12 },
+      { start:.79, end:.985, x:281, y:51, radius:9 },
+    ]
+    wand.bubbles = launches.map(({ start, end, x, y, radius }) => {
+      const grow = span(p,start,start+.04), travel = span(p,start+.025,end)
+      wand.breath += span(p,start,start+.018)*(1-span(p,start+.034,start+.065))
+      return {
+        x: mix(wand.ring.x + radius*grow*.55, x, travel) + 12*Math.sin(travel*Math.PI),
+        y: mix(wand.ring.y, y, travel),
+        radius: radius*grow, travel,
+      }
+    })
+    right=bentReach('right',wand)
     contacts.push(contact('wand-handle',right.palm,point(wand.x,wand.y)));gaze.x=3
   } else if(input.id==='F7') {
     const first=span(p,.14,.34), second=span(p,.45,.7)
-    blocks[2]={x:mix(144,80,first),y:mix(211,183,first)-Math.sin(first*Math.PI)*8,angle:0}
-    // The second block slides along the mat into a two-hand handoff before lift.
+    const baseY = blocks[0]!.y, middleY = baseY-BLOCK_HEIGHT, topY = middleY-BLOCK_HEIGHT
+    // Clear the back edge of each solid top before moving horizontally.
+    const place = (fromX: number, targetY: number, t: number): SceneObject => ({
+      x: mix(fromX,80,span(t,.27,.81)),
+      y: mix(baseY,targetY-10,span(t,0,.30)) + 10*span(t,.79,1),
+      angle: 0,
+    })
+    blocks[2] = place(144,middleY,first)
     const slide=span(second,0,.28),lift=span(second,.28,1)
-    blocks[3]={x:mix(mix(176,144,slide),80,lift),y:mix(211,155,lift)-Math.sin(lift*Math.PI)*45,angle:0}
+    blocks[3] = place(mix(176,144,slide),topY,lift)
     const grip1=point(blocks[2]!.x+16,blocks[2]!.y-24)
     const hold1=span(p,.08,.14)*(1-span(p,.34,.4))
-    left=blendSceneArm(left,movePalm(pressLeft,grip1.x-141,grip1.y-172),hold1)
+    left=blendSceneArm(left,bentReach('left',grip1),hold1)
     if(hold1>.999)contacts.push(contact('block-first',left.palm,grip1))
     const b=blocks[3]!, lp=point(b.x+8,b.y-24),rp=point(b.x+26,b.y-18)
-    const rightHold=span(p,.4,.45)*(1-span(second,.26,.4))
+    const rightHold=span(p,.4,.45)*(1-span(second,.28,.42))
     const leftHold=span(second,.15,.27)*(1-span(p,.7,.75))
-    right=blendSceneArm(right,movePalm(mirror(pressLeft),rp.x-183,rp.y-172),rightHold)
-    left=blendSceneArm(left,movePalm(pressLeft,lp.x-141,lp.y-172),leftHold)
+    right=blendSceneArm(right,bentReach('right',rp),rightHold)
+    left=blendSceneArm(left,bentReach('left',lp),leftHold)
     if(rightHold>.999)contacts.push(contact('block-slide',right.palm,rp))
     if(leftHold>.999)contacts.push(contact('block-second',left.palm,lp))
     const raise=span(p,.8,.94)
-    flag.x=mix(161,90,raise);flag.y=mix(206,127,raise)-Math.sin(raise*Math.PI)*32;flag.angle=mix(-90,0,raise)
-    const fg=transformScenePoint(point(0,-5),flag), flagHold=span(p,.76,.8)*(1-span(p,.94,1))
-    left=blendSceneArm(left,movePalm(pressLeft,fg.x-141,fg.y-172),flagHold)
+    const flagSeat = topY-BLOCK_HEIGHT-3
+    flag.x = mix(132,92,span(raise,.30,.86))
+    flag.y = mix(214,flagSeat-9,span(raise,0,.52)) + 9*span(raise,.84,1)
+    const fg=transformScenePoint(point(0,-13),flag), flagHold=span(p,.76,.8)*(1-span(p,.94,1))
+    left=blendSceneArm(left,bentReach('left',fg),flagHold)
     if(flagHold>.999)contacts.push(contact('flag-stem',left.palm,fg))
   } else if(input.id==='F8'||input.id==='R2') {
     body.lean=-5;gaze.x=-2;gaze.y=-4
   } else if(input.id==='R1') {
-    stretch=pulse
-    left=rotateArm(restLeft,220*stretch);right=mirror(left)
-    body.lean=(input.actionKind==='ending'?Math.sin(previousAction*Math.PI*2)*previousPulse*2*(1-sceneSmooth(a)):Math.sin(a*Math.PI*2)*stretch*2)||0
+    // Lift into a comfortable V, hold it for a breath, then lower both arms.
+    const ending = input.actionKind === 'ending'
+    const phase = ending ? previousAction : a
+    if (input.actionKind && input.actionKind !== 'idle') {
+      stretch = span(phase, 0, .38) * (1 - span(phase, .56, 1))
+      if (ending) stretch *= 1 - sceneSmooth(a)
+    }
+    left = rotateArm(restLeft, 170 * stretch)
+    right = mirror(left)
   }
   return {id:input.id,progress,action:pulse,body,left,right,cup,kettle,book,boat,wand,blocks,flag,food,stretch,gaze,touched:!!input.touchKind,contacts}
 }

@@ -1,17 +1,19 @@
 /* One stable coordinate system. The sampled rig owns hand/prop contact; CSS
    only supplies small independent ambient rhythms with matching endpoints. */
 .scene-rig { pointer-events:none; stroke-linecap:round; stroke-linejoin:round; --scene-blue:#79baf0; --scene-line:#3977af; --scene-ink:#204b72; --scene-pale:#ddf1ff; --scene-wood:#f2d8bd; --scene-edge:#e9bf8b; --scene-green:#aed7be; --scene-paper:#fff8e8; --scene-pink:#ffc3b6; }
-.scene-draw-body { fill:var(--scene-blue); stroke:var(--scene-line); stroke-width:1.5; }
+.scene-draw-body { fill:var(--scene-coat,var(--scene-blue)); stroke:var(--scene-line); stroke-width:1.5; }
 .scene-draw-shade { fill:#5097dc; stroke:var(--scene-line); stroke-width:1.5; }
-.scene-draw-belly { fill:var(--scene-pale); }
+.scene-draw-belly { fill:var(--scene-belly,var(--scene-pale)); }
+.scene-draw-highlight { fill:#b7e0ff; }
+.scene-draw-glint { fill:white; }
 .scene-draw-line,.scene-draw-softline { fill:none; stroke:var(--scene-line); stroke-width:1.6; }
-.scene-draw-softline { opacity:.65;stroke-width:1.2; }
+.scene-draw-softline { stroke-opacity:.65;stroke-width:1.2; }
 .scene-draw-ink { fill:var(--scene-ink); }
 .scene-draw-face { fill:none;stroke:var(--scene-ink);stroke-width:2.4; }
 .scene-draw-pink { fill:var(--scene-pink); }
-.scene-draw-shadow { fill:#aac8e4;opacity:.2; }
-.scene-draw-table { fill:var(--scene-wood);stroke:var(--scene-line);stroke-width:1.5; }
-.scene-draw-edge { fill:var(--scene-edge);stroke:var(--scene-line);stroke-width:1.5; }
+.scene-draw-shadow { fill:#796e67;opacity:.17; }
+.scene-draw-table { fill:var(--scene-wood);stroke:#997d68;stroke-width:1.5; }
+.scene-draw-edge { fill:var(--scene-edge);stroke:#9a7960;stroke-width:1.5; }
 .scene-draw-green { fill:var(--scene-green);stroke:var(--scene-line);stroke-width:1.5; }
 .scene-draw-paper { fill:var(--scene-paper);stroke:var(--scene-line);stroke-width:1.5; }
 .scene-draw-water { fill:#d5ecfb;stroke:var(--scene-line);stroke-width:1.4; }
@@ -19,6 +21,7 @@
 .scene-draw-steam { fill:none;stroke:#6f93b3;stroke-width:2; }
 .scene-draw-handle { fill:none;stroke:var(--scene-line);stroke-width:3; }
 .scene-draw-pour { fill:none;stroke:#d29e54;stroke-width:2.4; }
+.scene-rig [data-scene-part='ground'] .scene-draw-softline { stroke:#ac9985; stroke-opacity:.32; }
 .scene-rig-steam { animation:scene-rig-steam 4s ease-in-out infinite; transform-box:fill-box;transform-origin:center bottom; }
 .scene-rig[data-scene-part="scene-R2"] .scene-rig-gaze { animation:scene-rig-watch 16s ease-in-out infinite; }
 .scene-rig-cloud { animation:scene-rig-cloud 16s ease-in-out infinite; }

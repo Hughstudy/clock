@@ -6,6 +6,8 @@ Local continuation (2026-10-29): the user supplied the exported `57ca8697cfa3a69
 
 Maintain PLAN.md and ongoing local project documentation in English. Preserve supplied source snapshots and historical verification reports as records of their original content. This documentation-language preference does not change application UI copy or approve the plan's open product decisions.
 
+The [companion scenery and motion log](docs/plans/COMPANION_SCENERY_AND_MOTION.md) records the follow-up background research and contact corrections. Use its [verification report](docs/verification/companion-scenery.md) for the orchard settings, supported handling and playback behavior.
+
 Current Git workflow (user direction, 2026-10-29): work in `/Users/hughqiao/Code/clock` on `main`, validate authorized changes, then commit and push directly to `main`. Do not create task branches or worktrees unless the user requests isolation. Coordinate edits to shared files and preserve other contributors' work. Delete merged branches only after verifying their commits are contained in `origin/main`; archive unused managed worktrees where the app permits it, preserving unmerged commits and uncommitted files. An app-protected primary worktree may remain detached, but is not the development checkout. This workflow supersedes earlier branch-isolation instructions and does not approve pending product proposals.
 
 Read PLAN.md and these current sources:

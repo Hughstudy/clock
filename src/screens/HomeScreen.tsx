@@ -31,9 +31,8 @@ export function HomeScreen({ view, companion, thoughts, reducedMotion, canEdit, 
   useEffect(() => { setConfirmEnd(false); setChoosing(false) }, [view.sessionId])
   const label = PHASE_LABELS[view.phase]
   const readyFocus = view.status === 'ready' && !view.isBreak
-  const scene = companion.scene ? { ...companion.scene,
-    allowBeats: companion.scene.allowBeats && !thoughts.open && !stepOpen && !choosing && !confirmEnd,
-  } : null
+  const panelOpen = !!companion.scene?.allowBeats && (thoughts.open || stepOpen || choosing || confirmEnd)
+  const scene = panelOpen && companion.scene ? { ...companion.scene, allowBeats: false } : companion.scene
   // A one-off start takes the typed step with it; the field clears only once the session exists.
   useEffect(() => { if (view.sessionId) { setStep(''); setStepOpen(false) } }, [view.sessionId])
   const closeStartPanels = () => { setChoosing(false); setStepOpen(false); setConfirmEnd(false) }
@@ -67,7 +66,7 @@ export function HomeScreen({ view, companion, thoughts, reducedMotion, canEdit, 
           onDismiss={companion.dismiss}
           announce={false}
           quietStatus
-          renderCharacter={(presentation) => <BlueCompanion presentation={presentation} cueId={companion.cue?.id} scene={scene} />}
+          renderCharacter={(presentation) => <BlueCompanion presentation={presentation} cueId={companion.cue?.id} scene={scene} panelOpen={panelOpen} sceneryEnabled={companion.sceneryEnabled} />}
         />
       </div>
       {/* One fixed-height row in every state, so Pause appears exactly where Start was. */}

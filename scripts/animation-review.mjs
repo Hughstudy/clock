@@ -91,6 +91,37 @@ try {
   await page.emulateMedia({reducedMotion:'reduce'})
   check('Reduced motion retains the scene with no CSS animations',await svg.locator('.scene-rig').count()===1&&await svg.evaluate(el=>el.getAnimations({subtree:true}).length===0))
   await page.emulateMedia({reducedMotion:'no-preference'})
+  await frozenPreview(async (fixture, character) => {
+    const slider = fixture.getByRole('slider', { name: /Completed progress/ })
+    const handling = async () => Number(await character.getAttribute('data-scene-activity-progress'))
+    await range(slider, 39)
+    await fixture.getByLabel('Scene', { exact: true }).selectOption('F3')
+    await fixture.clock.runFor(32)
+    // Deliver a new reading every 250 ms just as a running Focus timer does.
+    // The full 2.6 s handling path gets four extra frame intervals of margin.
+    for (let tick = 0; tick < 10; tick++) {
+      await range(slider, 40 + tick / 10)
+      await fixture.clock.runFor(250)
+    }
+    await fixture.clock.runFor(164)
+    check('Quarter-second host readings keep the full handling cadence', await handling() === .4)
+
+    await fixture.getByLabel('Scene', { exact: true }).selectOption('F4')
+    await range(slider, 75)
+    await fixture.clock.runFor(1350)
+    const before = await handling(), pose = await character.evaluate(cupSupport)
+    const panel = fixture.getByLabel('Thought editor needs attention')
+    await panel.check()
+    await fixture.clock.runFor(600)
+    check('Opening a panel preserves a mid-reach hand and cup', before > .55 && before < .65 && await handling() === before && sameCupSupport(pose, await character.evaluate(cupSupport)))
+    await panel.uncheck()
+    check('Closing the panel starts at the held pose', await handling() === before && sameCupSupport(pose, await character.evaluate(cupSupport)))
+    await fixture.clock.runFor(200)
+    check('The held reach continues when the panel closes', await handling() > before && await handling() < .75)
+    await panel.check()
+    await fixture.getByLabel('Scene state', { exact: true }).selectOption('error')
+    check('An error supersedes a visible panel hold', await handling() === .75 && await character.getAttribute('data-scene-motion') === 'false')
+  })
   for(const paused of [false,true])await frozenPreview(async(fixture,character)=>{
     const label=paused?'Paused mid-sip ending':'Running mid-sip ending'
     await fixture.getByLabel('Scene',{exact:true}).selectOption('R3')
