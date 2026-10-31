@@ -6,13 +6,13 @@ import { hasNewerThoughts, mergeThoughts } from './thoughts'
 import { initialTimer } from './timer'
 import { PHASES, type AppSnapshot, type FocusRecord, type FocusSceneId, type ParticipationRecord, type Phase, type SceneAssignment, type SceneRotation, type SceneState, type SceneUnlock, type Session, type Thought, type ThoughtDraft, type TimerState } from './types'
 
-/** v6 makes every scene available and prevents v5 clients from restoring access gates. */
-export const SNAPSHOT_VERSION = 6
+/** v7 protects draft identity, attribution and conflict tokens from older writers. */
+export const SNAPSHOT_VERSION = 7
 
 export function createSnapshot(spec: Spec): AppSnapshot {
   return {
     version: SNAPSHOT_VERSION, revision: 0, writer: '', datasetGeneration: 0, settings: defaultSettings(spec), timer: initialTimer(),
-    records: [], participations: [], lastFocusMinutes: null, thoughts: [], thoughtDraft: null, scenes: initialScenes(),
+    records: [], participations: [], lastRestEnd: null, lastFocusMinutes: null, focusDefaultsRevision: 0, thoughts: [], thoughtDraft: null, draftStamp: null, scenes: initialScenes(),
   }
 }
 
@@ -69,6 +69,20 @@ export const MIGRATIONS: Readonly<Record<number, Migration>> = {
   4: (old) => ({ ...old, version: 5, scenes: initialScenes() }),
   // Bags are normalized after validation; active and historical assignments stay intact.
   5: (old) => ({ ...old, version: 6 }),
+  6: (old, { timeZone }) => {
+    const draft = old.thoughtDraft
+    if (!isRecord(draft)) return { ...old, version: 7, lastRestEnd: null, draftStamp: null, focusDefaultsRevision: 0 }
+    const target = Array.isArray(old.thoughts) && draft.thoughtId !== null
+      ? old.thoughts.find((t: unknown) => isRecord(t) && t.id === draft.thoughtId) : null
+    // Never attach an unattributed draft to whichever timer happens to be running.
+    const ids = new Set(Array.isArray(old.thoughts) ? old.thoughts.map(t => t?.id) : [])
+    let suffix = 0
+    while (ids.has('migrated-draft-' + suffix)) suffix++
+    const id = 'migrated-draft-' + suffix
+    return { ...old, version: 7, lastRestEnd: null, focusDefaultsRevision: 0, draftStamp: id, thoughtDraft: { ...draft, id, timeZone,
+      baseRev: target?.rev ?? null, sessionId: target?.sessionId ?? null, createdAt: target?.createdAt ?? null,
+      dateKey: target?.dateKey ?? null } }
+  },
 }
 
 export type Decoded =
@@ -166,10 +180,14 @@ function readThoughts(raw: unknown, spec: Spec, issues: string[]): Thought[] {
   return result
 }
 
-function readDraft(raw: unknown, spec: Spec, issues: string[]): ThoughtDraft | null {
+function readDraft(raw: unknown, issues: string[]): ThoughtDraft | null {
   if (raw === null) return null
-  if (isRecord(raw) && (raw.thoughtId === null || isId(raw.thoughtId)) && isText(raw.text, spec.thoughts.maxLength) && raw.text !== '') {
-    return { thoughtId: raw.thoughtId, text: raw.text }
+  if (isRecord(raw) && isId(raw.id) && (raw.thoughtId === null || isId(raw.thoughtId)) && typeof raw.text === 'string' &&
+      (raw.baseRev === null || isCount(raw.baseRev)) && (raw.sessionId === null || isId(raw.sessionId)) &&
+      isTimeZone(raw.timeZone) && (raw.createdAt === null || isInstant(raw.createdAt)) &&
+      (raw.dateKey === null || isDateKey(raw.dateKey)) && (raw.createdAt === null) === (raw.dateKey === null)) {
+    const { id, thoughtId, text, baseRev, sessionId, timeZone, createdAt, dateKey } = raw
+    return { id, thoughtId, text, baseRev, sessionId, timeZone, createdAt, dateKey }
   }
   issues.push('thoughtDraft')
   return null
@@ -249,13 +267,21 @@ export function decodeSnapshot(text: string, spec: Spec, context: MigrationConte
   if (!isCount(data.datasetGeneration)) return { kind: 'unreadable', reason: 'Saved data generation is invalid.' }
   const issues: string[] = []
   const records = readRecords(data.records, issues)
+  const ending = data.lastRestEnd
+  const lastRestEnd = isRecord(ending) && isId(ending.sessionId) && isInstant(ending.endedAt) && isInstant(ending.elapsedMs)
+    ? { sessionId: ending.sessionId, endedAt: ending.endedAt, elapsedMs: ending.elapsedMs } : null
+  if (ending !== null && !lastRestEnd) issues.push('lastRestEnd')
   const participations = readParticipations(data.participations, issues)
   const { settings, issues: settingIssues } = sanitizeSettings(data.settings, spec)
   issues.push(...settingIssues)
   let timer = readTimer(data.timer, records.filter((r) => r.endReason === 'deadline').length, issues)
   const thoughts = readThoughts(data.thoughts, spec, issues)
-  const thoughtDraft = readDraft(data.thoughtDraft, spec, issues)
+  const thoughtDraft = readDraft(data.thoughtDraft, issues)
+  const draftStamp = isId(data.draftStamp) ? data.draftStamp : null
+  if (draftStamp === null && (data.draftStamp !== null || thoughtDraft !== null)) issues.push('draftStamp')
   const lastFocusMinutes = readLastFocus(data.lastFocusMinutes, spec, issues)
+  const focusDefaultsRevision = isCount(data.focusDefaultsRevision) ? data.focusDefaultsRevision : 0
+  if (!isCount(data.focusDefaultsRevision)) issues.push('focusDefaultsRevision')
   let scenes = readScenes(data.scenes, issues)
   if (raw.version < 6) {
     // Only future selections change; keep ordinals and last IDs for repeat avoidance.
@@ -272,7 +298,7 @@ export function decodeSnapshot(text: string, spec: Spec, context: MigrationConte
   return { kind: 'ok', issues, snapshot: {
     version: SNAPSHOT_VERSION, revision: isCount(data.revision) ? data.revision : 0,
     writer: typeof data.writer === 'string' ? data.writer : '', datasetGeneration: data.datasetGeneration,
-    settings, timer, records, participations, lastFocusMinutes, thoughts, thoughtDraft, scenes,
+    settings, timer, lastRestEnd, records, participations, lastFocusMinutes, focusDefaultsRevision, thoughts, thoughtDraft, draftStamp, scenes,
   } }
 }
 

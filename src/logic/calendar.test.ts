@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import { addDays, fromDayNumber, isDateKey, startOfWeek, toDayNumber, weekday } from './calendar'
-import { indexByDay, weekTotals } from './stats'
+import { groupEntries, indexByDay, rangeTotals, weekTotals } from './stats'
 import { currentStreak } from './streak'
-import type { FocusRecord } from './types'
+import type { FocusRecord, Thought } from './types'
 
 describe('calendar keys', () => {
   it('round-trips day numbers across centuries and leap days', () => {
@@ -52,6 +52,28 @@ const record = (sessionId: string, dateKey: string, minutes = 25): FocusRecord =
 })
 
 describe('stats', () => {
+  it('includes today and the preceding 6 or 29 civil dates and sums sub-second records exactly', () => {
+    const sample = (dateKey: string, elapsedMs: number) => ({ ...record(dateKey, dateKey), elapsedMs })
+    const index = indexByDay([sample('2026-10-01', 10_000), sample('2026-10-02', 7_000),
+      sample('2026-10-24', 3_000), sample('2026-10-25', 600), sample('2026-10-25', 600),
+      sample('2026-10-31', 0), sample('2026-11-01', 5000)])
+    const seven = rangeTotals(index, '2026-10-31', 7)
+    expect(seven).toMatchObject({ startKey: '2026-10-25', focusMs: 1200, count: 3 })
+    expect(seven.days[0]).toMatchObject({ dateKey: '2026-10-25', focusMs: 1200, count: 2 })
+    expect(rangeTotals(index, '2026-10-31', 30)).toMatchObject({ startKey: '2026-10-02', focusMs: 11200, count: 5 })
+    expect(rangeTotals(index, '2024-03-01', 7).startKey).toBe('2024-02-24')
+    expect(rangeTotals(index, '2026-11-03', 7).days.map(day => day.dateKey)).toContain('2026-11-01')
+  })
+
+  it('orders independent thoughts among sessions on their own dates with stable identity ties', () => {
+    const dateKey = '2026-10-25'
+    const thought: Thought = { id: 't', text: '', dateKey, createdAt: 10, rev: 1, status: 'open', deletedAt: null, sessionId: null }
+    const session = (id: string, endedAt: number) => ({ kind: 'record' as const, record: { ...record(id, dateKey), endedAt } })
+    const days = groupEntries([session('z', 8), session('a', 8), { kind: 'thought', thought }, session('b', 12),
+      { kind: 'thought', thought: { ...thought, dateKey: '2026-10-26', id: 'next-day' } }])
+    expect(days.map(day => day.dateKey)).toEqual(['2026-10-26', dateKey])
+    expect(days[1]?.entries.map(e => e.kind === 'record' ? e.record.sessionId : e.thought.id)).toEqual(['b', 't', 'a', 'z'])
+  })
   it('groups by recorded date key and totals the local week', () => {
     const index = indexByDay([
       record('a', '2026-10-25'), // previous Sunday: outside the week

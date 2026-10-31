@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react'
+import { useState, type ReactNode } from 'react'
 import type { CompanionPresentation } from '../../logic/companion'
 import type { FeedbackResult } from '../../logic/feedback'
 import { useCompanionView } from '../../hooks/companion/useCompanionView'
@@ -9,7 +9,9 @@ interface Props {
   reducedMotion: boolean
   motionEnabled?: boolean
   /** A replaceable visual slot. The default is a static, unbranded placeholder. */
-  renderCharacter?: (presentation: CompanionPresentation) => ReactNode
+  renderCharacter?: (presentation: CompanionPresentation, keyboardPat?: number) => ReactNode
+  /** Focus owns a separate encouragement control and a single reading panel. */
+  compact?: boolean
   onNext?: () => void
   onBookmark?: () => void
   onDismiss?: () => void
@@ -32,13 +34,19 @@ function Placeholder() {
 }
 
 /** Presentation only: all operations are callbacks, including saved/failed bookmark state. */
-export function CompanionFeedback({ feedback, reducedMotion, motionEnabled = false, renderCharacter, onNext, onBookmark, onDismiss, onRequest, announce = true, bookmarkState = 'available', quietStatus = false }: Props) {
+export function CompanionFeedback({ feedback, reducedMotion, motionEnabled = false, renderCharacter, onNext, onBookmark, onDismiss, onRequest, announce = true, bookmarkState = 'available', quietStatus = false, compact = false }: Props) {
+  const [keyboardPat, setKeyboardPat] = useState(0)
   const { frame, announcement } = feedback
   const { presentation, labels } = useCompanionView(feedback, reducedMotion, motionEnabled)
   const requested = frame.placement === 'requested' && frame.encouragement !== null
   return (
     <section className="companion-feedback" aria-label="陪伴与状态" data-stance={presentation.stance} data-static={presentation.staticOnly} data-placement={frame.placement}>
-      {onRequest ? (
+      {compact ? (
+        <button type="button" className="companion-feedback__greeting" aria-label="摸摸蓝色伙伴"
+          onClick={event => { if (event.detail === 0) setKeyboardPat(n => n + 1) }}>
+          <span className="companion-feedback__character" aria-hidden="true">{renderCharacter?.(presentation, keyboardPat) ?? <Placeholder />}</span>
+        </button>
+      ) : onRequest ? (
         <button type="button" className="companion-feedback__greeting" onClick={onRequest} aria-label="给我一句鼓励">
           <span className="companion-feedback__character" aria-hidden="true">{renderCharacter ? renderCharacter(presentation) : <Placeholder />}</span>
           <span className="companion-feedback__invite">给我一句鼓励 <span aria-hidden="true">↗</span></span>
@@ -46,12 +54,12 @@ export function CompanionFeedback({ feedback, reducedMotion, motionEnabled = fal
       ) : <div className="companion-feedback__character" aria-hidden="true">{renderCharacter ? renderCharacter(presentation) : <Placeholder />}</div>}
       <div className="companion-feedback__content">
         {(frame.persistence !== 'saved' || frame.status.kind === 'error' || frame.status.result || (!frame.encouragement && !quietStatus)) && <p className={`companion-feedback__status${frame.status.kind === 'error' ? ' companion-feedback__status--error' : ''}`}>{frame.status.text}</p>}
-        {frame.encouragement && <p className="companion-feedback__copy">{frame.encouragement.text}</p>}
-        <div className="companion-feedback__actions">
+        {frame.encouragement && !(compact && requested) && <p className="companion-feedback__copy">{frame.encouragement.text}</p>}
+        {!compact && <div className="companion-feedback__actions">
           {requested && onNext && <button type="button" onClick={onNext}>{labels.next}</button>}
           {requested && onBookmark && <button type="button" onClick={onBookmark} disabled={bookmarkState === 'saving' || bookmarkState === 'saved'}>{bookmarkState === 'saved' ? labels.bookmarked : bookmarkState === 'saving' ? '正在收藏…' : labels.bookmark}</button>}
           {requested && onDismiss && <button type="button" onClick={onDismiss}>收起</button>}
-        </div>
+        </div>}
       </div>
       {announce && <span className="companion-feedback__live" aria-live={announcement?.priority ?? 'polite'} aria-atomic="true">{announcement?.text ?? ''}</span>}
     </section>

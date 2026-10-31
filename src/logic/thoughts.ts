@@ -1,9 +1,4 @@
-import type { Thought, ThoughtDraft } from './types'
-
-/** Trims surrounding whitespace and bounds length. Empty text is a valid marker. */
-export function normalizeThoughtText(text: string, maxLength: number): string {
-  return Array.from(text.trim()).slice(0, maxLength).join('')
-}
+import type { Thought } from './types'
 
 /** Optional small step: empty means none. */
 export function normalizeStep(text: string | undefined, maxLength: number): string | null {
@@ -61,9 +56,12 @@ export function purgeExpiredText(thoughts: Thought[], now: number, undoPeriodMs:
 }
 
 export function canRestore(thought: Thought, now: number, undoPeriodMs: number): boolean {
-  return thought.deletedAt !== null && now - thought.deletedAt < undoPeriodMs
+  return thought.deletedAt !== null && now >= thought.deletedAt && now - thought.deletedAt < undoPeriodMs
 }
 
-export function sameDraft(a: ThoughtDraft | null, b: ThoughtDraft | null): boolean {
-  return a === b || (a !== null && b !== null && a.thoughtId === b.thoughtId && a.text === b.text)
+/** Anchor a provisional deletion's undo period to its first successful write. */
+export function datePendingDeletion(current: Thought | undefined, durable: Thought | undefined, pending: Thought, now: number): Thought | null {
+  if (!current || pending.deletedAt === null || durable?.deletedAt != null || current.rev !== pending.rev ||
+      current.deletedAt !== pending.deletedAt || current.deletedAt === now) return null
+  return { ...current, deletedAt: now }
 }

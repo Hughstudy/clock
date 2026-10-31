@@ -7,7 +7,8 @@ import {
   SNAPSHOT_VERSION,
 } from '../logic/snapshot'
 import type { Spec } from '../logic/spec'
-import type { AppSnapshot } from '../logic/types'
+import { mergeSceneStates } from '../logic/scenes'
+import type { AppSnapshot, TimerState } from '../logic/types'
 import type { LockRunner } from './locks'
 
 export interface KeyValueStorage {
@@ -61,6 +62,22 @@ function message(error: unknown): string {
   return error instanceof Error ? `${error.name}: ${error.message}` : String(error)
 }
 
+/** Rebase independent preference fields. A conflicting durable value wins. */
+function mergePreferenceFields<T extends object>(base: T, disk: T, local: T): T {
+  const result = { ...disk }
+  for (const key of Object.keys(local) as Array<keyof T>) {
+    if (base[key] === disk[key]) result[key] = local[key]
+  }
+  return result
+}
+
+function sameTimerPosition(a: TimerState, b: TimerState): boolean {
+  if (a.phase !== b.phase || a.session?.id !== b.session?.id) return false
+  if (!a.session || !b.session) return a.session === b.session
+  if (a.session.status === 'paused') return b.session.status === 'paused' && a.session.remainingMs === b.session.remainingMs
+  return b.session.status === 'running' && a.session.deadline === b.session.deadline
+}
+
 /**
  * Owns the single versioned snapshot in storage. Every mutation runs under
  * the lock against the latest stored data merged with this tab's memory, so
@@ -70,6 +87,8 @@ export class SnapshotStore {
   private memory: AppSnapshot
   /** Last snapshot known to be on disk, before merging in this tab's pending changes. */
   private stored: AppSnapshot | null = null
+  /** Common ancestor for locally applied writes which the disk has not accepted. */
+  private pendingBase: AppSnapshot | null = null
   private sawStoredData = false
   private persistence: Persistence
   private notice: StoreNotice | null
@@ -91,6 +110,11 @@ export class SnapshotStore {
 
   get snapshot(): AppSnapshot {
     return this.memory
+  }
+
+  /** Last confirmed write or read. Used to acknowledge only matching operations. */
+  get durableSnapshot(): AppSnapshot | null {
+    return this.stored
   }
 
   get savedRecordIds(): ReadonlySet<string> {
@@ -169,9 +193,68 @@ export class SnapshotStore {
   /** A known snapshot disappeared. Keep the visible work, but never repopulate a cleared key. */
   private detachRemovedSnapshot(): void {
     this.stored = null
+    this.pendingBase = null
     this.sawStoredData = false
     if (this.persistence !== 'read-only') this.persistence = 'memory-only'
     this.notice = { kind: 'removed' }
+  }
+
+  /**
+   * A failed local edit can fork from a later, successful edit on another tab.
+   * Keep the accepted remote version for conflicting objects. The editor retains
+   * its local input and the old revision for explicit conflict resolution.
+   */
+  private mergeWithDisk(disk: AppSnapshot): AppSnapshot {
+    const base = this.pendingBase
+    const local = this.memory
+    let merged = mergeSnapshots(disk, local)
+    if (!base || disk.datasetGeneration !== base.datasetGeneration || local.datasetGeneration !== base.datasetGeneration) return merged
+    const draftOwner = disk.draftStamp === base.draftStamp ? local : disk
+    const durableRecords = new Map(disk.records.map(record => [record.sessionId, record]))
+    const records = merged.records.map(record => durableRecords.get(record.sessionId) ?? record)
+    const disputedCompletions = local.records.filter(r => r.endReason === 'deadline' && durableRecords.get(r.sessionId)?.endReason === 'manual').length
+    const completed = Math.max(local.timer.completedFocusCount - disputedCompletions, disk.timer.completedFocusCount,
+      records.filter(r => r.endReason === 'deadline').length)
+
+    // Phase, session identity and its deadline/paused amount form one position.
+    // Even an ended zero-second session advances the corresponding scene cursor.
+    const diskStartedAnother = disk.scenes.focus.ordinal !== base.scenes.focus.ordinal || disk.scenes.rest.ordinal !== base.scenes.rest.ordinal
+    const diskMoved = !sameTimerPosition(base.timer, disk.timer) || diskStartedAnother
+    const diskActive = disk.timer.session
+    const localEndedDiskSession = !!diskActive && (disk.timer.phase === 'focus'
+      ? records.some(r => r.sessionId === diskActive.id)
+      : local.lastRestEnd?.sessionId === diskActive.id)
+    // Both tabs settled the old session. Preserve a new local rest/focus already
+    // running after it when the other tab only published that common ending.
+    const priorId = base.timer.session?.id
+    const continuedAfterEnd = priorId && !diskActive && !diskStartedAnother && local.timer.session &&
+      local.timer.session.id !== priorId && (durableRecords.has(priorId) || disk.lastRestEnd?.sessionId === priorId)
+    const timerOwner = diskMoved && !localEndedDiskSession && !continuedAfterEnd ? disk : local
+    const other = timerOwner === disk ? local : disk
+    const lastFocusMinutes = disk.focusDefaultsRevision !== base.focusDefaultsRevision || disk.lastFocusMinutes !== base.lastFocusMinutes
+      ? disk.lastFocusMinutes : local.lastFocusMinutes
+    merged = {
+      ...merged, records, timer: { ...timerOwner.timer, completedFocusCount: completed },
+      scenes: mergeSceneStates(timerOwner.scenes, other.scenes),
+      lastRestEnd: disk.lastRestEnd?.sessionId !== base.lastRestEnd?.sessionId || disk.lastRestEnd?.endedAt !== base.lastRestEnd?.endedAt
+        ? disk.lastRestEnd : local.lastRestEnd,
+      lastFocusMinutes, focusDefaultsRevision: Math.max(disk.focusDefaultsRevision, local.focusDefaultsRevision),
+      settings: { ...mergePreferenceFields(base.settings, disk.settings, local.settings),
+        durationsMinutes: mergePreferenceFields(base.settings.durationsMinutes, disk.settings.durationsMinutes, local.settings.durationsMinutes) },
+      draftStamp: draftOwner.draftStamp, thoughtDraft: draftOwner.thoughtDraft,
+    }
+    const originals = new Map(base.thoughts.map(t => [t.id, t]))
+    const durable = new Map(disk.thoughts.map(t => [t.id, t]))
+    let changed = false
+    const thoughts = merged.thoughts.map(t => {
+      const accepted = durable.get(t.id)
+      if (!accepted || originals.get(t.id)?.rev === accepted.rev ||
+          (accepted.rev === t.rev && accepted.text === t.text && accepted.status === t.status && accepted.deletedAt === t.deletedAt)) return t
+      changed = true
+      return accepted
+    })
+    this.pendingBase = disk
+    return changed ? { ...merged, thoughts } : merged
   }
 
   /** Reads storage and merges it with memory. `behind` means storage lacks something memory has. */
@@ -215,7 +298,7 @@ export class SnapshotStore {
         return { latest: this.memory, behind: false }
       }
     }
-    const latest = mergeSnapshots(decoded.snapshot, this.memory)
+    const latest = this.mergeWithDisk(decoded.snapshot)
     return { latest, behind: latest !== decoded.snapshot || decoded.issues.length > 0 || JSON.parse(text).version !== SNAPSHOT_VERSION }
   }
 
@@ -241,11 +324,13 @@ export class SnapshotStore {
 
       const next: AppSnapshot = { ...result.snapshot, revision: latest.revision + 1, writer: this.options.writerId }
       this.memory = next
+      this.pendingBase ??= this.stored ?? latest
       // Never overwrite data when the latest stored revision could not be read.
       if (this.readError) return { snapshot: next, value: result.value, saved: false, error: this.readError }
       try {
         this.options.storage?.setItem(this.options.key, encodeSnapshot(next))
         this.stored = next
+        this.pendingBase = null
         this.sawStoredData = true
         return { snapshot: next, value: result.value, saved: true, error: null }
       } catch (error) {
@@ -279,12 +364,13 @@ export class SnapshotStore {
     if (decoded.kind === 'unreadable') return null
     // Another tab's event can arrive after this tab has committed a newer revision.
     const incoming = decoded.snapshot
-    if (incoming.datasetGeneration >= this.memory.datasetGeneration &&
-        (this.stored?.datasetGeneration !== incoming.datasetGeneration || incoming.revision >= this.stored.revision)) {
+    const fresh = incoming.datasetGeneration >= this.memory.datasetGeneration &&
+        (this.stored?.datasetGeneration !== incoming.datasetGeneration || incoming.revision >= this.stored.revision)
+    if (fresh) {
       this.stored = incoming
     }
-    const needsHeal = hasMissingRecords(decoded.snapshot, this.memory)
-    this.memory = mergeSnapshots(this.memory, decoded.snapshot)
+    this.memory = fresh ? this.mergeWithDisk(incoming) : mergeSnapshots(this.memory, incoming)
+    const needsHeal = hasMissingRecords(incoming, this.memory)
     return { snapshot: this.memory, needsHeal }
   }
 }

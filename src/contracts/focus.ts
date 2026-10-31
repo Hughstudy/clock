@@ -1,7 +1,6 @@
 /**
- * C1-F2: focus and thought slice, introduced in snapshot v4 and retained in v6.
- * Includes the optional session step, last one-off focus length, thoughts with
- * deletion markers and the thought draft. C2-P3 exposes saved scene presentation.
+ * Focus and thought slice, snapshot v7. Edits retain their owner, first input
+ * date and base revisions. Receipts identify the operation and dataset generation.
  * Rewards, bookmarks and import/export are not yet public contracts.
  */
 export type { AppSnapshot, FocusRecord, ParticipationRecord, Session, Thought, ThoughtDraft, TimerState } from '../logic/types'

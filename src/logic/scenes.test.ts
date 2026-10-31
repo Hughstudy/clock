@@ -164,7 +164,7 @@ describe('scene compatibility and factual endings', () => {
         unlocked: [legacyUnlock], introduced: ['F4' as const], announced: [] },
     }
     const loaded = roundTrip(old)
-    expect(loaded.version).toBe(6)
+    expect(loaded.version).toBe(7)
     expect(loaded.timer).toEqual(old.timer)
     expect(loaded.records).toEqual(old.records)
     expect(loaded.datasetGeneration).toBe(3)

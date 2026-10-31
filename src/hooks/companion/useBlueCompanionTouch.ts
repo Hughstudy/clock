@@ -12,7 +12,7 @@ interface Touch {
 }
 
 /** Local play only. Never captures a pointer, suppresses a click or calls the host. */
-export function useBlueCompanionTouch(presentation: CompanionPresentation, spec: BlueCompanionSpec, hostMotionId?: string, finishHost?: (id: string) => void, sceneKey?: string) {
+export function useBlueCompanionTouch(presentation: CompanionPresentation, spec: BlueCompanionSpec, hostMotionId?: string, finishHost?: (id: string) => void, sceneKey?: string, keyboardPat?: number) {
   const ref = useRef<SVGSVGElement>(null)
   const sequence = useRef(0)
   const [touch, setTouch] = useState<Touch | null>(null)
@@ -28,12 +28,18 @@ export function useBlueCompanionTouch(presentation: CompanionPresentation, spec:
   }, [touch?.id, hostMotionId, finishHost])
 
   useEffect(() => {
-    // The native encouragement button may supply support on release. That
-    // gesture can coexist with local play; any other host state wins immediately.
+    // A change in functional state takes precedence over a transient pose.
     if (stance !== 'support' || (cue && cue !== 'support')) cancel()
   }, [stance, cue, cancel])
   useEffect(() => { cancel() }, [staticOnly, cancel])
   useEffect(() => { cancel() }, [sceneKey, cancel])
+  const lastKeyboardPat = useRef(keyboardPat)
+  useEffect(() => {
+    if (lastKeyboardPat.current === keyboardPat) return
+    lastKeyboardPat.current = keyboardPat
+    if (stance !== 'neutral') setTouch({ id: ++sequence.current, pointerId: -1, kind: 'pat',
+      point: { x: spec.width / 2, y: spec.height / 4 }, phase: 'release' })
+  }, [keyboardPat, stance, spec])
   useEffect(() => {
     const hidden = () => { if (document.hidden) cancel() }
     document.addEventListener('visibilitychange', hidden)

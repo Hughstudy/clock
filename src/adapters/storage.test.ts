@@ -94,6 +94,124 @@ describe('SnapshotStore persistence', () => {
 })
 
 describe('SnapshotStore across tabs', () => {
+  it.each(['receive', 'locked read'])('preserves a failed pause beside a peer preference through %s', async delivery => {
+    const storage = new MemoryStorage()
+    const local = tab(storage, 'a')
+    await act(local, { type: 'start', sessionId: 'focus', timeZone: 'UTC' }, T0)
+    const peer = tab(storage, 'z')
+    storage.failWrites = true
+    await act(local, { type: 'pause', sessionId: 'focus' }, T0 + MIN)
+    await act(local, { type: 'updateSettings', patch: { soundEnabled: true, durationsMinutes: { shortBreak: 8 } } }, T0 + MIN)
+    storage.failWrites = false
+    await act(peer, { type: 'updateSettings', patch: { motionEnabled: false, durationsMinutes: { longBreak: 20 } } }, T0 + 2 * MIN)
+    if (delivery === 'receive') local.receive(storage.getItem(KEY))
+    await act(local, { type: 'reconcile' }, T0 + 4 * MIN)
+    expect(stored(storage).settings).toMatchObject({ soundEnabled: true, motionEnabled: false, durationsMinutes: { shortBreak: 8, longBreak: 20 } })
+    expect(stored(storage).timer.session).toMatchObject({ id: 'focus', status: 'paused', remainingMs: 24 * MIN })
+    await act(local, { type: 'end', sessionId: 'focus' }, T0 + 5 * MIN)
+    expect(stored(storage).records[0]?.elapsedMs).toBe(MIN)
+  })
+
+  it('does not resurrect a failed pause over a durable end and subsequent peer session', async () => {
+    const storage = new MemoryStorage()
+    const local = tab(storage, 'z')
+    await act(local, { type: 'start', sessionId: 'old', timeZone: 'UTC' }, T0)
+    const peer = tab(storage, 'a')
+    storage.failWrites = true
+    await act(local, { type: 'pause', sessionId: 'old' }, T0 + MIN)
+    await act(local, { type: 'updateSettings', patch: { durationsMinutes: { shortBreak: 8 } } }, T0 + MIN)
+    storage.failWrites = false
+    await act(peer, { type: 'end', sessionId: 'old' }, T0 + 2 * MIN)
+    await act(peer, { type: 'start', sessionId: 'new', timeZone: 'UTC' }, T0 + 3 * MIN)
+    await act(local, { type: 'reconcile' }, T0 + 4 * MIN)
+    expect(stored(storage).timer.session).toMatchObject({ id: 'new', status: 'running', deadline: T0 + 28 * MIN })
+    expect(stored(storage).records).toMatchObject([{ sessionId: 'old', elapsedMs: 2 * MIN }])
+    expect(stored(storage).settings.durationsMinutes.shortBreak).toBe(8)
+  })
+
+  it('keeps a durable default reset and resolves a conflicting local duration by field', async () => {
+    const storage = new MemoryStorage()
+    const local = tab(storage, 'z')
+    await act(local, { type: 'startFocus', sessionId: 'one-off', durationMinutes: 5, timeZone: 'UTC' }, T0)
+    await act(local, { type: 'end', sessionId: 'one-off' }, T0)
+    const peer = tab(storage, 'a')
+    storage.failWrites = true
+    await act(local, { type: 'updateSettings', patch: { durationsMinutes: { focus: 30, shortBreak: 8 } } }, T0)
+    storage.failWrites = false
+    await act(peer, { type: 'updateSettings', patch: { durationsMinutes: { focus: 40 } } }, T0)
+    await act(local, { type: 'reconcile' }, T0)
+    expect(stored(storage)).toMatchObject({ lastFocusMinutes: null, settings: { durationsMinutes: { focus: 40, shortBreak: 8 } } })
+  })
+
+  it('keeps the factual rest ending through an unrelated write without reviving its timer', async () => {
+    const storage = new MemoryStorage()
+    const local = tab(storage, 'a')
+    await act(local, { type: 'startBreak', sessionId: 'rest', timeZone: 'UTC' }, T0)
+    const peer = tab(storage, 'z')
+    storage.failWrites = true
+    await act(local, { type: 'end', sessionId: 'rest' }, T0 + 600)
+    storage.failWrites = false
+    await act(peer, { type: 'updateSettings', patch: { motionEnabled: false } }, T0 + 1000)
+    local.receive(storage.getItem(KEY))
+    await act(local, { type: 'reconcile' }, T0 + 30 * MIN)
+    expect(stored(storage)).toMatchObject({ timer: { session: null }, settings: { motionEnabled: false },
+      lastRestEnd: { sessionId: 'rest', elapsedMs: 600 }, scenes: { lastEnded: { sessionId: 'rest', elapsedMs: 600 } } })
+  })
+
+  it('keeps an already started rest while converging on the durable focus ending', async () => {
+    const storage = new MemoryStorage()
+    const local = tab(storage, 'a')
+    await act(local, { type: 'start', sessionId: 'focus', timeZone: 'UTC' }, T0)
+    const peer = tab(storage, 'z')
+    storage.failWrites = true
+    await act(local, { type: 'end', sessionId: 'focus' }, T0 + MIN)
+    await act(local, { type: 'startBreak', sessionId: 'rest', timeZone: 'UTC' }, T0 + MIN)
+    storage.failWrites = false
+    await act(peer, { type: 'end', sessionId: 'focus' }, T0 + 2 * MIN)
+    await act(local, { type: 'reconcile' }, T0 + 3 * MIN)
+    expect(stored(storage).timer.session).toMatchObject({ id: 'rest', status: 'running', deadline: T0 + 6 * MIN })
+    expect(stored(storage).records).toMatchObject([{ sessionId: 'focus', elapsedMs: 2 * MIN }])
+  })
+
+  it('keeps a competing durable edit and draft when a failed writer retries', async () => {
+    const storage = new MemoryStorage()
+    const local = tab(storage, 'z')
+    const other = tab(storage, 'a')
+    await act(local, { type: 'markThought', thoughtId: 'note', timeZone: 'UTC' }, T0)
+    const editor = { id: 'editor', thoughtId: 'note', sessionId: null, createdAt: T0, dateKey: utcKey(T0),
+      timeZone: 'UTC', baseRev: 1, text: 'input' }
+    await act(local, { type: 'writeDraft', draft: editor, expectedStamp: null, stamp: 'first' }, T0)
+    storage.failWrites = true
+    await act(local, { type: 'saveThoughtText', thoughtId: 'note', text: 'a local phrase', draft: editor,
+      expectedStamp: 'first', stamp: 'local', timeZone: 'UTC' }, T0)
+    expect(local.durableSnapshot?.thoughts[0]?.text).toBe('')
+    storage.failWrites = false
+    await act(other, { type: 'saveThoughtText', thoughtId: 'note', text: 'remote accepted', draft: editor,
+      expectedStamp: 'first', stamp: 'remote', timeZone: 'UTC' }, T0)
+    await act(other, { type: 'writeDraft', draft: { ...editor, text: 'newer draft', baseRev: 2 },
+      expectedStamp: 'remote', stamp: 'remote-2' }, T0)
+    await act(local, { type: 'reconcile' }, T0)
+    expect(stored(storage).thoughts[0]?.text).toBe('remote accepted')
+    expect(stored(storage).thoughtDraft?.text).toBe('newer draft')
+  })
+  it('BD08 distinguishes already durable A from failed B, then saves current draft and B exactly once', async () => {
+    const storage = new MemoryStorage()
+    const session = tab(storage, 'here')
+    await act(session, { type: 'markThought', thoughtId: 'A', timeZone: 'UTC' }, T0)
+    storage.failWrites = true
+    const failed = await act(session, { type: 'markThought', thoughtId: 'B', timeZone: 'UTC' }, T0 + 1)
+    expect(failed.saved).toBe(false)
+    expect(session.durableSnapshot?.thoughts.map(note => note.id)).toEqual(['A'])
+    expect(session.snapshot.thoughts.map(note => note.id)).toEqual(['A','B'])
+    const draft = { id: 'D', thoughtId: null, sessionId: null, createdAt: T0 + 2, dateKey: utcKey(T0),
+      timeZone: 'UTC', baseRev: null, text: 'later input' }
+    await act(session, { type: 'writeDraft', draft, expectedStamp: null, stamp: 'D1' }, T0 + 2)
+    storage.failWrites = false
+    await act(session, { type: 'reconcile' }, T0 + 3)
+    await act(session, { type: 'reconcile' }, T0 + 4)
+    expect(stored(storage).thoughts.map(note => note.id)).toEqual(['A','B'])
+    expect(stored(storage).thoughtDraft).toEqual(draft)
+  })
   it.each(['storage event', 'locked read'])('keeps removed records only in memory after a %s', async (signal) => {
     const storage = new MemoryStorage()
     const a = tab(storage, 'old')
@@ -218,7 +336,7 @@ describe('SnapshotStore across tabs', () => {
     const assignment = upgraded.snapshot.timer.session?.scene
     expect(assignment).toEqual(old.timer.session.scene)
     await act(upgraded, { type: 'reconcile' }, T0 + MIN)
-    expect(stored(storage).version).toBe(6)
+    expect(stored(storage).version).toBe(7)
     expect(stored(storage).timer).toEqual(old.timer)
     expect(stored(storage).scenes.focus).toEqual({ ...old.scenes.focus, remaining: [] })
     expect(tab(storage, 'reloaded').snapshot.timer.session?.scene).toEqual(assignment)
@@ -364,7 +482,7 @@ describe('SnapshotStore recovery', () => {
     const raw = { version: 2, revision: 3, writer: 'x', settings: { durationsMinutes: { focus: 30, shortBreak: 5, longBreak: 15 }, soundEnabled: 'yes' }, timer: { phase: 'focus', session: null, completedFocusCount: 0 }, completions: [] }
     storage.data.set(KEY, JSON.stringify(raw))
     const store = tab(storage, 'a')
-    expect(store.snapshot.settings).toEqual({ durationsMinutes: { focus: 30, shortBreak: 5, longBreak: 15 }, soundEnabled: true, motionEnabled: true, encouragementEnabled: true, sceneVarietyEnabled: true })
+    expect(store.snapshot.settings).toEqual({ durationsMinutes: { focus: 30, shortBreak: 5, longBreak: 15 }, soundEnabled: false, motionEnabled: true, encouragementEnabled: true, sceneVarietyEnabled: true })
     expect(store.status.notice).toEqual({ kind: 'repaired', fields: ['settings.soundEnabled'], backupKey: `${KEY}:backup:${T0}` })
   })
 
@@ -409,7 +527,7 @@ describe('durable early ends and recovery', () => {
     expect([...tab(storage, 'no-locks', null).savedRecordIds]).toEqual(['first', 'pending'])
   })
 
-  it('does not confirm a conflicting end time or use a previous generation as proof', async () => {
+  it('adopts the durable end time and never uses a previous generation as proof', async () => {
     const storage = new MemoryStorage()
     const a = tab(storage, 'z')
     await act(a, { type: 'start', sessionId: 'session', timeZone: 'UTC' }, T0)
@@ -420,8 +538,8 @@ describe('durable early ends and recovery', () => {
     await act(b, { type: 'end', sessionId: 'session' }, T0 + 20_000)
     const endInOtherTab = storage.getItem(KEY)
     a.receive(endInOtherTab)
-    expect(a.snapshot.records[0]?.elapsedMs).toBe(10_000)
-    expect(a.savedRecordIds.has('session')).toBe(false)
+    expect(a.snapshot.records[0]?.elapsedMs).toBe(20_000)
+    expect(a.savedRecordIds.has('session')).toBe(true)
 
     const replaced = { ...a.snapshot, datasetGeneration: 1 }
     a.receive(encodeSnapshot(replaced))
@@ -534,7 +652,7 @@ describe('durable early ends and recovery', () => {
     const upgraded = tab(storage, 'new')
     expect(upgraded.savedRecordIds.has('old-focus')).toBe(true)
     await act(upgraded, { type: 'reconcile' }, T0)
-    expect(stored(storage).version).toBe(6)
+    expect(stored(storage).version).toBe(7)
     expect(stored(storage).settings.soundEnabled).toBe(false)
     expect(tab(storage, 'reload').savedRecordIds.has('old-focus')).toBe(true)
   })

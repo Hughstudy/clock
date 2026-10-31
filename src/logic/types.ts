@@ -109,8 +109,16 @@ export interface Thought {
 
 /** Unsent thought text, persisted so it survives closing the panel or the page. */
 export interface ThoughtDraft {
+  /** Stable editor identity. A new entry uses this as its eventual thought ID. */
+  id: string
   /** Thought the text will be saved to; null creates a new thought. */
   thoughtId: string | null
+  baseRev: number | null
+  sessionId: string | null
+  timeZone: string
+  /** Frozen on first nonblank input. Legacy new drafts have no known creation instant. */
+  createdAt: number | null
+  dateKey: DateKey | null
   text: string
 }
 
@@ -124,11 +132,17 @@ export interface AppSnapshot {
   datasetGeneration: number
   settings: Settings
   timer: TimerState
+  /** At most one factual rest ending for confirmation/retry, independent of artwork. */
+  lastRestEnd: { sessionId: string; endedAt: number; elapsedMs: number } | null
   records: FocusRecord[]
   participations: ParticipationRecord[]
   /** Last explicitly chosen one-off focus length. Separate from the configured default. */
   lastFocusMinutes: number | null
+  /** Invalidates a tentative duration even if resetting returns the same numeric default. */
+  focusDefaultsRevision: number
   thoughts: Thought[]
   thoughtDraft: ThoughtDraft | null
+  /** Compare-and-swap token for the single recoverable draft, including after clearing it. */
+  draftStamp: string | null
   scenes: SceneState
 }

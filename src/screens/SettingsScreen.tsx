@@ -130,7 +130,7 @@ export function SettingsScreen({ form, canEdit }: Props) {
         <button
           type="button"
           className="btn btn-secondary"
-          disabled={!canEdit || form.isDefault}
+          disabled={!canEdit}
           onClick={form.restoreDefaults}
         >
           恢复默认时长

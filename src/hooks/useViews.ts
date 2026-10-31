@@ -3,7 +3,7 @@ import { localDateKey, localHour } from '../adapters/calendar'
 import { spec } from '../data/spec'
 import { nextFocusMinutes } from '../logic/app'
 import { recordsBand, recordStoryId, type RecordsBand, type RecordStoryId } from '../logic/record-stories'
-import { dayTotal, indexByDay, weekTotals, type DayTotal, type WeekTotals } from '../logic/stats'
+import { dayTotal, groupEntries, indexByDay, rangeTotals, type DayIndex, type DayTotal, type HistoryDay, type RangeLength } from '../logic/stats'
 import { isLive } from '../logic/thoughts'
 import { cycleProgress, isBreak, remainingMs, totalMs, type CycleProgress } from '../logic/timer'
 import type { AppSnapshot, FocusRecord, Phase, Session, Thought } from '../logic/types'
@@ -13,6 +13,8 @@ const MINUTE_MS = 60_000
 export interface TimerView {
   sessionId: string | null
   quickFocusMinutes: number
+  shortBreakMinutes: number
+  longBreakMinutes: number
   /** One-off lengths offered on demand. */
   quickChoicesMinutes: readonly number[]
   /** What a plain focus start captures: the last one-off choice, else the default. */
@@ -43,6 +45,8 @@ export function useTimerView(snapshot: AppSnapshot, now: number): TimerView {
   return {
     sessionId: timer.session?.id ?? null,
     quickFocusMinutes: spec.timer.quickFocusMinutes,
+    shortBreakMinutes: settings.durationsMinutes.shortBreak,
+    longBreakMinutes: settings.durationsMinutes.longBreak,
     quickChoicesMinutes: spec.timer.quickChoicesMinutes,
     nextFocusMinutes: next,
     stepMaxLength: spec.timer.stepMaxLength,
@@ -70,18 +74,28 @@ export interface RecordView extends FocusRecord {
 export interface StatsView {
   band: RecordsBand
   todayKey: string
-  /** Started focus sessions, including the current one. */
-  participationCount: number
-  records: readonly RecordView[]
-  /** All live thoughts, newest first; never limited by a history date range. */
-  thoughts: readonly Thought[]
-  /** Weekday (0 = Sunday) that starts the calendar week. */
-  firstWeekday: number
-  today: DayTotal
-  week: WeekTotals
+  active: { phase: Phase; status: Session['status']; id: string } | null
+  recordBySession: ReadonlyMap<string, RecordView>
+  confirmedThoughtIds: ReadonlySet<string>
+  totalsByDay: DayIndex
+  historyDays: HistoryDay<RecordView>[]
+  thoughtDays: HistoryDay<RecordView>[]
 }
 
-export function useStatsView(snapshot: AppSnapshot, now: number, savedRecordIds: ReadonlySet<string>): StatsView {
+export function useHistoryRange(view: StatsView, length: RangeLength) {
+  return useMemo(() => {
+    const totals = rangeTotals(view.totalsByDay, view.todayKey, length)
+    return {
+      totals,
+      range: view.historyDays.filter(day => day.dateKey >= totals.startKey && day.dateKey <= view.todayKey),
+      earlier: view.historyDays.filter(day => day.dateKey < totals.startKey),
+      // Travel may leave a recorded date later than the viewing device's local today.
+      later: view.historyDays.filter(day => day.dateKey > view.todayKey),
+    }
+  }, [view.totalsByDay, view.todayKey, view.historyDays, length])
+}
+
+export function useStatsView(snapshot: AppSnapshot, now: number, savedRecordIds: ReadonlySet<string>, durableThoughts: readonly Thought[]): StatsView {
   const todayKey = localDateKey(now)
   const band = recordsBand(localHour(now))
   const index = useMemo(() => indexByDay(snapshot.records), [snapshot.records])
@@ -89,22 +103,38 @@ export function useStatsView(snapshot: AppSnapshot, now: number, savedRecordIds:
   return useMemo(
     () => {
       const bySession = new Map<string, Thought[]>()
-      for (const t of live) if (t.sessionId) bySession.set(t.sessionId, [...(bySession.get(t.sessionId) ?? []), t])
+      for (const t of live) {
+        if (!t.sessionId) continue
+        const linked = bySession.get(t.sessionId)
+        if (linked) linked.push(t)
+        else bySession.set(t.sessionId, [t])
+      }
+      const records = snapshot.records.map(r => ({
+        ...r,
+        storyId: savedRecordIds.has(r.sessionId) ? recordStoryId(r.sessionId) : null,
+        thoughts: (bySession.get(r.sessionId) ?? []).sort((a, b) => a.createdAt - b.createdAt || a.id.localeCompare(b.id)),
+      }))
+      const thoughtEntries = live.map(thought => ({ kind: 'thought' as const, thought }))
+      const durableById = new Map(durableThoughts.map(t => [t.id, t]))
+      const confirmedThoughtIds = new Set(live.filter(t => {
+        const saved = durableById.get(t.id)
+        return saved && saved.rev === t.rev && saved.deletedAt === null && saved.status === t.status &&
+          saved.text === t.text && saved.sessionId === t.sessionId && saved.dateKey === t.dateKey && saved.createdAt === t.createdAt
+      }).map(t => t.id))
       return {
         band,
         todayKey,
-        participationCount: snapshot.participations.length,
-        records: [...snapshot.records].sort((a, b) => b.endedAt - a.endedAt).map((r) => ({
-          ...r,
-          storyId: savedRecordIds.has(r.sessionId) ? recordStoryId(r.sessionId) : null,
-          thoughts: bySession.get(r.sessionId) ?? [],
-        })),
-        thoughts: [...live].reverse(),
-        firstWeekday: spec.calendar.weekStartsOn,
-        today: dayTotal(index, todayKey),
-        week: weekTotals(index, todayKey, spec.calendar.weekStartsOn),
+        confirmedThoughtIds,
+        active: snapshot.timer.session && { phase: snapshot.timer.phase, status: snapshot.timer.session.status, id: snapshot.timer.session.id },
+        recordBySession: new Map(records.map(record => [record.sessionId, record])),
+        totalsByDay: index,
+        historyDays: groupEntries<RecordView>([
+          ...records.map(record => ({ kind: 'record' as const, record })),
+          ...thoughtEntries.filter(entry => entry.thought.sessionId === null),
+        ]),
+        thoughtDays: groupEntries<RecordView>(thoughtEntries),
       }
     },
-    [band, index, todayKey, snapshot.records, snapshot.participations.length, live, savedRecordIds],
+    [band, index, todayKey, snapshot.records, snapshot.timer, live, savedRecordIds, durableThoughts],
   )
 }

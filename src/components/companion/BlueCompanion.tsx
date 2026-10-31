@@ -13,16 +13,16 @@ import '../../styles/blue-companion.css'
 import '../../styles/companion-scenes.css'
 
 export interface SceneInspection { actionKind: SceneMotionKind | 'idle'; actionProgress: number }
-interface Props { presentation: CompanionPresentation; cueId?: string | undefined; scene?: CompanionScene | null | undefined; inspection?: SceneInspection | undefined; panelOpen?: boolean; sceneryEnabled?: boolean }
+interface Props { presentation: CompanionPresentation; cueId?: string | undefined; scene?: CompanionScene | null | undefined; inspection?: SceneInspection | undefined; panelOpen?: boolean; sceneryEnabled?: boolean; keyboardPat?: number | undefined }
 
 /** Original, replaceable prototype art. Only semantic presentation cues enter this layer. */
-export function BlueCompanion({ presentation, cueId, scene, inspection, panelOpen = false, sceneryEnabled = true }: Props) {
+export function BlueCompanion({ presentation, cueId, scene, inspection, panelOpen = false, sceneryEnabled = true, keyboardPat }: Props) {
   // Scene entrances/endings have their own bound identities. Keep greeting and
   // requested encouragement, but don't play two start/end gestures together.
   const legacyPresentation = scene && (presentation.cue === 'begin' || presentation.cue === 'settle')
     ? { ...presentation, cue: null } : presentation
   const { spec, sketch, active, finish } = useBlueCompanion(legacyPresentation, cueId)
-  const play = useBlueCompanionTouch(presentation, spec, active?.id, finish, scene?.key)
+  const play = useBlueCompanionTouch(presentation, spec, active?.id, finish, scene?.key, keyboardPat)
   const { touch } = play
   const sceneMotion = useCompanionScene(scene, { staticOnly: presentation.staticOnly || presentation.stance === 'neutral', touching: !!touch || !!active, panelOpen })
   const gradientId = useId().replace(/:/g, '')

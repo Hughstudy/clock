@@ -2,7 +2,8 @@ import { describe, expect, it } from 'vitest'
 import { spec } from '../data/spec'
 import { applyAction, nextFocusMinutes, reconcile, type ActionContext, type AppAction } from './app'
 import { createSnapshot, decodeSnapshot, encodeSnapshot, hasMissingRecords, mergeSnapshots } from './snapshot'
-import type { AppSnapshot } from './types'
+import type { AppSnapshot, ThoughtDraft } from './types'
+import { datePendingDeletion } from './thoughts'
 
 const MIN = 60_000
 const T0 = Date.UTC(2026, 9, 29, 9, 0, 0)
@@ -11,6 +12,11 @@ const ctx = (now: number): ActionContext => ({ now, dateKeyOf: utcKey })
 const step = (s: AppSnapshot, now: number, action: AppAction) => applyAction(s, action, ctx(now), spec)
 const run = (s: AppSnapshot, steps: [number, AppAction][]) => steps.reduce((acc, [now, a]) => step(acc, now, a).snapshot, s)
 const tz = 'UTC'
+const draft = (text: string, thoughtId: string | null = null): ThoughtDraft => ({
+  id: 'editor', text, thoughtId, baseRev: thoughtId ? 1 : null, sessionId: null,
+  createdAt: T0, dateKey: utcKey(T0), timeZone: tz,
+})
+const write = (value: ThoughtDraft): AppAction => ({ type: 'writeDraft', draft: value, expectedStamp: null, stamp: 'draft1' })
 
 describe('thought capture', () => {
   it('saves an empty marker then text during a running session without touching the timer, and links it to the ended record', () => {
@@ -48,10 +54,11 @@ describe('thought capture', () => {
   it('adds text to an existing marker, clears the matching draft in the same change, and rejects edits to deleted thoughts', () => {
     let s = run(createSnapshot(spec), [
       [T0, { type: 'markThought', thoughtId: 'n1', timeZone: tz }],
-      [T0 + 1, { type: 'saveThoughtDraft', thoughtId: 'n1', text: 'half typed' }],
+      [T0 + 1, write(draft('half typed', 'n1'))],
     ])
-    expect(s.thoughtDraft).toEqual({ thoughtId: 'n1', text: 'half typed' })
-    s = run(s, [[T0 + 2, { type: 'saveThoughtText', thoughtId: 'n1', text: 'half typed, now done', timeZone: tz }]])
+    expect(s.thoughtDraft).toEqual(draft('half typed', 'n1'))
+    s = run(s, [[T0 + 2, { type: 'saveThoughtText', thoughtId: 'n1', text: 'half typed, now done', timeZone: tz,
+      draft: s.thoughtDraft!, expectedStamp: 'draft1', stamp: 'saved' }]])
     expect(s.thoughts[0]).toMatchObject({ text: 'half typed, now done', rev: 2 })
     expect(s.thoughtDraft).toBeNull()
 
@@ -61,13 +68,17 @@ describe('thought capture', () => {
     expect(edit.changed).toBe(false)
   })
 
-  it('keeps a draft aimed at a deleted thought as text for a new one', () => {
+  it('retains input and its deleted target until the user explicitly saves a new thought', () => {
     const s = run(createSnapshot(spec), [
       [T0, { type: 'markThought', thoughtId: 'n1', timeZone: tz }],
-      [T0 + 1, { type: 'saveThoughtDraft', thoughtId: 'n1', text: 'keep me' }],
+      [T0 + 1, write(draft('keep me', 'n1'))],
       [T0 + 2, { type: 'deleteThought', thoughtId: 'n1' }],
     ])
-    expect(s.thoughtDraft).toEqual({ thoughtId: null, text: 'keep me' })
+    expect(s.thoughtDraft).toEqual(draft('keep me', 'n1'))
+    const again = step(s, T0 + 3, { type: 'saveThoughtText', thoughtId: 'n1', text: 'keep me',
+      timeZone: tz, draft: s.thoughtDraft!, expectedStamp: 'draft1', stamp: 'next' })
+    expect(again.thought?.change).toBe('rejected')
+    expect(again.snapshot.thoughtDraft).toEqual(s.thoughtDraft)
   })
 
   it('puts away, reopens, deletes and restores within the undo period, then clears deleted text', () => {
@@ -116,12 +127,65 @@ describe('thought synchronization', () => {
   })
 
   it('round-trips thoughts and drafts, and reports unreadable entries without dropping the rest', () => {
-    const s = run(base(), [[T0 + 1, { type: 'saveThoughtDraft', thoughtId: null, text: 'draft' }]])
+    const s = run(base(), [[T0 + 1, write(draft('draft'))]])
     expect(decodeSnapshot(encodeSnapshot(s), spec, { timeZone: tz })).toEqual({ kind: 'ok', snapshot: s, issues: [] })
     const broken = decodeSnapshot(JSON.stringify({ ...s, thoughts: [...s.thoughts, { id: 'x', rev: 0 }] }), spec, { timeZone: tz })
     if (broken.kind !== 'ok') throw Error(broken.kind)
     expect(broken.snapshot.thoughts).toEqual(s.thoughts)
     expect(broken.issues).toEqual(['thoughts (1 unreadable)'])
+  })
+})
+
+describe('v5 interaction boundaries', () => {
+  it('BD04 only edits the explicitly chosen A after B, rejects blank new text and counts Unicode code points', () => {
+    const base = run(createSnapshot(spec), ['a','b'].map(id => [T0, { type: 'markThought', thoughtId: id, timeZone: tz }]))
+    const commit = (s: AppSnapshot, id: string, text: string, editing: ThoughtDraft) => step(s, T0,
+      { type: 'saveThoughtText', thoughtId: id, text, draft: editing, timeZone: tz, expectedStamp: s.draftStamp, stamp: 'done' })
+    let s = commit(base, 'a', '📦'.repeat(500), draft('', 'a')).snapshot
+    expect(s.thoughts.map(t => t.text)).toEqual(['📦'.repeat(500), ''])
+    expect(commit(s, 'c', '   ', draft('   ')).changed).toBe(false)
+    expect(commit(s, 'c', '📦'.repeat(501), draft('')).changed).toBe(false)
+    s = commit(s, 'a', ' ', { ...draft('', 'a'), baseRev: 2 }).snapshot
+    expect(s.thoughts[0]).toMatchObject({ id:'a', text:'', rev:3 })
+  })
+  it('BD05 preserves first input date and original focus owner across midnight, expiry, new session and reopening', () => {
+    const midnight = Date.UTC(2026,9,31)
+    const opened = { ...draft('晚上取快递'), sessionId: 'A', createdAt: midnight-1000, dateKey: '2026-10-30' }
+    const s = run(createSnapshot(spec), [
+      [midnight-MIN, {type:'start',sessionId:'A',timeZone:tz,durationMinutes:1}],
+      [midnight-1000,write(opened)],
+      [midnight+1, {type:'startFocus',sessionId:'B',timeZone:tz}],
+    ])
+    const read = decodeSnapshot(encodeSnapshot(s), spec, {timeZone:tz})
+    if (read.kind !== 'ok') throw Error(read.kind)
+    const submit: AppAction = {type:'saveThoughtText',thoughtId:opened.id,text:opened.text,timeZone:tz,draft:opened,expectedStamp:'draft1',stamp:'saved'}
+    const noted = step(read.snapshot,midnight+1000,submit).snapshot
+    expect(noted.thoughts).toMatchObject([{sessionId:'A',dateKey:'2026-10-30',createdAt:midnight-1000}])
+    expect(step(noted,midnight+2000,submit).snapshot.thoughts).toEqual(noted.thoughts)
+  })
+  it('BD06 checks thought version, slot version, generation and exact 10 minute delete undo window', () => {
+    const base = run(createSnapshot(spec),[[T0,{type:'markThought',thoughtId:'a',timeZone:tz}], [T0,write(draft('local','a'))]])
+    const remote = step(base,T0+1,{type:'saveThoughtText',thoughtId:'a',text:'remote',timeZone:tz}).snapshot
+    expect(step(remote,T0+2,{type:'saveThoughtText',thoughtId:'a',text:'stale',timeZone:tz,draft:draft('stale','a')}).thought?.change).toBe('rejected')
+    expect(step(remote,T0+2,write(draft('stale'))).draftConflict).toBe(true)
+    expect(step({...remote,datasetGeneration:1},T0+2,{...write(draft('stale')),generation:0}).changed).toBe(false)
+    const deleted = step(remote,T0+3,{type:'deleteThought',thoughtId:'a',expectedRev:2}).snapshot
+    const undo:AppAction = {type:'restoreThought',thoughtId:'a',expectedRev:3}
+    expect(step(deleted,T0+3+599_000,undo).thought?.change).toBe('restored')
+    expect(step(deleted,T0+3+600_000,undo).thought?.change).toBe('rejected')
+    const lateWrite = T0 + 900_000
+    const pending = deleted.thoughts[0]!
+    const accepted = datePendingDeletion(pending, remote.thoughts[0], pending, lateWrite)!
+    expect(accepted).toMatchObject({ deletedAt: lateWrite, text: 'remote', rev: 3 })
+    expect(datePendingDeletion(accepted, accepted, accepted, lateWrite+1)).toBeNull()
+    expect(step({ ...deleted, thoughts: [accepted] }, lateWrite+599_000, undo).thought?.change).toBe('restored')
+  })
+  it('migrates v6 ownerless drafts as independent even with active focus, and protects unknown old text dates', () => {
+    const running = step(createSnapshot(spec),T0,{type:'start',sessionId:'s',timeZone:tz}).snapshot
+    const decoded = decodeSnapshot(JSON.stringify({...running,version:6,thoughtDraft:{thoughtId:null,text:'notes'}}),spec,{timeZone:tz})
+    if(decoded.kind!=='ok') throw Error(decoded.kind)
+    expect(decoded.issues).toEqual([])
+    expect(decoded.snapshot.thoughtDraft).toMatchObject({sessionId:null,createdAt:null,dateKey:null,text:'notes'})
   })
 })
 

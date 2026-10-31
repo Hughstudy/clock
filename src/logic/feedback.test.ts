@@ -223,9 +223,20 @@ describe('rotation, silence and one-result-per-action', () => {
     const first = reduce(event({ kind: 'encouragement-requested' }))
     const closed = reduce(event({ kind: 'dismissed' }, 'close'), ready, first.state)
     expect(closed.frame.encouragement).toBeNull()
-    expect(reduce(event({ kind: 'reconcile' }, 'tick'), running, first.state).frame.encouragement).toBeNull()
+    expect(reduce(event({ kind: 'reconcile' }, 'tick'), running, closed.state).frame.encouragement).toBeNull()
     const saving = reduce(event({ kind: 'reconcile' }), { ...ready, persistence: 'saving' })
     expect(reduce(event({ kind: 'reconcile' }, 'saved'), ready, saving.state).frame.status.text).not.toBe('正在保存。')
+  })
+
+  it('keeps a requested phrase through a remote pause and reports a failure without rereading the phrase', () => {
+    const first = reduce(event({ kind: 'encouragement-requested' }), running)
+    const sync = reduce({ ...event({ kind: 'paused' }, 'remote'), origin: 'sync' }, paused, first.state)
+    expect(sync.frame.encouragement).toEqual(first.frame.encouragement)
+    expect(sync.frame.companionState).toBe('focus-paused')
+    expect(sync.announcement).toBeNull()
+    const failed = reduce(event({ kind: 'reconcile' }, 'fail'), { ...paused, persistence: 'pending' }, sync.state)
+    expect(failed.frame.encouragement).toEqual(first.frame.encouragement)
+    expect(failed.announcement?.text).toBe(failed.frame.status.text)
   })
 
   it('announces a newly observed technical error once without rotating encouragement', () => {

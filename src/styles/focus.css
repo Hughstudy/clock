@@ -131,9 +131,9 @@ body { background: radial-gradient(ellipse at 50% 15%, #fff 0%, var(--paper) 65%
 .home .blue-companion { width: 100%; }
 .home .companion-feedback__invite { position: absolute; inline-size: 1px; block-size: 1px; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 .home .companion-feedback { position: relative; }
-/* Keep the existing 44px quiet-message slot. Longer results grow below the
-   drawing, so enlarged text and unlock notices never cover a held prop/face. */
-.home .companion-feedback__content { position: relative; z-index: 2; flex-shrink: 0; min-block-size: 44px; inline-size: min(330px, 94%); padding: 0; display: flex; flex-direction: column; justify-content: center; }
+/* Reserve the same reading space for silence, a factual result or a response.
+   Larger type can scroll inside it, independently of the timer controls. */
+.home .companion-feedback__content { position: relative; z-index: 2; flex-shrink: 0; block-size: 3.75rem; inline-size: min(350px, 96%); padding: 0; overflow-y: auto; scrollbar-width: thin; align-content: center; }
 .home .companion-feedback__content:has(> p) { padding: 6px 14px 2px; border-radius: 22px; background: #fff; box-shadow: 0 2px 14px #2b45760f; }
 .home .companion-feedback__content:has(> p)::before { content: ''; position: absolute; top: -7px; left: 50%; width: 14px; height: 14px; background: #fff; transform: translateX(-50%) rotate(45deg); border-radius: 3px; }
 .home .companion-feedback__status, .home .companion-feedback__copy { position: relative; margin: 0; line-height: 1.5; }
@@ -158,3 +158,55 @@ body { background: radial-gradient(ellipse at 50% 15%, #fff 0%, var(--paper) 65%
 .step-toggle:hover { background: var(--whale-soft); }
 .step-slot { min-height: 44px; display: flex; align-items: center; justify-content: center; }
 .step-input { width: min(320px, 100%); text-align: center; font-size: .9375rem; }
+.home .stage { flex-direction: column; gap: 0; }
+.home .companion-feedback__greeting .companion-feedback__character {
+  inline-size: min(320px, 78vw, max(110px, calc(49dvh - 6rem)));
+}
+.support-entry {
+  min-block-size: 44px; padding: 0 14px; border: 0; border-radius: 14px; background: transparent;
+  color: var(--whale-deep); font-size: .825rem; font-weight: 650;
+}
+.support-entry:hover, .support-entry:focus-visible { background: var(--whale-soft); }
+.step-slot { inline-size: 100%; }
+.step-preview { display: block; max-inline-size: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.home .primary-row { width: min(280px, 100%); }
+.home .primary-row > .btn-primary { min-inline-size: 0; inline-size: 100%; min-block-size: max(56px, calc(2lh + 4px)); text-wrap: balance; }
+.home .action-cards { width: 100%; display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 8rem), 1fr)); gap: 8px; }
+.home .action-cards > .btn-secondary { border: 1px solid #c8ddd8; color: var(--teal-deep); background: #eef8f5; }
+.action-cards .card-action-label { display: grid; gap: .1rem; padding-block: .3rem; }
+.card-action-label small { white-space: nowrap; font-size: .82em; font-weight: 600; }
+.home .thought-actions { inline-size: 100%; }
+.focus-feedback-slot {
+  inline-size: 100%; block-size: max(48px, 3rem); overflow: auto; scrollbar-width: thin;
+  font-size: .8125rem; color: var(--muted); text-align: center; overflow-wrap: anywhere;
+}
+.focus-task {
+  position: fixed; inset: auto; inset-block-start: calc(var(--visible-top, 0px) + var(--visible-height, 100dvh) / 2);
+  inset-inline-start: 50%; transform: translate(-50%, -50%); margin: 0;
+  width: min(400px, calc(100vw - 24px)); max-width: none; max-height: calc(var(--visible-height, 100dvh) - 24px - env(safe-area-inset-bottom));
+  padding: 16px; overflow-y: auto; overscroll-behavior: contain; border: 1px solid var(--line);
+  border-radius: 20px; color: var(--ink); background: var(--card); text-align: start;
+  box-shadow: 0 12px 60px #1f38532b; overflow-wrap: anywhere;
+}
+.focus-task::backdrop { background: rgb(33 50 70 / .24); }
+.focus-task__header { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.focus-task__header h2 { font-size: 1.125rem; margin: 0; }
+.focus-task__body { display: grid; justify-items: start; gap: .5rem; padding-block: .5rem; }
+.focus-task__body p, .focus-task .thought-form p { margin: 0; }
+.focus-task .btn-primary { min-width: 0; }
+.focus-task .duration-choices { padding-block: .75rem; }
+.focus-task .thought-form { border: 0; padding: .5rem 0; }
+.focus-task .thought-form textarea { min-height: 66px; max-height: 40dvh; }
+.focus-task .thought-form-actions { justify-content: start; }
+.focus-task .editor-timer { display: flex; align-items: center; justify-content: space-between; gap: .5rem; color: var(--muted); font-size: .875rem; }
+.focus-task .linked-notes { margin: .5rem 0; padding-inline-start: 1.25rem; }
+.focus-task .linked-notes li { padding-block: .25rem; }
+.focus-task .linked-notes span { white-space: pre-wrap; }
+.focus-task .requested-phrase { font-size: 1.05rem; line-height: 1.75; }
+.support-categories > summary { cursor: pointer; min-block-size: 44px; padding-block: .65rem; color: var(--muted); }
+.support-categories [aria-pressed='true'] { background-color: var(--whale-soft); }
+.panel-save-error { margin: .5rem 0 0; color: #71400c; }
+@media (max-height: 480px) {
+  .home .companion-feedback__greeting .companion-feedback__character { inline-size: min(190px, 38dvh); }
+  .focus-task { padding: 8px 12px; }
+}

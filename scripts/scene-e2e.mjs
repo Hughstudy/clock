@@ -41,12 +41,12 @@ async function untilSaved(page, predicate, label) {
 async function sceneAttribute(page, name) { return page.locator('.home .blue-companion').getAttribute(`data-scene${name ? `-${name}` : ''}`) }
 async function endEarly(page) {
   const id = (await readSaved(page)).data.timer.session.id
-  await page.getByRole('button', { name: '结束并记录', exact: true }).click()
-  await page.getByRole('button', { name: '确认结束并记录', exact: true }).click()
+  await page.getByRole('button', { name: '结束这段', exact: true }).click()
+  await page.getByRole('dialog').getByRole('button', { name: '结束并记录', exact: true }).click()
   await untilSaved(page, s => s.records.some(record => record.sessionId === id), 'confirmed early end')
 }
 async function focusReady(page) {
-  const back = page.getByRole('button', { name: '回到专注', exact: true })
+  const back = page.getByRole('button', { name: /^(回到准备|回到专注准备|专注模式)$/ })
   if (await back.isVisible()) await back.click()
 }
 try {
@@ -71,14 +71,14 @@ try {
   await page.evaluate(() => navigator.serviceWorker.ready)
   await page.getByText('已准备好离线使用。', { exact: true }).waitFor()
   await page.getByRole('button', { name: '知道了', exact: true }).click()
-  const primary = page.locator('.btn-primary')
+  const primary = page.locator('.controls .btn-primary')
   const beforeStart = await primary.boundingBox()
   await primary.click()
   const initial = await untilSaved(page, s => !!s.timer.session, 'first start')
   const firstId = initial.timer.session.id
   const firstScene = initial.timer.session.scene.sceneId
   const focusScenes = [firstScene]
-  check('New focus uses the full shipped pool and v2 selection', focusPool.includes(firstScene) && initial.version === 6 && initial.timer.session.scene.selectionVersion === 2 && await sceneAttribute(page, '') === firstScene)
+  check('New focus uses the full shipped pool and v2 selection', focusPool.includes(firstScene) && initial.version === 7 && initial.timer.session.scene.selectionVersion === 2 && await sceneAttribute(page, '') === firstScene)
   check('Permitted start has a scene entrance', await sceneAttribute(page, 'phase') === 'open')
   const afterStart = await primary.boundingBox()
   check('Start and Pause keep the same target', ['x', 'y', 'width', 'height'].every(key => Math.abs(beforeStart[key] - afterStart[key]) < 1))
@@ -103,7 +103,7 @@ try {
   await untilSaved(page, s => s.timer.session?.status === 'running', 'resume')
   check('Resume retains session and activity', (await readSaved(page)).data.timer.session.id === firstId && await sceneAttribute(page, '') === firstScene)
 
-  await page.getByRole('button', { name: '加一句', exact: true }).click()
+  await page.getByRole('button', { name: '写想法', exact: true }).click()
   await page.locator('#thought-text').fill('Scene E2E draft')
   check('Thought editor suspends scene motion', await svg.getAttribute('data-scene-motion') === 'false' && await svg.evaluate(el => el.getAnimations({ subtree: true }).every(animation => animation.playState !== 'running')))
   await page.getByRole('button', { name: '回到计时', exact: true }).click()
@@ -120,9 +120,11 @@ try {
   await untilSaved(page, s => s.settings.durationsMinutes.focus === 1, 'one minute default')
 
   // Start from a local input panel: its closure must not consume the entrance.
+  await focusReady(page)
   await page.getByRole('button', { name: /这一小步/ }).click()
   await page.locator('.step-input').fill('A small test step')
   await page.locator('.step-input').press('Enter')
+  await primary.click()
   await untilSaved(page, s => !!s.timer.session, 'step start')
   check('Typed-step start retains its entrance', await sceneAttribute(page, 'phase') === 'open')
   const stepStart = (await readSaved(page)).data
@@ -133,6 +135,7 @@ try {
   // Cover the entire focus bag before a single deadline completion: access
   // comes from the shipped catalogue, never from successful-session thresholds.
   for (let i = 2; i < 8; i++) {
+    await focusReady(page)
     await primary.click()
     const started = await untilSaved(page, s => !!s.timer.session, `immediate-access focus ${i + 1}`)
     focusScenes.push(started.timer.session.scene.sceneId)
@@ -216,10 +219,14 @@ try {
   const focusRecords = (await readSaved(page)).data.records.length
   const restScenes = []
   for (let i = 0; i < 3; i++) {
-    await page.getByRole('button', { name: '休息一下', exact: true }).click()
+    if (i > 0) {
+      await focusReady(page)
+      await page.getByRole('button', { name: '休息模式', exact: true }).click()
+    }
+    await page.getByRole('button', { name: /^开始休息/ }).click()
     const rest = await untilSaved(page, s => s.timer.phase !== 'focus' && !!s.timer.session, 'rest start')
     restScenes.push(rest.timer.session.scene.sceneId)
-    await page.getByRole('button', { name: '回到专注', exact: true }).click()
+    await page.getByRole('button', { name: '结束休息', exact: true }).click()
     await untilSaved(page, s => s.timer.phase === 'focus' && !s.timer.session, 'rest ending')
     check(`Rest ${i + 1} ends without a focus tier`, await sceneAttribute(page, 'tier') === '')
   }
@@ -229,8 +236,11 @@ try {
   await page.getByRole('button', { name: '设置', exact: true }).click()
   await page.getByRole('switch', { name: '伙伴动画', exact: true }).check()
   await page.getByRole('button', { name: '关闭设置，回到专注', exact: true }).click()
-  await page.getByRole('button', { name: '换个时长', exact: true }).click()
+  await focusReady(page)
+  await page.getByRole('button', { name: '选时长', exact: true }).click()
   await page.getByRole('button', { name: '5 分钟', exact: true }).click()
+  check('Choosing the duration leaves the timer ready', !(await readSaved(page)).data.timer.session)
+  await primary.click()
   await untilSaved(page, s => !!s.timer.session, 'duration chooser start')
   check('Duration-choice start retains its entrance', await sceneAttribute(page, 'phase') === 'open')
   await primary.focus()

@@ -286,12 +286,15 @@ export function transitionFeedback(memory: FeedbackMemory, event: FeedbackEvent,
   const key = JSON.stringify([event.id, context.persistence, context.error ?? null])
   const duplicate = memory.handledKeys.includes(key)
   const requested = event.kind === 'encouragement-requested' && event.origin === 'user'
+  const reading = !requested && event.kind !== 'dismissed' && memory.current?.placement === 'requested'
+    ? memory.current.encouragement : null
   const staticEvent = event.kind === 'records-viewed' || event.kind === 'memento-viewed'
   const state: FeedbackMemory = { ...memory, cursors: { ...memory.cursors }, lastIds: { ...memory.lastIds }, lastInteractionAt: { ...memory.lastInteractionAt }, staticChoices: { ...memory.staticChoices } }
   let frame: FeedbackFrame = { status: technical ?? status(context, catalog), encouragement: null, placement: 'node', companionState, persistence: context.persistence }
   const result = (announce: boolean): FeedbackResult => {
+    if (reading) frame = { ...frame, placement: 'requested', encouragement: reading }
     state.current = frame
-    const text = [frame.status.text, frame.encouragement?.text].filter(Boolean).join(' ')
+    const text = [frame.status.text, reading ? null : frame.encouragement?.text].filter(Boolean).join(' ')
     return { state, frame, announcement: announce ? { id: key, text, priority: frame.status.kind === 'error' ? 'assertive' : 'polite' } : null }
   }
   if (event.kind === 'dismissed') return result(false)
@@ -317,6 +320,7 @@ export function transitionFeedback(memory: FeedbackMemory, event: FeedbackEvent,
   if (technical && !requested) return result(!staticEvent)
   if (!technical) frame.status = eventStatus(event, context, catalog)
   if (frame.status.kind === 'error' && !requested) return result(!staticEvent)
+  if (reading) return result(!staticEvent)
   frame.placement = requested ? 'requested' : staticEvent ? 'static' : 'node'
   const { pool, facts } = eligibility(event, context)
   const enabled = options.nodeEncouragement ?? DEFAULT_FEEDBACK_OPTIONS.nodeEncouragement

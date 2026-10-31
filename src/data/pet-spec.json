@@ -24,7 +24,7 @@
       }
     },
     "longBreakEvery": 4,
-    "soundEnabledDefault": true,
+    "soundEnabledDefault": false,
     "completionSoundWindowSeconds": 60,
     "quickFocusMinutes": 5,
     "quickChoicesMinutes": [

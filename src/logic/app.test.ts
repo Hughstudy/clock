@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { spec } from '../data/spec'
-import { applyAction, reconcile, shouldChime, type ActionContext, type AppAction } from './app'
+import { applyAction, reconcile, resolveSessionResult, shouldChime, type ActionContext, type AppAction, type SessionResult } from './app'
 import { createSnapshot } from './snapshot'
 import { remainingMs } from './timer'
 import type { AppSnapshot } from './types'
@@ -23,6 +23,26 @@ function completeFocus(s: AppSnapshot, now: number, id: string): AppSnapshot {
 }
 
 describe('timer actions', () => {
+  it('updates a provisional ending to the actual winning durable record and revokes unconfirmed badges', () => {
+    const started = run(createSnapshot(spec), [[T0, { type: 'start', sessionId: 'same', timeZone: 'UTC' }]])
+    const early = run(started, [[T0 + 10_000, { type: 'end', sessionId: 'same' }]])
+    const later = run(started, [[T0 + 20_000, { type: 'end', sessionId: 'same' }]])
+    const result: SessionResult = { sessionId: 'same', phase: 'focus', elapsedMs: 10_000, saved: false }
+    expect(resolveSessionResult(result, early, later)).toEqual({ ...result, elapsedMs: 20_000, saved: true })
+    expect(resolveSessionResult({ ...result, saved: true }, early, null)).toEqual(result)
+    expect(resolveSessionResult(null, early, early)).toBeNull()
+  })
+  it('uses a paused legacy rest’s remaining time for its result without a scene or a focus record', () => {
+    const s = createSnapshot(spec)
+    const paused: AppSnapshot = { ...s, timer: { ...s.timer, phase: 'shortBreak',
+      session: { id: 'legacy-rest', status: 'paused', durationMs: 5 * MIN, remainingMs: 4 * MIN, timeZone: 'UTC', startedAt: null, step: null } } }
+    const ended = run(paused, [[T0, { type: 'end', sessionId: 'legacy-rest' }]])
+    expect(ended.records).toEqual([])
+    expect(ended.scenes.lastEnded).toBeNull()
+    expect(ended.lastRestEnd).toEqual({ sessionId: 'legacy-rest', elapsedMs: MIN, endedAt: T0 })
+    expect(resolveSessionResult({sessionId:'legacy-rest', phase:'rest', elapsedMs:0, saved:false}, ended, ended))
+      .toMatchObject({elapsedMs: MIN, saved:true})
+  })
   it('uses the configured defaults', () => {
     const s = createSnapshot(spec)
     expect(s.settings.durationsMinutes).toEqual({ focus: 25, shortBreak: 5, longBreak: 15 })
@@ -228,7 +248,9 @@ describe('time zones and clock changes', () => {
 describe('shouldChime', () => {
   const completion = { sessionId: 'a', phase: 'focus' as const, deadline: T0, credited: true }
   it('chimes for a fresh completion when sound is on', () => {
-    const settings = createSnapshot(spec).settings
+    const fresh = createSnapshot(spec).settings
+    expect(shouldChime(completion, T0, fresh, spec)).toBe(false)
+    const settings = { ...fresh, soundEnabled: true }
     expect(shouldChime(completion, T0 + 500, settings, spec)).toBe(true)
     expect(shouldChime(completion, T0 + spec.timer.completionSoundWindowMs + 1, settings, spec)).toBe(false)
     expect(shouldChime(completion, T0, { ...settings, soundEnabled: false }, spec)).toBe(false)

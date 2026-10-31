@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { spec } from '../data/spec'
-import { applySettingsPatch, checkDuration, defaultSettings, sameSettings, type SettingsPatch } from '../logic/settings'
+import { applySettingsPatch, checkDuration, defaultSettings, type SettingsPatch } from '../logic/settings'
 import { PHASES, type Phase, type Settings } from '../logic/types'
 import type { UserAction } from './useClockApp'
 
@@ -28,12 +28,11 @@ export interface SettingsForm {
   setEncouragementEnabled: (on: boolean) => void
   sceneVarietyEnabled: boolean
   setSceneVarietyEnabled: (on: boolean) => void
-  isDefault: boolean
   restoreDefaults: () => void
 }
 
 /**
- * Saves each valid edit immediately. An invalid entry stays on screen with its
+ * Commits a valid duration on blur. An invalid entry stays on screen with its
  * range error until the user fixes it or explicitly restores the saved value;
  * it is never silently replaced.
  * Saves are asynchronous, so the form shows edits optimistically until the saved settings
@@ -70,12 +69,12 @@ export function useSettingsForm(saved: Settings, dispatch: (action: UserAction) 
       min,
       max,
       value,
-      onChange: (text) => {
-        setDrafts((d) => ({ ...d, [phase]: text }))
-        const result = checkDuration(phase, text, spec)
-        if (result.ok && result.minutes !== value) saveMinutes(phase, result.minutes)
+      onChange: (text) => setDrafts((d) => ({ ...d, [phase]: text })),
+      onBlur: () => {
+        if (!check.ok) return
+        if (check.minutes !== value) saveMinutes(phase, check.minutes)
+        clearDraft(phase)
       },
-      onBlur: () => { if (check.ok) clearDraft(phase) },
       step: (delta) => {
         const minutes = Math.min(max, Math.max(min, value + delta))
         clearDraft(phase)
@@ -96,10 +95,10 @@ export function useSettingsForm(saved: Settings, dispatch: (action: UserAction) 
     setEncouragementEnabled: (on) => save({ encouragementEnabled: on }),
     sceneVarietyEnabled: settings.sceneVarietyEnabled,
     setSceneVarietyEnabled: (on) => save({ sceneVarietyEnabled: on }),
-    isDefault: sameSettings({ ...defaults, soundEnabled: settings.soundEnabled, motionEnabled: settings.motionEnabled, encouragementEnabled: settings.encouragementEnabled, sceneVarietyEnabled: settings.sceneVarietyEnabled }, settings),
     restoreDefaults: () => {
       setDrafts({})
-      save({ durationsMinutes: defaults.durationsMinutes })
+      setPending(p => [...p, { durationsMinutes: defaults.durationsMinutes }])
+      dispatch({ type: 'resetDurations' })
     },
   }
 }

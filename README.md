@@ -1,5 +1,7 @@
 # Whale Focus
 
+The current prototype follows the first interaction upgrade from the October 31 product PRD v5. Select a duration before starting, mark a moment without a keyboard, or write a thought that stays with its original session across expiry. Records offers 7-day and 30-day totals along with an all-history thoughts view. Snapshot v7 preserves earlier sessions and saved preferences. [Interaction guide and verification](docs/verification/focus-interactions-v5.md)
+
 The implementation baseline `e6daa66` contains the supplied 2026-10-29 PRD v3 handoff and
 the blue companion integration. This includes start, pause/resume, manual early
 ending, actual-time history, participation at start, and recovery from the saved
@@ -32,7 +34,7 @@ references, preserved in their original language; no cloud register has been
 updated. Maintained local project documentation uses English. This documentation
 preference does not change the application's UI language.
 
-The companion module is connected to actual saved start/pause/resume/end/rest events. Click the creature for encouragement; Enter works too. Copy never rotates on a countdown tick. Early and full endings have equal gestures, and reload/cross-tab recovery never replays them. Animation can be disabled in Settings; the operating system’s reduced-motion preference always wins. Focus and Records are the two main destinations, with Settings in the header.
+Touch the blue companion for a physical response or choose **给我一句鼓励** to read a phrase. The reader stays open while a session changes. Automatic feedback follows actual session and save events. Early and full endings receive the same consideration. Settings opens from Focus, and either the app or operating system can request reduced motion.
 
 Open **记录** to see the orchard at the device’s local hour. Expand a saved focus entry to see which discovery the blue companion found in its book. Its story stays with that entry. [Records design and browser checks](docs/plans/RECORDS_COMPANION_PLAN.md)
 
