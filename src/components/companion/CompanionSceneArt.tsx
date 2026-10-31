@@ -4,7 +4,7 @@ import { CompanionScenery } from './CompanionScenery'
 import type { CompanionScene } from '../../contracts/presentation'
 import { blueCompanionSpec } from '../../data/blue-companion'
 import { sceneArtPalette, sceneArtSketch } from '../../data/scene-art'
-import { BLOCK_HEIGHT, sampleScenePose, sceneArmPath, sceneSmooth, type ScenePoseFrame } from '../../logic/scene-pose'
+import { BLOCK_HEIGHT, BUBBLE_WAND, sampleScenePose, sceneArmPath, sceneSmooth, type ScenePoseFrame } from '../../logic/scene-pose'
 
 export function ScenePart({ name, className, transform }: { name: string; className?: string; transform?: string }) {
   return <g className={className} transform={transform} data-scene-part={name}>
@@ -97,21 +97,22 @@ function Block({x,y,angle,c}:{x:number;y:number;angle:number;c:string}){
 }
 function Bubbles({frame}:{frame:ScenePoseFrame}){
   const { wand } = frame, { ring } = wand
+  const { jarX, rimY, rimWidth, rimDepth, length, ringWidth, ringDepth } = BUBBLE_WAND
   return <g data-scene-part="bubble-play">
     <g data-scene-part="breath" opacity={wand.breath}>
-      <P d={`M172 147 Q179 143 ${ring.x-5} ${ring.y-2} M173 151 Q180 149 ${ring.x-4} ${ring.y+2}`} c="softline"/>
+      <P d={`M168 148 Q172 148 ${ring.x-5} ${ring.y-2} M168 151 Q173 151 ${ring.x-5} ${ring.y+1}`} c="softline"/>
     </g>
-    <E x={242} y={212} rx={21} ry={4}/>
-    <E x={242} y={180} rx={16} ry={5} c="edge"/>
+    <E x={jarX} y={rimY+22} rx={22} ry={3.5}/>
+    <E x={jarX} y={rimY} rx={rimWidth} ry={rimDepth} c="edge"/>
     <g data-scene-part="wand" transform={`translate(${wand.x} ${wand.y}) rotate(${wand.angle})`}>
-      <P d="M0 -8 L0 18"/><E x={0} y={28} rx={10} ry={10} c="line"/>
+      <P d={`M0 -6 V${length-ringDepth}`}/><E x={0} y={length} rx={ringWidth} ry={ringDepth} c="line"/>
     </g>
-    <g data-scene-part="jar-front">
-      <P d="M226 180 C226 187 258 187 258 180 L258 204 Q258 211 251 211 L233 211 Q226 211 226 204 Z" c="green"/>
-      <P d="M231 188 L231 198" c="softline"/>
+    <g data-scene-part="jar-front" transform={`translate(${jarX} ${rimY})`}>
+      <P d={`M-${rimWidth} 0 C-${rimWidth} 7 ${rimWidth} 7 ${rimWidth} 0 L18 14 Q17 21 11 21 H-11 Q-17 21 -18 14Z`} c="green"/>
+      <P d="M-14 7 L-13 13" c="softline"/>
     </g>
     {wand.bubbles.map(({x,y,radius:r,travel},i)=><g key={i} data-bubble={i} className={travel===1?'scene-rig-bubble':undefined} opacity={Math.min(1,r)}>
-      <E x={x} y={y} rx={r} ry={r} c="water"/>
+      <circle cx={x} cy={y} r={r} className="scene-draw-water" fillOpacity=".4"/>
       <P d={`M${x-r*.6} ${y-r*.2} Q${x-r*.6} ${y-r*.65} ${x-r*.2} ${y-r*.7}`} c="softline"/>
       {i===0 && <P transform={`translate(${x} ${y})`} d="M0 -2 C-7 -10 -13 -1 0 7 C13 -1 7 -10 0 -2Z" c="pink" opacity={wand.bubbles[2]?.travel ?? 0}/>}
     </g>)}
@@ -138,7 +139,10 @@ function Body({frame, happy}: {frame: ScenePoseFrame; happy: boolean}) {
           </>}
         </g>
       </g>
-      {part('mouth','face')}
+      {frame.id === 'F5' ? <>
+        <g opacity={1-frame.wand.breath}>{part('mouth','face')}</g>
+        <ellipse cx="122" cy="110" rx="3" ry="2.2" className="scene-draw-ink" opacity={frame.wand.breath}/>
+      </> : part('mouth','face')}
     </g>
   </g>
 }

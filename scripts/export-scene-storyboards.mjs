@@ -33,7 +33,7 @@ const definitions = [
  ['food-serving','F1','Food · prepare three dishes',[0,.2,.5,.8,1],['Ingredients on the table','Prepare the vegetables','Plate the rice','Finish the soup','Three dishes ready']],
  ['book-page','F3','Book · turn, mark and close',[.1,.2,.32,.58,.82,.885,.945,1],['Reach the page corner','Guide a single page','Let the page settle','Place the ribbon','Lift the cover edge','Guide the cover together','Lower onto the page stack','Release the closed book']],
  ['boat-fold','F6','Boat · fold and lower',[0,.3,.6,.82,.9,1],['Dry paper beside the tray','Press the crease','Open the hull','Lift with support','Lower into water','Release the boat']],
- ['wand-turn','F5','Bubbles · dip, turn and blow',[0,.10,.18,.26,.295,.4],['Dip the ring','Lift clear of the jar','Turn the rigid wand','Bring the ring to the mouth','Blow through the ring','Let the first bubble drift']],
+ ['wand-turn','F5','Bubbles · reach, blow and put away',[0,.052,.14,.204,.30,.4],['Wand resting in the jar','Take the handle','Fold the forearm inward','Blow through the loop','Lower the wand','Rest the hand as the bubble drifts']],
  ['block-place','F7','Blocks · stack and top with a flag',[.12,.22,.32,.4,.75,.80,.88,1],['Grasp a nearby block','Carry with support','Guide onto the base','Release the block','Stack the solid faces','Grasp the stored flag','Carry the flag clear','Seat and release the flag']],
  ['drink-sip','R3','Warm drink · sip and set down',[0,.22,.5,.8,.65,1],['Hold the cup close','Blow gently','Tilt toward the mouth','Return to a comfortable hold','Lower onto the table','Release the resting cup']],
 ]

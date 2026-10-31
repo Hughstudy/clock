@@ -106,7 +106,7 @@ function movePalm(a: SceneArm, x: number, y: number): SceneArm {
 }
 
 /** A folding elbow and a round, fixed-width palm for carries across the body. */
-function bentReach(side: 'left' | 'right', palm: ScenePoint): SceneArm {
+function bentReach(side: 'left' | 'right', palm: ScenePoint, posedElbow?: ScenePoint): SceneArm {
   const left = side === 'left'
   const shoulder = point(left ? 111 : 213, 143)
   const dx = palm.x - shoulder.x, dy = palm.y - shoulder.y
@@ -115,7 +115,7 @@ function bentReach(side: 'left' | 'right', palm: ScenePoint): SceneArm {
   const outside = left ? point(-direction.y, direction.x) : point(direction.y, -direction.x)
   const bend = mix(23, 6, span(distance, 16, 60))
   const offset = (p: ScenePoint, axis: ScenePoint, amount: number) => point(p.x + axis.x * amount, p.y + axis.y * amount)
-  const elbow = offset(pointMix(shoulder, palm, .5), outside, bend)
+  const elbow = posedElbow ?? offset(pointMix(shoulder, palm, .5), outside, bend)
   const unitFrom = (a: ScenePoint, b: ScenePoint) => {
     const x = b.x - a.x, y = b.y - a.y, length = Math.hypot(x, y)
     return point(x / length, y / length)
@@ -144,6 +144,62 @@ function rotateArm(a: SceneArm, degrees:number):SceneArm {
 export function transformScenePoint(p: ScenePoint, object: SceneObject): ScenePoint {
   const r = object.angle * Math.PI / 180
   return point(object.x + p.x * Math.cos(r) - p.y * Math.sin(r), object.y + p.x * Math.sin(r) + p.y * Math.cos(r))
+}
+
+export const BUBBLE_WAND = { length: 23, ringWidth: 8.5, ringDepth: 5.5, jarX: 196, rimY: 191, rimWidth: 20, rimDepth: 5 } as const
+const bubbleFlights = [
+  { from: 0, to: .4, x: 258, y: 88, radius: 17 },
+  { from: .4, to: .75, x: 228, y: 54, radius: 12 },
+  { from: .75, to: 1, x: 281, y: 51, radius: 9 },
+] as const
+
+// The elbow hangs alongside the belly. The two limb lengths stay constant as
+// the forearm folds. A held wand follows the palm through that same arc.
+function bubbleArmJoints(reach: number, lift: number) {
+  const joint = (base: ScenePoint, length: number, degrees: number) => {
+    const angle = degrees * Math.PI / 180
+    return point(base.x + length * Math.cos(angle), base.y + length * Math.sin(angle))
+  }
+  const elbow = joint(point(213,143), 24, mix(93,60,reach) + 9*lift - 4*Math.sin(Math.PI*lift))
+  const palm = joint(elbow, 23, mix(172,110,reach) + 77*lift)
+  return { elbow, palm }
+}
+
+const bubbleGrip = (lift: number): SceneObject => ({
+  ...bubbleArmJoints(1,lift).palm,
+  angle: mix(48,118,span(lift,.23,.94)),
+})
+const bubbleLoop = point(0,BUBBLE_WAND.length)
+const blowOrigin = transformScenePoint(bubbleLoop,bubbleGrip(1))
+
+function bubblePose(p: number) {
+  const flight = bubbleFlights.find(item => p <= item.to) ?? bubbleFlights[2]
+  const cycle = clamp((p-flight.from)/(flight.to-flight.from))
+  const reach = span(cycle,0,.13) * (1-span(cycle,.86,1))
+  const lift = span(cycle,.13,.44) * (1-span(cycle,.63,.86))
+  const { elbow, palm } = bubbleArmJoints(reach,lift)
+  const grip = bubbleGrip(lift)
+  const breath = span(cycle,.44,.49) * (1-span(cycle,.56,.63))
+  const bubbles = bubbleFlights.map(({from,to,x,y,radius}) => {
+    const phase = clamp((p-from)/(to-from))
+    const film = span(phase,.465,.55)
+    const travel = span(phase,.53,.96)
+    const size = radius * film * mix(.27,1,travel)
+    // Once the film detaches, its flight passes above the gripping hand.
+    const start = point(blowOrigin.x + radius*.27*film, blowOrigin.y)
+    const control = point(238,104)
+    const drift = pointMix(pointMix(start,control,travel), pointMix(control,point(x,y),travel), travel)
+    return {
+      ...drift,
+      radius: size, travel,
+    }
+  })
+  return {
+    arm: bentReach('right',palm,elbow),
+    held: reach === 1,
+    gaze: point(1.5 + reach, 1.6*(1-lift)),
+    wand: { ...grip, ring: transformScenePoint(bubbleLoop,grip), breath, bubbles },
+  }
 }
 export const SCENE_CUP_SCALE = .72
 export const SCENE_CUP_BASE = {x:-8,y:2}
@@ -182,12 +238,12 @@ export function sampleScenePose(input: ScenePoseInput): ScenePoseFrame {
   const kettle = { x: 131, y: 179, angle: 0, grip: point(131,135), spout: point(166,153), pour: 0 }
   const book = { turn: 0, close: 0, ribbon: span(p,.66,.74), corner: point(206,161), coverEdge: point(206,161), coverFront: point(214,175) }
   const boat = { fold: p, transfer: span(p,.78,1), x:150, y:0, scale:.71, left: point(135,173), right: point(189,174) }
-  const wand: ScenePoseFrame['wand'] = { x: 240, y: 165, angle: 0, ring: point(240,193), breath: 0, bubbles: [] }
+  let wand: ScenePoseFrame['wand'] = { x: 240, y: 165, angle: 0, ring: point(240,193), breath: 0, bubbles: [] }
   const blocks: SceneObject[] = [{x:68,y:211,angle:0},{x:97,y:211,angle:0},{x:144,y:211,angle:0},{x:176,y:211,angle:0}]
   const flag = { x: 132, y: 214, angle: 0 }
   const food = { greens: span(p,.16,.29), rice: span(p,.43,.58), soup: span(p,.76,.88), spoon: point(129,188), tip: point(104,195), soupSpoon: point(222,188), soupTip: point(248,193), leftHeld: 0, rightHeld: 0 }
   let stretch = 0
-  const gaze = point(0,0)
+  let gaze = point(0,0)
   if (input.id === 'F4') {
     body.x = 90; body.y = 45
     left = translateArm(restLeft,48,7); right = translateArm(mirror(restLeft),48,7)
@@ -294,29 +350,11 @@ export function sampleScenePose(input: ScenePoseInput): ScenePoseFrame {
     left=blendSceneArm(left,potHand,pat)
     if(pat>.999)contacts.push(contact('pot-rim',left.palm,point(114,155)))
   } else if(input.id==='F5') {
-    // Lift vertically out of the bottle, turn in clear air, then bring the
-    // ring to the mouth. Each achieved milestone leaves a supported pose.
-    const lift = span(p,.015,.10), turn = span(p,.10,.19), approach = span(p,.19,.26)
-    wand.x = 240 - 4*turn - 23*approach
-    wand.y = 165 - 32*lift + 12*turn + 24*approach
-    wand.angle = 148*turn + 2*pulse*span(p,.26,.28)
-    wand.ring=transformScenePoint(point(0,28),wand)
-    const launches = [
-      { start:.265, end:.4, x:258, y:88, radius:17 },
-      { start:.49, end:.74, x:228, y:54, radius:12 },
-      { start:.79, end:.985, x:281, y:51, radius:9 },
-    ]
-    wand.bubbles = launches.map(({ start, end, x, y, radius }) => {
-      const grow = span(p,start,start+.04), travel = span(p,start+.025,end)
-      wand.breath += span(p,start,start+.018)*(1-span(p,start+.034,start+.065))
-      return {
-        x: mix(wand.ring.x + radius*grow*.55, x, travel) + 12*Math.sin(travel*Math.PI),
-        y: mix(wand.ring.y, y, travel),
-        radius: radius*grow, travel,
-      }
-    })
-    right=bentReach('right',wand)
-    contacts.push(contact('wand-handle',right.palm,point(wand.x,wand.y)));gaze.x=3
+    const pose = bubblePose(p)
+    right = pose.arm
+    wand = pose.wand
+    gaze = pose.gaze
+    contacts.push(contact('wand-handle',right.palm,point(wand.x,wand.y),pose.held))
   } else if(input.id==='F7') {
     const first=span(p,.14,.34), second=span(p,.45,.7)
     const baseY = blocks[0]!.y, middleY = baseY-BLOCK_HEIGHT, topY = middleY-BLOCK_HEIGHT

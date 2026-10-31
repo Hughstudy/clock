@@ -14,7 +14,7 @@ The earlier concept generator has been replaced by an exporter of the actual pro
 | [Plant](assets/scene-storyboards/F2-plant.svg) | A supported pot, rounded palm and continuous leaf/bud/flower development. |
 | [Book](assets/scene-storyboards/F3-book.svg) | Page-corner reach → page arc and release → ribbon placement → shallow closed book on the table. |
 | [Tea](assets/scene-storyboards/F4-tea.svg) | Exactly one constant-sized cup on a small table; increasing kettle steam, supported pouring, visible filling, then a close two-handed cup hold. |
-| [Bubbles](assets/scene-storyboards/F5-bubbles.svg) | A rigid wand lifts and turns from the jar; a rounded hand and blow stroke connect the action to the bubbles. |
+| [Bubbles](assets/scene-storyboards/F5-bubbles.svg) | The elbow stays beside the body as the forearm brings a short wand to the lips. The hand returns the wand to the shallow jar and relaxes after each bubble. |
 | [Boat](assets/scene-storyboards/F6-boat.svg) | Asymmetric folding, a recognizable hull, and a constant-sized supported boat lowered into a tray present from the start. |
 | [Blocks](assets/scene-storyboards/F7-blocks.svg) | Four persistent blocks move from nearby spare positions onto the base. The flag starts on the mat and stays visible after placement. |
 | [Stars](assets/scene-storyboards/F8-stars.svg) | Supported rest, upward gaze and a gradually fuller sky. |
@@ -27,7 +27,7 @@ Contact sheets cover [pouring](assets/scene-contact-storyboards/tea-pour.svg), [
 ## Timing, progress and interruption
 
 - C2-P3 supplies clamped, unquantized completed focus progress. Rest continues to receive zero; its unhurried actions are presentation only.
-- Growth, steam and sky detail use precise supplied progress. Handling has supported destinations at 0/40/75/100%. Once a landmark is achieved, the local handling cursor moves to it over 2,600 ms. A cup lift therefore takes seconds instead of stretching across minutes. The cursor never goes beyond main's supplied progress.
+- Growth, steam and sky detail use precise supplied progress. Handling has supported destinations at 0/40/75/100%. Once a landmark is achieved, the local handling cursor moves to it over 2,600 ms. Bubble play takes 4,000 ms for each complete pickup, blow and return. The cursor never goes beyond main's supplied progress.
 - Simple entrances/beats use 160 ms anticipation + 640 ms action + 320 ms settling, with smooth zero-velocity phase boundaries. The rest stretch has a 3.2-second lift, hold and return. Breathing takes 5 seconds and steam takes 4 seconds. Sparse beats retain the 60–90-second cadence. Ending lengths retain validated main-independent presentation parameters.
 - Scene nodes remain mounted for their saved scene identity. Ambient loops do not restart for finite actions; paused loops keep their playback position.
 - Pausing, touching the character or opening a visible panel freezes the current supported configuration. On return, an unfinished local path can settle without replaying a semantic cue. A held cup retains support; greetings/touch use an available limb or expression. Endings capture the current local action position, so an interrupted sip or stretch continues from its visible pose.

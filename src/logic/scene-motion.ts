@@ -6,6 +6,7 @@ export interface SceneMotionSpec {
   beatMs: number
   stretchMs: number
   handlingMs: number
+  bubbleHandlingMs: number
   beatMinMs: number
   beatMaxMs: number
   endingMs: Record<'hello' | 'snack' | 'meal' | 'feast' | 'rest', number>
@@ -14,7 +15,8 @@ export interface SceneMotionSpec {
 /** Validate presentation timings without importing clocks, React or the DOM. */
 export function validateSceneMotionSpec(value: SceneMotionSpec): SceneMotionSpec {
   const finite = (number: number, min: number, max: number) => Number.isFinite(number) && number >= min && number <= max
-  if (!finite(value.openMs, 100, 3000) || !finite(value.beatMs, 100, 3000) || !finite(value.stretchMs, 2000, 6000) || !finite(value.handlingMs, 500, 6000) ||
+  if (!finite(value.openMs, 100, 3000) || !finite(value.beatMs, 100, 3000) || !finite(value.stretchMs, 2000, 6000) ||
+      !finite(value.handlingMs, 500, 6000) || !finite(value.bubbleHandlingMs, 500, 6000) ||
       !finite(value.beatMinMs, 60_000, 300_000) || !finite(value.beatMaxMs, value.beatMinMs, 300_000) ||
       !['hello', 'snack', 'meal', 'feast', 'rest'].every(key => finite(value.endingMs[key as keyof SceneMotionSpec['endingMs']], 100, 2400))) {
     throw new Error('Invalid companion scene motion timings')
@@ -86,4 +88,8 @@ export function sceneMotionDuration(kind: SceneMotionKind, scene: CompanionScene
   if (kind === 'ending') return spec.endingMs[scene.ending?.tier ?? 'rest']
   if (scene.id === 'R1') return spec.stretchMs
   return kind === 'open' ? spec.openMs : spec.beatMs
+}
+
+export function sceneHandlingDuration(id: CompanionScene['id'] | undefined, spec: SceneMotionSpec): number {
+  return id === 'F5' ? spec.bubbleHandlingMs : spec.handlingMs
 }

@@ -105,15 +105,15 @@
       "id": "F5",
       "title": "Bubble play",
       "kind": "focus",
-      "support": "The soap jar stands on a floor mat; the wand moves from the jar into open air.",
+      "support": "A shallow jar supports the wand between blows. The elbow stays beside the belly as the hand brings the ring to the mouth.",
       "frames": [
         {
-          "label": "0% · Dip the wand",
-          "caption": "Jar anchored on mat"
+          "label": "0% · Ready to reach",
+          "caption": "The wand leans against the rim"
         },
         {
           "label": "40% · One small bubble",
-          "caption": "Short grip on the handle"
+          "caption": "The hand has put the wand back"
         },
         {
           "label": "75% · Bubbles drift",

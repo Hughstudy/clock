@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import type { CompanionScene } from '../contracts/presentation'
 import { sceneMotionSpec } from '../data/scene-motion'
 import { sampleScenePose } from './scene-pose'
-import { emptySceneMotion, finishSceneMotion, nextSceneMotion, sceneBeatDelay, sceneMotionDuration, startSceneBeat, validateSceneMotionSpec } from './scene-motion'
+import { emptySceneMotion, finishSceneMotion, nextSceneMotion, sceneBeatDelay, sceneHandlingDuration, sceneMotionDuration, startSceneBeat, validateSceneMotionSpec } from './scene-motion'
 
 const enabled = { staticOnly: false, touching: false, visible: true }
 const scene = (patch: Partial<CompanionScene> = {}): CompanionScene => ({
@@ -85,11 +85,14 @@ describe('companion scene choreography', () => {
 
   it('bounds finite motions and rejects unsafe cadence data', () => {
     expect(sceneMotionDuration('open', scene(), sceneMotionSpec)).toBe(1120)
+    expect(sceneHandlingDuration('F5', sceneMotionSpec)).toBe(4000)
+    expect(sceneHandlingDuration('F4', sceneMotionSpec)).toBe(2600)
     for (const tier of ['hello', 'snack', 'meal', 'feast', null] as const) {
       expect(sceneMotionDuration('ending', scene({ ending: { cueId: 'end', tier } }), sceneMotionSpec)).toBeLessThanOrEqual(2400)
     }
     expect(() => validateSceneMotionSpec({ ...sceneMotionSpec, beatMinMs: 500 })).toThrow()
     expect(() => validateSceneMotionSpec({ ...sceneMotionSpec, stretchMs: 500 })).toThrow()
+    expect(() => validateSceneMotionSpec({ ...sceneMotionSpec, bubbleHandlingMs: 6500 })).toThrow()
     expect(() => validateSceneMotionSpec({ ...sceneMotionSpec, beatMaxMs: 59_000 })).toThrow()
     expect(() => validateSceneMotionSpec({ ...sceneMotionSpec, endingMs: { ...sceneMotionSpec.endingMs, feast: Infinity } })).toThrow()
   })
