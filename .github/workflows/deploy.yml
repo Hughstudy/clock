@@ -30,7 +30,7 @@ jobs:
       - run: npm test
       - name: Install browser for end-to-end checks
         run: npx playwright install --with-deps chromium
-      - name: Check scene flows in the production build
+      - name: Check companion scenes and Records in the production build
         run: npm run test:e2e
       - name: Build
         run: npm run build

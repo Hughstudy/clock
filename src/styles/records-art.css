@@ -1,0 +1,78 @@
+.records-art {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  pointer-events: none;
+}
+
+.records-art--greeting { width: 250px; }
+.records-art--story { width: 152px; }
+.records-art--token { width: 32px; height: 32px; }
+
+/* Every base transform is the finished pose. Cancellation and reduced motion
+   therefore display the same scene as a completed entrance. */
+@media (prefers-reduced-motion: no-preference) {
+  .records-art[data-animate="true"][data-band="morning"] .records-art__curtain {
+    transform-origin: 106px 18px;
+    animation: records-lift-curtain 1.45s ease-in-out;
+  }
+
+  .records-art[data-animate="true"][data-band="morning"] .records-art__curtain-hand {
+    transform-origin: 67px 103px;
+    animation: records-lift-paw 1.45s ease-in-out;
+  }
+
+  .records-art[data-animate="true"][data-band="afternoon"] .records-art__butterfly {
+    animation: records-butterfly 1.65s ease-in-out;
+  }
+
+  .records-art[data-animate="true"][data-band="afternoon"] .records-art__gaze {
+    animation: records-follow 1.65s ease-in-out;
+  }
+
+  .records-art[data-animate="true"][data-band="evening"] .records-art__leaf-hand {
+    transform-origin: 168px 106px;
+    animation: records-tilt-leaf 1.55s ease-in-out;
+  }
+
+  .records-art[data-animate="true"][data-band="night"] .records-art__book-hands {
+    animation: records-draw-book 1.55s ease-in-out;
+  }
+}
+
+@keyframes records-lift-curtain {
+  0%, 15% { transform: rotate(4deg) scaleY(1.045); }
+  75% { transform: rotate(-1deg) scaleY(.99); }
+  100% { transform: none; }
+}
+
+@keyframes records-lift-paw {
+  0%, 15% { transform: rotate(15deg) scaleY(1.15); }
+  75% { transform: rotate(-3deg); }
+  100% { transform: none; }
+}
+
+@keyframes records-butterfly {
+  0% { transform: translate(-31px, 11px) rotate(-22deg); }
+  44% { transform: translate(-14px, -8px) rotate(10deg); }
+  74% { transform: translate(-4px, 2px) rotate(-7deg); }
+  100% { transform: none; }
+}
+
+@keyframes records-follow {
+  0%, 14% { transform: translate(-3px, 2px); }
+  55% { transform: translate(-1px, -3px); }
+  100% { transform: none; }
+}
+
+@keyframes records-tilt-leaf {
+  0%, 12% { transform: rotate(29deg); }
+  73% { transform: rotate(-5deg); }
+  100% { transform: none; }
+}
+
+@keyframes records-draw-book {
+  0%, 15% { transform: translate(8px, 4px) rotate(2deg); }
+  73% { transform: translate(-1px, -1px); }
+  100% { transform: none; }
+}

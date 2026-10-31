@@ -42,6 +42,7 @@ export interface ThoughtResult {
 
 export interface ClockApp {
   snapshot: AppSnapshot
+  savedRecordIds: ReadonlySet<string>
   persistence: Persistence
   notice: StoreNotice | null
   saveError: string | null
@@ -64,7 +65,9 @@ interface CommitOptions {
 export function useClockApp(): ClockApp {
   const [store] = useState(() => openBrowserStore(spec))
   const [chime] = useState(createChime)
-  const [view, setView] = useState(() => ({ snapshot: store.snapshot, saveError: null as string | null, ...store.status }))
+  const [view, setView] = useState(() => ({
+    snapshot: store.snapshot, savedRecordIds: store.savedRecordIds, saveError: null as string | null, ...store.status,
+  }))
   const [saveState, setSaveState] = useState<SaveState>(store.status.persistence)
   const [feedbackEvent, setFeedbackEvent] = useState<AppFeedbackEvent | null>(null)
   const [thoughtResult, setThoughtResult] = useState<ThoughtResult | null>(null)
@@ -82,9 +85,9 @@ export function useClockApp(): ClockApp {
         const t = applyAction(latest, action, { now: nowMs(), dateKeyOf: dateKeyInZone }, spec)
         return { snapshot: t.snapshot, changed: t.changed, value: { transition: t, before: latest } }
       })
-      if (result.saved) retryAction.current = null
+      if (result.saved || store.status.persistence !== 'saved') retryAction.current = null
       else retryAction.current = { action: { type: 'reconcile' }, id: operationId }
-      setView({ snapshot: result.snapshot, saveError: result.error, ...store.status })
+      setView({ snapshot: store.snapshot, savedRecordIds: store.savedRecordIds, saveError: result.error, ...store.status })
       setSaveState(store.status.persistence !== 'saved' ? store.status.persistence : result.saved ? 'saved' : 'pending')
       const { transition, before } = result.value
       if (!quiet || !result.saved) {
@@ -117,7 +120,10 @@ export function useClockApp(): ClockApp {
   useEffect(() => onExternalWrite((newValue) => {
     const received = store.receive(newValue)
     if (!received) return
-    setView((prev) => ({ ...prev, snapshot: received.snapshot, ...store.status }))
+    const update = { snapshot: received.snapshot, savedRecordIds: store.savedRecordIds, ...store.status }
+    const removed = update.notice?.kind === 'removed'
+    if (removed) retryAction.current = null
+    setView((prev) => ({ ...prev, ...update, saveError: removed ? null : prev.saveError }))
     setFeedbackEvent({ kind: 'reconcile', id: newId(), atMs: nowMs(), origin: 'sync',
       generation: received.snapshot.datasetGeneration, revision: received.snapshot.revision })
     if (store.status.persistence !== 'saved') setSaveState(store.status.persistence)

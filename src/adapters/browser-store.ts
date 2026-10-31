@@ -28,10 +28,13 @@ export function openBrowserStore(spec: Spec): SnapshotStore {
   })
 }
 
-/** Notifies when another tab writes the snapshot. */
+/** Observe the local snapshot key and origin-wide clears from other tabs. */
 export function onExternalWrite(listener: (newValue: string | null) => void): () => void {
+  const storage = localStorageOrNull()
   const handle = (event: StorageEvent) => {
-    if (event.key === SNAPSHOT_KEY) listener(event.newValue)
+    if (storage && event.storageArea === storage && (event.key === SNAPSHOT_KEY || event.key === null)) {
+      listener(event.newValue)
+    }
   }
   window.addEventListener('storage', handle)
   return () => window.removeEventListener('storage', handle)

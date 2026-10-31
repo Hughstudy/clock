@@ -28,6 +28,7 @@ export type StoreNotice =
   | { kind: 'unreadable'; reason: string; backupKey: string | null }
   | { kind: 'newer'; version: number }
   | { kind: 'unavailable' }
+  | { kind: 'removed' }
 
 export interface StoreOptions {
   key: string
@@ -67,6 +68,9 @@ function message(error: unknown): string {
  */
 export class SnapshotStore {
   private memory: AppSnapshot
+  /** Last snapshot known to be on disk, before merging in this tab's pending changes. */
+  private stored: AppSnapshot | null = null
+  private sawStoredData = false
   private persistence: Persistence
   private notice: StoreNotice | null
   private lastBackup: string | null = null
@@ -89,6 +93,19 @@ export class SnapshotStore {
     return this.memory
   }
 
+  get savedRecordIds(): ReadonlySet<string> {
+    const ids = new Set<string>()
+    if (this.stored?.datasetGeneration !== this.memory.datasetGeneration) return ids
+    const onDisk = new Map(this.stored.records.map(record => [record.sessionId, record]))
+    for (const record of this.memory.records) {
+      const saved = onDisk.get(record.sessionId)
+      // Two tabs can end the same session at different times if a write failed.
+      if (saved && saved.endedAt === record.endedAt && saved.elapsedMs === record.elapsedMs &&
+          saved.endReason === record.endReason && saved.dateKey === record.dateKey) ids.add(record.sessionId)
+    }
+    return ids
+  }
+
   get status(): { persistence: Persistence; notice: StoreNotice | null } {
     return { persistence: this.persistence, notice: this.notice }
   }
@@ -109,6 +126,7 @@ export class SnapshotStore {
     const decoded = this.decode(text)
     switch (decoded.kind) {
       case 'ok': {
+        this.stored = decoded.snapshot
         if (decoded.issues.length === 0) return { snapshot: decoded.snapshot, persistence: 'saved', notice: null }
         const backupKey = this.backup(text)
         return {
@@ -132,6 +150,7 @@ export class SnapshotStore {
   }
 
   private decode(text: string) {
+    this.sawStoredData = true
     return decodeSnapshot(text, this.options.spec, { timeZone: this.options.timeZone() })
   }
 
@@ -147,6 +166,14 @@ export class SnapshotStore {
     }
   }
 
+  /** A known snapshot disappeared. Keep the visible work, but never repopulate a cleared key. */
+  private detachRemovedSnapshot(): void {
+    this.stored = null
+    this.sawStoredData = false
+    if (this.persistence !== 'read-only') this.persistence = 'memory-only'
+    this.notice = { kind: 'removed' }
+  }
+
   /** Reads storage and merges it with memory. `behind` means storage lacks something memory has. */
   private readLatest(): { latest: AppSnapshot; behind: boolean } {
     this.readError = null
@@ -158,10 +185,14 @@ export class SnapshotStore {
       this.readError = message(error)
       return { latest: this.memory, behind: true }
     }
-    // Empty storage is only behind once this tab has written something.
-    if (text === null) return { latest: this.memory, behind: this.memory.revision > 0 }
+    if (text === null) {
+      if (this.sawStoredData) this.detachRemovedSnapshot()
+      // A failed first write is still retryable when there has never been a durable snapshot.
+      return { latest: this.memory, behind: this.memory.revision > 0 }
+    }
 
     const decoded = this.decode(text)
+    this.stored = decoded.kind === 'ok' ? decoded.snapshot : null
     if (decoded.kind === 'newer') {
       this.persistence = 'read-only'
       this.notice = { kind: 'newer', version: decoded.version }
@@ -214,6 +245,8 @@ export class SnapshotStore {
       if (this.readError) return { snapshot: next, value: result.value, saved: false, error: this.readError }
       try {
         this.options.storage?.setItem(this.options.key, encodeSnapshot(next))
+        this.stored = next
+        this.sawStoredData = true
         return { snapshot: next, value: result.value, saved: true, error: null }
       } catch (error) {
         return { snapshot: next, value: result.value, saved: false, error: message(error) }
@@ -226,14 +259,30 @@ export class SnapshotStore {
    * completion records the other write lacks, so the caller can persist the merge.
    */
   receive(newValue: string | null): { snapshot: AppSnapshot; needsHeal: boolean } | null {
-    if (this.persistence !== 'saved' || newValue === null) return null
+    if (newValue === null) {
+      if (!this.sawStoredData) return null
+      try {
+        // A delayed removal event may describe a key another tab has since written again.
+        if (this.options.storage?.getItem(this.options.key) !== null) return null
+      } catch { return null }
+      this.detachRemovedSnapshot()
+      return { snapshot: this.memory, needsHeal: false }
+    }
+    if (this.persistence !== 'saved') return null
     const decoded = this.decode(newValue)
     if (decoded.kind === 'newer') {
+      this.stored = null
       this.persistence = 'read-only'
       this.notice = { kind: 'newer', version: decoded.version }
       return { snapshot: this.memory, needsHeal: false }
     }
     if (decoded.kind === 'unreadable') return null
+    // Another tab's event can arrive after this tab has committed a newer revision.
+    const incoming = decoded.snapshot
+    if (incoming.datasetGeneration >= this.memory.datasetGeneration &&
+        (this.stored?.datasetGeneration !== incoming.datasetGeneration || incoming.revision >= this.stored.revision)) {
+      this.stored = incoming
+    }
     const needsHeal = hasMissingRecords(decoded.snapshot, this.memory)
     this.memory = mergeSnapshots(this.memory, decoded.snapshot)
     return { snapshot: this.memory, needsHeal }

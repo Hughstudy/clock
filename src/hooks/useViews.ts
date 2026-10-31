@@ -1,7 +1,8 @@
 import { useMemo } from 'react'
-import { localDateKey } from '../adapters/calendar'
+import { localDateKey, localHour } from '../adapters/calendar'
 import { spec } from '../data/spec'
 import { nextFocusMinutes } from '../logic/app'
+import { recordsBand, recordStoryId, type RecordsBand, type RecordStoryId } from '../logic/record-stories'
 import { dayTotal, indexByDay, weekTotals, type DayTotal, type WeekTotals } from '../logic/stats'
 import { isLive } from '../logic/thoughts'
 import { cycleProgress, isBreak, remainingMs, totalMs, type CycleProgress } from '../logic/timer'
@@ -60,11 +61,14 @@ export function useTimerView(snapshot: AppSnapshot, now: number): TimerView {
 }
 
 export interface RecordView extends FocusRecord {
+  /** Available only when storage confirms this session's record in this dataset. */
+  storyId: RecordStoryId | null
   /** Live thoughts captured during this session, oldest first. */
   thoughts: readonly Thought[]
 }
 
 export interface StatsView {
+  band: RecordsBand
   todayKey: string
   /** Started focus sessions, including the current one. */
   participationCount: number
@@ -77,8 +81,9 @@ export interface StatsView {
   week: WeekTotals
 }
 
-export function useStatsView(snapshot: AppSnapshot, now: number): StatsView {
+export function useStatsView(snapshot: AppSnapshot, now: number, savedRecordIds: ReadonlySet<string>): StatsView {
   const todayKey = localDateKey(now)
+  const band = recordsBand(localHour(now))
   const index = useMemo(() => indexByDay(snapshot.records), [snapshot.records])
   const live = useMemo(() => snapshot.thoughts.filter(isLive), [snapshot.thoughts])
   return useMemo(
@@ -86,15 +91,20 @@ export function useStatsView(snapshot: AppSnapshot, now: number): StatsView {
       const bySession = new Map<string, Thought[]>()
       for (const t of live) if (t.sessionId) bySession.set(t.sessionId, [...(bySession.get(t.sessionId) ?? []), t])
       return {
+        band,
         todayKey,
         participationCount: snapshot.participations.length,
-        records: [...snapshot.records].sort((a, b) => b.endedAt - a.endedAt).map((r) => ({ ...r, thoughts: bySession.get(r.sessionId) ?? [] })),
+        records: [...snapshot.records].sort((a, b) => b.endedAt - a.endedAt).map((r) => ({
+          ...r,
+          storyId: savedRecordIds.has(r.sessionId) ? recordStoryId(r.sessionId) : null,
+          thoughts: bySession.get(r.sessionId) ?? [],
+        })),
         thoughts: [...live].reverse(),
         firstWeekday: spec.calendar.weekStartsOn,
         today: dayTotal(index, todayKey),
         week: weekTotals(index, todayKey, spec.calendar.weekStartsOn),
       }
     },
-    [index, todayKey, snapshot.records, snapshot.participations.length, live],
+    [band, index, todayKey, snapshot.records, snapshot.participations.length, live, savedRecordIds],
   )
 }

@@ -34,6 +34,8 @@ preference does not change the application's UI language.
 
 The companion module is connected to actual saved start/pause/resume/end/rest events. Click the creature for encouragement; Enter works too. Copy never rotates on a countdown tick. Early and full endings have equal gestures, and reload/cross-tab recovery never replays them. Animation can be disabled in Settings; the operating system’s reduced-motion preference always wins. Focus and Records are the two main destinations, with Settings in the header.
 
+Open **记录** to see the orchard at the device’s local hour. Expand a saved focus entry to see which discovery the blue companion found in its book. Its story stays with that entry. [Records design and browser checks](docs/plans/RECORDS_COMPANION_PLAN.md)
+
 A mobile-first Pomodoro-style focus timer built with React 18, TypeScript,
 Vite and rough.js. Early and full endings receive equal supportive feedback.
 Actual time excludes pauses, includes sub-minute sessions, and is saved locally.

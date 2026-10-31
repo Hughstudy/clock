@@ -27,7 +27,7 @@ function shuffled(pool: readonly SceneId[], seed: number, last: SceneId | null):
 }
 
 /** Stable session identity is supplied by main; pure logic never creates entropy. */
-function identitySeed(identity: string): number {
+export function identitySeed(identity: string): number {
   let hash = 2166136261
   for (let i = 0; i < identity.length; i++) hash = Math.imul(hash ^ identity.charCodeAt(i), 16777619)
   return hash >>> 0

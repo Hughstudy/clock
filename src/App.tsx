@@ -24,9 +24,9 @@ export function App() {
   const app = useClockApp()
   const [screen, setScreen] = useState<Screen>('home')
   const running = app.snapshot.timer.session?.status === 'running'
-  const now = useNow(running ? RUNNING_REFRESH_MS : IDLE_REFRESH_MS)
+  const { now, refresh } = useNow(running ? RUNNING_REFRESH_MS : IDLE_REFRESH_MS)
   const timerView = useTimerView(app.snapshot, now)
-  const statsView = useStatsView(app.snapshot, now)
+  const statsView = useStatsView(app.snapshot, now, app.savedRecordIds)
   const form = useSettingsForm(app.snapshot.settings, app.dispatch)
   const thoughts = useThoughts(app)
   const companion = useFeedback(app, { active: screen === 'home', completedProgress: timerView.completedProgress })
@@ -63,12 +63,17 @@ export function App() {
             <div hidden={screen !== 'home'}>
               <HomeScreen view={timerView} companion={companion} thoughts={thoughts} reducedMotion={motion.reducedMotion} saveState={app.saveState} canEdit={canEdit} dispatch={app.dispatch} />
             </div>
-            {screen === 'stats' && <StatsScreen view={statsView} thoughts={thoughts} canEdit={canEdit} />}
+            {screen === 'stats' && <StatsScreen view={statsView} thoughts={thoughts} canEdit={canEdit}
+              persistence={app.persistence} notice={app.notice} hasSaveError={!!app.saveError}
+              showArt={app.snapshot.settings.sceneVarietyEnabled} reducedMotion={motion.reducedMotion} />}
             {screen === 'settings' && <SettingsScreen form={form} canEdit={canEdit} />}
           </>
         )}
       </main>
-      <TabBar active={screen} onSelect={setScreen} />
+      <TabBar active={screen} onSelect={next => {
+        if (next === 'stats' && next !== screen) refresh()
+        setScreen(next)
+      }} />
       <p className="sr-only" aria-live={companion.feedback.announcement?.priority ?? 'polite'} aria-atomic="true">
         {companion.feedback.announcement?.text ?? ''}
       </p>

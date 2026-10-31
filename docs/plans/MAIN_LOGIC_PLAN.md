@@ -2,7 +2,7 @@
 
 **Implemented animation integration, 2026-10-31:** full focus/rest pools, retired unlock grants/notices, snapshot v6 compatibility and C2-P3 precise progress are implemented under the approved [Animation Refinement Plan](ANIMATION_REFINEMENT_PLAN.md). Selection remains atomic and independent of break cadence. See [verification evidence](../verification/animation-refinement.md). Other L3–L5 product proposals retain their existing status.
 
-Status: proposed work breakdown for review, 2026-10-29. This document covers application behavior, data and functional screen integration. L0–L2 were first implemented on branch `claude/main-logic-l0-l2`. The [verification report](../verification/main-logic-l0-l2.md) lists what was checked and what remains open; L3–L5 are not started. Read [PLAN.md](../../PLAN.md) for the shared scope, open decisions, interface and release sequence; see the separate [Animation Plan](ANIMATION_PLAN.md) for character presentation.
+L0–L2 were first implemented on branch `claude/main-logic-l0-l2`. L3 now includes inline entry details, confirmed-save status and stable stories. The wider history, reward and data-management work remains open. [L0–L2 verification](../verification/main-logic-l0-l2.md) · [Records implementation](RECORDS_COMPANION_PLAN.md) · [Overall plan](../../PLAN.md) · [Animation Plan](ANIMATION_PLAN.md)
 
 ## Responsibility
 

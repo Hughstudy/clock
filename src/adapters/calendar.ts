@@ -5,6 +5,10 @@ export function nowMs(): number {
   return Date.now()
 }
 
+export function localHour(epochMs: number): number {
+  return new Date(epochMs).getHours()
+}
+
 /** The local calendar date of an instant, in the device's current time zone. */
 export function localDateKey(epochMs: number): DateKey {
   const d = new Date(epochMs)

@@ -1,10 +1,11 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import { spec } from '../data/spec'
 import { applyAction, type AppAction } from '../logic/app'
 import { encodeSnapshot } from '../logic/snapshot'
 import type { AppSnapshot } from '../logic/types'
 import { createLock, type LockRunner } from './locks'
 import { SnapshotStore, type KeyValueStorage } from './storage'
+import { onExternalWrite, SNAPSHOT_KEY } from './browser-store'
 
 const KEY = 'test:snapshot'
 const MIN = 60_000
@@ -93,6 +94,68 @@ describe('SnapshotStore persistence', () => {
 })
 
 describe('SnapshotStore across tabs', () => {
+  it.each(['storage event', 'locked read'])('keeps removed records only in memory after a %s', async (signal) => {
+    const storage = new MemoryStorage()
+    const a = tab(storage, 'old')
+    await act(a, { type: 'start', sessionId: 'removed', timeZone: 'UTC' }, T0)
+    await act(a, { type: 'end', sessionId: 'removed' }, T0 + MIN)
+    expect(a.savedRecordIds.has('removed')).toBe(true)
+    storage.data.delete(KEY)
+    if (signal === 'storage event') expect(a.receive(null)?.needsHeal).toBe(false)
+    const recovered = await act(a, { type: 'reconcile' }, T0 + 2 * MIN)
+    expect(recovered.saved).toBe(false)
+    expect(a.status).toEqual({ persistence: 'memory-only', notice: { kind: 'removed' } })
+    expect(a.snapshot.records).toHaveLength(1)
+    expect(a.savedRecordIds.size).toBe(0)
+    expect(storage.getItem(KEY)).toBeNull()
+
+    const fresh = tab(storage, 'fresh')
+    await act(fresh, { type: 'start', sessionId: 'fresh', timeZone: 'UTC' }, T0 + 3 * MIN)
+    const freshBytes = storage.getItem(KEY)
+    a.receive(freshBytes)
+    await act(a, { type: 'start', sessionId: 'memory', timeZone: 'UTC' }, T0 + 4 * MIN)
+    expect(storage.getItem(KEY)).toBe(freshBytes)
+    expect(tab(storage, 'reload').snapshot.records).toHaveLength(0)
+  })
+
+  it('ignores unrelated clears on an empty store and delayed removal events after a write', async () => {
+    const storage = new MemoryStorage()
+    const a = tab(storage, 'a')
+    expect(a.receive(null)).toBeNull()
+    await act(a, { type: 'start', sessionId: 'still-saved', timeZone: 'UTC' }, T0)
+    await act(a, { type: 'end', sessionId: 'still-saved' }, T0)
+    expect(a.receive(null)).toBeNull()
+    expect(a.savedRecordIds.has('still-saved')).toBe(true)
+    const restricted = tab(storage, 'no-locks', null)
+    storage.data.delete(KEY)
+    restricted.receive(null)
+    expect(restricted.status).toEqual({ persistence: 'read-only', notice: { kind: 'removed' } })
+    expect(restricted.savedRecordIds.size).toBe(0)
+  })
+
+  it('observes snapshot removal and localStorage.clear while ignoring other keys and sessionStorage', () => {
+    const localStorage = new MemoryStorage()
+    const otherStorage = new MemoryStorage()
+    const fakeWindow = Object.assign(new EventTarget(), { localStorage })
+    vi.stubGlobal('window', fakeWindow)
+    const listener = vi.fn()
+    const stop = onExternalWrite(listener)
+    const emit = (storageArea: MemoryStorage, key: string | null) =>
+      fakeWindow.dispatchEvent(Object.assign(new Event('storage'), { storageArea, key, newValue: null }))
+    try {
+      emit(otherStorage, SNAPSHOT_KEY)
+      emit(otherStorage, null)
+      emit(localStorage, 'another-app')
+      expect(listener).not.toHaveBeenCalled()
+      emit(localStorage, SNAPSHOT_KEY)
+      emit(localStorage, null)
+      expect(listener.mock.calls).toEqual([[null], [null]])
+    } finally {
+      stop()
+      vi.unstubAllGlobals()
+    }
+  })
+
   it('assigns only one ordinal when two tabs start at once', async () => {
     const storage = new MemoryStorage()
     const lock = sharedLock()
@@ -205,8 +268,10 @@ describe('SnapshotStore across tabs', () => {
 
     const seen = a.receive(storage.data.get(KEY) ?? null)
     expect(seen?.needsHeal).toBe(true)
+    expect(a.savedRecordIds.has('s1')).toBe(false)
     await a.transact((latest) => ({ snapshot: latest, changed: false, value: null }))
     expect(stored(storage).records.map((r) => r.sessionId)).toEqual(['s1'])
+    expect(a.savedRecordIds.has('s1')).toBe(true)
   })
 
   it('shows saved data read-only when the Web Locks API is missing', async () => {
@@ -324,6 +389,55 @@ describe('SnapshotStore recovery', () => {
 })
 
 describe('durable early ends and recovery', () => {
+  it('confirms only the rows on disk across a failed write, retry and read-only reload', async () => {
+    const storage = new MemoryStorage()
+    const a = tab(storage, 'a')
+    await act(a, { type: 'start', sessionId: 'first', timeZone: 'UTC' }, T0)
+    await act(a, { type: 'end', sessionId: 'first' }, T0)
+    await act(a, { type: 'start', sessionId: 'pending', timeZone: 'UTC' }, T0)
+    const previousWrite = storage.getItem(KEY)
+    storage.failWrites = true
+    await act(a, { type: 'end', sessionId: 'pending' }, T0 + 20_000)
+    expect(a.snapshot.records).toHaveLength(2)
+    expect([...a.savedRecordIds]).toEqual(['first'])
+    a.receive(previousWrite)
+    expect([...a.savedRecordIds]).toEqual(['first'])
+    storage.failWrites = false
+    await act(a, { type: 'reconcile' }, T0 + MIN)
+    a.receive(previousWrite)
+    expect([...a.savedRecordIds]).toEqual(['first', 'pending'])
+    expect([...tab(storage, 'no-locks', null).savedRecordIds]).toEqual(['first', 'pending'])
+  })
+
+  it('does not confirm a conflicting end time or use a previous generation as proof', async () => {
+    const storage = new MemoryStorage()
+    const a = tab(storage, 'z')
+    await act(a, { type: 'start', sessionId: 'session', timeZone: 'UTC' }, T0)
+    const b = tab(storage, 'b')
+    storage.failWrites = true
+    await act(a, { type: 'end', sessionId: 'session' }, T0 + 10_000)
+    storage.failWrites = false
+    await act(b, { type: 'end', sessionId: 'session' }, T0 + 20_000)
+    const endInOtherTab = storage.getItem(KEY)
+    a.receive(endInOtherTab)
+    expect(a.snapshot.records[0]?.elapsedMs).toBe(10_000)
+    expect(a.savedRecordIds.has('session')).toBe(false)
+
+    const replaced = { ...a.snapshot, datasetGeneration: 1 }
+    a.receive(encodeSnapshot(replaced))
+    a.receive(endInOtherTab)
+    expect(a.snapshot.datasetGeneration).toBe(1)
+    expect(a.savedRecordIds.has('session')).toBe(true)
+  })
+
+  it('gives memory-only records no durable status', async () => {
+    const a = tab(null, 'a')
+    await act(a, { type: 'start', sessionId: 'memory', timeZone: 'UTC' }, T0)
+    await act(a, { type: 'end', sessionId: 'memory' }, T0 + 20_000)
+    expect(a.snapshot.records).toHaveLength(1)
+    expect(a.savedRecordIds.size).toBe(0)
+  })
+
   it('recovers a running deadline without needing any unload event', async () => {
     const storage = new MemoryStorage()
     const original = tab(storage, 'a')
@@ -414,12 +528,15 @@ describe('durable early ends and recovery', () => {
     const storage = new MemoryStorage()
     storage.data.set(KEY, JSON.stringify({ version: 2, revision: 5, writer: 'legacy',
       settings: { durationsMinutes: { focus: 25, shortBreak: 5, longBreak: 15 }, soundEnabled: false },
-      timer: { phase: 'focus', session: null, completedFocusCount: 0 }, completions: [],
+      timer: { phase: 'focus', session: null, completedFocusCount: 1 },
+      completions: [{ sessionId: 'old-focus', completedAt: T0, dateKey: utcKey(T0), focusMs: 25 * MIN }],
     }))
     const upgraded = tab(storage, 'new')
+    expect(upgraded.savedRecordIds.has('old-focus')).toBe(true)
     await act(upgraded, { type: 'reconcile' }, T0)
     expect(stored(storage).version).toBe(6)
     expect(stored(storage).settings.soundEnabled).toBe(false)
+    expect(tab(storage, 'reload').savedRecordIds.has('old-focus')).toBe(true)
   })
   it('prevents a stale tab from reviving older-generation data on its next action', async () => {
     const storage = new MemoryStorage()

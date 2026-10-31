@@ -19,6 +19,8 @@ function storeMessage(notice: StoreNotice, persistence: Persistence): string {
       return '此浏览器不支持安全的多窗口保存，当前为只读模式。请使用支持此功能的浏览器。'
     case 'unavailable':
       return '此浏览器阻止了数据保存，进度只保留在当前页面，关闭后无法恢复。'
+    case 'removed':
+      return '浏览器中的专注数据已被清除。这一页的内容仅保留在内存中，重新打开应用即可查看当前的本地记录。'
     case 'newer':
       return '数据由更新版本保存，当前无法读取。请更新应用；原数据不会被覆盖。'
     case 'unreadable':
@@ -47,7 +49,7 @@ export function Notices({ persistence, notice, saveError, updateReady, offlineRe
           )}
         </div>
       )}
-      {saveError && (
+      {saveError && persistence === 'saved' && (
         <div className="notice notice-warn" role={announceSaveError ? 'alert' : undefined}>
           <p>最新操作尚未保存（{saveError}）。请保留页面；系统会自动重试。</p>
           <button type="button" className="notice-action" onClick={onRetry}>重试保存</button>

@@ -10,7 +10,7 @@
     "typecheck": "tsc -b",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:e2e": "node scripts/scene-e2e.mjs",
+    "test:e2e": "node scripts/scene-e2e.mjs && node scripts/verify-records-companion.mjs",
     "check": "tsc -b && vitest run",
     "icons": "UPDATE_ICON=1 vitest run src/test/icon.test.ts && pwa-assets-generator"
   },
