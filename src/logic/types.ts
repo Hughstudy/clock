@@ -12,24 +12,25 @@ export interface Settings {
   motionEnabled: boolean
   /** Encouragement after start/pause/end and similar events. Explicit requests stay available. */
   encouragementEnabled: boolean
-  /** Scene art may be hidden without changing timing, scene choice or unlocks. */
+  /** Scene art may be hidden without changing timing or the saved scene choice. */
   sceneVarietyEnabled: boolean
 }
 
 export type FocusSceneId = 'F1' | 'F2' | 'F3' | 'F4' | 'F5' | 'F6' | 'F7' | 'F8'
 export type RestSceneId = 'R1' | 'R2' | 'R3'
 export type SceneId = FocusSceneId | RestSceneId
-export interface SceneAssignment { sceneId: SceneId; ordinal: number; selectionVersion: 1 }
+export interface SceneAssignment { sceneId: SceneId; ordinal: number; selectionVersion: 1 | 2 }
 export interface SceneRotation { ordinal: number; cycle: number; remaining: SceneId[]; last: SceneId | null }
 export interface SceneUnlock { sceneId: FocusSceneId; unlockedAt: number; bySessionId: string; ruleVersion: number }
 export interface SceneEnding { sessionId: string; phase: 'focus' | 'rest'; scene: SceneAssignment; elapsedMs: number; endedAt: number }
 export interface SceneState {
   focus: SceneRotation
   rest: SceneRotation
+  /** Inert v5 history, preserved for compatibility. Never gates access or creates grants. */
   unlocked: SceneUnlock[]
-  /** Append-only IDs already introduced on a focus start. */
+  /** Inert v5 history; new selections do not append here. */
   introduced: FocusSceneId[]
-  /** Durable claims, written before an optional unlock announcement is shown. */
+  /** Inert v5 notice history; no new claims or announcements are issued. */
   announced: FocusSceneId[]
   lastEnded: SceneEnding | null
 }

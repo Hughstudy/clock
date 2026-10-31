@@ -10,14 +10,14 @@ const act = (snapshot: AppSnapshot, action: AppAction, now = 0) => applyAction(s
 const start = () => act(createSnapshot(spec), { type: 'start', sessionId: 'focus-one', timeZone: 'UTC', durationMinutes: 60 })
 const cue = (kind: PresentationCue['kind'], sessionId = 'focus-one'): PresentationCue => ({ id: `cue:${sessionId}:${kind}`, kind, sessionId, thoughtId: null })
 
-describe('C2-P2 readonly scene projection', () => {
-  it('keeps assignment identity stable while clamping and quantizing completed progress', () => {
+describe('C2-P3 readonly scene projection', () => {
+  it('keeps assignment identity stable while clamping without quantizing completed progress', () => {
     const snapshot = start()
     const first = companionSceneOf(snapshot, cue('begin'), options)!
     const next = companionSceneOf(snapshot, null, { ...options, completedProgress: 0.457 })!
     expect(next.key).toBe(first.key)
     expect(next.id).toBe(first.id)
-    expect(next.completedProgress).toBe(0.45)
+    expect(next.completedProgress).toBe(0.457)
     expect(next.cue).toBeNull()
     expect(companionSceneOf(snapshot, null, { ...options, completedProgress: -1 })?.completedProgress).toBe(0)
     expect(companionSceneOf(snapshot, null, { ...options, completedProgress: 2 })?.completedProgress).toBe(1)
@@ -35,7 +35,7 @@ describe('C2-P2 readonly scene projection', () => {
   it('uses only the matching saved record for an ending, never a pending or fabricated result', () => {
     const ended = act(start(), { type: 'end', sessionId: 'focus-one' }, 61_000)
     const input = { ...ended, scenes: { ...ended.scenes, lastEnded: { ...ended.scenes.lastEnded!, elapsedMs: 99_000_000 } } }
-    expect(companionSceneOf(input, cue('settle'), options)).toMatchObject({ status: 'ended', ending: { tier: 'snack', cueId: cue('settle').id } })
+    expect(companionSceneOf(input, cue('settle'), options)).toMatchObject({ status: 'ended', completedProgress: 61_000 / 3_600_000, ending: { tier: 'snack', cueId: cue('settle').id } })
     expect(companionSceneOf(input, cue('settle', 'other'), options)).toBeNull()
     expect(companionSceneOf(input, cue('settle'), { ...options, persistence: 'pending' })).toBeNull()
     expect(companionSceneOf(input, null, options)).toBeNull()

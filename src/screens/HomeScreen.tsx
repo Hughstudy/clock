@@ -68,8 +68,6 @@ export function HomeScreen({ view, companion, thoughts, reducedMotion, canEdit, 
           announce={false}
           quietStatus
           renderCharacter={(presentation) => <BlueCompanion presentation={presentation} cueId={companion.cue?.id} scene={scene} />}
-          sceneNotice={companion.sceneNotice}
-          onDismissSceneNotice={companion.dismissSceneNotice}
         />
       </div>
       {/* One fixed-height row in every state, so Pause appears exactly where Start was. */}

@@ -25,7 +25,7 @@ const EXPECTED: Record<FixtureName, { cue: CueKind | null; announced: boolean; s
   'motion-disabled': { cue: 'begin', announced: true, status: 'UI27' },
 }
 
-describe('C2-P2 presentation fixtures', () => {
+describe('C2-P3 presentation fixtures', () => {
   const fixtures = presentationFixtures()
 
   it('covers every published scenario once', () => {
@@ -76,7 +76,7 @@ describe('C2-P2 presentation fixtures', () => {
 
   it('binds saved ending tiers to their original scene and handles rest without a focus tier', () => {
     const early = fixtures.find((f) => f.name === 'ended-early')!
-    expect(early.scene).toMatchObject({ sessionId: 'f1', status: 'ended', ending: { cueId: early.cue!.id, tier: 'snack' } })
+    expect(early.scene).toMatchObject({ sessionId: 'f1', status: 'ended', completedProgress: 200_000 / 1_500_000, ending: { cueId: early.cue!.id, tier: 'snack' } })
     const zero = fixtures.find((f) => f.name === 'ended-zero')!
     expect(zero.scene?.ending?.tier).toBe('hello')
     const rest = fixtures.find((f) => f.name === 'break-ended')!

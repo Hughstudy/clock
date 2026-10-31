@@ -1,6 +1,6 @@
 # Animation and Presentation Plan (Review Draft)
 
-**Latest review, 2026-10-30:** see [Animation Refinement Plan](ANIMATION_REFINEMENT_PLAN.md) for clearer actions, uninterrupted motion, time-dependent activity development, critical storyboards and immediate access to all scenes. The user asked to plan first. This new direction supersedes completion-based scene unlocking, while the delivered baseline described below still implements it. No refinement application changes are included in this planning pass.
+**Implemented refinement, 2026-10-31:** the user authorized the complete [Animation Refinement Plan](ANIMATION_REFINEMENT_PLAN.md). The shared pose renderer, production keyframes, finite handling, independent ambient loops and C2-P3 integration are implemented. [Verification evidence](../verification/animation-refinement.md) records desktop checks and remaining device limits. Earlier baseline sections below remain historical.
 
 Updated: 2026-10-29. This is the animation workstream of the [overall plan](../../PLAN.md). It defines future work; this documentation change does not refactor code or approve open visual decisions. Read the overall plan for product scope, the shared interface, integration order and release status.
 

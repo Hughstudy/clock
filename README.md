@@ -11,9 +11,8 @@ features below are not yet complete.
 The user selected a soft, round blue creature with expressive arms for the
 working prototype. Home uses original rough.js artwork, short event-driven
 gestures, quiet focus and reduced-motion poses. Final artwork, product name and
-brand assets remain open. Thought capture, full history/reflection, persistent
-rewards and favorites, backup/restore/clear UI and final visual design are still
-pending.
+brand assets remain open. Thought capture and draft recovery are implemented. Full history/reflection,
+additional rewards and favorites, backup/restore/clear UI and final branding remain pending.
 
 The English [PLAN.md](PLAN.md) is the current review draft: it records the PRD
 gaps, proposed choices, shared interface and integration order. Work is split into
@@ -21,8 +20,10 @@ the [Animation Plan](docs/plans/ANIMATION_PLAN.md) (art, poses, contact and moti
 and [Main Logic Plan](docs/plans/MAIN_LOGIC_PLAN.md) (timer, thoughts, records,
 rewards, persistence and functional screens). Main logic provides read-only
 results and permitted cues; animation never changes time, saved data or rewards.
-Both can be developed independently against the agreed interface. This split is
-documentation only; further product implementation awaits plan review.
+Both can be developed independently against the agreed interface. The approved
+2026-10-31 refinement is implemented: eleven immediately available scenes, shared
+rounded-hand contact poses, progress-based activity development, C2-P3 and snapshot v6.
+See [animation verification](docs/verification/animation-refinement.md).
 See [AGENTS.md](AGENTS.md) for
 engineering and collaboration rules. The [supplied handoff](docs/handoff-20261029/README.md),
 [PRD v3](docs/handoff-20261029/番茄钟_产品PRD_v3.md) and
@@ -124,3 +125,15 @@ ZipZipPipe and 上善无形). She is drawn in code from the shapes in
 This project is not affiliated with or endorsed by DeepSeek.
 
 The blue creature in `src/data/companion-spec.json` is new original procedural artwork, separate from the retained legacy character and install icons. Its named parts, palette, poses and animation timings are validated and cached; animations cannot change time or saved records.
+
+## Animation review and keyframes
+
+The workbench in `preview/animation` supports exact contact scrubbing, normal/slow playback and interruption fixtures. Catalogue and contact sheets share the production renderer; regenerate them with `python3 docs/plans/assets/build-storyboards.py`.
+
+```bash
+node scripts/animation-review.mjs
+node scripts/record-scene-motion.mjs
+SCENE_BROWSER_CHANNEL=chrome npm run test:e2e
+```
+
+These commands use isolated browser profiles and print their artifact directory. Set `ANIMATION_REVIEW_OUTPUT`, `ANIMATION_VIDEO_OUTPUT` or `SCENE_E2E_OUTPUT` to retain results at a chosen path. Desktop browser evidence is separate from physical-phone acceptance.

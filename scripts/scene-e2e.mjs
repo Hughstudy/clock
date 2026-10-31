@@ -20,6 +20,7 @@ const fixtureServer = await preview({ configFile: false, root: fixtureRoot, base
 const appUrl = `http://127.0.0.1:${appServer.httpServer.address().port}/clock/`
 const fixtureUrl = `http://127.0.0.1:${fixtureServer.httpServer.address().port}/`
 const browser = await chromium.launch({ headless: true, ...(process.env.SCENE_BROWSER_CHANNEL ? { channel: process.env.SCENE_BROWSER_CHANNEL } : {}) })
+const focusPool = ['F1', 'F2', 'F3', 'F4', 'F5', 'F6', 'F7', 'F8']
 const checks = []
 const errors = []
 const check = (name, condition) => { assert.ok(condition, name); checks.push(name); console.log(`PASS ${name}`) }
@@ -76,7 +77,8 @@ try {
   const initial = await untilSaved(page, s => !!s.timer.session, 'first start')
   const firstId = initial.timer.session.id
   const firstScene = initial.timer.session.scene.sceneId
-  check('New focus selects a shipped starter scene', ['F1', 'F2', 'F3'].includes(firstScene) && await sceneAttribute(page, '') === firstScene)
+  const focusScenes = [firstScene]
+  check('New focus uses the full shipped pool and v2 selection', focusPool.includes(firstScene) && initial.version === 6 && initial.timer.session.scene.selectionVersion === 2 && await sceneAttribute(page, '') === firstScene)
   check('Permitted start has a scene entrance', await sceneAttribute(page, 'phase') === 'open')
   const afterStart = await primary.boundingBox()
   check('Start and Pause keep the same target', ['x', 'y', 'width', 'height'].every(key => Math.abs(beforeStart[key] - afterStart[key]) < 1))
@@ -103,7 +105,7 @@ try {
 
   await page.getByRole('button', { name: '加一句', exact: true }).click()
   await page.locator('#thought-text').fill('Scene E2E draft')
-  check('Thought editor suspends scene motion', await svg.getAttribute('data-scene-motion') === 'false' && await svg.evaluate(el => el.getAnimations({ subtree: true }).length === 0))
+  check('Thought editor suspends scene motion', await svg.getAttribute('data-scene-motion') === 'false' && await svg.evaluate(el => el.getAnimations({ subtree: true }).every(animation => animation.playState !== 'running')))
   await page.getByRole('button', { name: '回到计时', exact: true }).click()
   await endEarly(page)
   const early = await untilSaved(page, s => s.records.some(r => r.sessionId === firstId), 'short ending')
@@ -123,45 +125,64 @@ try {
   await page.locator('.step-input').press('Enter')
   await untilSaved(page, s => !!s.timer.session, 'step start')
   check('Typed-step start retains its entrance', await sceneAttribute(page, 'phase') === 'open')
-  check('Consecutive focus starts differ', await sceneAttribute(page, '') !== firstScene)
+  const stepStart = (await readSaved(page)).data
+  focusScenes.push(stepStart.timer.session.scene.sceneId)
+  check('Consecutive focus starts differ', focusScenes[1] !== firstScene)
+  await endEarly(page)
 
-  for (let success = 1; success <= 15; success++) {
-    if (success > 1) {
-      await focusReady(page)
-      await primary.click()
-      await untilSaved(page, s => s.timer.session?.status === 'running', `focus ${success}`)
-      if (success === 2) check('Newly unlocked tea is the next focus activity', await sceneAttribute(page, '') === 'F4')
-      if (success === 4) {
-        await page.clock.fastForward(4000)
-        check('Starting during unlock delay suppresses notices while running', !(await page.locator('.companion-feedback__content').getByText(/伙伴有了新活动/).isVisible()))
-      }
-    }
+  // Cover the entire focus bag before a single deadline completion: access
+  // comes from the shipped catalogue, never from successful-session thresholds.
+  for (let i = 2; i < 8; i++) {
+    await primary.click()
+    const started = await untilSaved(page, s => !!s.timer.session, `immediate-access focus ${i + 1}`)
+    focusScenes.push(started.timer.session.scene.sceneId)
+    check(`Focus ${i + 1} selects a new bag entry`, focusPool.includes(focusScenes[i]) && focusScenes[i] !== focusScenes[i - 1])
+    await endEarly(page)
+  }
+  const beforeDeadline = (await readSaved(page)).data
+  check(`All eight focus scenes appear before any full completion (${focusScenes.join(', ')})`,
+    new Set(focusScenes).size === 8 && focusPool.every(id => focusScenes.includes(id)) &&
+    beforeDeadline.timer.completedFocusCount === 0 && beforeDeadline.records.length === 8 && beforeDeadline.records.every(r => r.endReason === 'manual'))
+  check('Immediate access creates no grants, introductions or notice claims',
+    beforeDeadline.scenes.unlocked.length === 0 && beforeDeadline.scenes.introduced.length === 0 && beforeDeadline.scenes.announced.length === 0)
+
+  let lastScene = focusScenes.at(-1)
+  for (let success = 1; success <= 4; success++) {
+    await focusReady(page)
+    await primary.click()
+    const active = await untilSaved(page, s => s.timer.session?.status === 'running', `deadline focus ${success}`)
+    const selected = active.timer.session.scene.sceneId
+    check(`Deadline focus ${success} keeps random variety without adjacent repeats`, selected !== lastScene && active.timer.session.scene.selectionVersion === 2)
+    lastScene = selected
     await page.clock.fastForward(60_100)
     const completed = await untilSaved(page, s => s.records.filter(r => r.endReason === 'deadline').length === success, `deadline ${success}`)
-    check(`Deadline ${success} settles once`, completed.timer.session === null)
+    check(`Deadline ${success} settles once and preserves scene availability`,
+      completed.timer.session === null && completed.scenes.unlocked.length === 0 && completed.scenes.announced.length === 0)
     if (success === 1) {
-      check('Chosen one-minute length unlocks tea and gets Snack ending', completed.scenes.unlocked.some(x => x.sceneId === 'F4') && await sceneAttribute(page, 'tier') === 'snack')
-      await page.clock.fastForward(3200)
-      await page.locator('.companion-feedback__content').getByText(/伙伴有了新活动：双人茶/).waitFor()
-      await untilSaved(page, s => s.scenes.announced.includes('F4'), 'saved announcement claim')
-      check('Unlock notice appears only after its saved claim', true)
+      check('One-minute completion has its factual Snack ending', await sceneAttribute(page, 'tier') === 'snack')
+      const settledRevision = completed.revision
+      await page.clock.fastForward(4000)
+      check('Quiet time schedules no unlock notice or claim write',
+        !(await page.locator('.companion-feedback__content').getByText(/伙伴有了新活动/).isVisible()) &&
+        (await readSaved(page)).data.revision === settledRevision)
       await page.reload()
-      check('Reload never repeats an unlock notice or ending', !(await page.locator('.companion-feedback__content').getByText(/伙伴有了新活动/).isVisible()) && await sceneAttribute(page, 'phase') === 'idle')
+      check('Reload never replays an ending or access notice',
+        !(await page.locator('.companion-feedback__content').getByText(/伙伴有了新活动/).isVisible()) && await sceneAttribute(page, 'phase') === 'idle')
     }
   }
-  const unlocked = (await readSaved(page)).data.scenes.unlocked.map(x => x.sceneId).sort()
-  check('All five unlock thresholds grant exactly once', JSON.stringify(unlocked) === JSON.stringify(['F4', 'F5', 'F6', 'F7', 'F8']))
+  check('Four full focus sessions still suggest a long break', (await readSaved(page)).data.timer.phase === 'longBreak')
 
   await focusReady(page)
   await primary.click()
-  const finalActive = await untilSaved(page, s => !!s.timer.session, 'unlocked stars start')
-  check('Final unlocked scene is usable on next start', await sceneAttribute(page, '') === 'F8')
+  const finalActive = await untilSaved(page, s => !!s.timer.session, 'cross-tab focus start')
+  const finalScene = finalActive.timer.session.scene.sceneId
+  check('Later sessions retain full-pool selection without an immediate repeat', focusPool.includes(finalScene) && finalScene !== lastScene)
   const second = await context.newPage()
   observe(second)
   await second.clock.install({ time: new Date(await page.evaluate(() => Date.now())) })
   await second.goto(appUrl)
-  check('Another tab agrees on the running scene without an entrance', await sceneAttribute(second, '') === 'F8' && await sceneAttribute(second, 'phase') === 'idle')
-  check('Another tab does not replay claimed unlock notices', !(await second.locator('.companion-feedback__content').getByText(/伙伴有了新活动/).isVisible()))
+  check('Another tab agrees on the running scene without an entrance', await sceneAttribute(second, '') === finalScene && await sceneAttribute(second, 'phase') === 'idle')
+  check('Another tab has no scene-access notices', !(await second.locator('.companion-feedback__content').getByText(/伙伴有了新活动/).isVisible()))
   await second.close()
   await page.bringToFront()
 
@@ -190,7 +211,7 @@ try {
   await page.getByRole('switch', { name: '伙伴小场景', exact: true }).check()
   await page.getByRole('switch', { name: '伙伴动画', exact: true }).uncheck()
   await page.getByRole('button', { name: '关闭设置，回到专注', exact: true }).click()
-  check('Restoring variety retains assignment; app motion off is static', await sceneAttribute(page, '') === 'F8' && await svg.evaluate(el => el.getAnimations({ subtree: true }).length === 0))
+  check('Restoring variety retains assignment; app motion off is static', await sceneAttribute(page, '') === finalScene && await svg.evaluate(el => el.getAnimations({ subtree: true }).length === 0))
   await endEarly(page)
   const focusRecords = (await readSaved(page)).data.records.length
   const restScenes = []

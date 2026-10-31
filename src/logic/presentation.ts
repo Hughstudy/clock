@@ -3,7 +3,7 @@ import { endingTierForElapsed } from './scenes'
 import type { AppSnapshot, SceneId } from './types'
 
 /** Contract version for the main → animation boundary. Bump when a field's meaning changes. */
-export const PRESENTATION_CONTRACT = 'C2-P2'
+export const PRESENTATION_CONTRACT = 'C2-P3'
 
 /** Semantic results a renderer may react to. No species, asset, reward or ranking identity. */
 export const CUE_KINDS = ['welcome', 'begin', 'pause', 'resume', 'settle', 'rest', 'thought-saved', 'support'] as const
@@ -29,7 +29,7 @@ export interface CompanionScene {
   sessionId: string
   phase: 'focus' | 'break'
   status: 'running' | 'paused' | 'ended'
-  /** Completed proportion, clamped and quantized to 1/100; rest always uses zero. */
+  /** Main-owned completed proportion, clamped to [0, 1] without quantization; rest uses zero. */
   completedProgress: number
   /** The host suppresses beats while another input/panel needs attention. */
   allowBeats: boolean
@@ -101,7 +101,7 @@ export function companionSceneOf(snapshot: AppSnapshot, cue: PresentationCue | n
   const keyFor = (id: string, version: number) => `${snapshot.datasetGeneration}:${id}:scene-v${version}`
   if (session?.scene) {
     const phase = snapshot.timer.phase === 'focus' ? 'focus' : 'break'
-    const progress = Number.isFinite(options.completedProgress) ? Math.floor(Math.min(1, Math.max(0, options.completedProgress)) * 100) / 100 : 0
+    const progress = Number.isFinite(options.completedProgress) ? Math.min(1, Math.max(0, options.completedProgress)) : 0
     const matchedCue = allowed && cue && (cue.sessionId === session.id || cue.kind === 'support') ? cue : null
     return {
       key: keyFor(session.id, session.scene.selectionVersion), id: session.scene.sceneId,
@@ -119,7 +119,7 @@ export function companionSceneOf(snapshot: AppSnapshot, cue: PresentationCue | n
   return {
     key: keyFor(ended.sessionId, ended.scene.selectionVersion), id: ended.scene.sceneId,
     sessionId: ended.sessionId, phase: ended.phase === 'focus' ? 'focus' : 'break', status: 'ended',
-    completedProgress: record && record.targetMs > 0 ? Math.floor(Math.min(1, record.elapsedMs / record.targetMs) * 100) / 100 : 0,
+    completedProgress: record && record.targetMs > 0 ? Math.min(1, record.elapsedMs / record.targetMs) : 0,
     allowBeats: true, cue,
     ending: { cueId: cue.id, tier: record ? endingTierForElapsed(record.elapsedMs) : null },
   }

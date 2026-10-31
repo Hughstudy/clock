@@ -1,9 +1,9 @@
 import { applySettingsPatch, isValidDuration, sameSettings, type SettingsPatch } from './settings'
-import { claimSceneAnnouncement, grantSceneUnlocks, selectScene } from './scenes'
+import { selectScene } from './scenes'
 import type { Spec } from './spec'
 import { canRestore, isLive, normalizeStep, normalizeThoughtText, purgeExpiredText, sameDraft } from './thoughts'
 import { breakAfterFocus, expireSession, pauseSession, remainingMs, resetSession, resumeSession, skipBreak, startSession } from './timer'
-import type { AppSnapshot, DateKey, FocusRecord, FocusSceneId, Phase, Settings, Thought } from './types'
+import type { AppSnapshot, DateKey, FocusRecord, Phase, Settings, Thought } from './types'
 
 export type ThoughtAction =
   /** One tap: an empty marker, linked to the running or paused focus session if there is one. */
@@ -22,8 +22,6 @@ export type AppAction =
   | { type: 'pause' | 'resume' | 'end'; sessionId?: string }
   | { type: 'skipBreak' }
   | { type: 'updateSettings'; patch: SettingsPatch }
-  /** Claim before display, inside the shared snapshot transaction. */
-  | { type: 'claimSceneAnnouncement'; sceneId: FocusSceneId }
   | ThoughtAction
 
 export interface ActionContext {
@@ -49,8 +47,6 @@ export interface Transition {
   /** The thought an action changed. `rejected` when the target was deleted or the request no longer applies. */
   thought: { id: string; change: ThoughtChange | 'rejected' } | null
   changed: boolean
-  /** Only the winning claim may be shown, and only after confirmed persistence. */
-  sceneAnnouncement?: FocusSceneId
 }
 
 const unchanged = (snapshot: AppSnapshot): Transition => ({ snapshot, completion: null, ended: null, thought: null, changed: false })
@@ -63,9 +59,6 @@ export function nextFocusMinutes(snapshot: AppSnapshot, spec: Spec): number {
 
 /** Settle at most one phase, without starting the next phase. */
 export function reconcile(snapshot: AppSnapshot, ctx: ActionContext, spec: Spec): Transition {
-  const granted = grantSceneUnlocks(snapshot.scenes, snapshot.records)
-  const grantsChanged = granted !== snapshot.scenes
-  if (grantsChanged) snapshot = { ...snapshot, scenes: granted }
   const active = snapshot.timer.session
   // A delayed write must not revive a session that already has an end record.
   const known = active && snapshot.records.find((r) => r.sessionId === active.id)
@@ -75,7 +68,7 @@ export function reconcile(snapshot: AppSnapshot, ctx: ActionContext, spec: Spec)
     return { ...unchanged(snapshot), snapshot: { ...snapshot, timer: { phase, session: null, completedFocusCount: count } }, changed: true }
   }
   const { timer, expired } = expireSession(snapshot.timer, ctx.now, spec.timer.longBreakEvery)
-  if (!expired) return { ...unchanged(snapshot), changed: grantsChanged }
+  if (!expired) return unchanged(snapshot)
   const ended: FocusRecord | null = expired.phase === 'focus' ? {
     sessionId: expired.sessionId,
     startedAt: expired.startedAt,
@@ -89,10 +82,10 @@ export function reconcile(snapshot: AppSnapshot, ctx: ActionContext, spec: Spec)
     ...(active?.scene ? { scene: active.scene } : {}),
   } : null
   const records = ended ? [...snapshot.records, ended] : snapshot.records
-  const scenes = grantSceneUnlocks({ ...snapshot.scenes, lastEnded: active?.scene ? {
+  const scenes: AppSnapshot['scenes'] = { ...snapshot.scenes, lastEnded: active?.scene ? {
     sessionId: active.id, phase: expired.phase === 'focus' ? 'focus' : 'rest', scene: active.scene,
     elapsedMs: expired.durationMs, endedAt: expired.deadline,
-  } : null }, records)
+  } : null }
   return {
     snapshot: { ...snapshot, timer, records, scenes },
     completion: { sessionId: expired.sessionId, phase: expired.phase, deadline: expired.deadline, credited: ended !== null },
@@ -121,7 +114,7 @@ function act(snapshot: AppSnapshot, action: AppAction, ctx: ActionContext, spec:
       const duration = chosen ?? (focus ? nextFocusMinutes(snapshot, spec) : undefined)
       const step = focus && action.type === 'start' ? normalizeStep(action.step, spec.timer.stepMaxLength) : null
       const started = startSession(timer, snapshot.settings, now, action.sessionId, action.timeZone, duration, step)
-      const selection = selectScene(snapshot.scenes, focus ? 'focus' : 'rest')
+      const selection = selectScene(snapshot.scenes, focus ? 'focus' : 'rest', action.sessionId)
       return {
         ...unchanged(snapshot), changed: true,
         snapshot: { ...snapshot, timer: { ...started, session: started.session ? { ...started.session, scene: selection.assignment } : null }, scenes: selection.scenes,
@@ -168,13 +161,6 @@ function act(snapshot: AppSnapshot, action: AppAction, ctx: ActionContext, spec:
         sessionId: session.id, phase: 'rest', scene: session.scene,
         elapsedMs: session.durationMs - remainingMs(snapshot.timer, snapshot.settings, now), endedAt: now,
       } } } }
-    }
-    case 'claimSceneAnnouncement': {
-      if (snapshot.timer.session) return unchanged(snapshot)
-      const scenes = claimSceneAnnouncement(snapshot.scenes, action.sceneId)
-      return scenes === snapshot.scenes ? unchanged(snapshot) : {
-        ...unchanged(snapshot), snapshot: { ...snapshot, scenes }, changed: true, sceneAnnouncement: action.sceneId,
-      }
     }
     case 'updateSettings': {
       const settings = applySettingsPatch(snapshot.settings, action.patch, spec)
@@ -248,8 +234,7 @@ export function applyAction(snapshot: AppSnapshot, action: AppAction, ctx: Actio
   const purged = thoughts !== settled.snapshot.thoughts
   const next = act(purged ? { ...settled.snapshot, thoughts } : settled.snapshot, action, ctx, spec)
   return { snapshot: next.snapshot, completion: settled.completion, ended: next.ended ?? settled.ended, thought: next.thought,
-    changed: settled.changed || purged || next.changed,
-    ...(next.sceneAnnouncement ? { sceneAnnouncement: next.sceneAnnouncement } : {}) }
+    changed: settled.changed || purged || next.changed }
 }
 
 export function shouldChime(completion: Completion, now: number, settings: Settings, spec: Spec): boolean {

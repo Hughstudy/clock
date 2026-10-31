@@ -62,3 +62,4 @@ input[type='range'] { width: 100%; accent-color: #397fba; }
   .preview__checks { padding: 20px; }
   .preview__checks-heading { align-items: start; flex-direction: column; gap: 18px; }
 }
+.preview__contact-grid { grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); }

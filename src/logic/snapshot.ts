@@ -1,13 +1,13 @@
 import { isDateKey } from './calendar'
 import { defaultSettings, isValidDuration, sanitizeSettings } from './settings'
-import { grantSceneUnlocks, hasMissingScenes, initialScenes, isFocusSceneId, isSceneId, mergeSceneStates, selectScene } from './scenes'
+import { hasMissingScenes, initialScenes, isFocusSceneId, isSceneId, mergeSceneStates, selectScene } from './scenes'
 import type { Spec } from './spec'
 import { hasNewerThoughts, mergeThoughts } from './thoughts'
 import { initialTimer } from './timer'
 import { PHASES, type AppSnapshot, type FocusRecord, type FocusSceneId, type ParticipationRecord, type Phase, type SceneAssignment, type SceneRotation, type SceneState, type SceneUnlock, type Session, type Thought, type ThoughtDraft, type TimerState } from './types'
 
-/** v5 retains session scenes, separate rotation cursors and durable unlock/announcement sets. */
-export const SNAPSHOT_VERSION = 5
+/** v6 makes every scene available and prevents v5 clients from restoring access gates. */
+export const SNAPSHOT_VERSION = 6
 
 export function createSnapshot(spec: Spec): AppSnapshot {
   return {
@@ -65,8 +65,10 @@ export const MIGRATIONS: Readonly<Record<number, Migration>> = {
     return { ...old, version: 4, records, lastFocusMinutes: null, thoughts: [], thoughtDraft: null,
       timer: timer && session ? { ...timer, session: { ...session, step: null } } : old.timer }
   },
-  // Historical eligibility is granted silently after records have passed validation.
+  // Introduce scene data without inventing historical assignments or grants.
   4: (old) => ({ ...old, version: 5, scenes: initialScenes() }),
+  // Bags are normalized after validation; active and historical assignments stay intact.
+  5: (old) => ({ ...old, version: 6 }),
 }
 
 export type Decoded =
@@ -75,8 +77,8 @@ export type Decoded =
   | { kind: 'newer'; version: number }
 
 function readSceneAssignment(raw: unknown): SceneAssignment | null {
-  return isRecord(raw) && isSceneId(raw.sceneId) && isCount(raw.ordinal) && raw.ordinal > 0 && raw.selectionVersion === 1
-    ? { sceneId: raw.sceneId, ordinal: raw.ordinal, selectionVersion: 1 } : null
+  return isRecord(raw) && isSceneId(raw.sceneId) && isCount(raw.ordinal) && raw.ordinal > 0 && (raw.selectionVersion === 1 || raw.selectionVersion === 2)
+    ? { sceneId: raw.sceneId, ordinal: raw.ordinal, selectionVersion: raw.selectionVersion } : null
 }
 
 function readSession(raw: unknown, issues: string[]): Session | null {
@@ -255,11 +257,14 @@ export function decodeSnapshot(text: string, spec: Spec, context: MigrationConte
   const thoughtDraft = readDraft(data.thoughtDraft, spec, issues)
   const lastFocusMinutes = readLastFocus(data.lastFocusMinutes, spec, issues)
   let scenes = readScenes(data.scenes, issues)
+  if (raw.version < 6) {
+    // Only future selections change; keep ordinals and last IDs for repeat avoidance.
+    scenes = { ...scenes, focus: { ...scenes.focus, remaining: [] }, rest: { ...scenes.rest, remaining: [] } }
+  }
   if (raw.version < 5) {
-    scenes = grantSceneUnlocks(scenes, records, true)
     // An upgraded active timer gets one durable assignment without a fresh begin cue.
     if (timer.session) {
-      const selected = selectScene(scenes, timer.phase === 'focus' ? 'focus' : 'rest')
+      const selected = selectScene(scenes, timer.phase === 'focus' ? 'focus' : 'rest', timer.session.id)
       scenes = selected.scenes
       timer = { ...timer, session: { ...timer.session, scene: selected.assignment } }
     }
@@ -296,7 +301,7 @@ export function mergeSnapshots(a: AppSnapshot, b: AppSnapshot): AppSnapshot {
   if (!missing.length && !missingParticipation.length && thoughts === base.thoughts && scenes === base.scenes) return base
   const records = [...base.records, ...missing].sort((x, y) => x.endedAt - y.endedAt || x.sessionId.localeCompare(y.sessionId))
   return { ...base, records, participations: [...base.participations, ...missingParticipation].sort((x, y) => x.sessionId.localeCompare(y.sessionId)),
-    thoughts: [...thoughts], scenes: grantSceneUnlocks(scenes, records),
+    thoughts: [...thoughts], scenes,
     timer: { ...base.timer, completedFocusCount: Math.max(base.timer.completedFocusCount, records.filter((r) => r.endReason === 'deadline').length) } }
 }
 

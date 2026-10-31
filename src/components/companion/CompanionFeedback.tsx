@@ -19,9 +19,6 @@ interface Props {
   bookmarkState?: 'available' | 'saving' | 'saved' | 'failed'
   /** Omit routine timer status that another element already shows; results and errors stay. */
   quietStatus?: boolean
-  /** A main-owned, already-saved unlock claim. Announced by the app's one live region. */
-  sceneNotice?: string | null
-  onDismissSceneNotice?: () => void
 }
 
 function Placeholder() {
@@ -35,7 +32,7 @@ function Placeholder() {
 }
 
 /** Presentation only: all operations are callbacks, including saved/failed bookmark state. */
-export function CompanionFeedback({ feedback, reducedMotion, motionEnabled = false, renderCharacter, onNext, onBookmark, onDismiss, onRequest, announce = true, bookmarkState = 'available', quietStatus = false, sceneNotice, onDismissSceneNotice }: Props) {
+export function CompanionFeedback({ feedback, reducedMotion, motionEnabled = false, renderCharacter, onNext, onBookmark, onDismiss, onRequest, announce = true, bookmarkState = 'available', quietStatus = false }: Props) {
   const { frame, announcement } = feedback
   const { presentation, labels } = useCompanionView(feedback, reducedMotion, motionEnabled)
   const requested = frame.placement === 'requested' && frame.encouragement !== null
@@ -50,12 +47,10 @@ export function CompanionFeedback({ feedback, reducedMotion, motionEnabled = fal
       <div className="companion-feedback__content">
         {(frame.persistence !== 'saved' || frame.status.kind === 'error' || frame.status.result || (!frame.encouragement && !quietStatus)) && <p className={`companion-feedback__status${frame.status.kind === 'error' ? ' companion-feedback__status--error' : ''}`}>{frame.status.text}</p>}
         {frame.encouragement && <p className="companion-feedback__copy">{frame.encouragement.text}</p>}
-        {sceneNotice && <p className="companion-feedback__status">{sceneNotice}</p>}
         <div className="companion-feedback__actions">
           {requested && onNext && <button type="button" onClick={onNext}>{labels.next}</button>}
           {requested && onBookmark && <button type="button" onClick={onBookmark} disabled={bookmarkState === 'saving' || bookmarkState === 'saved'}>{bookmarkState === 'saved' ? labels.bookmarked : bookmarkState === 'saving' ? '正在收藏…' : labels.bookmark}</button>}
           {requested && onDismiss && <button type="button" onClick={onDismiss}>收起</button>}
-          {sceneNotice && onDismissSceneNotice && <button type="button" onClick={onDismissSceneNotice}>知道了</button>}
         </div>
       </div>
       {announce && <span className="companion-feedback__live" aria-live={announcement?.priority ?? 'polite'} aria-atomic="true">{announcement?.text ?? ''}</span>}

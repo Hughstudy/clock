@@ -11,7 +11,7 @@ import { applyAction, shouldChime, type AppAction, type ThoughtChange } from '..
 import { feedbackFromTransition, type AppFeedbackEvent } from '../logic/feedback-host'
 import type { FeedbackEvent } from '../logic/feedback'
 import type { SettingsPatch } from '../logic/settings'
-import type { AppSnapshot, FocusSceneId } from '../logic/types'
+import type { AppSnapshot } from '../logic/types'
 
 export type UserAction =
   | { type: 'start'; durationMinutes?: number; step?: string }
@@ -22,7 +22,6 @@ export type UserAction =
   | { type: 'skipBreak' }
   | { type: 'retrySave' }
   | { type: 'updateSettings'; patch: SettingsPatch }
-  | { type: 'claimSceneAnnouncement'; sceneId: FocusSceneId }
   | { type: 'markThought' }
   /** Without `thoughtId`, creates a new thought. */
   | { type: 'saveThoughtText'; thoughtId?: string; text: string }
@@ -49,8 +48,6 @@ export interface ClockApp {
   saveState: SaveState
   feedbackEvent: AppFeedbackEvent | null
   thoughtResult: ThoughtResult | null
-  /** Local receipt of an atomically saved claim; never reconstructed on reload. */
-  sceneAnnouncement: { id: string; sceneId: FocusSceneId; generation: number } | null
   dispatch: (action: UserAction) => void
 }
 
@@ -71,14 +68,11 @@ export function useClockApp(): ClockApp {
   const [saveState, setSaveState] = useState<SaveState>(store.status.persistence)
   const [feedbackEvent, setFeedbackEvent] = useState<AppFeedbackEvent | null>(null)
   const [thoughtResult, setThoughtResult] = useState<ThoughtResult | null>(null)
-  const [sceneAnnouncement, setSceneAnnouncement] = useState<ClockApp['sceneAnnouncement']>(null)
   const inFlight = useRef(0)
   const retryAction = useRef<{ action: AppAction; id: string } | null>(null)
   const lastMarkAt = useRef(Number.NEGATIVE_INFINITY)
-  const userIntentVersion = useRef(0)
 
   const commit = useCallback(async (action: AppAction, { origin = 'user', operationId = newId(), quiet = false }: CommitOptions = {}) => {
-    const claimIntentVersion = userIntentVersion.current
     const silent = origin === 'restore' || origin === 'sync'
     const thoughtId = 'thoughtId' in action && action.thoughtId ? action.thoughtId : null
     inFlight.current += 1
@@ -93,9 +87,6 @@ export function useClockApp(): ClockApp {
       setView({ snapshot: result.snapshot, saveError: result.error, ...store.status })
       setSaveState(store.status.persistence !== 'saved' ? store.status.persistence : result.saved ? 'saved' : 'pending')
       const { transition, before } = result.value
-      if (transition.sceneAnnouncement && result.saved && claimIntentVersion === userIntentVersion.current) {
-        setSceneAnnouncement({ id: operationId, sceneId: transition.sceneAnnouncement, generation: result.snapshot.datasetGeneration })
-      }
       if (!quiet || !result.saved) {
         setFeedbackEvent(feedbackFromTransition(before, { ...transition, snapshot: result.snapshot }, action,
           { id: operationId, atMs: nowMs(), origin }, result.saved))
@@ -151,10 +142,6 @@ export function useClockApp(): ClockApp {
 
   const dispatch = useCallback((action: UserAction) => {
     if (store.status.persistence === 'read-only') return
-    if (action.type !== 'claimSceneAnnouncement') {
-      userIntentVersion.current += 1
-      setSceneAnnouncement(null)
-    }
     if (action.type === 'start' || action.type === 'startBreak' || action.type === 'resume') chime.unlock()
     if (action.type === 'updateSettings' && action.patch.soundEnabled === true) { chime.unlock(); chime.play() }
     switch (action.type) {
@@ -183,15 +170,10 @@ export function useClockApp(): ClockApp {
       case 'saveThoughtDraft':
       case 'discardThoughtDraft':
         return void commit(action, { quiet: true })
-      case 'claimSceneAnnouncement':
-        // With no Web Locks this store is read-only (or memory-only). Neither
-        // can safely issue an at-most-once saved announcement.
-        if (store.status.persistence !== 'saved') return
-        return void commit(action, { quiet: true })
       default:
         return void commit(action)
     }
   }, [store, commit, chime, view.snapshot.timer])
 
-  return { ...view, saveState, feedbackEvent, thoughtResult, sceneAnnouncement, dispatch }
+  return { ...view, saveState, feedbackEvent, thoughtResult, dispatch }
 }

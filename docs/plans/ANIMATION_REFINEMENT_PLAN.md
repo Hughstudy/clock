@@ -1,160 +1,51 @@
-# Animation refinement: clarity, continuity and progress
+# Animation refinement: implemented prototype
 
-Status: review draft, 2026-10-30. **Plan and concept artwork only; application changes have not started.** This follows the user's request to plan first. The current implementation baseline is `1808c90` (C2-P2, snapshot v5). This document refines the animation workstream; it is not a new live ownership register.
+Status: implemented and validated in desktop Chrome, 2026-10-31. The user explicitly approved refining all keyframes, implementing the animation, validating and publishing directly to main. The selected character remains the soft blue creature with rounded hands. This increment does not complete the wider P0 plan or physical-device acceptance.
 
-## Latest direction
+## Production drawing and motion
 
-- Make the activity readable and its motion smooth, with a consistent character, material and movement vocabulary across all eleven scenes.
-- Show meaningful change as session time passes. Tea is the reference: a quiet kettle develops more steam, then becomes ready to pour and drink.
-- Prepare critical animation storyboards before application implementation.
-- Give the tea activity a real table and natural object placement, and apply the same composition work to every scene rather than refining tea alone.
-- Latest tea revision: **one cup and a small table**. The user found the previous hands unnatural; replace the stretched generic arm shapes with short, rounded poses and a readable cup grip. The revised tea title is “A quiet cup of tea.”
-- Latest catalogue revision: redraw the hands in every other scene using the tea reference. Replace the food scene's confusing right-side pot/lid shapes with **preparing several dishes**: vegetables, rice and soup.
-- Remove completion-based scene restrictions. Every shipped scene is available immediately and a scene is selected randomly for each new session.
+All eleven scenes use one deterministic pose sampler and persistent SVG renderer. Shoulders, rounded arm outlines, hand grips and held objects are sampled together. Each object keeps its identity and physical scale; tables, mats, cushions and trays supply stable support. No physics dependency or business-state callback was added.
 
-The final point supersedes the 2026-10-29 scene-unlock decision and the 1/3/6/10/15 thresholds in the existing Start Scenes Plan. Those rules still describe the current code, not the desired next behavior. Other reward, bookmark and memento proposals are outside this change.
+The earlier concept generator has been replaced by an exporter of the actual production geometry. `python3 docs/plans/assets/build-storyboards.py` now runs that exporter. The [catalogue data](assets/scene-storyboards.json) contains 44 landmarks and the [contact data](assets/scene-contact-storyboards.json) contains 40 intermediate drawings. Labels and sample definitions remain design data; geometry comes from the same renderer as the app.
 
-The live PRD and register Library links could not be fetched in this review. The supplied PRD v3/revision 7 and register snapshots remain the source baseline; the user's latest direction above is explicit. No remote register was edited.
-
-## What needs fixing
-
-Code inspection and the existing static gallery identify concrete continuity and clarity problems. These are not a measured diagnosis of device frame rate.
-
-| Current behavior | Evidence | Planned correction |
-| --- | --- | --- |
-| Kettle steam is constant through the session | `src/components/companion/CompanionSceneArt.tsx`, F4 | Make steam amount, cup placement and pose depend on supplied progress |
-| Props remount on entrance/beat/ending changes | `src/components/companion/BlueCompanion.tsx`, `sceneLayer` key includes `motionId` | Keep the scene mounted for its saved session identity; restart only the relevant finite gesture |
-| Every finite gesture stops and restarts ambient motion | `src/hooks/companion/useCompanionScene.ts`, `ambientAllowed` | Separate ambient motion from the action; override only the joints or layers the action uses |
-| Growth and new objects appear at hard thresholds | `CompanionSceneArt.tsx`, F2/F6/F7/F8 | Use continuous shape/opacity changes or a readable placement action with a static destination |
-| Hands and objects do not always move together | Scene arm mapping and `src/styles/companion-scenes.css` | Define hand-to-prop contact anchors and choreograph each interaction as one action |
-| Current tests mostly verify states/lifecycle | `preview/animation/main.tsx`, `scripts/scene-e2e.mjs` | Add motion recordings, continuity inspection and measured browser performance |
-
-## Storyboards before implementation
-
-The revised [tea progression drawing](assets/tea-progression-storyboard.svg) uses one cup on a small side table beside the companion. The kettle stays supported on its base. Idle arms use the original relaxed curves; separate reach and lift poses keep the elbow soft, the palm at the cup handle and the lifted cup close to the torso. This replaces the prior wide table/two-cup composition and generic stretched arm paths, which the user rejected as unnatural. The review pack covers all eleven activities with four-frame scene sheets, linked in the catalogue below, and shared [storyboard data](assets/scene-storyboards.json). These are schematic composition and progression drafts, not replacement mascot artwork, implemented scenes or evidence of smooth playback. Keep the selected blue creature and existing SVG/sketch direction.
-
-### Natural placement across every scene
-
-The user's table request establishes a catalogue-wide composition rule: every object has a believable place to rest, and every lifted object has visible support. A table drawn underneath a floating kettle does not satisfy it.
-
-- **Support planes:** kettle and cups sit on a tabletop or tray; book and paper have a desk/lap surface; blocks stand on a mat; rest poses use a cushion or ground plane. Use the smallest setting that makes the activity natural, without adding full rooms or unrelated furniture.
-- **Contact and weight:** show the pot/cup base meeting its support, fingers meeting a handle or page edge, and the creature's feet/body meeting a cushion or ground. Contact shadows stay attached to the resting object and soften when it is lifted.
-- **Perspective and scale:** use a consistent tabletop depth, ellipse angle, ground plane and light direction. Size the kettle, cup, book and hands so their function is readable at phone size; do not enlarge a prop until it overwhelms the creature.
-- **Layer order:** a hand behind a handle, a hand holding a cup, and a prop resting in front of the body have intentional occlusion. Show a supported resting position before and after a lift; never make a cup appear inside a hand or let a moving prop pass through the table.
-- **Composition:** preserve the companion's face, fixed clock badge and factual feedback area. A surface anchors the activity; it must not become a platform for moving controls or reduce their hit areas. Simplify secondary detail at narrow widths before shrinking the main action.
-
-Each scene sheet presents four readable states using these same rules. Focus sheets use 0/40/75/100% landmarks; rest sheets use four unhurried action beats rather than a completion target. Actual tabletop geometry, grip trajectories, animation timing and small-screen fit remain subject to visual review and later motion validation.
-
-The latest catalogue pass replaces the shared endpoint-based arm generator in all ten non-tea sheets. Resting poses reuse the creature's original short arms; active poses have rounded elbows/palms drawn for the action. Body lean and resting-arm transforms match, while page/ribbon and cup-lift poses keep their shoulder roots fixed. Bring the plant pot, wand and block tower into reach rather than stretching a limb. Book and paper have broad supporting palms; warm drink uses a close two-handed hold. The tower's final hand relaxes after placement so the flag remains visible. These are new review drawings, not a claim that the user's naturalness concern is resolved without review.
-
-Food now has three clearly separated places on its table: vegetables on the left, rice in front, and soup on the right. A small utensil rest replaces the large ambiguous right-side objects. The four landmarks show laying out the ingredients, preparing the vegetables, plating the rice, and the three finished dishes. The motion pass must connect these states with visible utensil/serving actions; the soup must not simply appear at the last threshold.
-
-| Critical sequence | Keyframes to draw | What review must establish |
-| --- | --- | --- |
-| Tea progression | Setup → first wisps → fuller steam → cup ready | Change is clear at phone size; the kettle never becomes frantic or threatening |
-| Tea pouring | Reach and grasp → lift/tilt → visible pour into cup → lower/offer cup | Both hand contacts, kettle spout, stream and cup stay aligned; no cup appears abruptly |
-| Book page turn | Reach → hold corner → page arcs across → release and settle | One understandable action, with gaze following the page and stable book support |
-| Paper boat | Flat sheet → crease → triangle → open hull → boat | Intermediate silhouettes connect; paper does not instantly switch to a boat |
-| Shared interruption | Activity → touch → release; activity → pause → resume; end interrupted by new start | No pose snap, prop jump or old gesture replay; controls stay immediately usable |
-
-The all-scene composition sheets are supplied in this planning pass. The next motion-design pass should expand the critical actions above into four or five contact drawings with movement arrows, proposed timing, and static/reduced-motion destinations. That pass adds the actual pouring/page-turn/folding trajectories and interruption transitions; it does not defer the other scenes' basic design. Review at the actual 320/375/430 layout sizes before production animation work.
-
-### Tea progress proposal
-
-Percentages are storyboard landmarks, not new business thresholds or hard visual switches.
-
-| Session progress | Visible state |
+| Scene | Implemented progression and contact |
 | --- | --- |
-| 0% | Kettle and one cup rest on a small side table; both short arms rest close to the body; little or no steam |
-| Around 40% | Two soft steam wisps; occasional glance at the kettle; table and resting objects stay fixed |
-| Around 75% | Fuller steam; one arm makes a short curved reach to the near cup handle, while the other stays relaxed |
-| 100% | The same cup is held close to the torso, with a palm beneath/alongside the base and the other hand at the handle; the kettle stays on the table |
+| [Food](assets/scene-storyboards/F1-food.svg) | Ingredients → vegetables prepared → rice plated → warm soup completes the meal. Two small spoons have nearby rests and supported, continuous pickup/return paths. |
+| [Plant](assets/scene-storyboards/F2-plant.svg) | A supported pot, rounded palm and continuous leaf/bud/flower development. |
+| [Book](assets/scene-storyboards/F3-book.svg) | Page-corner reach → page arc and release → ribbon placement → shallow closed book on the table. |
+| [Tea](assets/scene-storyboards/F4-tea.svg) | Exactly one constant-sized cup on a small table; increasing kettle steam, supported pouring, visible filling, then a close two-handed cup hold. |
+| [Bubbles](assets/scene-storyboards/F5-bubbles.svg) | A rigid wand lifts and turns from the jar; a rounded hand and blow stroke connect the action to the bubbles. |
+| [Boat](assets/scene-storyboards/F6-boat.svg) | Asymmetric folding, a recognizable hull, and a constant-sized supported boat lowered into a tray present from the start. |
+| [Blocks](assets/scene-storyboards/F7-blocks.svg) | Four persistent blocks move from nearby spare positions onto the base. The flag starts on the mat and stays visible after placement. |
+| [Stars](assets/scene-storyboards/F8-stars.svg) | Supported rest, upward gaze and a gradually fuller sky. |
+| [Stretch](assets/scene-storyboards/R1-stretch.svg) | Rounded arms rotate upward without losing volume; feet remain planted. |
+| [Clouds](assets/scene-storyboards/R2-clouds.svg) | Relaxed cushion contact, subtle gaze and independently drifting clouds. |
+| [Warm drink](assets/scene-storyboards/R3-drink.svg) | Two-handed sip with shared rotated cup anchors; an ending places the cup on the nearby saucer before releasing the handle. |
 
-The table is beside the creature rather than spanning the full stage. The cup's parked position is within a short arm's reach, so neither shoulder nor hand must stretch to meet it. Preserve a continuous rounded shoulder–elbow–palm silhouette and intentional overlap at the grip. Do not mistake mere endpoint contact for a natural pose. The tea poses serve as the reference for the revised catalogue; the user's continuation to other keyframes does not approve production motion or all other hand geometry. Pouring remains a separate motion-detail sheet before implementation.
+Contact sheets cover [pouring](assets/scene-contact-storyboards/tea-pour.svg), [cup lifting](assets/scene-contact-storyboards/tea-cup.svg), [food preparation](assets/scene-contact-storyboards/food-serving.svg), [page turning](assets/scene-contact-storyboards/book-page.svg), [folding and lowering](assets/scene-contact-storyboards/boat-fold.svg), [wand rotation](assets/scene-contact-storyboards/wand-turn.svg), [block placement](assets/scene-contact-storyboards/block-place.svg) and [sipping/set-down](assets/scene-contact-storyboards/drink-sip.svg).
 
-Between the reach and lifted hold, show a deliberate two-hand transfer: the right hand joins the handle while the left slides beneath the cup. The cup remains supported throughout; do not jump from the left-hand grip in the reach drawing to the right-hand grip in the final drawing. The four static landmarks do not replace this intermediate motion.
+## Timing, progress and interruption
 
-Steam grows in amount and shape, not simply in speed. A completed five-minute session reaches the same readiness as a completed twenty-five-minute session. The exact timer remains a separate factual badge; the artwork is a metaphor for session progress, not a claim about attention or real boiling time.
+- C2-P3 supplies clamped, unquantized completed focus progress. Rest continues to receive zero; its unhurried actions are presentation only.
+- Growth, steam and sky detail use precise supplied progress. Handling has supported destinations at 0/40/75/100%. Once a landmark is achieved, the local handling cursor moves to it over 2,600 ms. A cup lift therefore takes seconds instead of stretching across minutes. The cursor never goes beyond main's supplied progress.
+- Simple entrances/beats use 160 ms anticipation + 640 ms action + 320 ms settling, with smooth zero-velocity phase boundaries. Breathing is 5 seconds; steam is 4 seconds. Sparse beats retain the 60–90-second cadence. Ending lengths retain validated main-independent presentation parameters.
+- Scene nodes remain mounted for their saved scene identity. Ambient loops do not restart for finite actions; paused loops keep their playback position.
+- Pause/touch freezes the current supported configuration. On return, an unfinished local path can settle without replaying a semantic cue. A held cup retains support; greetings/touch use an available limb or expression. Endings capture the current local action position, so an interrupted sip or stretch continues from its visible pose.
+- Attention suppression, hidden pages, errors and reduced motion settle to the current meaningful static state. Returning never catches up missed gestures. Controls remain usable throughout.
+- Completed short and long sessions reach the final state. Early endings retain achieved progress and receive a warm closing response. Rendering never asserts that a save succeeded or awards credit.
 
-Pause preserves the achieved stage and rests the hands. Resume continues the same activity. An early end closes warmly from the achieved stage, without snapping progress or steam to 100%. A friendly cup/closing gesture remains available at any duration: tea and happiness are never withheld. Existing actual-time ending variants may add different details, but cannot leave a short completed session looking unfinished. A saved ending gesture remains dependent on the host's permitted cue; progress alone never asserts a save.
+## Immediate scene access and compatibility
 
-## One movement system across the catalogue
+Every focus scene F1–F8 and rest scene R1–R3 is available from the first session. Independent saved shuffled bags cover each pool and avoid adjacent repeats, including bag boundaries. Stable adapter-generated session identity supplies entropy to pure selection. Accepted selection and the timer save together; retries, resume, reload and rejected starts do not reroll.
 
-Retain SVG/CSS, cached seeded geometry and the stationary stage. No new physics/animation dependency is proposed.
+Snapshot v6 / selection policy v2 preserves existing active and historical v1 assignments. Migration clears only future bag contents, retaining ordinals, cycles, previous selections, timing, records, settings and dataset identity. Legacy unlock/introduction/announcement sets remain inert compatibility history. Active grants, claim actions, notice scheduling and access-pressure wording are removed. Actual completion counts still drive break cadence.
 
-- **Persistent scene:** the same character/prop nodes survive progress updates and ordinary gestures. Stable placement owns its own transform group.
-- **Ambient layer:** slow breath, blink and a small prop loop. Match loop endpoints in both position and apparent speed. One dominant motion at a time.
-- **Progress layer:** smoothly develop the supplied state. Do not replace entire illustrations at thresholds. Use placement/folding actions where fading alone would be unclear.
-- **Action layer:** a common sequence of anticipation → contact/action → follow-through → settle. Hands and held props share anchors; separate transform groups prevent competing CSS animations from overwriting placement.
-- **Interaction layer:** touch takes priority over affected limbs; props remain supported. Resume quiet activity without restarting unrelated loops. Do not queue missed gestures.
-- **Interruption/static policy:** pause, errors, panels, backgrounding and reduced motion still suppress motion where required. Settle to the current meaningful pose. Latest state wins and factual controls never wait.
+The real archived v5 client was exercised against v6 storage: received updates, missed storage events and cold loads all became read-only without changing v6 bytes. Future schema/raw-data protection remains intact.
 
-Preview starting values: 120–220 ms anticipation, 450–900 ms main action, 250–450 ms settle; 4–6 s breathing and 3–5 s steam loops. Keep occasional beats sparse (currently 60–90 s). These are tunable design parameters, not performance promises or approved final values. Use the same easing family, bounded squash, line weight, prop scale, contact logic and shadow behavior throughout.
+## Review and delivery evidence
 
-| Scene sheet | Natural support | Four-state progression |
-| --- | --- | --- |
-| [F1 Food](assets/scene-storyboards/F1-food.svg) | Preparation table, three separate dishes and a small utensil rest | Lay out ingredients → prepare vegetables → plate rice → vegetables, rice and warm soup ready |
-| [F2 Plant](assets/scene-storyboards/F2-plant.svg) | Pot on a bench or planting tray; leaves clear of the face | Shoot → unfolding leaves → bud → flower and pot pat |
-| [F3 Book](assets/scene-storyboards/F3-book.svg) | Book supported by a reading table and broad, rounded palms | Open spread → turn page → place ribbon → close book on table |
-| [F4 Tea](assets/scene-storyboards/F4-tea.svg) | Small side table, kettle base and exactly one cup/saucer; short arms stay within reach | Resting hands → growing steam → near-handle grip → cup held close |
-| [F5 Bubbles](assets/scene-storyboards/F5-bubbles.svg) | Bubble jar rests on a mat; wand is held visibly | Wand dip → small bubble → wider calm composition → heart bubble |
-| [F6 Boat](assets/scene-storyboards/F6-boat.svg) | Folding table/tray, then a shallow water tray | Sheet → triangle → folded hull → boat afloat |
-| [F7 Blocks](assets/scene-storyboards/F7-blocks.svg) | Stable floor mat; nearby tower with visible block-to-block contact | Base → deliberate placements → stable tower → flag visible, hands relaxed |
-| [F8 Stars](assets/scene-storyboards/F8-stars.svg) | Grounded cushion/blanket; sky remains behind the character | Sparse sky → constellation reveal → fuller sky → shooting star |
-| [R1 Stretch](assets/scene-storyboards/R1-stretch.svg) | Feet and seated weight remain on a soft mat | Settle → reach → slow stretch → relaxed breathing |
-| [R2 Clouds](assets/scene-storyboards/R2-clouds.svg) | Cushion or lawn supports a relaxed seated pose | Settle → watch → slow cloud change → comfortable observation |
-| [R3 Warm drink](assets/scene-storyboards/R3-drink.svg) | Side table/coaster nearby; both hands support one cup close to the body | Hold → blow gently → sip → comfortable hold |
+See [Animation refinement verification](../verification/animation-refinement.md) for exact checks, recordings and browser details. The visual correction loop found and resolved collapsed intermediate arms, a stretched kettle grip, an ambiguous closed book, weak boat support, a floating flag and abrupt food-utensil changes. Independent review inspected the corrected contact samples; dense pose tests cover intermediate silhouettes and anchors.
 
-Focus scenes develop against the chosen session's progress. Rest scenes remain leisurely activities available immediately, with no completion requirement or earned readiness. Their motion language matches focus; they need not act as a second countdown. All scenes must be recognizable in their static form.
+The live PRD/Register Library links were unavailable during this continuation. The supplied PRD v3/revision 7 and historical register snapshots were read; the user's approved implementation plan is the current direction. No remote collaboration register was changed.
 
-## Random selection without unlocking
-
-Recommended interpretation: choose among all eight focus scenes on a focus start and all three rest scenes on a rest start. Keep the existing distinct pools; do not mix an active cooking scene into rest by default.
-
-- Use a shuffled bag for random variety with no immediate repeats. Every scene in its pool appears before a new bag is drawn. Seed through explicit injected identity/entropy, not a hidden random call in pure logic; avoid identical fixed starting order for every installation.
-- Select once per accepted logical session and save with that session in the same transaction. Pause, resume, reload, settings edits, retries, rejected starts and cross-tab synchronization do not reroll it.
-- Remove active unlock calculation, newly-unlocked priority, delayed notice claims, unlock notices and “earned scenes” wording. Setting thresholds to zero or hiding the notice is insufficient.
-- Keep scene variety and reduced-motion preferences. Keep focus-completion counts for the existing long-break suggestion, independently of scene availability.
-- Preserve active and historical assignments, records, timer identity/deadline, preferences and dataset generation. Normalize future bags only; do not rewrite a running session to fit the new selection policy.
-- Plan an explicit snapshot v6 / selection-policy revision for compatibility. Legacy unlock metadata may remain inert during migration; it must not gate access, create notices or be recreated as a grant. Test old v5 tabs becoming read-only against newer data; do not force-refresh an active session.
-
-## Contract and implementation boundaries
-
-Main owns selection, migration, true progress, persistence, ending eligibility and accessible factual output. Animation owns pose interpolation, contacts, local timelines and cancellation. No animation callback changes time, records, rewards or storage.
-
-The current C2-P2 host floors focus progress to 1% (15 seconds per step in a 25-minute session), both upstream in `useViews.ts` and in `companionSceneOf`. Prefer a small C2-P3 contract revision supplying main's unquantized normalized focus fraction, removing both quantizers from the scene-progress path. Keep the clock badge's remaining-time meaning separate. The renderer may ease toward received values but cannot advance beyond them or run a second accounting clock. Pause/reload/background return must resolve to the latest host state without catching up missed gestures. Preserve the existing rest-zero meaning unless a separately reviewed rest-progress need emerges.
-
-Main/integration edits: `src/logic/scenes.ts`, scene rules/types/app/snapshot and relevant tests, storage compatibility, `src/logic/presentation.ts`, `src/contracts/presentation.ts` and fixtures, `src/hooks/useViews.ts`, `useClockApp`, feedback plumbing, `CompanionFeedback.tsx`, Settings wording and shared composition only as needed.
-
-Animation edits: `BlueCompanion.tsx`, `CompanionSceneArt.tsx`, `useCompanionScene.ts`, pure scene motion, validated art/motion data, scoped companion styles and `preview/animation/`. Coordinate any shared character transforms with existing touch behavior. Keep one owner for each edited file.
-
-## Delivery order and acceptance
-
-| Step | Deliverable | Review/check |
-| --- | --- | --- |
-| 1. Storyboards | Four-frame composition sheets for all eleven scenes supplied for review; next expand pouring, page turn, folding and interruption contact sequences | Believable support/perspective, recognizable actions, clear silhouette and static outcomes at phone size |
-| 2. Reference motion | Fixture-only tea animatic plus page-turn/fold examples using the shared layer model | Review full-speed and slow-motion video; loop seams, contact and interruption have no visible jump |
-| 3. Main contract and access | Full scene pools, retired unlock behavior, safe migration, precise progress fixtures | Stable session selection and truthful time/save state with a static renderer |
-| 4. Catalogue pass | Apply the reviewed motion rules and progression to all eleven scenes | No scene relies on a generic wobble to explain its main action |
-| 5. Integration and delivery | Production flow checks, recorded evidence, relevant tests/build, commit/push and deployment verification | Only after this plan and visual direction are reviewed; document device limitations honestly |
-
-Meaningful verification after implementation:
-
-- All scenes are selectable with zero completed sessions; no unlock calculation or notice is active. Verify bag coverage/no immediate repeat and independent focus/rest selection.
-- Selection and data survive pause/resume, reload, failed-save retry, two-tab races, v4/v5 migration and stale clients. Preserve short/zero records, expiry deduplication and break cadence.
-- Inspect progress at 0/25/50/75/100%, threshold neighborhoods, 5/25-minute completion, early end, pause exclusion and background recovery. Reduced motion shows the same meaningful progress state without looping.
-- Record full-speed and slow-motion tea, book, boat and touch/cancellation sequences. Check persistent prop nodes, loop continuity, supported hands, steam contrast and no abrupt object substitution.
-- Inspect support at every keyframe: no floating kettle/cup, detached hand, drifting contact shadow, intersecting tabletop, unstable block base or unsupported rest pose. Compare prop scale, perspective and occlusion across all eleven scenes.
-- Measure frame behavior and long tasks on named browser/device configurations. Target stable refresh-rate motion (about 60 fps on a 60 Hz test device); do not claim it from screenshots or automated state assertions.
-- Inspect all eleven scenes at 320/375/430 CSS pixels, 200% text, keyboard/focus, long/error feedback, open thought panel and soft keyboard. Verify fixed hit targets, single host-owned announcements, offline artwork and `/clock/` paths.
-- Run relevant tests, `npm run check`, `BASE_PATH=/clock/ npm run build` and affected production/console checks. Record physical iOS/Android results separately from desktop emulation; unavailable devices remain unverified.
-
-### Static review pack checks — 2026-10-30
-
-The supplied pack contains 11 scene sheets and 44 frame drawings, with shared data for the in-chat scene selector. All SVG fragments/sheets parse and the plan's asset links resolve. The gallery was checked in desktop Chrome 156.0.8078.74 at 320/375/430/736 CSS-pixel viewport widths in light and dark appearance: all 88 scene/width/appearance combinations showed four frames, responded to selection and had no horizontal overflow or page errors. Static visual review covers prop support, hand contact, labels and preservation of the rounded creature across the catalogue.
-
-After the catalogue hand/food correction, all 44 frame fragments and 11 SVG sheets parse; all ten non-tea scene drawings changed and the revised tea sheet is preserved. The new ten-scene selector passed 80 scene/width/appearance combinations in the same desktop Chrome version and widths, with four frames per scene, working selection, no horizontal overflow and no page errors. Static review also caught and corrected an obscured tower flag and a moving shoulder in the bookmark pose. The generic endpoint-arm helper is no longer used by the design generator.
-
-These are checks of the design artifacts, not the production app, animation smoothness, 200% app text, physical phones or final design acceptance. Detailed motion trajectories and app integration still follow review.
-
-This documentation-only planning change needs no dependency installation or application test/build. It does not mark any of the proposed improvements implemented or visually accepted.
+Publication is authorized directly to main. Commit/push and the exact GitHub Pages deployment are verified separately from local validation. The remaining product proposals in PLAN.md retain their review status.

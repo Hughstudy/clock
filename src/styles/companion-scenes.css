@@ -1,134 +1,41 @@
-/* Props share the existing SVG coordinate system. All motion is local; the
-   button, clock, status, and scene footprint remain stationary. */
-.scene-front, .scene-back, .scene-held { pointer-events: none; }
-.scene-pot { transform-origin: 41px 140px; }
-.scene-lid { transform-origin: 24px 8px; }
-.scene-spoon { transform-origin: 40px 5px; }
-.scene-steam { opacity: .65; transform-box: fill-box; transform-origin: center bottom; }
-.scene-plant { transform-origin: 41px 147px; }
-.scene-leaves { transform-origin: 17px -13px; }
-.scene-flower { transform-box: fill-box; transform-origin: center; }
-.scene-butterfly { opacity: 0; transform-box: fill-box; transform-origin: center; }
-.scene-book { transform-origin: 120px 148px; }
-.scene-page { opacity: 0; transform-origin: 36px 20px; }
-.scene-tea { transform-origin: 40px 140px; }
-.scene-cup { transform-box: fill-box; transform-origin: center bottom; }
-.scene-wand { transform-origin: 187px 94px; }
-.scene-bubble { transform-box: fill-box; transform-origin: center; opacity: .65; }
-.scene-paper { transform-origin: 120px 140px; }
-.scene-boat { transform-origin: 34px 16px; }
-.scene-blocks { transform-origin: 36px 146px; }
-.scene-block-top { transform-box: fill-box; transform-origin: center bottom; }
-.scene-star { opacity: .85; transform-box: fill-box; transform-origin: center; }
-.scene-cloud { transform-box: fill-box; transform-origin: center; }
-.scene-stretch-marks { opacity: .7; }
-.scene-serving { transform-box: fill-box; transform-origin: center bottom; }
-.scene-ending-sparks { opacity: .8; }
+/* One stable coordinate system. The sampled rig owns hand/prop contact; CSS
+   only supplies small independent ambient rhythms with matching endpoints. */
+.scene-rig { pointer-events:none; stroke-linecap:round; stroke-linejoin:round; --scene-blue:#79baf0; --scene-line:#3977af; --scene-ink:#204b72; --scene-pale:#ddf1ff; --scene-wood:#f2d8bd; --scene-edge:#e9bf8b; --scene-green:#aed7be; --scene-paper:#fff8e8; --scene-pink:#ffc3b6; }
+.scene-draw-body { fill:var(--scene-blue); stroke:var(--scene-line); stroke-width:1.5; }
+.scene-draw-shade { fill:#5097dc; stroke:var(--scene-line); stroke-width:1.5; }
+.scene-draw-belly { fill:var(--scene-pale); }
+.scene-draw-line,.scene-draw-softline { fill:none; stroke:var(--scene-line); stroke-width:1.6; }
+.scene-draw-softline { opacity:.65;stroke-width:1.2; }
+.scene-draw-ink { fill:var(--scene-ink); }
+.scene-draw-face { fill:none;stroke:var(--scene-ink);stroke-width:2.4; }
+.scene-draw-pink { fill:var(--scene-pink); }
+.scene-draw-shadow { fill:#aac8e4;opacity:.2; }
+.scene-draw-table { fill:var(--scene-wood);stroke:var(--scene-line);stroke-width:1.5; }
+.scene-draw-edge { fill:var(--scene-edge);stroke:var(--scene-line);stroke-width:1.5; }
+.scene-draw-green { fill:var(--scene-green);stroke:var(--scene-line);stroke-width:1.5; }
+.scene-draw-paper { fill:var(--scene-paper);stroke:var(--scene-line);stroke-width:1.5; }
+.scene-draw-water { fill:#d5ecfb;stroke:var(--scene-line);stroke-width:1.4; }
+.scene-draw-light { fill:var(--scene-pale);stroke:var(--scene-line);stroke-width:1.4; }
+.scene-draw-steam { fill:none;stroke:#6f93b3;stroke-width:2; }
+.scene-draw-handle { fill:none;stroke:var(--scene-line);stroke-width:3; }
+.scene-draw-pour { fill:none;stroke:#d29e54;stroke-width:2.4; }
+.scene-rig-steam { animation:scene-rig-steam 4s ease-in-out infinite; transform-box:fill-box;transform-origin:center bottom; }
+.scene-rig[data-scene-part="scene-R2"] .scene-rig-gaze { animation:scene-rig-watch 16s ease-in-out infinite; }
+.scene-rig-cloud { animation:scene-rig-cloud 16s ease-in-out infinite; }
+.scene-rig-bubble { animation:scene-rig-bubble 8s ease-in-out infinite; }
+.scene-rig-star { animation:scene-rig-star 7s ease-in-out infinite; }
+/* Keep supports and arm roots fixed: breathing is limited to the face/body
+   artwork, below one pixel, and is not applied to hands, tables or held props. */
+.scene-rig-breath { animation:scene-rig-breath 5s ease-in-out infinite; transform-origin:120px 164px; }
+.scene-rig-eyes { animation:scene-rig-blink 6.8s linear infinite; transform-origin:120px 95px; }
+.blue-companion[data-scene-motion='false'] .scene-rig * { animation-play-state:paused; }
+.blue-companion[data-static='true'] .scene-rig *, .blue-companion[data-stance='neutral'] .scene-rig * { animation:none!important;transition:none!important; }
+@keyframes scene-rig-steam { 0%,100%{translate:0 0;opacity:.65}50%{translate:1px -2px;opacity:.9} }
+@keyframes scene-rig-cloud { 0%,100%{translate:0 0}50%{translate:5px 0} }
+@keyframes scene-rig-bubble { 0%,100%{translate:0 0}50%{translate:1px -3px} }
+@keyframes scene-rig-star { 0%,100%{opacity:.75}50%{opacity:1} }
+@keyframes scene-rig-breath { 0%,100%{scale:1 1}50%{scale:1.003 1.004} }
+@keyframes scene-rig-blink { 0%,44%,48%,100%{scale:1 1}46%{scale:1 .12} }
+@media(prefers-reduced-motion:reduce){.scene-rig *{animation:none!important;transition:none!important}}
 
-/* The background rhythm is deliberately small. Secondary actions only play
-   when the lifecycle schedules a beat, at least 60 seconds apart. */
-.blue-companion[data-scene-motion='true'] .scene-steam { animation: scene-steam 8s ease-in-out infinite; }
-.blue-companion[data-scene-motion='true'][data-scene='F5'] .scene-bubble { animation: scene-bubble 12s ease-in-out infinite; }
-.blue-companion[data-scene-motion='true'] .scene-bubble--second { animation-delay: -6s; }
-.blue-companion[data-scene-motion='true'][data-scene='F8'] .scene-star { animation: scene-twinkle 10s ease-in-out infinite; }
-.blue-companion[data-scene-motion='true'] .scene-star--second { animation-delay: -5s; }
-.blue-companion[data-scene-motion='true'][data-scene='R2'] .scene-cloud { animation: scene-cloud 16s ease-in-out infinite; }
-/* Holding a prop replaces the generic focus hand loop in blue-companion.css;
-   explicit support and touch gestures retain their hand movement. */
-.blue-companion:not([data-scene=''])[data-scene-motion='false'] .blue-companion__body,
-.blue-companion:not([data-scene=''])[data-scene-motion='false'] .blue-companion__eyes { animation: none; }
-.blue-companion[data-scene='R1'][data-scene-motion='true'] .blue-companion__body { animation: blue-breathe var(--blue-breathing) ease-in-out infinite; }
-
-/* Entrances: the same character begins a different little activity. */
-.blue-companion[data-scene-phase='open'] .scene-pot { animation: scene-place var(--scene-duration) ease-in-out both; }
-.blue-companion[data-scene-phase='open'] .scene-plant { animation: scene-plant-in var(--scene-duration) ease-in-out both; }
-.blue-companion[data-scene-phase='open'][data-scene='F2'] .blue-companion__arm--left { animation: scene-pat var(--scene-duration) ease-in-out both; }
-.blue-companion[data-scene-phase='open'] .scene-book { animation: scene-book-open var(--scene-duration) ease-in-out both; }
-.blue-companion[data-scene-phase='open'] .scene-tea { animation: scene-tea-in var(--scene-duration) ease-in-out both; }
-.blue-companion[data-scene-phase='open'] .scene-wand { animation: scene-wand var(--scene-duration) ease-in-out both; }
-.blue-companion[data-scene-phase='open'] .scene-paper { animation: scene-paper-in var(--scene-duration) ease-in-out both; }
-.blue-companion[data-scene-phase='open'] .scene-blocks { animation: scene-place var(--scene-duration) ease-in-out both; }
-.blue-companion[data-scene-phase='open'] .scene-night { animation: scene-appear var(--scene-duration) ease-out both; }
-.blue-companion[data-scene-phase='open'][data-scene='F8'] .blue-companion__stance { animation: scene-lean var(--scene-duration) ease-in-out both; }
-.blue-companion[data-scene-phase='open'][data-scene='R1'] .blue-companion__arm--left { animation: scene-stretch-left var(--scene-duration) ease-in-out both; }
-.blue-companion[data-scene-phase='open'][data-scene='R1'] .blue-companion__arm--right { animation: scene-stretch-right var(--scene-duration) ease-in-out both; }
-.blue-companion[data-scene-phase='open'][data-scene='R2'] .scene-cloud { animation: scene-cloud-in var(--scene-duration) ease-out both; }
-.blue-companion[data-scene-phase='open'][data-scene='R3'] .scene-cup { animation: scene-toast var(--scene-duration) ease-in-out both; }
-
-/* One rare action at a time. */
-.blue-companion[data-scene-phase='beat'][data-scene='F1'] .scene-lid { animation: scene-peek var(--scene-duration) ease-in-out both; }
-.blue-companion[data-scene-phase='beat'][data-scene='F1'] .blue-companion__arm--left { animation: scene-stir var(--scene-duration) ease-in-out both; }
-.blue-companion[data-scene-phase='beat'] .scene-leaves { animation: scene-leaf var(--scene-duration) ease-in-out both; }
-.blue-companion[data-scene-phase='beat'] .scene-butterfly { animation: scene-butterfly var(--scene-duration) ease-in-out both; }
-.blue-companion[data-scene-phase='beat'] .scene-page { animation: scene-page var(--scene-duration) ease-in-out both; }
-.blue-companion[data-scene-phase='beat'] .scene-tea .scene-lid { animation: scene-peek var(--scene-duration) ease-in-out both; }
-.blue-companion[data-scene-phase='beat'] .scene-wand { animation: scene-wand var(--scene-duration) ease-in-out both; }
-.blue-companion[data-scene-phase='beat'] .scene-paper { animation: scene-paper-fold var(--scene-duration) ease-in-out both; }
-.blue-companion[data-scene-phase='beat'] .scene-blocks { animation: scene-block-wobble var(--scene-duration) ease-in-out both; }
-.blue-companion[data-scene-phase='beat'][data-scene='F8'] .blue-companion__stance { animation: scene-lean var(--scene-duration) ease-in-out both; }
-.blue-companion[data-scene-phase='beat'][data-scene='R1'] .blue-companion__arm--left { animation: scene-stretch-left var(--scene-duration) ease-in-out both; }
-.blue-companion[data-scene-phase='beat'][data-scene='R1'] .blue-companion__arm--right { animation: scene-stretch-right var(--scene-duration) ease-in-out both; }
-.blue-companion[data-scene-phase='beat'][data-scene='R2'] .blue-companion__stance { animation: scene-lean var(--scene-duration) ease-in-out both; }
-.blue-companion[data-scene-phase='beat'][data-scene='R3'] .scene-cup { animation: scene-toast var(--scene-duration) ease-in-out both; }
-
-/* Every ending is complete and happy, including the zero-minute variant. */
-.blue-companion[data-scene-status='ended'] .scene-pot .scene-lid { transform: translate(-5px, -18px) rotate(-12deg); }
-.blue-companion[data-scene-phase='ending'] .scene-pot .scene-lid { animation: scene-reveal var(--scene-duration) ease-in-out both; }
-.blue-companion[data-scene-phase='ending'] .scene-serving,
-.blue-companion[data-scene-phase='ending'] .scene-cup { animation: scene-toast var(--scene-duration) ease-in-out both; }
-.blue-companion[data-scene-phase='ending'] .scene-flower { animation: scene-bloom var(--scene-duration) ease-in-out both; }
-.blue-companion[data-scene-phase='ending'] .scene-book { animation: scene-book-hug var(--scene-duration) ease-in-out both; }
-.blue-companion[data-scene-phase='ending'] .scene-bubble-heart { animation: scene-heart-rise var(--scene-duration) ease-out both; }
-.blue-companion[data-scene-phase='ending'] .scene-boat { animation: scene-boat-out var(--scene-duration) ease-in-out both; }
-.blue-companion[data-scene-phase='ending'] .scene-flag { animation: scene-appear var(--scene-duration) ease-out both; }
-.blue-companion[data-scene-phase='ending'] .scene-shooting-star { animation: scene-shoot var(--scene-duration) ease-out both; }
-.blue-companion[data-scene-phase='ending'] .scene-ending-sparks { animation: scene-appear var(--scene-duration) ease-in-out both; }
-.blue-companion[data-scene-phase='ending']:is([data-scene-tier='meal'], [data-scene-tier='feast']) .blue-companion__stance { animation: scene-happy var(--scene-duration) ease-in-out both; }
-
-/* Touch keeps its existing stable surface and takes priority over all scenes. */
-.blue-companion:not([data-touch='']) .scene-front,
-.blue-companion:not([data-touch='']) .scene-held { transform: translateY(-1px); }
-.blue-companion[data-touch-phase='release'][data-static='false'] .scene-front,
-.blue-companion[data-touch-phase='release'][data-static='false'] .scene-held { animation: scene-touch var(--blue-touch-duration) ease-out both; }
-.blue-companion:not([data-touch='']) .scene-lid { transform: translateY(-3px) rotate(-3deg); }
-.blue-companion:not([data-touch='']) .scene-leaves { transform: rotate(5deg); }
-.blue-companion[data-scene-status='paused'] .scene-steam { opacity: .3; }
-
-@keyframes scene-steam { 0%,100% { opacity: .18; translate: 0 1px; } 50% { opacity: .6; translate: 1px -3px; } }
-@keyframes scene-bubble { 0%,100% { translate: 0 0; opacity: .55; } 50% { translate: 2px -4px; opacity: .75; } }
-@keyframes scene-twinkle { 0%,100% { opacity: .45; } 50% { opacity: .9; } }
-@keyframes scene-cloud { 0%,100% { translate: 0 0; } 50% { translate: 4px 1px; } }
-@keyframes scene-place { 0% { translate: -9px 4px; opacity: 0; rotate: -6deg; } 45% { translate: 0 -2px; opacity: 1; rotate: 2deg; } 70%,100% { translate: 0 0; rotate: 0deg; } }
-@keyframes scene-plant-in { 0% { scale: .9; translate: 0 4px; opacity: 0; } 50% { scale: 1.025 .97; translate: 0 0; opacity: 1; } 100% { scale: 1; } }
-@keyframes scene-pat { 0%,100% { rotate: 0deg; } 40%,70% { rotate: -8deg; } 55% { rotate: 2deg; } }
-@keyframes scene-book-open { 0% { scale: .45 1; translate: 0 5px; opacity: 0; } 30% { opacity: 1; } 70% { scale: 1.025 1; translate: 0 -1px; } 100% { scale: 1; translate: 0 0; } }
-@keyframes scene-tea-in { 0% { translate: -7px 3px; rotate: -8deg; opacity: 0; } 45% { translate: 0 0; rotate: 7deg; opacity: 1; } 100% { rotate: 0deg; } }
-@keyframes scene-wand { 0%,100% { rotate: 0deg; } 45% { rotate: -14deg; } 70% { rotate: 5deg; } }
-@keyframes scene-paper-in { 0% { translate: 0 -10px; rotate: -9deg; opacity: 0; } 60% { translate: 0 1px; rotate: 3deg; opacity: 1; } 100% { translate: 0 0; rotate: 0deg; } }
-@keyframes scene-appear { 0% { opacity: 0; } 40%,100% { opacity: 1; } }
-@keyframes scene-lean { 0%,100% { rotate: 0deg; } 45%,65% { rotate: -4deg; } }
-@keyframes scene-stretch-left { 0%,100% { rotate: 0deg; } 40%,70% { rotate: 18deg; translate: 0 -2px; } }
-@keyframes scene-stretch-right { 0%,100% { rotate: 0deg; } 40%,70% { rotate: -18deg; translate: 0 -2px; } }
-@keyframes scene-cloud-in { from { translate: -8px 0; opacity: 0; } to { translate: 0 0; opacity: 1; } }
-@keyframes scene-peek { 0%,100% { transform: none; } 40%,65% { transform: translate(-2px,-5px) rotate(-6deg); } }
-@keyframes scene-stir { 0%,100% { rotate: 0deg; } 30% { rotate: -6deg; } 60% { rotate: 3deg; } }
-@keyframes scene-leaf { 0%,100% { rotate: 0deg; } 30% { rotate: 7deg; } 65% { rotate: -4deg; } }
-@keyframes scene-butterfly { 0%,100% { opacity: 0; translate: -3px 2px; } 30%,70% { opacity: 1; translate: 2px -2px; } 50% { scale: .8 1; } }
-@keyframes scene-page { 0%,100% { opacity: 0; transform: scaleX(1); } 15% { opacity: 1; } 70% { opacity: .8; transform: scaleX(-1); } 90% { opacity: 0; transform: scaleX(-1); } }
-@keyframes scene-paper-fold { 0%,100% { scale: 1; rotate: 0deg; } 40% { scale: .97 1; rotate: -3deg; } 70% { scale: 1.01 .98; rotate: 2deg; } }
-@keyframes scene-block-wobble { 0%,100% { rotate: 0deg; } 30% { rotate: -5deg; } 65% { rotate: 3deg; } }
-@keyframes scene-reveal { 0% { transform: none; } 35% { transform: translate(0,-23px) rotate(-6deg); } 70%,100% { transform: translate(-5px,-18px) rotate(-12deg); } }
-@keyframes scene-toast { 0%,100% { translate: 0 0; rotate: 0deg; } 35%,65% { translate: 0 -5px; rotate: -3deg; } }
-@keyframes scene-bloom { 0% { scale: .35; } 45% { scale: 1.1; } 75%,100% { scale: 1; } }
-@keyframes scene-book-hug { 0%,100% { translate: 0 0; rotate: 0deg; } 40%,65% { translate: 0 -3px; rotate: -3deg; } }
-@keyframes scene-heart-rise { 0% { translate: 0 10px; opacity: 0; } 55%,100% { translate: 0 0; opacity: 1; } }
-@keyframes scene-boat-out { 0% { translate: -8px 0; rotate: -3deg; } 55% { translate: 4px -2px; rotate: 3deg; } 100% { translate: 0 0; rotate: 0deg; } }
-@keyframes scene-shoot { 0% { translate: -10px -10px; opacity: 0; } 35% { opacity: 1; } 100% { translate: 0 0; opacity: 1; } }
-@keyframes scene-happy { 0%,100% { translate: 0 0; rotate: 0deg; } 30% { translate: 0 -3px; rotate: -2deg; } 60% { translate: 0 -1px; rotate: 2deg; } }
-@keyframes scene-touch { 0%,100% { translate: 0 0; } 35% { translate: 0 -2px; } }
-
-.blue-companion[data-static='true'] *,
-.blue-companion[data-stance='neutral'] * { animation: none !important; transition: none !important; }
-@media (prefers-reduced-motion: reduce) {
-  .blue-companion * { animation: none !important; transition: none !important; }
-}
+@keyframes scene-rig-watch { 0%,100%{translate:0 0}50%{translate:2px 0} }

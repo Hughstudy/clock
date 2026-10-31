@@ -1,0 +1,280 @@
+{
+  "version": 2,
+  "scenes": [
+    {
+      "id": "F1",
+      "title": "Prepare a little meal",
+      "kind": "focus",
+      "support": "Vegetables, a rice dish and soup share a compact preparation table.",
+      "frames": [
+        {
+          "label": "0% · Lay out ingredients",
+          "caption": "Three dishes have their places"
+        },
+        {
+          "label": "40% · Prepare vegetables",
+          "caption": "Spoon and palm move together"
+        },
+        {
+          "label": "75% · Plate the rice",
+          "caption": "Rice is shaped on its plate"
+        },
+        {
+          "label": "100% · Three dishes ready",
+          "caption": "Vegetables, rice and warm soup"
+        }
+      ],
+      "slug": "F1-food"
+    },
+    {
+      "id": "F2",
+      "title": "Little plant",
+      "kind": "focus",
+      "support": "The flowerpot rests in a tray on a low potting bench.",
+      "frames": [
+        {
+          "label": "0% · Small shoot",
+          "caption": "Pot stays in its tray"
+        },
+        {
+          "label": "40% · Leaves unfold",
+          "caption": "Hand steadies the pot"
+        },
+        {
+          "label": "75% · A new bud",
+          "caption": "Bud grows above leaves"
+        },
+        {
+          "label": "100% · Flower opens",
+          "caption": "A gentle pot pat"
+        }
+      ],
+      "slug": "F2-plant"
+    },
+    {
+      "id": "F3",
+      "title": "Picture book",
+      "kind": "focus",
+      "support": "An open book rests on a reading table while one hand supports each action.",
+      "frames": [
+        {
+          "label": "0% · Open spread",
+          "caption": "Book rests on table"
+        },
+        {
+          "label": "40% · Turn a page",
+          "caption": "Fingers follow the corner"
+        },
+        {
+          "label": "75% · Place ribbon",
+          "caption": "Ribbon marks the place"
+        },
+        {
+          "label": "100% · Close the book",
+          "caption": "Book stays supported"
+        }
+      ],
+      "slug": "F3-book"
+    },
+    {
+      "id": "F4",
+      "title": "A quiet cup of tea",
+      "kind": "focus",
+      "support": "One cup on a small side table; short, relaxed arms reach only as far as the cup.",
+      "frames": [
+        {
+          "label": "0% · Settle beside the table",
+          "caption": "Hands rest close to the body"
+        },
+        {
+          "label": "40% · Tea is warming",
+          "caption": "One cup stays on its saucer"
+        },
+        {
+          "label": "75% · Tea is poured",
+          "caption": "Kettle returns to its base"
+        },
+        {
+          "label": "100% · Enjoy the tea",
+          "caption": "Cup held close, base supported"
+        }
+      ],
+      "slug": "F4-tea"
+    },
+    {
+      "id": "F5",
+      "title": "Bubble play",
+      "kind": "focus",
+      "support": "The soap jar stands on a floor mat; the wand moves from the jar into open air.",
+      "frames": [
+        {
+          "label": "0% · Dip the wand",
+          "caption": "Jar anchored on mat"
+        },
+        {
+          "label": "40% · One small bubble",
+          "caption": "Short grip on the handle"
+        },
+        {
+          "label": "75% · Bubbles drift",
+          "caption": "Clear space for bubbles"
+        },
+        {
+          "label": "100% · A heart bubble",
+          "caption": "A playful final shape"
+        }
+      ],
+      "slug": "F5-bubbles"
+    },
+    {
+      "id": "F6",
+      "title": "Paper boat",
+      "kind": "focus",
+      "support": "A dry folding area and a shallow water tray share the craft table from the start.",
+      "frames": [
+        {
+          "label": "0% · Lay out paper",
+          "caption": "Dry paper beside the water tray"
+        },
+        {
+          "label": "40% · Press a crease",
+          "caption": "One hand holds, one folds"
+        },
+        {
+          "label": "75% · Open the hull",
+          "caption": "Both palms open the hull"
+        },
+        {
+          "label": "100% · Float the boat",
+          "caption": "The same boat rests in water"
+        }
+      ],
+      "slug": "F6-boat"
+    },
+    {
+      "id": "F7",
+      "title": "Block tower",
+      "kind": "focus",
+      "support": "Each block is supported by a stable base on a floor mat.",
+      "frames": [
+        {
+          "label": "0% · Place the base",
+          "caption": "Two base blocks and two spares"
+        },
+        {
+          "label": "40% · Add one block",
+          "caption": "One spare joins the tower"
+        },
+        {
+          "label": "75% · A taller tower",
+          "caption": "The last spare is placed"
+        },
+        {
+          "label": "100% · Flag on the tower",
+          "caption": "Hands clear of the stable tower"
+        }
+      ],
+      "slug": "F7-blocks"
+    },
+    {
+      "id": "F8",
+      "title": "Stargazing",
+      "kind": "focus",
+      "support": "A cushion and blanket support the companion beneath a gradually fuller sky.",
+      "frames": [
+        {
+          "label": "0% · Settle in",
+          "caption": "Cushion meets the ground"
+        },
+        {
+          "label": "40% · Find a pattern",
+          "caption": "A small constellation"
+        },
+        {
+          "label": "75% · More stars",
+          "caption": "Sky grows gently"
+        },
+        {
+          "label": "100% · A shooting star",
+          "caption": "One quiet streak"
+        }
+      ],
+      "slug": "F8-stars"
+    },
+    {
+      "id": "R1",
+      "title": "Stretch and relax",
+      "kind": "rest",
+      "support": "A soft floor mat supports the feet throughout the stretch.",
+      "frames": [
+        {
+          "label": "Settle",
+          "caption": "Feet planted on mat"
+        },
+        {
+          "label": "Reach upward",
+          "caption": "Slow comfortable reach"
+        },
+        {
+          "label": "Open the arms",
+          "caption": "A broad easy stretch"
+        },
+        {
+          "label": "Relax",
+          "caption": "Return to resting hands"
+        }
+      ],
+      "slug": "R1-stretch"
+    },
+    {
+      "id": "R2",
+      "title": "Watch the clouds",
+      "kind": "rest",
+      "support": "The companion rests on a cushion and blanket while clouds cross the open sky.",
+      "frames": [
+        {
+          "label": "Look up",
+          "caption": "Cushion supports body"
+        },
+        {
+          "label": "Watch a cloud",
+          "caption": "Cloud drifts slowly"
+        },
+        {
+          "label": "A new shape",
+          "caption": "Shapes change softly"
+        },
+        {
+          "label": "Rest quietly",
+          "caption": "Nothing to complete"
+        }
+      ],
+      "slug": "R2-clouds"
+    },
+    {
+      "id": "R3",
+      "title": "Warm drink",
+      "kind": "rest",
+      "support": "A side table and coaster provide a resting place; both hands support the warm cup.",
+      "frames": [
+        {
+          "label": "Hold the cup",
+          "caption": "Cup held in both hands"
+        },
+        {
+          "label": "Blow gently",
+          "caption": "Steam stays delicate"
+        },
+        {
+          "label": "Take a sip",
+          "caption": "Cup meets the mouth"
+        },
+        {
+          "label": "Settle",
+          "caption": "Side table stays nearby"
+        }
+      ],
+      "slug": "R3-drink"
+    }
+  ]
+}

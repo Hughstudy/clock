@@ -2,9 +2,9 @@ import { describe, expect, it } from 'vitest'
 import { sceneRules } from '../data/scene-rules'
 import { spec } from '../data/spec'
 import { applyAction, type AppAction } from './app'
-import { claimSceneAnnouncement, endingTierForElapsed, grantSceneUnlocks, initialScenes, mergeSceneStates, pendingSceneAnnouncement, selectScene } from './scenes'
+import { endingTierForElapsed, initialScenes, mergeSceneStates, selectScene } from './scenes'
 import { createSnapshot, decodeSnapshot, encodeSnapshot, mergeSnapshots } from './snapshot'
-import type { AppSnapshot, FocusRecord, SceneId } from './types'
+import type { AppSnapshot, FocusRecord, SceneAssignment, SceneId } from './types'
 
 const MIN = 60_000
 const ctx = (now: number) => ({ now, dateKeyOf: () => '2026-10-29' })
@@ -20,62 +20,79 @@ function roundTrip(s: AppSnapshot): AppSnapshot {
   return loaded.snapshot
 }
 
-describe('durable scene rotation', () => {
-  it('uses every starter once per bag with no repeat across bag boundaries', () => {
+const legacyUnlock = { sceneId: 'F4' as const, unlockedAt: MIN, bySessionId: 'past', ruleVersion: 1 }
+
+describe('immediately available durable scene rotation', () => {
+  it('uses all eight focus scenes from zero completions, without adjacent repeats', () => {
     let scenes = initialScenes()
     const ids: SceneId[] = []
-    for (let i = 0; i < 60; i++) {
-      const next = selectScene(scenes, 'focus')
+    for (let i = 0; i < 80; i++) {
+      const next = selectScene(scenes, 'focus', `session-${i}`)
       scenes = next.scenes
       ids.push(next.assignment.sceneId)
-      expect(next.assignment.ordinal).toBe(i + 1)
+      expect(next.assignment).toMatchObject({ ordinal: i + 1, selectionVersion: 2 })
     }
-    for (let i = 0; i < ids.length; i += 3) expect(new Set(ids.slice(i, i + 3))).toEqual(new Set(['F1', 'F2', 'F3']))
+    for (let i = 0; i < ids.length; i += 8) expect(new Set(ids.slice(i, i + 8))).toEqual(new Set(sceneRules.focus))
     expect(ids.every((id, i) => i === 0 || id !== ids[i - 1])).toBe(true)
-    expect(selectScene(initialScenes(), 'focus')).toEqual(selectScene(initialScenes(), 'focus'))
+    expect(scenes.unlocked).toEqual([])
+    expect(scenes.introduced).toEqual([])
+    expect(scenes.announced).toEqual([])
   })
 
-  it('rotates consecutive rests independently of focus participation', () => {
-    let scenes = selectScene(initialScenes(), 'focus').scenes
+  it('uses explicit stable identity for deterministic but varied bag orders', () => {
+    const a = selectScene(initialScenes(), 'focus', 'installation-a-session-1')
+    expect(selectScene(initialScenes(), 'focus', 'installation-a-session-1')).toEqual(a)
+    const orders = new Set(Array.from({ length: 20 }, (_, i) => {
+      const next = selectScene(initialScenes(), 'focus', `installation-${i}-session-1`)
+      return [next.assignment.sceneId, ...next.scenes.focus.remaining].join(',')
+    }))
+    expect(orders.size).toBeGreaterThan(1)
+  })
+
+  it('rotates all three rest scenes independently of focus', () => {
+    let scenes = selectScene(initialScenes(), 'focus', 'focus').scenes
     const focus = scenes.focus
     const ids: SceneId[] = []
-    for (let i = 0; i < 9; i++) {
-      const next = selectScene(scenes, 'rest')
+    for (let i = 0; i < 30; i++) {
+      const next = selectScene(scenes, 'rest', `rest-${i}`)
       scenes = next.scenes
       ids.push(next.assignment.sceneId)
     }
     expect(scenes.focus).toEqual(focus)
-    expect(new Set(ids.slice(0, 3))).toEqual(new Set(['R1', 'R2', 'R3']))
+    for (let i = 0; i < ids.length; i += 3) expect(new Set(ids.slice(i, i + 3))).toEqual(new Set(sceneRules.rest))
     expect(ids.every((id, i) => i === 0 || id !== ids[i - 1])).toBe(true)
   })
 
-  it('introduces several historical unlocks one per start without losing the current bag', () => {
-    const first = selectScene(initialScenes(), 'focus')
-    let scenes = grantSceneUnlocks(first.scenes, Array.from({ length: 15 }, (_, i) => record(i)), true)
-    const oldBag = [...scenes.focus.remaining]
-    const ids: SceneId[] = []
-    for (let i = 0; i < 5; i++) {
-      const next = selectScene(scenes, 'focus')
-      scenes = next.scenes
-      ids.push(next.assignment.sceneId)
-    }
-    expect(ids).toEqual(['F4', 'F5', 'F6', 'F7', 'F8'])
-    expect(scenes.focus.remaining).toEqual(oldBag)
-    expect(selectScene(scenes, 'focus').assignment.sceneId).toBe(oldBag[0])
-    expect(pendingSceneAnnouncement(scenes)).toBeNull()
+  it('never prioritizes or adds legacy grants, introductions or notices', () => {
+    const empty = initialScenes()
+    const legacy = { ...empty, unlocked: [legacyUnlock], introduced: ['F4' as const], announced: [] }
+    const a = selectScene(empty, 'focus', 'same-session')
+    const b = selectScene(legacy, 'focus', 'same-session')
+    expect(b.assignment).toEqual(a.assignment)
+    expect(b.scenes.focus).toEqual(a.scenes.focus)
+    expect(b.scenes.unlocked).toEqual(legacy.unlocked)
+    expect(b.scenes.introduced).toEqual(legacy.introduced)
+    expect(b.scenes.announced).toEqual([])
   })
 
-  it('retains assignment on pause, resume, reload, retries and rejected starts', () => {
+  it('retains assignment on pause, resume, reload, retries, preferences and rejected starts', () => {
     let s = start(createSnapshot(spec))
     const scene = s.timer.session!.scene
     s = act(s, { type: 'pause', sessionId: 'one' }, 2 * MIN).snapshot
     s = roundTrip(s)
     s = act(s, { type: 'resume', sessionId: 'one' }, 8 * MIN).snapshot
+    s = act(s, { type: 'updateSettings', patch: { sceneVarietyEnabled: false } }, 8 * MIN).snapshot
     s = act(s, { type: 'start', sessionId: 'one', timeZone: 'UTC' }, 8 * MIN).snapshot
     s = act(s, { type: 'start', sessionId: 'two', timeZone: 'UTC' }, 8 * MIN).snapshot
     expect(s.timer.session?.scene).toEqual(scene)
     expect(s.scenes.focus.ordinal).toBe(1)
     expect(act(s, { type: 'end', sessionId: 'stale' }, 8 * MIN).snapshot).toBe(s)
+  })
+
+  it('rejects invalid starts without consuming a bag entry', () => {
+    const s = createSnapshot(spec)
+    expect(act(s, { type: 'start', sessionId: 'invalid', timeZone: 'UTC', durationMinutes: 0 }).snapshot).toBe(s)
+    expect(act(s, { type: 'start', sessionId: 'wrong-phase', timeZone: 'UTC', expectedPhase: 'longBreak' }).snapshot).toBe(s)
   })
 
   it('retains each ending and lets a new session replace it immediately', () => {
@@ -95,44 +112,32 @@ describe('durable scene rotation', () => {
   })
 })
 
-describe('scene grants and claims', () => {
-  it('grants only distinct deadline sessions at configured thresholds', () => {
-    const manual = Array.from({ length: 30 }, (_, i) => record(i, 'manual'))
-    expect(grantSceneUnlocks(initialScenes(), manual).unlocked).toEqual([])
-    const one = record(0)
-    const scenes = grantSceneUnlocks(initialScenes(), [one, one, one])
-    expect(scenes.unlocked.map(unlock => unlock.sceneId)).toEqual(['F4'])
-    const all = grantSceneUnlocks(scenes, Array.from({ length: 15 }, (_, i) => record(i)))
-    expect(all.unlocked.map(unlock => unlock.sceneId)).toEqual(['F4', 'F5', 'F6', 'F7', 'F8'])
-    expect(grantSceneUnlocks(all, []).unlocked).toEqual(all.unlocked)
-    expect(grantSceneUnlocks(all, [one], false, { ...sceneRules, unlocks: [{ sceneId: 'F4', successes: 100 }] })).toBe(all)
+describe('scene compatibility and factual endings', () => {
+  it('records a deadline once without deriving grants and keeps long-break cadence', () => {
+    let s = createSnapshot(spec)
+    for (let i = 0; i < 4; i++) {
+      s = start({ ...s, timer: { ...s.timer, phase: 'focus' } }, `focus-${i}`, i * 5 * MIN)
+      s = act(s, { type: 'reconcile' }, (i + 1) * 5 * MIN).snapshot
+    }
+    expect(s.timer).toMatchObject({ phase: 'longBreak', session: null, completedFocusCount: 4 })
+    expect(s.records).toHaveLength(4)
+    expect(s.scenes.unlocked).toEqual([])
+    expect(s.scenes.announced).toEqual([])
+    expect(act(s, { type: 'reconcile' }, 21 * MIN).changed).toBe(false)
   })
 
-  it('records the deadline and unlock in one transition, only once after recovery', () => {
-    const s = start(createSnapshot(spec))
-    const ended = act(s, { type: 'reconcile' }, 20 * MIN)
-    expect(ended.snapshot.records).toHaveLength(1)
-    expect(ended.snapshot.scenes.unlocked).toEqual([{ sceneId: 'F4', unlockedAt: 5 * MIN, bySessionId: 'one', ruleVersion: 1 }])
-    expect(ended.snapshot.scenes.lastEnded?.scene).toEqual(s.timer.session!.scene)
-    expect(act(ended.snapshot, { type: 'reconcile' }, 21 * MIN).changed).toBe(false)
-  })
-
-  it('claims once while ready and does not claim during a running session', () => {
-    const s = act(start(createSnapshot(spec)), { type: 'reconcile' }, 5 * MIN).snapshot
-    expect(pendingSceneAnnouncement(s.scenes)).toBe('F4')
-    const claim = act(s, { type: 'claimSceneAnnouncement', sceneId: 'F4' }, 5 * MIN)
-    expect(claim.sceneAnnouncement).toBe('F4')
-    expect(act(claim.snapshot, { type: 'claimSceneAnnouncement', sceneId: 'F4' }, 5 * MIN).sceneAnnouncement).toBeUndefined()
-    expect(claimSceneAnnouncement(s.scenes, 'F8')).toBe(s.scenes)
-    const running = act(s, { type: 'startBreak', sessionId: 'rest', timeZone: 'UTC' }, 5 * MIN).snapshot
-    expect(act(running, { type: 'claimSceneAnnouncement', sceneId: 'F4' }, 5 * MIN).sceneAnnouncement).toBeUndefined()
+  it.each([0, 1_000, 59_999])('records a %i ms ending without changing availability or grants', ms => {
+    const s = act(start(createSnapshot(spec)), { type: 'end', sessionId: 'one' }, ms).snapshot
+    expect(s.records[0]?.elapsedMs).toBe(ms)
+    expect(s.scenes.unlocked).toEqual([])
+    expect(selectScene(s.scenes, 'focus', 'next').scenes.focus.remaining).toHaveLength(6)
   })
 
   it.each([[0, 'hello'], [59_999, 'hello'], [60_000, 'snack'], [599_999, 'snack'], [600_000, 'meal'], [1_799_999, 'meal'], [1_800_000, 'feast']] as const)('maps %i ms to %s without overlapping boundaries', (ms, tier) => {
     expect(endingTierForElapsed(ms)).toBe(tier)
   })
 
-  it('silently migrates historical successes and preserves accounting and active timing', () => {
+  it('upgrades pre-scene data without grants or fabricated historical assignments', () => {
     const original = start(createSnapshot(spec))
     const { scenes: _, ...old } = original
     const { scene: __, ...oldSession } = old.timer.session!
@@ -142,30 +147,59 @@ describe('scene grants and claims', () => {
     expect(decoded.issues).toEqual([])
     expect(decoded.snapshot.records).toEqual(records)
     expect(decoded.snapshot.timer.session).toMatchObject(oldSession)
-    expect(decoded.snapshot.scenes.unlocked).toHaveLength(5)
-    expect(decoded.snapshot.scenes.announced).toEqual(['F4', 'F5', 'F6', 'F7', 'F8'])
+    expect(decoded.snapshot.timer.session?.scene?.selectionVersion).toBe(2)
+    expect(decoded.snapshot.scenes.unlocked).toEqual([])
+    expect(decoded.snapshot.scenes.announced).toEqual([])
     expect(roundTrip(decoded.snapshot)).toEqual(decoded.snapshot)
   })
 
-  it('unions claims and introduced scenes while preserving the newer active assignment', () => {
-    const a = selectScene(grantSceneUnlocks(initialScenes(), [record(0)]), 'focus').scenes
-    const b = claimSceneAnnouncement(grantSceneUnlocks(initialScenes(), [record(0)]), 'F4')
-    const merged = mergeSceneStates(a, b)
-    expect(merged.introduced).toContain('F4')
-    expect(merged.announced).toContain('F4')
-    expect(selectScene(merged, 'focus').assignment.sceneId).not.toBe('F4')
+  it.each(['running', 'paused'] as const)('migrates v5 %s identity and history; resets only future bags once', status => {
+    const scene: SceneAssignment = { sceneId: 'F2', ordinal: 4, selectionVersion: 1 }
+    let original = start(createSnapshot(spec))
+    if (status === 'paused') original = act(original, { type: 'pause', sessionId: 'one' }, MIN).snapshot
+    const old = { ...original, version: 5, datasetGeneration: 3,
+      timer: { ...original.timer, completedFocusCount: 1, session: { ...original.timer.session!, scene } },
+      records: [{ ...record(0), scene }],
+      scenes: { ...original.scenes, focus: { ordinal: 4, cycle: 2, last: 'F2' as const, remaining: ['F1' as const, 'F3' as const] },
+        unlocked: [legacyUnlock], introduced: ['F4' as const], announced: [] },
+    }
+    const loaded = roundTrip(old)
+    expect(loaded.version).toBe(6)
+    expect(loaded.timer).toEqual(old.timer)
+    expect(loaded.records).toEqual(old.records)
+    expect(loaded.datasetGeneration).toBe(3)
+    expect(loaded.settings).toEqual(old.settings)
+    expect(loaded.scenes.focus).toEqual({ ...old.scenes.focus, remaining: [] })
+    expect(loaded.scenes.unlocked).toEqual([legacyUnlock])
+    expect(loaded.scenes.announced).toEqual([])
+    const next = selectScene(loaded.scenes, 'focus', 'next')
+    expect(next.assignment).toMatchObject({ ordinal: 5, selectionVersion: 2 })
+    expect(next.assignment.sceneId).not.toBe('F2')
+    expect(new Set([next.assignment.sceneId, ...next.scenes.focus.remaining])).toEqual(new Set(sceneRules.focus))
+    expect(roundTrip({ ...loaded, scenes: next.scenes }).scenes).toEqual(next.scenes)
+  })
+
+  it('merges independent cursors and inert legacy metadata without changing the newer active assignment', () => {
+    const focus = selectScene(initialScenes(), 'focus', 'first').scenes
+    const rest = selectScene(initialScenes(), 'rest', 'rest').scenes
+    const other = { ...rest, unlocked: [legacyUnlock], introduced: ['F4' as const], announced: ['F4' as const] }
+    const merged = mergeSceneStates(focus, other)
+    expect(merged.focus).toEqual(focus.focus)
+    expect(merged.rest).toEqual(rest.rest)
+    expect(merged.unlocked).toEqual([legacyUnlock])
     const fresh = start({ ...createSnapshot(spec), scenes: merged })
-    const stale = { ...createSnapshot(spec), scenes: b, revision: 0 }
+    const stale = { ...createSnapshot(spec), scenes: other, revision: 0, records: [record(0)] }
     const snapshot = mergeSnapshots({ ...fresh, revision: 2 }, stale)
     expect(snapshot.timer.session?.scene).toEqual(fresh.timer.session?.scene)
+    expect(snapshot.scenes.unlocked).toEqual([legacyUnlock])
+    expect(snapshot.scenes.announced).toEqual(['F4'])
     const cleared = { ...createSnapshot(spec), datasetGeneration: 1 }
     expect(mergeSnapshots(snapshot, cleared)).toEqual(cleared)
   })
 
   it('preserves factual time when malformed scene metadata needs repair', () => {
     const s = start(createSnapshot(spec))
-    const raw = {
-      ...s,
+    const raw = { ...s,
       timer: { ...s.timer, session: { ...s.timer.session, scene: { sceneId: 'R1', ordinal: 1, selectionVersion: 1 } } },
       records: [{ ...record(0), scene: { sceneId: 'unknown', ordinal: -1, selectionVersion: 1 } }],
       scenes: { ...s.scenes, focus: { ordinal: -1 }, unlocked: [{ sceneId: 'F4', unlockedAt: 'bad' }] },

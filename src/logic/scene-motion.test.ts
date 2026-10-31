@@ -83,7 +83,7 @@ describe('companion scene choreography', () => {
   })
 
   it('bounds finite motions and rejects unsafe cadence data', () => {
-    expect(sceneMotionDuration('open', scene(), sceneMotionSpec)).toBe(1800)
+    expect(sceneMotionDuration('open', scene(), sceneMotionSpec)).toBe(1120)
     for (const tier of ['hello', 'snack', 'meal', 'feast', null] as const) {
       expect(sceneMotionDuration('ending', scene({ ending: { cueId: 'end', tier } }), sceneMotionSpec)).toBeLessThanOrEqual(2400)
     }

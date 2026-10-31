@@ -1,7 +1,7 @@
-import React, { useRef, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import { createRoot } from 'react-dom/client'
 import { flushSync } from 'react-dom'
-import { BlueCompanion } from '../../src/components/companion/BlueCompanion'
+import { BlueCompanion, type SceneInspection } from '../../src/components/companion/BlueCompanion'
 import { blueCompanionSpec } from '../../src/data/blue-companion'
 import { useMotionPreference } from '../../src/hooks/companion/useMotionPreference'
 import { BLUE_STANCES } from '../../src/logic/blue-companion'
@@ -35,6 +35,11 @@ function Preview() {
   const [sceneProgress, setSceneProgress] = useState(0.45)
   const [sceneTier, setSceneTier] = useState<SceneFixtureTier>('snack')
   const [attentionAllowed, setAttentionAllowed] = useState(true)
+  const [inspectMotion, setInspectMotion] = useState(false)
+  const [inspectKind, setInspectKind] = useState<SceneInspection['actionKind']>('idle')
+  const [inspectPosition, setInspectPosition] = useState(0)
+  const [playInspection, setPlayInspection] = useState(false)
+  const [playbackSpeed, setPlaybackSpeed] = useState(1)
   const [sceneChecks, setSceneChecks] = useState<Check[]>([])
   const scene = useRef<HTMLDivElement>(null)
   const serial = useRef(0)
@@ -46,6 +51,24 @@ function Preview() {
     ...activityPresentation(activity, sceneState, reducedMotion),
     ...(cue === 'support' && sceneState !== 'error' ? { stance: 'support', cue: 'support' } as const : {}),
   } : presentation
+
+  useEffect(() => {
+    if (!playInspection || !inspectMotion || reducedMotion) return
+    let animation = 0
+    let last: number | null = null
+    let position = inspectKind === 'idle' ? sceneProgress : inspectPosition
+    const duration = inspectKind === 'idle' ? 12000 : sceneMotionSpec.beatMs
+    const step = (now: number) => {
+      if (last !== null) position = Math.min(1, position + (now - last) * playbackSpeed / duration)
+      last = now
+      if (inspectKind === 'idle') setSceneProgress(position)
+      else setInspectPosition(position)
+      if (position < 1) animation = requestAnimationFrame(step)
+      else setPlayInspection(false)
+    }
+    animation = requestAnimationFrame(step)
+    return () => cancelAnimationFrame(animation)
+  }, [playInspection, inspectMotion, inspectKind, playbackSpeed, reducedMotion])
 
   function emit(nextCue: Cue = 'support') {
     setStance(nextCue === 'begin' ? 'focused' : nextCue === 'settle' ? 'settled' : nextCue === 'welcome' ? 'ready' : 'support')
@@ -92,6 +115,7 @@ function Preview() {
     if (running) return
     setRunning(true)
     setChecks([])
+    setInspectMotion(false); setPlayInspection(false)
     const results: Check[] = []
     const check = (label: string, passed: boolean) => { results.push({ label, passed }); setChecks([...results]) }
     const touch = () => svg().dataset.touch
@@ -203,6 +227,7 @@ function Preview() {
     if (running) return
     setRunning(true)
     setSceneChecks([])
+    setInspectMotion(false); setPlayInspection(false)
     const results: Check[] = []
     const check = (label: string, passed: boolean) => { results.push({ label, passed }); setSceneChecks([...results]) }
     const phase = () => svg().dataset.scenePhase
@@ -244,7 +269,7 @@ function Preview() {
         await wait()
         flushSync(() => setAttentionAllowed(false))
         await wait()
-        check('Thought input attention stops every scene animation', phase() === 'idle' && svg().dataset.sceneMotion === 'false' && svg().getAnimations({ subtree: true }).length === 0)
+        check('Thought input attention stops every scene animation', phase() === 'idle' && svg().dataset.sceneMotion === 'false' && svg().getAnimations({ subtree: true }).every(animation => animation.playState !== 'running'))
         flushSync(() => setAttentionAllowed(true))
         await wait()
         check('Finishing input never replays the cancelled entrance', phase() === 'idle')
@@ -268,7 +293,7 @@ function Preview() {
 
         flushSync(() => emit('support'))
         await wait()
-        check('An explicit greeting keeps its arm wave while scene motion yields', phase() === 'idle' && svg().getAnimations({ subtree: true }).some(animation => animation instanceof CSSAnimation && animation.animationName === 'blue-wave'))
+        check('An explicit greeting preserves supported scene contact while activity yields', phase() === 'idle' && svg().querySelector('[data-scene-part]') !== null && !/NaN|Infinity/.test(svg().outerHTML))
 
         choose('F1', 'ending', 'feast')
         await wait()
@@ -307,12 +332,12 @@ function Preview() {
   }
 
   return <main className="preview">
-    <header className="preview__header"><span className="preview__eyebrow">Animation workbench · C2-P2 fixtures</span><h1>A little company, in blue.</h1><p>The production character and its everyday activities. Pat its head, squish its belly or touch a hand. These fixtures select read-only views; they never save a session, record time or grant an unlock.</p></header>
+    <header className="preview__header"><span className="preview__eyebrow">Animation workbench · C2-P3 fixtures</span><h1>A little company, in blue.</h1><p>The production character and its everyday activities. Pat its head, squish its belly or touch a hand. These fixtures select read-only views; they never save a session, record time or grant scene access.</p></header>
     <div className="preview__workspace">
       <section className="preview__canvas" aria-label="Character fixture">
         <div ref={scene} className="preview__phone" style={{ width, fontSize: largeText ? '200%' : '100%' }} data-text-scale={largeText ? '200' : '100'}>
           <p className="preview__eyebrow">Fixture · {stance}</p>
-          <div className="companion-feedback"><button type="button" className="companion-feedback__greeting" aria-label="Say hello to the blue companion" onClick={request}><span className="companion-feedback__character" aria-hidden="true"><BlueCompanion presentation={renderedPresentation} cueId={cueId} scene={activity} /></span><span className="preview__invite">Say hello <span aria-hidden="true">↗</span></span></button></div>
+          <div className="companion-feedback"><button type="button" className="companion-feedback__greeting" aria-label="Say hello to the blue companion" onClick={request}><span className="companion-feedback__character" aria-hidden="true"><BlueCompanion presentation={renderedPresentation} cueId={cueId} scene={activity} inspection={inspectMotion ? { actionKind: inspectKind, actionProgress: inspectPosition } : undefined} /></span><span className="preview__invite">Say hello <span aria-hidden="true">↗</span></span></button></div>
           <p className="preview__hint">A head pat, a belly squish, a tiny high-five.</p>
           <p className="preview__facts">Explicit host intents: <strong>{intentCount}</strong></p>
           <p className="preview__facts">{reducedMotion ? 'Static expression' : 'Motion enabled'}{systemReducedMotion ? ' · OS reduced motion' : ''}</p>
@@ -321,17 +346,25 @@ function Preview() {
       </section>
       <aside className="preview__controls" aria-label="Fixture controls">
         <fieldset disabled={running}><legend>Session activity</legend>
-          <label>Scene<select value={sceneId} onChange={event => { setSceneId(event.target.value as SceneId | ''); setSceneState('loop') }}><option value="">Plain character / legacy cues</option>{SCENE_IDS.map(id => <option key={id} value={id}>{id} · {SCENE_LABELS[id]}</option>)}</select></label>
-          <label>Scene state<select value={sceneState} onChange={event => { setSceneState(event.target.value as SceneFixtureState); setSceneSerial(value => value + 1) }}>{(['opening', 'loop', 'paused', 'ending', 'restored', 'error'] as const).map(value => <option key={value}>{value}</option>)}</select></label>
-          <label>Saved ending tier<select value={sceneTier} onChange={event => setSceneTier(event.target.value as SceneFixtureTier)}>{(['hello', 'snack', 'meal', 'feast'] as const).map(value => <option key={value}>{value}</option>)}</select></label>
-          <label>Completed progress: {Math.round(sceneProgress * 100)}%<input type="range" min="0" max="100" value={Math.round(sceneProgress * 100)} onChange={event => setSceneProgress(Number(event.target.value) / 100)} /></label>
+          <label>Scene<select aria-label="Scene" value={sceneId} onChange={event => { setSceneId(event.target.value as SceneId | ''); setSceneState('loop') }}><option value="">Plain character / legacy cues</option>{SCENE_IDS.map(id => <option key={id} value={id}>{id} · {SCENE_LABELS[id]}</option>)}</select></label>
+          <label>Scene state<select aria-label="Scene state" value={sceneState} onChange={event => { setSceneState(event.target.value as SceneFixtureState); setSceneSerial(value => value + 1) }}>{(['opening', 'loop', 'paused', 'ending', 'restored', 'error'] as const).map(value => <option key={value}>{value}</option>)}</select></label>
+          <label>Saved ending tier<select aria-label="Saved ending tier" value={sceneTier} onChange={event => setSceneTier(event.target.value as SceneFixtureTier)}>{(['hello', 'snack', 'meal', 'feast'] as const).map(value => <option key={value}>{value}</option>)}</select></label>
+          <label>Completed progress: {Math.round(sceneProgress * 100)}%<input type="range" min="0" max="100" step="0.1" value={sceneProgress * 100} onChange={event => setSceneProgress(Number(event.target.value) / 100)} /></label>
           <label className="preview__toggle"><input type="checkbox" checked={!attentionAllowed} onChange={event => setAttentionAllowed(!event.target.checked)} /> Thought editor needs attention</label>
           <div className="preview__buttons"><button type="button" onClick={() => { setSceneState('opening'); setSceneSerial(value => value + 1) }}>New entrance cue</button><button type="button" onClick={() => { setSceneState('ending'); setSceneSerial(value => value + 1) }}>New ending cue</button></div>
           <p className="preview__small">Focus progress is completed proportion; rest has no progress prop. Rest endings have no focus-time tier.</p>
         </fieldset>
+        <fieldset disabled={running}><legend>Motion inspection</legend>
+          <label className="preview__toggle"><input type="checkbox" checked={inspectMotion} onChange={event => { setInspectMotion(event.target.checked); setPlayInspection(false) }} /> Inspect exact poses</label>
+          <label>Sequence<select aria-label="Sequence" value={inspectKind} onChange={event => { setInspectKind(event.target.value as SceneInspection['actionKind']); setPlayInspection(false) }}><option value="idle">Full activity progression</option><option value="open">Entrance</option><option value="beat">Quiet activity beat</option><option value="ending">Closing gesture</option></select></label>
+          <label>Action position: {Math.round(inspectPosition * 100)}%<input type="range" min="0" max="1" step="0.001" value={inspectPosition} onChange={event => { setInspectPosition(Number(event.target.value)); setPlayInspection(false) }} /></label>
+          <label>Playback speed<select aria-label="Playback speed" value={playbackSpeed} onChange={event => setPlaybackSpeed(Number(event.target.value))}><option value="1">Normal speed</option><option value="0.25">Quarter speed</option></select></label>
+          <div className="preview__buttons"><button type="button" onClick={() => { setInspectMotion(true); if (inspectKind === 'idle') setSceneProgress(0); else setInspectPosition(0); setPlayInspection(true) }}>Play sequence</button><button type="button" onClick={() => setPlayInspection(false)}>Hold this pose</button></div>
+          <p className="preview__small">The full-activity preview compresses session progress into twelve seconds. The action slider samples exact contact poses; reduced motion keeps the selected pose still.</p>
+        </fieldset>
         <fieldset disabled={running}><legend>Presentation</legend>
-          <label>Semantic stance<select value={stance} onChange={event => { setStance(event.target.value as CompanionStance); setCue(null) }}>{BLUE_STANCES.map(value => <option key={value}>{value}</option>)}</select></label>
-          <label>Scene width<select value={width} onChange={event => setWidth(Number(event.target.value))}>{[320, 375, 430].map(value => <option key={value} value={value}>{value} CSS pixels</option>)}</select></label>
+          <label>Semantic stance<select aria-label="Semantic stance" value={stance} onChange={event => { setStance(event.target.value as CompanionStance); setCue(null) }}>{BLUE_STANCES.map(value => <option key={value}>{value}</option>)}</select></label>
+          <label>Scene width<select aria-label="Scene width" value={width} onChange={event => setWidth(Number(event.target.value))}>{[320, 375, 430].map(value => <option key={value} value={value}>{value} CSS pixels</option>)}</select></label>
           <label className="preview__toggle"><input type="checkbox" checked={motionEnabled} onChange={event => setMotionEnabled(event.target.checked)} /> Enable motion</label>
           <label className="preview__toggle"><input type="checkbox" checked={largeText} onChange={event => setLargeText(event.target.checked)} /> 200% scene text</label>
           <p className="preview__small">The OS preference takes precedence. Neutral is the quiet error fixture.</p>
@@ -347,6 +380,15 @@ function Preview() {
         </fieldset>
       </aside>
     </div>
+    {sceneId && <section className="preview__poses" aria-label="Selected activity contact sequence">
+      <h2>{SCENE_LABELS[sceneId]} · contact sequence</h2>
+      <p className="preview__small">Exact sampled poses from the production renderer. Progress landmarks are connected by handling actions; resting scenes show their action cycle.</p>
+      <div className="preview__pose-grid preview__contact-grid">{[0, .2, .32, .4, .58, .75, .9, 1].map(position => {
+        const example = activityFixture(sceneId, 'loop', 0, 'snack', position, true)
+        const rest = sceneId.startsWith('R')
+        return <figure key={position} className="preview__pose"><div aria-hidden="true"><BlueCompanion presentation={activityPresentation(example, 'loop', true)} scene={example} inspection={{ actionKind: rest ? 'beat' : 'idle', actionProgress: rest ? position : 0 }} /></div><figcaption>{Math.round(position * 100)}%</figcaption></figure>
+      })}</div>
+    </section>}
     <section className="preview__poses" aria-label="All static session activities">
       <h2>Eleven activities, same little companion</h2>
       <p className="preview__small">Every shipped scene remains recognizable without motion. Select a scene above to inspect its opening, pause, ending or restored state.</p>
@@ -367,7 +409,7 @@ function Preview() {
       <div className="preview__checks-heading preview__scene-checks-heading"><div><h2>Scene lifecycle checks</h2><p>Checks every scene in static running, paused, ended and restored states, then verifies finite cue cancellation and replay protection.</p></div><button type="button" className="preview__run" disabled={running} onClick={() => void runSceneChecks()}>{running ? 'Checking…' : 'Run scene checks'}</button></div>
       {sceneChecks.length > 0 && <p className="preview__result" data-scene-result={sceneChecks.some(check => !check.passed) ? 'fail' : running ? 'running' : 'pass'}>{sceneChecks.filter(check => check.passed).length}/{sceneChecks.length} scene checks passed{running ? ' · running' : ''}</p>}
       <ol className="preview__check-list">{sceneChecks.map((check, index) => <li key={index} data-passed={check.passed}><span>{check.passed ? 'PASS' : 'FAIL'}</span> {check.label}</li>)}</ol>
-      <p className="preview__small">Synthetic checks do not establish physical-device, screen-reader or installed-PWA verification. Actual app accounting, unlock and recovery flows are tested separately.</p>
+      <p className="preview__small">Synthetic checks do not establish physical-device, screen-reader or installed-PWA verification. Actual app accounting, selection and recovery flows are tested separately.</p>
       <p className="preview__small">Browser: {navigator.userAgent}</p>
     </section>
   </main>
