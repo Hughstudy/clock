@@ -1,5 +1,7 @@
 # Focus App: Next Implementation Plan (Review Draft)
 
+The [Records companion proposal](docs/plans/RECORDS_COMPANION_PLAN.md) covers the local-time scene on entering Records and a stable, illustrated story for each saved focus entry. The user chose these two placements. The proposed artwork, time bands and implementation are ready for review.
+
 The [companion scenery and motion review](docs/plans/COMPANION_SCENERY_AND_MOTION.md) records the baseline findings, visual research and implemented corrections. The ready view and eleven activities now share an orchard workroom, garden terrace and dusk setting. See the [browser verification](docs/verification/companion-scenery.md).
 
 Updated: 2026-10-31. This plan distinguishes implemented scope from remaining product proposals. The user explicitly authorized the complete animation-refinement plan, integration and publication. All eleven activities now use the shared production pose system, C2-P3 precise progress and snapshot v6 immediate scene access. See the [refinement implementation](docs/plans/ANIMATION_REFINEMENT_PLAN.md) and [verification evidence](docs/verification/animation-refinement.md). Physical-device acceptance and the wider P0 work remain separate.
