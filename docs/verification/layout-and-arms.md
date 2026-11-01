@@ -1,10 +1,12 @@
 # Focus layout on iPhone and iPad, and arm placement — verification
 
+> Screenshots and recordings were removed from the repository on 2026-11-01 at the owner's request. Links below point to `2642a37`, the last commit that has them.
+
 Date: 2026-11-01. Requested by the owner: "make sure the iPad and iPhone layouts are right, with no overlapping layers, and check the arm positions for odd overlaps." All runs used desktop Chrome 156.0.8078.74 with viewport emulation. **No physical iPhone or iPad was used**, so safe areas, the real soft keyboard and Safari rendering remain unverified.
 
 ## What was wrong
 
-Measured with a layout audit over nine viewports and fourteen Focus states. Screenshots are in [layout-and-arms/](layout-and-arms/).
+Measured with a layout audit over nine viewports and fourteen Focus states. Screenshots are in [layout-and-arms/](https://github.com/Hughstudy/clock/tree/2642a37ba63351ddabf84259751b861df201c21e/docs/verification/layout-and-arms).
 
 - **Panels covered the creature.** The custom-length, thought and end panels sat over the scene, so on every device the creature's face showed half above the card.
 - **The requested bubble covered the head** on 375×667, and in landscape on both iPhone and iPad.
@@ -77,13 +79,13 @@ The pre-existing E2E check that keeps the primary action's target fixed still pa
 ## Evidence
 
 Before:
-- [blocks](layout-and-arms/blocks-before.png)
-- [book](layout-and-arms/book-before.png)
+- [blocks](https://github.com/Hughstudy/clock/blob/2642a37ba63351ddabf84259751b861df201c21e/docs/verification/layout-and-arms/blocks-before.png)
+- [book](https://github.com/Hughstudy/clock/blob/2642a37ba63351ddabf84259751b861df201c21e/docs/verification/layout-and-arms/book-before.png)
 
 After:
-- [blocks](layout-and-arms/blocks-after.png)
-- [book](layout-and-arms/book-after.png)
-- Layouts: [iPhone 375×667](layout-and-arms/iphone-se.png), [iPhone 393×852](layout-and-arms/iphone-393.png), [iPad 820×1180](layout-and-arms/ipad-820.png), [iPhone landscape](layout-and-arms/iphone-landscape.png), [iPad landscape](layout-and-arms/ipad-landscape.png)
+- [blocks](https://github.com/Hughstudy/clock/blob/2642a37ba63351ddabf84259751b861df201c21e/docs/verification/layout-and-arms/blocks-after.png)
+- [book](https://github.com/Hughstudy/clock/blob/2642a37ba63351ddabf84259751b861df201c21e/docs/verification/layout-and-arms/book-after.png)
+- Layouts: [iPhone 375×667](https://github.com/Hughstudy/clock/blob/2642a37ba63351ddabf84259751b861df201c21e/docs/verification/layout-and-arms/iphone-se.png), [iPhone 393×852](https://github.com/Hughstudy/clock/blob/2642a37ba63351ddabf84259751b861df201c21e/docs/verification/layout-and-arms/iphone-393.png), [iPad 820×1180](https://github.com/Hughstudy/clock/blob/2642a37ba63351ddabf84259751b861df201c21e/docs/verification/layout-and-arms/ipad-820.png), [iPhone landscape](https://github.com/Hughstudy/clock/blob/2642a37ba63351ddabf84259751b861df201c21e/docs/verification/layout-and-arms/iphone-landscape.png), [iPad landscape](https://github.com/Hughstudy/clock/blob/2642a37ba63351ddabf84259751b861df201c21e/docs/verification/layout-and-arms/ipad-landscape.png)
 
 The production storyboards in `docs/plans/assets/` were re-exported from the new geometry.
 

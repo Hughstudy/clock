@@ -1,5 +1,7 @@
 # Interaction overhaul (PRD v26) — verification
 
+> Screenshots and recordings were removed from the repository on 2026-11-01 at the owner's request. Links below point to `2642a37`, the last commit that has them.
+
 Date: 2026-11-01. Scope: the revision-2 interaction overhaul described in [INTERACTION_OVERHAUL_PLAN.md](../plans/INTERACTION_OVERHAUL_PLAN.md). Every check was run in desktop Chrome with mobile viewport emulation. **No physical-device, screen-reader or real soft-keyboard trial has been done**, so those remain unverified.
 
 ## Automated checks
@@ -44,11 +46,11 @@ Date: 2026-11-01. Scope: the revision-2 interaction overhaul described in [INTER
 | 812×375 landscape | The scene is on the left and the plate on the right. |
 | 430×850 at 200% text | No horizontal overflow. Rows wrap and the art shrinks first. |
 
-Screenshots are in [interaction-v26/](interaction-v26/):
-- [ready](interaction-v26/ready-375.png)
-- [running at 320](interaction-v26/scene-320.png), [375](interaction-v26/scene-375.png) and [430](interaction-v26/scene-430.png)
-- [200% text](interaction-v26/text-200.png)
-- [Records](interaction-v26/records-375.png)
+Screenshots are in [interaction-v26/](https://github.com/Hughstudy/clock/tree/2642a37ba63351ddabf84259751b861df201c21e/docs/verification/interaction-v26):
+- [ready](https://github.com/Hughstudy/clock/blob/2642a37ba63351ddabf84259751b861df201c21e/docs/verification/interaction-v26/ready-375.png)
+- [running at 320](https://github.com/Hughstudy/clock/blob/2642a37ba63351ddabf84259751b861df201c21e/docs/verification/interaction-v26/scene-320.png), [375](https://github.com/Hughstudy/clock/blob/2642a37ba63351ddabf84259751b861df201c21e/docs/verification/interaction-v26/scene-375.png) and [430](https://github.com/Hughstudy/clock/blob/2642a37ba63351ddabf84259751b861df201c21e/docs/verification/interaction-v26/scene-430.png)
+- [200% text](https://github.com/Hughstudy/clock/blob/2642a37ba63351ddabf84259751b861df201c21e/docs/verification/interaction-v26/text-200.png)
+- [Records](https://github.com/Hughstudy/clock/blob/2642a37ba63351ddabf84259751b861df201c21e/docs/verification/interaction-v26/records-375.png)
 
 The approved mockups and the before/after comparison are in [plans/assets/interaction-mockups](../plans/assets/interaction-mockups/).
 

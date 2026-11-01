@@ -1,5 +1,7 @@
 # Blue companion touch interaction — 2026-10-29
 
+> Screenshots and recordings were removed from the repository on 2026-11-01 at the owner's request. Links below point to `2642a37`, the last commit that has them.
+
 ## Scope and integration
 
 Baseline: `fb3f77f` (`Document animation and main logic workstreams`). Work is on
@@ -177,7 +179,7 @@ feedback grows below the SVG, preserving the face and held props; longer pages
 can scroll. All 11 static scene compositions, the 375px reading scene and the
 200% text layout were visually inspected.
 
-![The eleven original blue-companion activities](assets/session-scenes-gallery.png)
+![The eleven original blue-companion activities](https://raw.githubusercontent.com/Hughstudy/clock/2642a37ba63351ddabf84259751b861df201c21e/docs/verification/assets/session-scenes-gallery.png)
 
 ### Repeating the checks
 

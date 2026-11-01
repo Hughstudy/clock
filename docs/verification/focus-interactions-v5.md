@@ -1,12 +1,14 @@
 # Focus interaction upgrade
 
+> Screenshots and recordings were removed from the repository on 2026-11-01 at the owner's request. Links below point to `2642a37`, the last commit that has them.
+
 The user supplied **番茄钟_产品PRD_v5.md** on October 31, 2026. This implementation follows §§2.4, 3–7 and 10.7. Its starting commit was `91ef261`, four commits after the PRD archive. The existing orchard artwork, eleven immediately available activities, Records greetings and saved-entry stories are part of the baseline.
 
 ## Entry comparison
 
 | Production console, 375 CSS pixels | Action-card comparison, 375 CSS pixels |
 | --- | --- |
-| ![Focus console with a 25-minute start and a separate 5-minute shortcut](focus-interactions/console-375.png) | ![Two action cards for starting focus or rest](focus-interactions/action-cards-375.png) |
+| ![Focus console with a 25-minute start and a separate 5-minute shortcut](https://raw.githubusercontent.com/Hughstudy/clock/2642a37ba63351ddabf84259751b861df201c21e/docs/verification/focus-interactions/console-375.png) | ![Two action cards for starting focus or rest](https://raw.githubusercontent.com/Hughstudy/clock/2642a37ba63351ddabf84259751b861df201c21e/docs/verification/focus-interactions/action-cards-375.png) |
 
 The comparison page lives under `preview/focus/`. Serve the repository with Vite on a dedicated development origin. Open `/preview/focus/index.html` for the console or append `?layout=cards` for the action cards. Use fresh browser profiles for each trial. Only the console is shipped in the Pages build.
 

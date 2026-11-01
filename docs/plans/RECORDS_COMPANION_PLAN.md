@@ -1,6 +1,6 @@
 # Records companion and storybook entries
 
-Implemented prototype, 2026-10-31. Tap **记录** for the local-time greeting, then expand any saved focus entry to read its story. The recording shows four visits at 08:15, 14:15, 18:15 and 21:15 on a simulated Singapore device clock, with motion playing at normal speed. [Watch all four entrances](../verification/records-companion/entrances.webm) · [Phone-width screenshot](../verification/records-companion/records-night-375.png) · [Browser results](../verification/records-companion/browser-review.json)
+Implemented prototype, 2026-10-31. Tap **记录** for the local-time greeting, then expand any saved focus entry to read its story. The recording shows four visits at 08:15, 14:15, 18:15 and 21:15 on a simulated Singapore device clock, with motion playing at normal speed. [Watch all four entrances](https://github.com/Hughstudy/clock/blob/2642a37ba63351ddabf84259751b861df201c21e/docs/verification/records-companion/entrances.webm) · [Phone-width screenshot](https://github.com/Hughstudy/clock/blob/2642a37ba63351ddabf84259751b861df201c21e/docs/verification/records-companion/records-night-375.png) · [Browser results](../verification/records-companion/browser-review.json)
 
 ## A visit to Records
 

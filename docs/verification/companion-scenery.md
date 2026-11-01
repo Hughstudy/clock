@@ -1,12 +1,14 @@
 # Orchard scenery and companion motion verification
 
+> Screenshots and recordings were removed from the repository on 2026-11-01 at the owner's request. Links below point to `2642a37`, the last commit that has them.
+
 Verified on 2026-10-31 in the Windows development checkout. The [research and implementation log](../plans/COMPANION_SCENERY_AND_MOTION.md) records the findings that motivated the changes.
 
 ## What the app looks like
 
-- [Normal-speed motion recording](companion-scenery/companion-motion.webm) shows the book closing, the wand emerging from its jar and the rest stretch in 12.36 seconds. The production renderer plays each action at normal speed. The fixture advances the host's session milestones between shots.
-- [All eleven activities](companion-scenery/scenery-catalogue.png) show the workroom, garden terrace and dusk palette. The ready character shares its coat shading and eye highlights with the activity renderer.
-- [Production timer at three phone widths](companion-scenery/scenery-widths.png) shows ready, tea, planting and stargazing at 320, 375 and 430 CSS pixels. The real app selected these scenes through normal starts. The stills use reduced motion.
+- [Normal-speed motion recording](https://github.com/Hughstudy/clock/blob/2642a37ba63351ddabf84259751b861df201c21e/docs/verification/companion-scenery/companion-motion.webm) shows the book closing, the wand emerging from its jar and the rest stretch in 12.36 seconds. The production renderer plays each action at normal speed. The fixture advances the host's session milestones between shots.
+- [All eleven activities](https://github.com/Hughstudy/clock/blob/2642a37ba63351ddabf84259751b861df201c21e/docs/verification/companion-scenery/scenery-catalogue.png) show the workroom, garden terrace and dusk palette. The ready character shares its coat shading and eye highlights with the activity renderer.
+- [Production timer at three phone widths](https://github.com/Hughstudy/clock/blob/2642a37ba63351ddabf84259751b861df201c21e/docs/verification/companion-scenery/scenery-widths.png) shows ready, tea, planting and stargazing at 320, 375 and 430 CSS pixels. The real app selected these scenes through normal starts. The stills use reduced motion.
 - The [book](../plans/assets/scene-contact-storyboards/book-page.svg), [wand](../plans/assets/scene-contact-storyboards/wand-turn.svg), [boat](../plans/assets/scene-contact-storyboards/boat-fold.svg) and [tower](../plans/assets/scene-contact-storyboards/block-place.svg) sheets show the hand and supporting surface through the revised actions.
 
 The first visual pass exposed a blue oval extending below the workroom floor. A small foot shadow now grounds the ready character. Further inspection led to a shallower book closure, moving the bubble ring clear of the eye, an outlined flag and a warm-drink steam curl that moves away from the face.
