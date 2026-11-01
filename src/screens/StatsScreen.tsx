@@ -75,7 +75,7 @@ function ThoughtEntry({ item, expanded, onToggle, linkedRecord, linkedActive, pe
         {linkedRecord && <p>关联专注 · {linkedDate} {linkedRecord.timeLabel} · {formatMinutes(linkedRecord.elapsedMs)}{linkedRecord.step && ' · ' + linkedRecord.step}</p>}
         {linkedActive && <p>关联当前专注</p>}
         <div className="thought-row-actions">
-          {edit && <button type="button" className="link-button" disabled={!canEdit} onClick={() => edit(item.id)}>{item.text ? '编辑文字' : '加一句'}</button>}
+          {edit && <button type="button" className="link-button" disabled={!canEdit} onClick={() => edit(item.id)}>{item.text ? '编辑文字' : '补一句'}</button>}
           {item.status === 'open'
             ? <button type="button" className="link-button" disabled={!canEdit} onClick={() => thoughts.putAway(item.id)}>收起想法</button>
             : <button type="button" className="link-button" disabled={!canEdit} onClick={() => thoughts.reopen(item.id)}>放回待看</button>}

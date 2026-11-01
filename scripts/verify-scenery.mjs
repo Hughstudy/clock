@@ -140,7 +140,7 @@ try {
     }
     const sample = samples.find(entry => entry.id === id)
     if (sample && !captured.has(id)) await captureWidths(real, sample)
-    await real.getByRole('button', { name: '结束这段', exact: true }).click()
+    await real.getByRole('button', { name: '结束专注', exact: true }).click()
     await real.getByRole('dialog').getByRole('button', { name: '结束并记录', exact: true }).click()
     await real.locator('.home .blue-companion[data-scene-status="ended"]').waitFor()
   }

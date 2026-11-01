@@ -40,7 +40,7 @@ export function RecordEntry({ record, expanded, onToggle, persistence, showArt, 
           {record.thoughts.length > 0 && <ul className="record-thoughts" aria-label="这一段的想法">
             {record.thoughts.map(t => <li key={t.id}>
               {t.dateKey !== record.dateKey && `${formatDate(t.dateKey)} · `}{t.text || '留过标记'}{!confirmedThoughtIds.has(t.id) && ' · ' + pendingText}
-              {editThought && <button type="button" className="link-button" onClick={() => editThought(t.id)}>{t.text ? '编辑文字' : '加一句'}</button>}
+              {editThought && <button type="button" className="link-button" onClick={() => editThought(t.id)}>{t.text ? '编辑文字' : '补一句'}</button>}
             </li>)}
           </ul>}
           {story && storyId && <figure className="record-story" data-story-id={storyId}>

@@ -35,7 +35,7 @@ async function failWrites(page, fail) {
   }, { key, fail })
 }
 async function end(page) {
-  await tap(page, '结束这段')
+  await tap(page, '结束专注')
   await tap(dialog(page), '结束并记录')
 }
 process.env.BASE_PATH = '/clock/'
@@ -81,15 +81,15 @@ try {
   await tap(page, '摸摸蓝色伙伴')
   check('A pat leaves panels closed', !await dialog(page).count())
   const baseline = await geometry(page)
-  await tap(page, '先记一下')
-  await button(page, '加一句').waitFor()
+  await tap(page, '留个标记')
+  await button(page, '补一句').waitFor()
   const markerA = (await snapshot(page)).thoughts[0].id
   check('Marker and undo do not move controls or increase background height', stable(baseline, await geometry(page)))
   await page.clock.fastForward(850)
-  await tap(page, '先记一下')
+  await tap(page, '留个标记')
   await tap(page, '写想法')
   await dialog(page).locator('.fp-linked summary').click()
-  await button(dialog(page), '加一句').first().click()
+  await button(dialog(page), '补一句').first().click()
   await page.locator('#thought-text').fill('只补第一个记号')
   await tap(dialog(page), '保存想法')
   await page.waitForFunction(({ key, id }) => JSON.parse(localStorage.getItem(key)).thoughts.find(t => t.id === id)?.text === '只补第一个记号', { key, id: markerA })
@@ -124,7 +124,7 @@ try {
   await tap(second, '暂停')
   await page.locator('.fp-status').getByText(/已暂停/).waitFor()
   check('A remote pause keeps the requested phrase readable', Boolean(phrase) && await reading.innerText() === phrase)
-  await tap(page, '收起')
+  await tap(page, '收到鼓励了')
   await second.close()
   await page.bringToFront()
   const failingSession = (await snapshot(page)).timer.session.id
@@ -158,7 +158,7 @@ try {
   await tap(page, /^再专注 \d+ 分钟$/)
   await button(page, '暂停').waitFor()
   const confirming = (await snapshot(page)).timer.session
-  await tap(page, '结束这段')
+  await tap(page, '结束专注')
   await page.clock.fastForward(confirming.durationMs + 100)
   await dialog(page).waitFor({ state: 'detached' })
   const expired = await snapshot(page)

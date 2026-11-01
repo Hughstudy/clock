@@ -60,7 +60,7 @@ export function CompanionFeedback({ feedback, reducedMotion, motionEnabled = fal
         {!compact && <div className="companion-feedback__actions">
           {requested && onNext && <button type="button" onClick={onNext}>{labels.next}</button>}
           {requested && onBookmark && <button type="button" onClick={onBookmark} disabled={bookmarkState === 'saving' || bookmarkState === 'saved'}>{bookmarkState === 'saved' ? labels.bookmarked : bookmarkState === 'saving' ? '正在收藏…' : labels.bookmark}</button>}
-          {requested && onDismiss && <button type="button" onClick={onDismiss}>收起</button>}
+          {requested && onDismiss && <button type="button" onClick={onDismiss}>收到鼓励了</button>}
         </div>}
       </div>}
       {announce && <span className="companion-feedback__live" aria-live={announcement?.priority ?? 'polite'} aria-atomic="true">{announcement?.text ?? ''}</span>}

@@ -17,13 +17,26 @@ Inputs:
 | Size jump | Removed. The ready creature uses the same rig scale and anchor as every scene (`scale(.75) translate(42 38)` in `BlueCompanion.tsx`), so starting, pausing and ending never resize or move it. This is the only change inside CodeX-owned art code, and it is a single wrapper with no restyle. |
 | Plate | 34px tabular digits (30px on short screens), one status line, one row (5/15/25 chips + 「其他」, short/long rest chips, or a 6px progress bar), a single pill primary of about 220×44, light dot-text secondary actions, and one note line for receipts and save state. Visual sizes are small; every target is extended to at least 44px. |
 | Primary | 「开始专注」 (25 minutes by default, one tap), 「暂停」, 「继续专注」 (warm colour), 「暂停休息」/「继续休息」 (mint), and 「休息 N 分钟」 after a focus session. One element, which keeps the press identity guard. |
-| Secondary | Ready: 先记一下 · 写想法 · 休息一下. Running/paused: 先记一下 · 写想法 · 结束这段. Rest: 先记一下 · 写想法 · 结束休息. After a focus session: 再专注 N 分钟 · 换个时长 · 写想法. |
+| Secondary | Ready: 留个标记 · 写想法 · 休息一下. Running/paused: 留个标记 · 写想法 · 结束专注. Rest: 留个标记 · 写想法 · 结束休息. After a focus session: 再专注 N 分钟 · 换个时长 · 写想法. |
 | Duration | The chips change only the prepared value. 「其他」 opens a local panel with −/+ and a whole-minute field (1–120); invalid drafts stay editable, with 「恢复上次值」. Enter accepts and never starts anything. The separate five-minute start and the `cards` layout are removed. |
 | Small step | 「＋ 这一小步」 in the status line becomes an inline field. Enter or blur collapses it and never starts. |
 | Local panels | `FocusPanel` (non-modal, `role="dialog"`) rests on the plate and docks above the soft keyboard. It holds the custom length, the thought editor (with the collapsible 「本段想法」 list) and the end confirm (「先不结束」/「结束并记录」). The time, pause and navigation stay visible and usable. |
-| Feedback | The companion's line is a bubble in the sky. Requested encouragement shows 「换一句」/「收起」 and the categories inside the bubble. Thought receipts, undo, 「加一句」, save errors with 「重试保存」, and the memory-only/read-only state use the note line. The elapsed time appears once as a sentence (「本段计时 … · 已保存」) and once as muted digits, rounded down to match. |
+| Feedback | The companion's line is a bubble in the sky. Requested encouragement shows 「换一句」/「收到鼓励了」 and 「换一种鼓励」 (the four categories) inside the bubble. Thought receipts, undo, 「补一句」, save errors with 「重试保存」, and the memory-only/read-only state use the note line. The elapsed time appears once as a sentence (「本段计时 … · 已保存」) and once as muted digits, rounded down to match. |
 | Rest end | Ending or finishing a rest lands directly on focus ready (「休息好了 · 本次休息 …」). 「开始专注」 is one tap. |
 | Header | The "Whale Focus" wordmark row is removed. Settings opens from the gear in the scene's top band and returns with 「‹ 回到专注」. Notices float above the page instead of pushing it down. |
+
+**Final labels (owner, 2026-11-01).** The owner renamed these after the release:
+
+| Earlier | Final |
+|---|---|
+| 结束这段 | 结束专注 |
+| 先记一下 | 留个标记 |
+| 写想法 | 写想法 (unchanged) |
+| 加一句 | 补一句 |
+| 按现在的需要选 | 换一种鼓励 |
+| 收起 (encouragement bubble) | 收到鼓励了 |
+
+The end panel's question follows the same naming: 「现在结束专注？」. Rest keeps 「结束休息」. The copy registry (`UI05`, `UI12`, `UI13`) and Records' 「补一句」 match. Functional labels in the thought panel now say 标记 instead of 记号 (「标记 1」, 「确认只留下标记」). The companion's own lines (`NME` pool) keep 记号 as reviewed copy. Revision 1 below still uses the earlier names as a record.
 
 ### Records and Settings
 
@@ -35,7 +48,7 @@ Inputs:
 1. The companion is larger in every state, and the art box sets a minimum share before the controls.
 2. Tap counts are reported honestly below; Settings typing already committed on blur.
 3. Memory-only still allows timer and thought operations, and the note line says 「仅在此页」. Only read-only disables writes, which is how `canEdit` already worked.
-4. 「先记一下」 is available in ready and rest states, creating an independent marker; only running/paused focus binds thoughts to the session.
+4. 「留个标记」 is available in ready and rest states, creating an independent marker; only running/paused focus binds thoughts to the session.
 5. The landscape layout puts the scene and plate side by side. Creature size is held constant by sharing the rig, not by identical bounding boxes.
 6. Duration intent order: Focus picks record the count of default-length requests made in Settings. A delayed settings save clears only picks made before that request (`keepsDurationChoice`, unit-tested).
 

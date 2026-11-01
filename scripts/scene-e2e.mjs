@@ -41,7 +41,7 @@ async function untilSaved(page, predicate, label) {
 async function sceneAttribute(page, name) { return page.locator('.home .blue-companion').getAttribute(`data-scene${name ? `-${name}` : ''}`) }
 async function endEarly(page) {
   const id = (await readSaved(page)).data.timer.session.id
-  await page.getByRole('button', { name: '结束这段', exact: true }).click()
+  await page.getByRole('button', { name: '结束专注', exact: true }).click()
   await page.getByRole('dialog').getByRole('button', { name: '结束并记录', exact: true }).click()
   await untilSaved(page, s => s.records.some(record => record.sessionId === id), 'confirmed early end')
 }

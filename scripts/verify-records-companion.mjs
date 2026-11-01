@@ -52,7 +52,7 @@ async function start(page, sessionId, step) {
 }
 
 async function end(page) {
-  await press(page, '结束这段')
+  await press(page, '结束专注')
   await press(page, '结束并记录')
 }
 

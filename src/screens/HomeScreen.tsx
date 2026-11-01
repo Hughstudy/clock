@@ -215,7 +215,7 @@ export function HomeScreen({ active, view, result, linkedThoughts, defaultsInten
           {panel === 'thought' && <>
             {!!linkedThoughts.length && !thoughts.isExisting && <details className="fp-linked">
               <summary>{copy.sessionThoughts}（{linkedThoughts.length}）</summary>
-              <ul>{linkedThoughts.map((note, index) => <li key={note.id}><span>{note.text || `记号 ${index + 1}`}</span>
+              <ul>{linkedThoughts.map((note, index) => <li key={note.id}><span>{note.text || `标记 ${index + 1}`}</span>
                 <button type="button" className="text-action" disabled={!canEdit} onClick={e => edit(note.id, e.currentTarget)}>
                   {note.text ? copy.edit : copy.supplement}</button></li>)}</ul>
             </details>}
