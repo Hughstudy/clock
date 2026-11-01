@@ -6,7 +6,7 @@ const TABS = [
 interface Props { active: Screen; onSelect: (screen: Screen) => void }
 export function TabBar({ active, onSelect }: Props) {
   return <nav className="tab-bar" aria-label="主导航">
-    {TABS.map(tab => <button key={tab.id} type="button" className="tab" aria-current={tab.id === active ? 'page' : undefined} onClick={() => onSelect(tab.id)}>
+    {TABS.map(tab => <button key={tab.id} type="button" className="tab" data-tab={tab.id} aria-current={tab.id === active ? 'page' : undefined} onClick={() => onSelect(tab.id)}>
       <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d={tab.path}/></svg>
       <span>{tab.label}</span>
     </button>)}

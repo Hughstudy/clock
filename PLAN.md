@@ -1,6 +1,4 @@
-# Focus App: Next Implementation Plan (Review Draft)
-
-The current interaction baseline is the supplied **番茄钟_产品PRD_v5.md** (2026-10-31). Its archive marker `cdd6be36` precedes the integrated scenery and Records work. The first v5 slice builds on `91ef261`. The [interaction report](docs/verification/focus-interactions-v5.md) includes the two entry layouts, state and action table, storage changes and acceptance evidence.
+The current product source is the supplied **番茄钟_产品PRD_v26.md** (2026-11-01, [snapshot](docs/handoff-20261101/番茄钟_产品PRD_v26.md)). On 2026-11-01 the user approved the [interaction overhaul](docs/plans/INTERACTION_OVERHAUL_PLAN.md) and asked for it to be implemented and published: the companion's scene now fills the Focus page, one cream plate carries the time, 5/15/25 chips plus a custom length, a single 「开始专注」 and light secondary actions, and only a custom length, a thought and an end confirmation open a local panel. The drawing style is unchanged by owner decision. Evidence: [interaction-v26 verification](docs/verification/interaction-v26.md). PRD v5 and its [interaction report](docs/verification/focus-interactions-v5.md) are history.
 
 Records now opens with a short orchard scene for the viewer's local hour. Expanding a saved focus entry reveals its illustrated story. Pending rows show their actual time and save status. [Records design and implementation](docs/plans/RECORDS_COMPANION_PLAN.md) · [Production browser checks](docs/verification/records-companion/browser-review.json)
 
@@ -22,7 +20,7 @@ The selected direction is the soft blue creature with rounded hands. Tea has one
 
 | Capability | Implemented now | Remaining work | PRD reference |
 | --- | --- | --- | --- |
-| F1 timing and accounting | Separate selection and start, 25-minute default, one-tap 5-minute focus, optional step, captured deadlines, paused-time exclusion, factual end result and explicit rest or next focus | Unprompted comparison of the two entry layouts and the separate first-use 5-minute experiment | §§3–4, 10 |
+| F1 timing and accounting | Inline 5/15/25 choice and a validated one-off custom length (1–120) separate from one 「开始专注」, 25-minute default, optional step, captured deadlines, paused-time exclusion, factual end result, one-tap rest or 「再专注」 after a session, rest ending straight on focus ready | Daily chapters (DAY05) and process gains from PRD v26 §3.4 | v26 §§3.1, 5.2 |
 | Supportive feedback | Saved start/pause/resume/end/rest and thought-save events; requested encouragement with categories, next and dismiss; saved event-encouragement preference; factual result kept separate; no replay on recovery or synchronization | Welcome/return coverage and durable bookmarks | Section 7 |
 | Blue companion | Original rough.js artwork, seven semantic poses, direct pat/squish/high-five responses, quiet focus, saved motion preference; all eight focus and three rest activities with shared contact poses, finite handling actions, persistent ambient loops and static states (C2-P3) | Final integrated visual/device acceptance; contact with external UI surfaces; final artwork and icons | Section 8 |
 | F2 thought capture | One-tap markers, explicit item editing, a recoverable draft with its original context and date, version-checked writes and time-limited undo | Real phone keyboard and screen-reader trials | §5 |

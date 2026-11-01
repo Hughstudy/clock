@@ -7,13 +7,14 @@ interface Props {
   children: React.ReactNode
   primary?: boolean
   label?: string
+  className?: string
 }
 
 /** Keep a held press bound to the session, state and command it started on. */
-export function TimerActionButton({ identity, disabled, onActivate, children, primary, label }: Props) {
+export function TimerActionButton({ identity, disabled, onActivate, children, primary, label, className }: Props) {
   const held = useRef<string | null>(null)
   return (
-    <button type="button" className={primary ? 'btn btn-primary' : 'btn btn-secondary'} disabled={disabled} aria-label={label}
+    <button type="button" className={className ?? (primary ? 'btn btn-primary' : 'btn btn-secondary')} disabled={disabled} aria-label={label}
       onPointerDown={() => { held.current = identity }}
       onPointerCancel={() => { held.current = null }}
       onKeyDown={event => {

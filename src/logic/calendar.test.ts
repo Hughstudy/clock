@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { addDays, fromDayNumber, isDateKey, startOfWeek, toDayNumber, weekday } from './calendar'
+import { addDays, dayHeading, fromDayNumber, isDateKey, shortDate, startOfWeek, toDayNumber, weekday } from './calendar'
 import { groupEntries, indexByDay, rangeTotals, weekTotals } from './stats'
 import { currentStreak } from './streak'
 import type { FocusRecord, Thought } from './types'
@@ -115,5 +115,18 @@ describe('streak', () => {
   it('crosses month boundaries by calendar day', () => {
     const days = indexByDay([record('a', '2026-10-30'), record('b', '2026-10-31'), record('c', '2026-11-01')])
     expect(currentStreak(days, '2026-11-01').days).toBe(3)
+  })
+})
+
+describe('history headings', () => {
+  it('names today and yesterday and keeps the stored date', () => {
+    expect(dayHeading('2026-11-01', '2026-11-01')).toBe('今天 · 11月1日 周日')
+    expect(dayHeading('2026-10-31', '2026-11-01')).toBe('昨天 · 10月31日 周六')
+    expect(dayHeading('2026-10-30', '2026-11-01')).toBe('10月30日 周五')
+  })
+
+  it('adds the year only across a year boundary', () => {
+    expect(shortDate('2025-12-31', '2026-01-02')).toBe('2025年12月31日')
+    expect(dayHeading('2025-12-31', '2026-01-01')).toBe('昨天 · 2025年12月31日 周三')
   })
 })

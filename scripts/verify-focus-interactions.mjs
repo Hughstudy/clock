@@ -16,7 +16,7 @@ const snapshot = page => page.evaluate(k => JSON.parse(localStorage.getItem(k)),
 const dialog = page => page.getByRole('dialog')
 const geometry = page => page.evaluate(() => ({
   height: document.scrollingElement.scrollHeight,
-  bounds: ['.controls .btn-primary', '.tab-bar'].flatMap(selector => {
+  bounds: ['.fp-primary .btn-primary', '.tab-bar'].flatMap(selector => {
     const rect = document.querySelector(selector).getBoundingClientRect()
     return [rect.x, rect.y, rect.width, rect.height]
   }),
@@ -58,42 +58,38 @@ try {
   await page.goto(url)
   await page.getByText('已准备好离线使用。', { exact: true }).waitFor()
   await tap(page, '知道了')
-  await button(page, '开始专注 · 25 分钟').waitFor()
+  await button(page, '开始专注').waitFor()
   await page.screenshot({ path: path.join(output, 'console-375.png') })
-  const comparison = await browser.newPage({ viewport: { width: 375, height: 850 }, reducedMotion: 'reduce' })
-  await comparison.goto(url + 'preview/focus/index.html?layout=cards')
-  await comparison.getByText('已准备好离线使用。', { exact: true }).waitFor()
-  await tap(comparison, '知道了')
-  await button(comparison, '开始专注 · 25 分钟').waitFor()
-  await comparison.screenshot({ path: path.join(output, 'action-cards-375.png') })
-  await tap(comparison, '开始休息 · 5 分钟')
-  await button(comparison, '暂停休息').waitFor()
-  check('Comparison layout starts the displayed five-minute rest independently', (await snapshot(comparison)).timer.session.durationMs === 300000)
-  await comparison.close()
-  await tap(page, '选时长')
-  await tap(dialog(page), '15 分钟')
-  await button(page, '开始专注 · 15 分钟').waitFor()
-  check('Choosing a duration changes only the ready display', !(await snapshot(page))?.timer.session)
-  await tap(page, '选时长')
+  await tap(page, '15 分钟')
+  check('Choosing a duration changes only the ready display',
+    !(await snapshot(page))?.timer.session && await page.locator('.fp-digits').innerText() === '15:00')
+  await tap(page, '其他')
+  await page.locator('#custom-minutes').fill('0')
+  await page.keyboard.press('Enter')
+  check('An invalid custom length stays editable and never starts',
+    !(await snapshot(page))?.timer.session && await button(dialog(page), '用这个时长').isDisabled() && await page.locator('#custom-minutes').inputValue() === '0')
   await page.keyboard.press('Escape')
-  check('Escape returns focus and retains the displayed choice', await button(page, '选时长').evaluate(el => el === document.activeElement))
-  await tap(page, '开始 5 分钟专注')
+  check('Escape returns focus to the chooser and keeps the displayed choice',
+    await button(page, '其他').evaluate(el => el === document.activeElement) && await page.locator('.fp-digits').innerText() === '15:00')
+  await tap(page, '5 分钟')
+  await tap(page, '开始专注')
   await button(page, '暂停').waitFor()
   const first = await snapshot(page)
   const owner = first.timer.session.id
-  check('Explicit five-minute start preserves the configured duration and quiet default',
+  check('A five-minute start preserves the configured duration and quiet default',
     first.timer.session.durationMs === 300000 && first.settings.durationsMinutes.focus === 25 && !first.settings.soundEnabled)
   await tap(page, '摸摸蓝色伙伴')
-  check('A pat leaves the support reader closed', !await dialog(page).count())
+  check('A pat leaves panels closed', !await dialog(page).count())
   const baseline = await geometry(page)
-  await tap(page, '留个记号')
-  await button(page, '补充文字').waitFor()
+  await tap(page, '先记一下')
+  await button(page, '加一句').waitFor()
   const markerA = (await snapshot(page)).thoughts[0].id
   check('Marker and undo do not move controls or increase background height', stable(baseline, await geometry(page)))
   await page.clock.fastForward(850)
-  await tap(page, '留个记号')
-  await tap(page, '看本段想法')
-  await button(dialog(page), '补充文字').first().click()
+  await tap(page, '先记一下')
+  await tap(page, '写想法')
+  await dialog(page).locator('.fp-linked summary').click()
+  await button(dialog(page), '加一句').first().click()
   await page.locator('#thought-text').fill('只补第一个记号')
   await tap(dialog(page), '保存想法')
   await page.waitForFunction(({ key, id }) => JSON.parse(localStorage.getItem(key)).thoughts.find(t => t.id === id)?.text === '只补第一个记号', { key, id: markerA })
@@ -110,8 +106,8 @@ try {
   const second = await context.newPage()
   await second.clock.install({ time: new Date(await page.evaluate(() => Date.now())) })
   await second.goto(url)
-  await tap(second, '专注模式')
-  await tap(second, /^开始专注 ·/)
+  await tap(second, '回到专注')
+  await tap(second, '开始专注')
   await page.waitForFunction(({ key, owner }) => {
     const active = JSON.parse(localStorage.getItem(key)).timer.session
     return active && active.id !== owner
@@ -123,12 +119,12 @@ try {
     drafted.length === 1 && drafted[0].sessionId === owner && drafted[0].dateKey === '2026-10-31')
   if (await dialog(page).count()) await page.keyboard.press('Escape')
   await tap(page, '给我一句鼓励')
-  const reading = dialog(page).locator('.requested-phrase')
+  const reading = page.locator('.fp-bubble--requested p')
   const phrase = await reading.innerText()
   await tap(second, '暂停')
-  await page.locator('.clock-badge').getByText('已暂停').waitFor()
+  await page.locator('.fp-status').getByText(/已暂停/).waitFor()
   check('A remote pause keeps the requested phrase readable', Boolean(phrase) && await reading.innerText() === phrase)
-  await page.keyboard.press('Escape')
+  await tap(page, '收起')
   await second.close()
   await page.bringToFront()
   const failingSession = (await snapshot(page)).timer.session.id
@@ -137,7 +133,7 @@ try {
   await end(page)
   await button(page, '重试保存').waitFor()
   check('Failed save leaves its retry reachable and controls stable', stable(beforeFail, await geometry(page)))
-  await tap(page, /^开始休息/)
+  await tap(page, /^休息 \d+ 分钟$/)
   await button(page, '暂停休息').waitFor()
   await failWrites(page, false)
   await tap(page, '重试保存')
@@ -145,19 +141,21 @@ try {
   const healed = await snapshot(page)
   check('Retry during rest persists the original focus end once', healed.records.filter(r => r.sessionId === failingSession).length === 1 && healed.timer.session?.status === 'running')
   await tap(page, '结束休息')
-  await tap(page, /^开始专注 ·/)
+  await button(page, '开始专注').waitFor()
+  check('Ending a rest lands directly on a one-tap focus start', !(await snapshot(page)).timer.session && await button(page, '开始专注').isEnabled())
+  await tap(page, '开始专注')
   await button(page, '暂停').waitFor()
   const held = (await snapshot(page)).timer.session
   const pauseBox = await button(page, '暂停').boundingBox()
   await page.mouse.move(pauseBox.x + pauseBox.width / 2, pauseBox.y + pauseBox.height / 2)
   await page.mouse.down()
   await page.clock.fastForward(held.durationMs + 100)
-  await button(page, /^开始休息/).waitFor()
+  await button(page, /^休息 \d+ 分钟$/).waitFor()
   await page.mouse.up()
   const released = await snapshot(page)
   check('Releasing a held Pause after expiry cannot start the suggested rest',
     !released.timer.session && released.records.filter(r => r.sessionId === held.id).length === 1)
-  await tap(page, /^再开一段/)
+  await tap(page, /^再专注 \d+ 分钟$/)
   await button(page, '暂停').waitFor()
   const confirming = (await snapshot(page)).timer.session
   await tap(page, '结束这段')

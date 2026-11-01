@@ -71,7 +71,10 @@ export function BlueCompanion({ presentation, cueId, scene, inspection, panelOpe
       data-scene-action={inspection?.actionKind ?? sceneMotion.sampleKind} data-scene-action-progress={inspection?.actionProgress ?? sceneMotion.actionProgress}>
       {scene && sceneFrame ? <CompanionSceneArt key={scene.key} scene={scene} frame={sceneFrame} /> : <>
       <CompanionPaint id={gradientId}/>
-      {sceneryEnabled ? <g transform="scale(.75)"><CompanionScenery/></g> : <>{part('ground')}{part('groundEdge')}</>}
+      {sceneryEnabled && <g transform="scale(.75)"><CompanionScenery/></g>}
+      {/* Same rig scale and anchor as every scene, so starting never resizes the creature. */}
+      <g transform="scale(.75) translate(42 38)">
+      {!sceneryEnabled && <>{part('ground')}{part('groundEdge')}</>}
       <g className="blue-companion__shadow">{part('shadow')}</g>
       <g key={active?.id ?? 'at-rest'} className="blue-companion__gesture" onAnimationEnd={event => { if (event.target === event.currentTarget && active) finish(active.id) }}>
         <g key={touch?.id ?? 'no-touch'} className="blue-companion__touch" onAnimationEnd={event => { if (event.target === event.currentTarget && touch) play.finish(touch.id) }}>
@@ -92,6 +95,7 @@ export function BlueCompanion({ presentation, cueId, scene, inspection, panelOpe
         </g>
       </g>
       <g className="blue-companion__sparkles" aria-hidden="true">{part('sparkLeft')}{part('sparkRight')}</g>
+      </g>
       </>}
       {touch && <g key={touch.id} className="blue-companion__contact" transform={`translate(${touch.point.x} ${touch.point.y})`} aria-hidden="true">
         <circle className="blue-companion__contact-ring" r={spec.touch.contactRadius} />

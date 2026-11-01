@@ -13,9 +13,11 @@ interface Props {
   showArt: boolean
   confirmedThoughtIds: ReadonlySet<string>
   editThought?: ((id: string) => void) | undefined
+  /** `10月24日`: shown beside a thought written on another day than its session's. */
+  formatDate: (key: string) => string
 }
 
-export function RecordEntry({ record, expanded, onToggle, persistence, showArt, confirmedThoughtIds, editThought }: Props) {
+export function RecordEntry({ record, expanded, onToggle, persistence, showArt, confirmedThoughtIds, editThought, formatDate }: Props) {
   const detailId = useId()
   const { storyId } = record
   const story = storyId ? recordStories[storyId] : null
@@ -24,7 +26,7 @@ export function RecordEntry({ record, expanded, onToggle, persistence, showArt, 
     <li data-record-id={record.sessionId} data-saved={storyId !== null} data-story-id={storyId ?? undefined}>
       <button className="record-summary" type="button" aria-expanded={expanded} aria-controls={detailId} onClick={onToggle}>
         <span className="record-identity">
-          <span className="record-meta"><time dateTime={record.dateKey}>{record.dateKey}</time> · {story ? '已保存' : pendingText}</span>
+          <span className="record-meta">{record.timeLabel}{story ? '' : ' · ' + pendingText}</span>
           <strong>{record.elapsedMs === 0 ? '已开始过这一段' : formatMinutes(record.elapsedMs)}</strong>
           {record.step && <span className="record-step">这一小步：{record.step}</span>}
           {record.thoughts.length > 0 && <span className="record-meta">{record.thoughts.some(t => t.text) ? '留有想法' : '留过标记'}</span>}
@@ -34,11 +36,11 @@ export function RecordEntry({ record, expanded, onToggle, persistence, showArt, 
       </button>
       <div id={detailId} className="record-detail" hidden={!expanded}>
         {expanded && <>
-          <p>{record.endReason === 'manual' ? '手动结束' : '到时结束'} · 目标 {formatMinutes(record.targetMs)}</p>
+          <p>{record.endReason === 'manual' ? '手动结束' : '到时结束'} · 目标 {formatMinutes(record.targetMs)} · {story ? '已保存' : pendingText}</p>
           {record.thoughts.length > 0 && <ul className="record-thoughts" aria-label="这一段的想法">
             {record.thoughts.map(t => <li key={t.id}>
-              <time dateTime={new Date(t.createdAt).toISOString()}>{t.dateKey}</time> · {t.text || '留过标记'}{!confirmedThoughtIds.has(t.id) && ' · ' + pendingText}
-              {editThought && <button type="button" className="link-button" onClick={() => editThought(t.id)}>{t.text ? '编辑文字' : '补充文字'}</button>}
+              {t.dateKey !== record.dateKey && `${formatDate(t.dateKey)} · `}{t.text || '留过标记'}{!confirmedThoughtIds.has(t.id) && ' · ' + pendingText}
+              {editThought && <button type="button" className="link-button" onClick={() => editThought(t.id)}>{t.text ? '编辑文字' : '加一句'}</button>}
             </li>)}
           </ul>}
           {story && storyId && <figure className="record-story" data-story-id={storyId}>

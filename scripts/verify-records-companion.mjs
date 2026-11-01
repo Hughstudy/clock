@@ -34,18 +34,18 @@ async function openRecords(page, band) {
 }
 
 async function start(page, sessionId, step) {
-  const prepare = page.getByRole('button', { name: '回到准备', exact: true })
+  const prepare = page.getByRole('button', { name: '换个时长', exact: true })
   if (await prepare.isVisible()) await prepare.click()
   if (step) {
-    await page.locator('.step-toggle').click()
-    await page.locator('.step-input').fill(step)
-    await press(page, '用作这一小步')
+    await page.locator('.fp-status .text-action').click()
+    await page.locator('.fp-step-input').fill(step)
+    await page.locator('.fp-step-input').press('Enter')
   }
   // Supply the next session ID only, so each real start selects a reproducible story.
   await page.evaluate(id => {
     crypto.randomUUID = () => { delete crypto.randomUUID; return id }
   }, sessionId)
-  await page.locator('.home .btn-primary').click()
+  await page.locator('.fp-primary .btn-primary').click()
   await page.waitForFunction(k => JSON.parse(localStorage.getItem(k))?.timer.session, key)
   assert.equal((await snapshot(page)).timer.session.id, sessionId)
   return sessionId
@@ -184,7 +184,7 @@ try {
     await other.locator(`${header} svg`).isVisible() && await other.locator(header).getAttribute('data-animate') === 'false' &&
     await other.locator(header).evaluate(el => el.getAnimations({ subtree: true }).length === 0))
   check('Another tab reads the same story and historical date',
-    await row(other, latest).getAttribute('data-story-id') === story && (await row(other, latest).innerText()).includes(initialRecord.dateKey))
+    await row(other, latest).getAttribute('data-story-id') === story && (await row(other, latest).evaluate((el, d) => el.closest('.record-day')?.dataset.date === d, initialRecord.dateKey)))
   await other.reload()
   await openRecords(other, 'night')
   check('Reload keeps the story without announcing a past success',
@@ -194,7 +194,7 @@ try {
   // Singapore 21:15 is Los Angeles 06:15 on the test date.
   await other.locator(`${header}[data-band="morning"][data-animate="false"]`).waitFor()
   check('Travel changes the room while the saved story and date remain fixed',
-    await row(other, latest).getAttribute('data-story-id') === story && (await row(other, latest).innerText()).includes(initialRecord.dateKey))
+    await row(other, latest).getAttribute('data-story-id') === story && (await row(other, latest).evaluate((el, d) => el.closest('.record-day')?.dataset.date === d, initialRecord.dateKey)))
   await other.emulateMedia({ reducedMotion: 'no-preference' })
   await press(other, '专注')
   await press(other, '设置')
@@ -239,7 +239,7 @@ try {
     check(`Version 5 history shows the original date with its stable ${expected} illustration and caption`,
       await entry.getAttribute('data-story-id') === expected && await entry.locator('.record-story svg').isVisible() &&
       (await entry.locator('.record-story').innerText()).trim().length > 6 &&
-      (await entry.innerText()).includes(saved.records[0].dateKey))
+      (await entry.evaluate((el, d) => el.closest('.record-day')?.dataset.date === d, saved.records[0].dateKey)))
   }
 
   // Exercise a real decode repair in this disposable profile. One valid record survives.
@@ -302,9 +302,9 @@ try {
   await start(calendar, 'ongoing-bd07')
   await openRecords(calendar, 'night')
   const amount = calendar.locator('.stats .stat-value')
-  check('BD07 includes Oct 25 through 31 and keeps the active session separate', await amount.innerText() === '1 秒' &&
-    await calendar.getByText('2026-10-25 至 2026-10-31', { exact: true }).isVisible() &&
-    await calendar.getByText(/正在计时，未计入/).isVisible() && !await row(calendar, 'oct24').count())
+  check('BD07 totals Oct 25 through 31, keeps the active session separate and still lists older days', await amount.innerText() === '1 秒' &&
+    await calendar.getByText(/10月25日 – 10月31日/).isVisible() &&
+    await calendar.getByText(/正在计时，未计入/).isVisible() && await row(calendar, 'oct24').isVisible())
   const group = calendar.locator('.record-day[data-date="2026-10-25"]')
   check('Two 600 ms entries each display below one second and the day sums to one second', (await group.locator('h4').innerText()).includes('1 秒') &&
     await group.getByText('不到 1 秒', { exact: true }).count() === 2 &&
@@ -313,13 +313,13 @@ try {
     await calendar.locator('[data-date="2026-10-27"] [data-thought-id="solo"]').isVisible() &&
     !await calendar.locator('[data-thought-id="linked"]').count())
   await row(calendar, 'small-a').locator('.record-summary').click()
-  check('A cross-day thought retains its original date inside the session', (await row(calendar, 'small-a').innerText()).includes('2026-10-24 · 跨日想法'))
-  await press(calendar, '查看更早记录')
-  check('Earlier entries are explicitly outside the total', await row(calendar, 'oct24').isVisible() &&
-    await calendar.getByText('更早记录，不计入上方范围汇总。', { exact: true }).isVisible() && await amount.innerText() === '1 秒')
+  check('A cross-day thought retains its original date inside the session', (await row(calendar, 'small-a').innerText()).includes('10月24日 · 跨日想法'))
+  check('History ends with an explicit end-of-list note, and the window only labels the total', await row(calendar, 'oct24').isVisible() &&
+    await calendar.getByText('没有更早的记录了', { exact: true }).isVisible() && await calendar.getByText(/只统计这段日期的计时/).isVisible())
   await press(calendar, '近30天')
-  check('The 30-day window switches both date boundaries and total', await amount.innerText() === '4 秒' &&
-    await calendar.getByText('2026-10-02 至 2026-10-31', { exact: true }).isVisible())
+  check('The 30-day window switches the total and its dates without hiding or collapsing history', await amount.innerText() === '4 秒' &&
+    await calendar.getByText(/10月2日 – 10月31日/).isVisible() && await row(calendar, 'oct24').isVisible() &&
+    await row(calendar, 'small-a').locator('.record-summary').getAttribute('aria-expanded') === 'true')
   await calendar.setViewportSize({ width: 375, height: 450 })
   await calendar.evaluate(() => window.scrollTo(0, 220))
   await calendar.waitForFunction(() => window.scrollY === 220)
@@ -365,7 +365,7 @@ try {
     }
     window.restorePauseWrite = () => { Storage.prototype.setItem = original }
   }, key)
-  await calendar.locator('.home .btn-primary').click()
+  await calendar.locator('.fp-primary .btn-primary').click()
   const retry = calendar.getByRole('button', { name: '重试保存', exact: true }).first()
   await retry.waitFor()
   await press(peer, '设置')

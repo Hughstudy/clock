@@ -21,6 +21,8 @@ interface Props {
   bookmarkState?: 'available' | 'saving' | 'saved' | 'failed'
   /** Omit routine timer status that another element already shows; results and errors stay. */
   quietStatus?: boolean
+  /** The host renders the companion's line and factual status itself. */
+  hideContent?: boolean
 }
 
 function Placeholder() {
@@ -34,7 +36,7 @@ function Placeholder() {
 }
 
 /** Presentation only: all operations are callbacks, including saved/failed bookmark state. */
-export function CompanionFeedback({ feedback, reducedMotion, motionEnabled = false, renderCharacter, onNext, onBookmark, onDismiss, onRequest, announce = true, bookmarkState = 'available', quietStatus = false, compact = false }: Props) {
+export function CompanionFeedback({ feedback, reducedMotion, motionEnabled = false, renderCharacter, onNext, onBookmark, onDismiss, onRequest, announce = true, bookmarkState = 'available', quietStatus = false, compact = false, hideContent = false }: Props) {
   const [keyboardPat, setKeyboardPat] = useState(0)
   const { frame, announcement } = feedback
   const { presentation, labels } = useCompanionView(feedback, reducedMotion, motionEnabled)
@@ -52,7 +54,7 @@ export function CompanionFeedback({ feedback, reducedMotion, motionEnabled = fal
           <span className="companion-feedback__invite">给我一句鼓励 <span aria-hidden="true">↗</span></span>
         </button>
       ) : <div className="companion-feedback__character" aria-hidden="true">{renderCharacter ? renderCharacter(presentation) : <Placeholder />}</div>}
-      <div className="companion-feedback__content">
+      {!hideContent && <div className="companion-feedback__content">
         {(frame.persistence !== 'saved' || frame.status.kind === 'error' || frame.status.result || (!frame.encouragement && !quietStatus)) && <p className={`companion-feedback__status${frame.status.kind === 'error' ? ' companion-feedback__status--error' : ''}`}>{frame.status.text}</p>}
         {frame.encouragement && !(compact && requested) && <p className="companion-feedback__copy">{frame.encouragement.text}</p>}
         {!compact && <div className="companion-feedback__actions">
@@ -60,7 +62,7 @@ export function CompanionFeedback({ feedback, reducedMotion, motionEnabled = fal
           {requested && onBookmark && <button type="button" onClick={onBookmark} disabled={bookmarkState === 'saving' || bookmarkState === 'saved'}>{bookmarkState === 'saved' ? labels.bookmarked : bookmarkState === 'saving' ? '正在收藏…' : labels.bookmark}</button>}
           {requested && onDismiss && <button type="button" onClick={onDismiss}>收起</button>}
         </div>}
-      </div>
+      </div>}
       {announce && <span className="companion-feedback__live" aria-live={announcement?.priority ?? 'polite'} aria-atomic="true">{announcement?.text ?? ''}</span>}
     </section>
   )

@@ -46,7 +46,6 @@ export interface ClockApp {
   submitThought: (action: ThoughtAction, operationId: string, generation: number) => Promise<boolean>
   dispatch: (action: UserAction) => void
   result: SessionResult | null
-  durationResetKey: number
 }
 
 interface CommitOptions {
@@ -287,5 +286,5 @@ export function useClockApp(): ClockApp {
 
   const durable = store.durableSnapshot?.datasetGeneration === view.snapshot.datasetGeneration ? store.durableSnapshot : null
   return { ...view, saveState, feedbackEvent, thoughtResult, thoughtReceipts, submitThought, dispatch, result,
-    durableThoughts: durable?.thoughts ?? EMPTY_THOUGHTS, durationResetKey: durable?.focusDefaultsRevision ?? 0 }
+    durableThoughts: durable?.thoughts ?? EMPTY_THOUGHTS }
 }

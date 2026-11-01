@@ -29,7 +29,7 @@ function observe(page) {
 
 async function captureWidths(page, sample) {
   const frames = []
-  const stage = page.locator('.home .stage')
+  const stage = page.locator('.home .fp-scene')
   const svg = stage.locator('.blue-companion')
   await svg.locator(`[data-scenery="${sample.scenery}"]`).waitFor()
   for (const width of widths) {
@@ -38,7 +38,7 @@ async function captureWidths(page, sample) {
     if (await offlineNotice.isVisible()) await offlineNotice.click()
     await stage.scrollIntoViewIfNeeded()
     const metrics = await svg.evaluate(el => {
-      const badge = document.querySelector('.clock-badge').getBoundingClientRect()
+      const badge = document.querySelector('.fp-digits').getBoundingClientRect()
       const foreground = [...el.querySelectorAll('[data-part^="eye"],[data-part^="mouth"],[data-scene-hand]')]
       const overlapsBadge = foreground.some(node => {
         const r = node.getBoundingClientRect()
@@ -124,7 +124,7 @@ try {
   const running = real.locator('.home .blue-companion[data-scene-status="running"]')
   // The saved focus bag makes all three activities reachable in eight normal starts.
   for (let attempt = 0; attempt < 8 && captured.size < samples.length; attempt++) {
-    if (attempt) await real.getByRole('button', { name: '回到准备', exact: true }).click()
+    if (attempt) await real.getByRole('button', { name: '换个时长', exact: true }).click()
     await primary.click()
     await running.waitFor()
     const id = await running.getAttribute('data-scene')

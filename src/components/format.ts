@@ -14,6 +14,12 @@ export function formatClock(ms: number): string {
   return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`
 }
 
+/** Elapsed `mm:ss`, rounding down to match `formatMinutes`: 9.6 seconds of effort reads 00:09. */
+export function formatElapsedClock(ms: number): string {
+  const totalSeconds = Math.floor(Math.max(0, ms) / 1000)
+  return `${String(Math.floor(totalSeconds / 60)).padStart(2, '0')}:${String(totalSeconds % 60).padStart(2, '0')}`
+}
+
 export function spokenClock(ms: number): string {
   const totalSeconds = Math.ceil(Math.max(0, ms) / 1000)
   const minutes = Math.floor(totalSeconds / 60)

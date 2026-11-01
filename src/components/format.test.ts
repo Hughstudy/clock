@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { formatClock, formatMinutes, spokenClock } from './format'
+import { formatClock, formatElapsedClock, formatMinutes, spokenClock } from './format'
 
 describe('formatting', () => {
   it('rounds the countdown up to whole seconds', () => {
@@ -18,5 +18,12 @@ describe('formatting', () => {
     expect(formatMinutes(61_999)).toBe('1 分钟 1 秒')
     expect(formatMinutes(45 * 60_000)).toBe('45 分钟')
     expect(formatMinutes(125 * 60_000)).toBe('2 小时 5 分钟')
+  })
+
+  it('shows elapsed effort rounded down, like the sentence beside it', () => {
+    expect(formatElapsedClock(9_600)).toBe('00:09')
+    expect(formatMinutes(9_600)).toBe('9 秒')
+    expect(formatElapsedClock(0)).toBe('00:00')
+    expect(formatElapsedClock(75 * 60_000 + 999)).toBe('75:00')
   })
 })

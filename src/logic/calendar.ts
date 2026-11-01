@@ -76,3 +76,19 @@ export function startOfWeek(key: DateKey, weekStartsOn: number): DateKey {
   const offset = (weekday(key) - weekStartsOn + 7) % 7
   return addDays(key, -offset)
 }
+
+const WEEKDAYS = ['周日', '周一', '周二', '周三', '周四', '周五', '周六']
+
+/** `11月1日`, with the year only when it differs from `todayKey`'s. */
+export function shortDate(key: DateKey, todayKey: DateKey): string {
+  const [y, m, d] = parts(key)
+  return `${y === parts(todayKey)[0] ? '' : `${y}年`}${m}月${d}日`
+}
+
+/** Day heading for history: `今天 · 11月1日 周日`, `昨天 · …`, or the date and weekday. */
+export function dayHeading(key: DateKey, todayKey: DateKey): string {
+  const label = `${shortDate(key, todayKey)} ${WEEKDAYS[weekday(key)]}`
+  if (key === todayKey) return `今天 · ${label}`
+  if (key === addDays(todayKey, -1)) return `昨天 · ${label}`
+  return label
+}

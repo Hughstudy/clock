@@ -6,15 +6,17 @@ interface Props {
   form: SettingsForm
   /** False while saved data is shown read-only. */
   canEdit: boolean
+  onBack: () => void
 }
 
-export function SettingsScreen({ form, canEdit }: Props) {
+export function SettingsScreen({ form, canEdit, onBack }: Props) {
   const { systemReducedMotion } = useMotionPreference(form.motionEnabled)
   return (
     <section className="screen settings" aria-labelledby="settings-title">
-      <h2 id="settings-title" className="screen-title">
-        设置
-      </h2>
+      <header className="settings-header">
+        <button type="button" className="pill pill--ghost" onClick={onBack}>‹ 回到专注</button>
+        <h2 id="settings-title" className="screen-title">设置</h2>
+      </header>
       <form className="card settings-form" onSubmit={(e) => e.preventDefault()}>
         <fieldset disabled={!canEdit}>
           <legend className="card-title">计时时长（分钟）</legend>

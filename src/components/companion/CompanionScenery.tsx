@@ -4,7 +4,8 @@ import type { SceneId } from '../../contracts/presentation'
 type Setting = 'workroom' | 'garden' | 'dusk'
 
 // The same orchard is visible from the workroom and across the terrace.
-function settingFor(scene?: SceneId): Setting {
+/** Exported so the host can extend the matching sky beyond the framed art. */
+export function sceneSettingFor(scene?: SceneId): Setting {
   switch (scene) {
     case 'F8': return 'dusk'
     case 'F2': case 'F5': case 'F6': case 'R1': case 'R2': return 'garden'
@@ -88,7 +89,7 @@ function Terrace({ dusk }: { dusk: boolean }) {
 
 /** Stationary illustration, painted underneath the existing character and activity rig. */
 export const CompanionScenery = memo(function CompanionScenery({ scene }: { scene?: SceneId }) {
-  const setting = settingFor(scene)
+  const setting = sceneSettingFor(scene)
   const id = useId().replace(/:/g, '')
   const clip = `scenery-${setting}-${id}`
   const wash = `${clip}-wash`

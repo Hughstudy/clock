@@ -1,7 +1,8 @@
 import { useMemo } from 'react'
-import { localDateKey, localHour } from '../adapters/calendar'
+import { localClockTime, localDateKey, localHour } from '../adapters/calendar'
 import { spec } from '../data/spec'
 import { nextFocusMinutes } from '../logic/app'
+import { dayHeading, shortDate } from '../logic/calendar'
 import { recordsBand, recordStoryId, type RecordsBand, type RecordStoryId } from '../logic/record-stories'
 import { dayTotal, groupEntries, indexByDay, rangeTotals, type DayIndex, type DayTotal, type HistoryDay, type RangeLength } from '../logic/stats'
 import { isLive } from '../logic/thoughts'
@@ -12,7 +13,8 @@ const MINUTE_MS = 60_000
 
 export interface TimerView {
   sessionId: string | null
-  quickFocusMinutes: number
+  /** Whole-minute bounds for a one-off focus length. */
+  focusMinutesRange: { min: number; max: number }
   shortBreakMinutes: number
   longBreakMinutes: number
   /** One-off lengths offered on demand. */
@@ -44,7 +46,7 @@ export function useTimerView(snapshot: AppSnapshot, now: number): TimerView {
   const total = readyFocus ? next * MINUTE_MS : totalMs(timer, settings)
   return {
     sessionId: timer.session?.id ?? null,
-    quickFocusMinutes: spec.timer.quickFocusMinutes,
+    focusMinutesRange: spec.timer.durationsMinutes.focus,
     shortBreakMinutes: settings.durationsMinutes.shortBreak,
     longBreakMinutes: settings.durationsMinutes.longBreak,
     quickChoicesMinutes: spec.timer.quickChoicesMinutes,
@@ -69,6 +71,8 @@ export interface RecordView extends FocusRecord {
   storyId: RecordStoryId | null
   /** Live thoughts captured during this session, oldest first. */
   thoughts: readonly Thought[]
+  /** `14:05–14:30` on the device clock; end time only when the start is unknown. */
+  timeLabel: string
 }
 
 export interface StatsView {
@@ -80,19 +84,24 @@ export interface StatsView {
   totalsByDay: DayIndex
   historyDays: HistoryDay<RecordView>[]
   thoughtDays: HistoryDay<RecordView>[]
+  /** `今天 · 11月1日 周日` and similar, from the stored date key. */
+  dayHeading: (key: string) => string
+  shortDate: (key: string) => string
+  clockTime: (epochMs: number) => string
 }
 
+/**
+ * The window drives only the summary and trend. History is browsed day by day
+ * regardless of the window, so switching 7/30 never hides or reloads entries.
+ */
 export function useHistoryRange(view: StatsView, length: RangeLength) {
-  return useMemo(() => {
-    const totals = rangeTotals(view.totalsByDay, view.todayKey, length)
-    return {
-      totals,
-      range: view.historyDays.filter(day => day.dateKey >= totals.startKey && day.dateKey <= view.todayKey),
-      earlier: view.historyDays.filter(day => day.dateKey < totals.startKey),
-      // Travel may leave a recorded date later than the viewing device's local today.
-      later: view.historyDays.filter(day => day.dateKey > view.todayKey),
-    }
-  }, [view.totalsByDay, view.todayKey, view.historyDays, length])
+  const totals = useMemo(() => rangeTotals(view.totalsByDay, view.todayKey, length), [view.totalsByDay, view.todayKey, length])
+  const history = useMemo(() => ({
+    days: view.historyDays.filter(day => day.dateKey <= view.todayKey),
+    // Travel may leave a recorded date later than the viewing device's local today.
+    later: view.historyDays.filter(day => day.dateKey > view.todayKey),
+  }), [view.historyDays, view.todayKey])
+  return { totals, ...history }
 }
 
 export function useStatsView(snapshot: AppSnapshot, now: number, savedRecordIds: ReadonlySet<string>, durableThoughts: readonly Thought[]): StatsView {
@@ -113,6 +122,7 @@ export function useStatsView(snapshot: AppSnapshot, now: number, savedRecordIds:
         ...r,
         storyId: savedRecordIds.has(r.sessionId) ? recordStoryId(r.sessionId) : null,
         thoughts: (bySession.get(r.sessionId) ?? []).sort((a, b) => a.createdAt - b.createdAt || a.id.localeCompare(b.id)),
+        timeLabel: r.startedAt === null ? `${localClockTime(r.endedAt)} 结束` : `${localClockTime(r.startedAt)}–${localClockTime(r.endedAt)}`,
       }))
       const thoughtEntries = live.map(thought => ({ kind: 'thought' as const, thought }))
       const durableById = new Map(durableThoughts.map(t => [t.id, t]))
@@ -133,6 +143,9 @@ export function useStatsView(snapshot: AppSnapshot, now: number, savedRecordIds:
           ...thoughtEntries.filter(entry => entry.thought.sessionId === null),
         ]),
         thoughtDays: groupEntries<RecordView>(thoughtEntries),
+        dayHeading: (key: string) => dayHeading(key, todayKey),
+        shortDate: (key: string) => shortDate(key, todayKey),
+        clockTime: localClockTime,
       }
     },
     [band, index, todayKey, snapshot.records, snapshot.timer, live, savedRecordIds, durableThoughts],

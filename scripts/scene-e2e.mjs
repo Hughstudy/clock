@@ -46,7 +46,7 @@ async function endEarly(page) {
   await untilSaved(page, s => s.records.some(record => record.sessionId === id), 'confirmed early end')
 }
 async function focusReady(page) {
-  const back = page.getByRole('button', { name: /^(回到准备|回到专注准备|专注模式)$/ })
+  const back = page.getByRole('button', { name: /^(换个时长|回到专注)$/ })
   if (await back.isVisible()) await back.click()
 }
 try {
@@ -71,7 +71,7 @@ try {
   await page.evaluate(() => navigator.serviceWorker.ready)
   await page.getByText('已准备好离线使用。', { exact: true }).waitFor()
   await page.getByRole('button', { name: '知道了', exact: true }).click()
-  const primary = page.locator('.controls .btn-primary')
+  const primary = page.locator('.fp-primary .btn-primary')
   const beforeStart = await primary.boundingBox()
   await primary.click()
   const initial = await untilSaved(page, s => !!s.timer.session, 'first start')
@@ -116,14 +116,14 @@ try {
   await page.getByRole('button', { name: '设置', exact: true }).click()
   await page.locator('#duration-focus').fill('1')
   await page.locator('#duration-focus').blur()
-  await page.getByRole('button', { name: '关闭设置，回到专注', exact: true }).click()
+  await page.getByRole('button', { name: '‹ 回到专注', exact: true }).click()
   await untilSaved(page, s => s.settings.durationsMinutes.focus === 1, 'one minute default')
 
   // Start from a local input panel: its closure must not consume the entrance.
   await focusReady(page)
   await page.getByRole('button', { name: /这一小步/ }).click()
-  await page.locator('.step-input').fill('A small test step')
-  await page.locator('.step-input').press('Enter')
+  await page.locator('.fp-step-input').fill('A small test step')
+  await page.locator('.fp-step-input').press('Enter')
   await primary.click()
   await untilSaved(page, s => !!s.timer.session, 'step start')
   check('Typed-step start retains its entrance', await sceneAttribute(page, 'phase') === 'open')
@@ -192,14 +192,14 @@ try {
   for (const width of [320, 375, 430]) {
     await page.setViewportSize({ width, height: 850 })
     check(`${width}px layout has no horizontal overflow`, await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth))
-    const badge = await page.locator('.clock-badge').boundingBox()
+    const badge = await page.locator('.fp-digits').boundingBox()
     const controls = await primary.boundingBox()
     check(`${width}px clock and primary control remain readable`, badge.x >= 0 && badge.x + badge.width <= width && controls.x >= 0 && controls.x + controls.width <= width)
     await page.screenshot({ path: path.join(output, `scene-${width}.png`) })
   }
   await page.addStyleTag({ content: 'html { font-size: 200% !important; }' })
   check('200% text has no horizontal overflow', await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth))
-  check('Enlarged feedback stays below the character and props', await page.locator('.companion-feedback__content').evaluate(el => el.getBoundingClientRect().top >= document.querySelector('.home .blue-companion').getBoundingClientRect().bottom - 1))
+  check('Enlarged text keeps the primary action on screen', await primary.evaluate(el => { const r = el.getBoundingClientRect(); return r.top >= 0 && r.bottom <= innerHeight }))
   await page.screenshot({ path: path.join(output, 'text-200.png'), fullPage: true })
   await page.reload()
 
@@ -208,12 +208,12 @@ try {
   await page.emulateMedia({ reducedMotion: 'no-preference' })
   await page.getByRole('button', { name: '设置', exact: true }).click()
   await page.getByRole('switch', { name: '伙伴小场景', exact: true }).uncheck()
-  await page.getByRole('button', { name: '关闭设置，回到专注', exact: true }).click()
+  await page.getByRole('button', { name: '‹ 回到专注', exact: true }).click()
   check('Scene variety off retains the plain companion', await sceneAttribute(page, '') === '' && await svg.locator('[data-scenery]').count() === 0)
   await page.getByRole('button', { name: '设置', exact: true }).click()
   await page.getByRole('switch', { name: '伙伴小场景', exact: true }).check()
   await page.getByRole('switch', { name: '伙伴动画', exact: true }).uncheck()
-  await page.getByRole('button', { name: '关闭设置，回到专注', exact: true }).click()
+  await page.getByRole('button', { name: '‹ 回到专注', exact: true }).click()
   check('Restoring variety retains assignment; app motion off is static', await sceneAttribute(page, '') === finalScene && await svg.evaluate(el => el.getAnimations({ subtree: true }).length === 0))
   await endEarly(page)
   const focusRecords = (await readSaved(page)).data.records.length
@@ -221,9 +221,9 @@ try {
   for (let i = 0; i < 3; i++) {
     if (i > 0) {
       await focusReady(page)
-      await page.getByRole('button', { name: '休息模式', exact: true }).click()
+      await page.getByRole('button', { name: '休息一下', exact: true }).click()
     }
-    await page.getByRole('button', { name: /^开始休息/ }).click()
+    await page.getByRole('button', { name: /^(开始休息|休息 \d+ 分钟)$/ }).click()
     const rest = await untilSaved(page, s => s.timer.phase !== 'focus' && !!s.timer.session, 'rest start')
     restScenes.push(rest.timer.session.scene.sceneId)
     await page.getByRole('button', { name: '结束休息', exact: true }).click()
@@ -235,9 +235,8 @@ try {
 
   await page.getByRole('button', { name: '设置', exact: true }).click()
   await page.getByRole('switch', { name: '伙伴动画', exact: true }).check()
-  await page.getByRole('button', { name: '关闭设置，回到专注', exact: true }).click()
+  await page.getByRole('button', { name: '‹ 回到专注', exact: true }).click()
   await focusReady(page)
-  await page.getByRole('button', { name: '选时长', exact: true }).click()
   await page.getByRole('button', { name: '5 分钟', exact: true }).click()
   check('Choosing the duration leaves the timer ready', !(await readSaved(page)).data.timer.session)
   await primary.click()

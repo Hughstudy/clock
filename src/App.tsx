@@ -1,5 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
-import { AppHeader } from './components/AppHeader'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { FocusTaskDialog } from './components/FocusTaskDialog'
 import { ThoughtPanel } from './components/ThoughtPanel'
 import { formatClock, PHASE_LABELS } from './components/format'
@@ -7,7 +6,7 @@ import { Notices } from './components/Notices'
 import { TabBar, type Screen } from './components/TabBar'
 import { useFeedback } from './hooks/companion/useFeedback'
 import { useMotionPreference } from './hooks/companion/useMotionPreference'
-import { useClockApp } from './hooks/useClockApp'
+import { useClockApp, type UserAction } from './hooks/useClockApp'
 import { useDocumentTitle } from './hooks/useDocumentTitle'
 import { useFocusTaskBack } from './hooks/useFocusTaskBack'
 import { useNow } from './hooks/useNow'
@@ -23,7 +22,12 @@ import { StatsScreen, type RecordsVisit } from './screens/StatsScreen'
 const RUNNING_REFRESH_MS = 250
 const IDLE_REFRESH_MS = 15_000
 
-export function App({ entryLayout = 'console' }: { entryLayout?: 'console' | 'cards' }) {
+/** True for requests that change the default focus length (or reset it). */
+function changesFocusDefault(action: UserAction): boolean {
+  return action.type === 'resetDurations' || (action.type === 'updateSettings' && action.patch.durationsMinutes?.focus !== undefined)
+}
+
+export function App() {
   const app = useClockApp()
   const [screen, setScreen] = useState<Screen>('home')
   const recordsVisit = useRef<RecordsVisit | null>(null)
@@ -36,7 +40,14 @@ export function App({ entryLayout = 'console' }: { entryLayout?: 'console' | 'ca
   const { now, refresh } = useNow(running ? RUNNING_REFRESH_MS : IDLE_REFRESH_MS)
   const timerView = useTimerView(app.snapshot, now)
   const statsView = useStatsView(app.snapshot, now, app.savedRecordIds, app.durableThoughts)
-  const form = useSettingsForm(app.snapshot.settings, app.dispatch)
+  // Count default-length requests as they are made, so a slow save can't clear a newer pick on Focus.
+  const [defaultsIntent, setDefaultsIntent] = useState(0)
+  const appDispatch = app.dispatch
+  const settingsDispatch = useCallback((action: UserAction) => {
+    if (changesFocusDefault(action)) setDefaultsIntent(n => n + 1)
+    appDispatch(action)
+  }, [appDispatch])
+  const form = useSettingsForm(app.snapshot.settings, settingsDispatch)
   const thoughts = useThoughts(app)
   useFocusTaskBack(screen === 'stats' && thoughts.open, () => thoughts.setOpen(false))
   // The companion consumes hidden events silently. Announce a Records edit or
@@ -71,8 +82,7 @@ export function App({ entryLayout = 'console' }: { entryLayout?: 'console' | 'ca
   )
 
   return (
-    <div className="app" data-reduced-motion={motion.reducedMotion}>
-      <AppHeader settingsOpen={screen === 'settings'} showSettings={screen !== 'stats'} onSettings={() => setScreen(screen === 'settings' ? 'home' : 'settings')} />
+    <div className="app" data-screen={screen} data-reduced-motion={motion.reducedMotion}>
       <Notices
         announceSaveError={screen !== 'home' && !(screen === 'stats' && noteKind === 'error')}
         onRetry={() => app.dispatch({ type: 'retrySave' })}
@@ -92,8 +102,8 @@ export function App({ entryLayout = 'console' }: { entryLayout?: 'console' | 'ca
           <>
             <div hidden={screen !== 'home'}>
               <HomeScreen key={app.snapshot.datasetGeneration} view={timerView} companion={companion} thoughts={thoughts} reducedMotion={motion.reducedMotion}
-                active={screen === 'home'} result={app.result} linkedThoughts={linkedThoughts} durationResetKey={app.durationResetKey}
-                entryLayout={entryLayout} saveState={app.saveState} canEdit={canEdit} dispatch={app.dispatch} />
+                active={screen === 'home'} result={app.result} linkedThoughts={linkedThoughts} defaultsIntent={defaultsIntent}
+                saveState={app.saveState} canEdit={canEdit} dispatch={app.dispatch} onSettings={() => setScreen('settings')} />
             </div>
             {screen === 'stats' && <StatsScreen key={app.snapshot.datasetGeneration} view={statsView} thoughts={thoughts} canEdit={canEdit} visit={recordsVisit}
               onEditThought={thoughts.edit}
@@ -104,7 +114,7 @@ export function App({ entryLayout = 'console' }: { entryLayout?: 'console' | 'ca
               {app.saveState === 'pending' && <p className="panel-save-error">有更改尚未保存。
                 <button type="button" className="link-button" onClick={() => app.dispatch({ type: 'retrySave' })}>重试保存</button></p>}
             </FocusTaskDialog>}
-            {screen === 'settings' && <SettingsScreen form={form} canEdit={canEdit} />}
+            {screen === 'settings' && <SettingsScreen form={form} canEdit={canEdit} onBack={() => setScreen('home')} />}
           </>
         )}
       </main>

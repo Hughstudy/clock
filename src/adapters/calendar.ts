@@ -15,6 +15,12 @@ export function localDateKey(epochMs: number): DateKey {
   return dateKeyFromParts(d.getFullYear(), d.getMonth() + 1, d.getDate())
 }
 
+/** `14:05` on the device's current clock (24-hour). */
+export function localClockTime(epochMs: number): string {
+  const d = new Date(epochMs)
+  return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`
+}
+
 /** IANA zone the device uses now, e.g. `Europe/Berlin`; captured when a session starts. */
 export function currentTimeZone(): string {
   return Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC'
