@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { BLOCK_HEIGHT, BUBBLE_WAND, sampleScenePose, sceneArmPath, simpleGesturePulse, SCENE_CUP_BASE, SCENE_CUP_HANDLE, transformScenePoint, type SceneArm, type ScenePoint } from './scene-pose'
 import { achievedSceneLandmark } from './scene-playback'
+import { blueCompanionSpec } from '../data/blue-companion'
 import type { SceneId } from './types'
 const ids:SceneId[]=['F1','F2','F3','F4','F5','F6','F7','F8','R1','R2','R3']
 const distance=(a:ScenePoint,b:ScenePoint)=>Math.hypot(a.x-b.x,a.y-b.y)
@@ -15,6 +16,23 @@ function sampledOutline(arm:SceneArm){
 function outlineArea(arm:SceneArm){
   const outline = sampledOutline(arm)
   return Math.abs(outline.reduce((sum,a,i)=>{const b=outline[(i+1)%outline.length]!;return sum+a.x*b.y-b.x*a.y},0))/2
+}
+/** Body-local bounds of a face part, from its path's coordinates. */
+function partBox(name:string){
+  const n=(blueCompanionSpec.parts[name]?.d.match(/-?\d*\.?\d+/g)??[]).map(Number)
+  const xs=n.filter((_,i)=>i%2===0),ys=n.filter((_,i)=>i%2===1)
+  return {l:Math.min(...xs),r:Math.max(...xs),t:Math.min(...ys),b:Math.max(...ys)}
+}
+function inside(poly:readonly ScenePoint[],x:number,y:number){
+  let hit=false
+  for(let i=0,j=poly.length-1;i<poly.length;j=i++){const a=poly[i]!,b=poly[j]!;if((a.y>y)!==(b.y>y)&&x<(b.x-a.x)*(y-a.y)/(b.y-a.y)+a.x)hit=!hit}
+  return hit
+}
+/** Share of a rectangle's sample points covered by any of the shapes. */
+function coverage(box:{l:number;r:number;t:number;b:number},shapes:readonly (readonly ScenePoint[])[]){
+  let hit=0,all=0
+  for(let x=box.l;x<=box.r;x+=1.5)for(let y=box.t;y<=box.b;y+=1.5){all++;if(shapes.some(s=>inside(s,x,y)))hit++}
+  return hit/all
 }
 function distanceToOutline(point:ScenePoint, arm:SceneArm) {
   const outline = sampledOutline(arm)
@@ -89,7 +107,7 @@ describe('sampled scene contact and silhouette',()=>{
       if(frame.book.close===0||frame.book.close===1)continue
       const { x,y }=frame.book.coverEdge
       // The projected front corner is 8 units to the right and 14 down.
-      const rightGrip={x:x+8*.12,y:y+14*.12},leftGrip={x:x+8*.94,y:y+14*.94}
+      const rightGrip={x:x+8*.94,y:y+14*.94},leftGrip={x:x+8*.5,y:y+14*.5}
       expect(Math.min(distance(frame.right.palm,rightGrip),distance(frame.left.palm,leftGrip))).toBeLessThan(.001)
     }
     const closed=sampleScenePose({id:'F3',progress:1})
@@ -216,6 +234,21 @@ describe('sampled scene contact and silhouette',()=>{
       expect(ending.right).toEqual(previous.right)
       const settled=sampleScenePose({id:'R3',status:'ended',progress:0,actionKind:'ending',actionProgress:1,endingFromActionProgress:sip})
       expect(settled.cup).toEqual(sampleScenePose({id:'R3',status:'ended',progress:0}).cup)
+    }
+  })
+  it('keeps hands, arms and carried props off the eyes and mouth',()=>{
+    // The sip (R3) and the blow through the wand (F5) bring the cup and ring to the mouth on purpose.
+    const face={eyeLeft:partBox('eyeLeft'),eyeRight:partBox('eyeRight'),mouth:partBox('mouth')}
+    for(const id of ids)for(let i=0;i<=100;i++){
+      const f=sampleScenePose({id,progress:i/100})
+      const shapes=[sampledOutline(f.left),sampledOutline(f.right)]
+      if(id==='F7')for(const b of f.blocks)shapes.push([{x:b.x,y:b.y-BLOCK_HEIGHT-6},{x:b.x+31,y:b.y-BLOCK_HEIGHT-6},{x:b.x+31,y:b.y},{x:b.x,y:b.y}])
+      if(id==='F4'){const c=f.cup,k=c.scale;shapes.push([{x:c.x-18*k,y:c.y-25*k},{x:c.x+37*k,y:c.y-25*k},{x:c.x+37*k,y:c.y+5*k},{x:c.x-18*k,y:c.y+5*k}])}
+      for(const [name,box] of Object.entries(face)){
+        const shift=name==='mouth'?{x:0,y:0}:f.gaze
+        const placed={l:box.l+f.body.x+shift.x,r:box.r+f.body.x+shift.x,t:box.t+f.body.y+shift.y,b:box.b+f.body.y+shift.y}
+        expect(coverage(placed,shapes),`${id} ${i/100} ${name}`).toBeLessThan(.1)
+      }
     }
   })
   it('sets the rest cup down before releasing the supporting hand',()=>{

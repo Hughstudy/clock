@@ -1,5 +1,5 @@
 import { focusCopy as copy } from '../data/focus-copy'
-import { useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { useEffect, useId, useLayoutEffect, useRef, useState } from 'react'
 import { FocusPanel } from '../components/FocusPanel'
 import { formatClock, formatElapsedClock, formatMinutes, PHASE_LABELS, spokenClock } from '../components/format'
 import { ThoughtPanel } from '../components/ThoughtPanel'
@@ -12,6 +12,7 @@ import { uiText } from '../data/ui-copy'
 import type { useFeedback } from '../hooks/companion/useFeedback'
 import { useDurationChoice, validateDurationDraft } from '../hooks/useDurationChoice'
 import { useFocusTaskBack } from '../hooks/useFocusTaskBack'
+import { useSceneFit } from '../hooks/useSceneFit'
 import type { SessionResult, UserAction } from '../hooks/useClockApp'
 import type { Thoughts } from '../hooks/useThoughts'
 import type { TimerView } from '../hooks/useViews'
@@ -50,6 +51,8 @@ export function HomeScreen({ active, view, result, linkedThoughts, defaultsInten
   const [step, setStep] = useState('')
   const [editingStep, setEditingStep] = useState(false)
   const [draft, setDraft] = useState('')
+  const [askOpen, setAskOpen] = useState(false)
+  const askId = useId()
   const confirming = useRef<string | null>(null)
   const submittedStep = useRef<string | null>(null)
   const primaryRef = useRef<HTMLDivElement>(null)
@@ -110,6 +113,8 @@ export function HomeScreen({ active, view, result, linkedThoughts, defaultsInten
     setTask(null)
   }
   useFocusTaskBack(!!panel, close)
+  const sceneBox = useRef<HTMLDivElement>(null)
+  useSceneFit(sceneBox, companion.sceneryEnabled)
 
   const pick = choice.pick
   const startFocus = (minutes: number) => {
@@ -141,7 +146,9 @@ export function HomeScreen({ active, view, result, linkedThoughts, defaultsInten
 
   const frame = companion.feedback.frame
   const requested = frame.placement === 'requested' ? frame.encouragement : null
-  const spoken = requested ?? (frame.placement !== 'requested' ? frame.encouragement : null)
+  // The companion's passing line steps aside while a local panel has the space.
+  const spoken = requested ?? (frame.placement !== 'requested' && !panel ? frame.encouragement : null)
+  useEffect(() => { if (!requested) setAskOpen(false) }, [requested])
   const noteStatus = thoughts.status
   const pending = saveState === 'pending'
   const statusLine = focusResult
@@ -153,7 +160,7 @@ export function HomeScreen({ active, view, result, linkedThoughts, defaultsInten
 
   return (
     <section className="screen home" data-tone={tone} aria-label="专注计时">
-      <div className="fp-scene" data-setting={companion.sceneryEnabled ? sceneSettingFor(scene?.id) : 'plain'}>
+      <div ref={sceneBox} className="fp-scene" data-setting={companion.sceneryEnabled ? sceneSettingFor(scene?.id) : 'plain'}>
         <div className="fp-top">
           <button type="button" className="pill pill--glass" aria-expanded={!!requested}
             onClick={() => (requested ? companion.dismiss() : companion.request())}>{uiText('UI19')}</button>
@@ -166,11 +173,13 @@ export function HomeScreen({ active, view, result, linkedThoughts, defaultsInten
           {requested && <div className="fp-bubble__actions">
             <button type="button" className="pill pill--soft" onClick={companion.next}>{uiText('UI20')}</button>
             <button type="button" className="pill pill--ghost" onClick={companion.dismiss}>{copy.dismiss}</button>
+            <button type="button" className="text-action fp-bubble__more" aria-expanded={askOpen} aria-controls={askId}
+              onClick={() => setAskOpen(open => !open)}>{copy.askCategories}</button>
           </div>}
-          {requested && <details className="fp-bubble__more"><summary>{copy.askCategories}</summary>
+          {requested && askOpen && <div id={askId} className="fp-bubble__options" role="group" aria-label={copy.askCategories}>
             {copy.askOptions.map(({ pool, label }) => <button key={pool} type="button" className="pill pill--soft"
-              aria-pressed={requested.pool === pool} onClick={() => companion.request(pool)}>{label}</button>)}
-          </details>}
+              aria-pressed={requested.pool === pool} onClick={() => { companion.request(pool); setAskOpen(false) }}>{label}</button>)}
+          </div>}
         </div>}
         <div className="fp-art">
           <CompanionFeedback feedback={companion.feedback} compact reducedMotion={reducedMotion} motionEnabled={!reducedMotion}

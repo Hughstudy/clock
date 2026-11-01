@@ -38,6 +38,14 @@ Inputs:
 
 The end panel's question follows the same naming: 「现在结束专注？」. Rest keeps 「结束休息」. The copy registry (`UI05`, `UI12`, `UI13`) and Records' 「补一句」 match. Functional labels in the thought panel now say 标记 instead of 记号 (「标记 1」, 「确认只留下标记」). The companion's own lines (`NME` pool) keep 记号 as reviewed copy. Revision 1 below still uses the earlier names as a record.
 
+**Every device, no overlapping layers (owner, 2026-11-01).**
+- **Bubble and art.** The bubble sits just above the creature's head. The art keeps a reserve for the top buttons and a two-line bubble.
+- **Making room.** When a requested bubble or a local panel needs room, the art moves up onto the panel, or shrinks if it must. Below 40% it steps out instead.
+- **Landscape.** On every landscape screen (iPhone and iPad) the scene sits beside the plate.
+- **Requested bubble.** 「换一种鼓励」 joins the bubble's action row and opens the categories in place.
+
+Evidence: [layout-and-arms verification](../verification/layout-and-arms.md).
+
 ### Records and Settings
 
 - **Records.** The 7/30-day switch updates only the summary and trend: loaded history, the expanded entry and the scroll position stay. History is one day-by-day list with 「加载更早」, 「已显示到 …」 and 「没有更早的记录了」. Day headings read 「今天 · 11月1日 周日」 and 「昨天 · …」. Rows show 「14:05–14:30」, or the end time only when the start is unknown, and show the save state only when it isn't saved. A thought written on another day keeps its date. The styling matches the soft pills.

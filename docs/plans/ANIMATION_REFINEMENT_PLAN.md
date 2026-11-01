@@ -24,6 +24,14 @@ The earlier concept generator has been replaced by an exporter of the actual pro
 
 Contact sheets cover [pouring](assets/scene-contact-storyboards/tea-pour.svg), [cup lifting](assets/scene-contact-storyboards/tea-cup.svg), [food preparation](assets/scene-contact-storyboards/food-serving.svg), [page turning](assets/scene-contact-storyboards/book-page.svg), [folding and lowering](assets/scene-contact-storyboards/boat-fold.svg), [wand rotation](assets/scene-contact-storyboards/wand-turn.svg), [block placement](assets/scene-contact-storyboards/block-place.svg) and [sipping/set-down](assets/scene-contact-storyboards/drink-sip.svg).
 
+**Face clearance (owner request, 2026-11-01).** Hands, arms and carried props stay off the eyes and mouth; a per-frame unit test enforces this.
+- **Blocks.** Blocks travel low past the face and rise beside it. The tower moved 12 units left, and the left hand reaches it with an outward, downward elbow instead of an arch.
+- **Book.** The page and cover arcs are lower, and the hands meet at the spine without crossing.
+- **Tea.** The final cup hold sits below the mouth.
+- **Warm drink.** The put-down arc stays below the cheek, and steam appears once the cup is on the side table.
+
+See [layout-and-arms](../verification/layout-and-arms.md).
+
 ## Timing, progress and interruption
 
 - C2-P3 supplies clamped, unquantized completed focus progress. Rest continues to receive zero; its unhurried actions are presentation only.

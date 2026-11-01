@@ -222,6 +222,29 @@ function foodUtensil(p: number, stops: readonly (readonly [number, number, numbe
   return { grip, tip: point(grip.x+26*Math.cos(angle),grip.y+26*Math.sin(angle)) }
 }
 
+/** The left hand placing blocks on the tower beside it. Its elbow always bows outward and
+ * down: the same side as an ordinary reach down and across the body, but it never arches
+ * over the block, the tower or the face, even while the hand passes close by the shoulder.
+ * The bow grows a little more than bentReach's as the hand comes in, so the folded arm
+ * keeps its length. */
+function towerReach(palm: ScenePoint): SceneArm {
+  const shoulder = point(111,143), distance = Math.hypot(palm.x-shoulder.x, palm.y-shoulder.y)
+  const bend = mix(30, 6, span(distance, 8, 60)), middle = pointMix(shoulder, palm, .5)
+  return bentReach('left', palm, point(middle.x - .6*bend, middle.y + .8*bend))
+}
+
+/** A carried block eases between [time, x, bottom] stops. */
+function carry(t: number, stops: readonly (readonly [number, number, number])[]): SceneObject {
+  let from = stops[0]!, to = from
+  for (const next of stops.slice(1)) {
+    to = next
+    if (t <= next[0]) break
+    from = next
+  }
+  const u = from === to ? 0 : span(t, from[0], to[0])
+  return { x: mix(from[1], to[1], u), y: mix(from[2], to[2], u), angle: 0 }
+}
+
 /** Pure sampled geometry. All clocks, scheduling, cues and persistence remain outside. */
 export function sampleScenePose(input: ScenePoseInput): ScenePoseFrame {
   const progress = clamp(input.progress)
@@ -239,7 +262,7 @@ export function sampleScenePose(input: ScenePoseInput): ScenePoseFrame {
   const book = { turn: 0, close: 0, ribbon: span(p,.66,.74), corner: point(206,161), coverEdge: point(206,161), coverFront: point(214,175) }
   const boat = { fold: p, transfer: span(p,.78,1), x:150, y:0, scale:.71, left: point(135,173), right: point(189,174) }
   let wand: ScenePoseFrame['wand'] = { x: 240, y: 165, angle: 0, ring: point(240,193), breath: 0, bubbles: [] }
-  const blocks: SceneObject[] = [{x:68,y:211,angle:0},{x:97,y:211,angle:0},{x:144,y:211,angle:0},{x:176,y:211,angle:0}]
+  const blocks: SceneObject[] = [{x:56,y:211,angle:0},{x:97,y:211,angle:0},{x:144,y:211,angle:0},{x:176,y:211,angle:0}]
   const flag = { x: 132, y: 214, angle: 0 }
   const food = { greens: span(p,.16,.29), rice: span(p,.43,.58), soup: span(p,.76,.88), spoon: point(129,188), tip: point(104,195), soupSpoon: point(222,188), soupTip: point(248,193), leftHeld: 0, rightHeld: 0 }
   let stretch = 0
@@ -259,7 +282,7 @@ export function sampleScenePose(input: ScenePoseInput): ScenePoseFrame {
     left = blendSceneArm(left,kettleHand,reach)
     if (reach>.999) contacts.push(contact('kettle-handle',left.palm,kettle.grip))
     const pickup = span(p,.8,.84), lift = span(p,.84,.98)
-    cup.x=mix(169,204,lift);cup.y=mix(180,174,lift);cup.held=pickup
+    cup.x=mix(169,204,lift);cup.y=mix(180,183,lift);cup.held=pickup
     const lp = cupAnchor(SCENE_CUP_BASE,cup), rp = cupAnchor(SCENE_CUP_HANDLE,cup)
     const join=span(lift,.25,.6), transfer=span(lift,.6,.82)
     const leftPalm=pointMix(rp,lp,transfer)
@@ -275,24 +298,29 @@ export function sampleScenePose(input: ScenePoseInput): ScenePoseFrame {
     const turn=span(p,.12,.34)
     book.turn=turn;book.close=span(p,.815,.957)
     const theta=turn*Math.PI
-    book.corner=point(160+46*Math.cos(theta),161-24*Math.sin(theta))
-    const pageHand=bentReach('right',book.corner)
+    book.corner=point(160+46*Math.cos(theta),161-8*Math.sin(theta))
+    // Hold the page partway down its outer edge, below the mouth.
+    const pageGrip=point(book.corner.x+8*.45,book.corner.y+14*.45)
+    const pageHand=bentReach('right',pageGrip)
     const grasp=span(p,.08,.12)*(1-span(p,.21,.26))
     right=blendSceneArm(right,pageHand,grasp)
-    if(grasp>.999)contacts.push(contact('page-corner',right.palm,book.corner))
+    if(grasp>.999)contacts.push(contact('page-corner',right.palm,pageGrip))
     const ribbon=span(p,.5,.56)*(1-span(p,.68,.74))
     const ribbonHand=movePalm(pageRight,-2,19)
     right=blendSceneArm(right,ribbonHand,ribbon)
     if(ribbon>.999)contacts.push(contact('bookmark',right.palm,point(183,165)))
-    // The right hand lifts the near edge. The left hand meets the other end
-    // of that edge before lowering the cover onto the stationary page stack.
+    // The right hand lifts the edge. The left hand meets the other end of that
+    // edge before lowering the cover onto the stationary page stack.
     const close = book.close
-    book.coverEdge = point(160 + 46*Math.cos(Math.PI*close), 161 - 20*Math.sin(Math.PI*close))
+    book.coverEdge = point(160 + 46*Math.cos(Math.PI*close), 161 - 4*Math.sin(Math.PI*close))
     book.coverFront = point(book.coverEdge.x+8, book.coverEdge.y+14)
-    const rightGrip = pointMix(book.coverEdge,book.coverFront,.12)
-    const leftGrip = pointMix(book.coverEdge,book.coverFront,.94)
-    const rightHold = span(p,.75,.815) * (1-span(close,.48,.72))
-    const leftHold = span(close,.23,.45) * (1-span(p,.957,1))
+    // The right hand takes the near end and the left hand the middle, so at the handoff
+    // the left hand is on the left and the arms meet without crossing.
+    const rightGrip = pointMix(book.coverEdge,book.coverFront,.94)
+    const leftGrip = pointMix(book.coverEdge,book.coverFront,.5)
+    // Hand over at the spine: the left hand arrives just as the right one lets go.
+    const rightHold = span(p,.75,.815) * (1-span(close,.5,.66))
+    const leftHold = span(close,.36,.5) * (1-span(p,.957,1))
     left = blendSceneArm(blendSceneArm(left, restLeft, close), bentReach('left', leftGrip), leftHold)
     right = blendSceneArm(blendSceneArm(right, mirror(restLeft), close), bentReach('right', rightGrip), rightHold)
     if (rightHold === 1) contacts.push(contact('cover-right',right.palm,rightGrip))
@@ -315,7 +343,7 @@ export function sampleScenePose(input: ScenePoseInput): ScenePoseFrame {
     const travel=span(put,.2,.85)
     const from=clamp(input.endingFromActionProgress??0),fromPulse=simpleGesturePulse(from)
     const fromY=175-13*fromPulse,fromAngle=-2*fromPulse||0
-    cup.x=mix(156,244,travel);cup.y=ending?mix(fromY,182,travel)-12*Math.sin(travel*Math.PI):175-13*pulse
+    cup.x=mix(156,244,travel);cup.y=ending?mix(fromY,182,travel)-4*Math.sin(travel*Math.PI):175-13*pulse
     cup.angle=ending?mix(fromAngle,0,span(put,0,.2)):(-2*pulse||0);cup.held=1-span(put,.85,.95)
     const lp=cupAnchor(SCENE_CUP_BASE,cup),rp=cupAnchor(SCENE_CUP_HANDLE,cup)
     const leftRelease=span(put,0,.2),rightRelease=span(put,.85,1)
@@ -358,32 +386,35 @@ export function sampleScenePose(input: ScenePoseInput): ScenePoseFrame {
   } else if(input.id==='F7') {
     const first=span(p,.14,.34), second=span(p,.45,.7)
     const baseY = blocks[0]!.y, middleY = baseY-BLOCK_HEIGHT, topY = middleY-BLOCK_HEIGHT
-    // Clear the back edge of each solid top before moving horizontally.
-    const place = (fromX: number, targetY: number, t: number): SceneObject => ({
-      x: mix(fromX,80,span(t,.27,.81)),
-      y: mix(baseY,targetY-10,span(t,0,.30)) + 10*span(t,.79,1),
-      angle: 0,
-    })
-    blocks[2] = place(144,middleY,first)
+    // Each carry clears the solid tops beside it, but stays below the mouth while it
+    // is in front of the face and only rises above the cheek once it is left of the eye.
+    blocks[2] = carry(first,[[0,144,baseY],[.18,128,baseY],[.4,128,baseY-28],[.82,68,middleY-6],[1,68,middleY]])
     const slide=span(second,0,.28),lift=span(second,.28,1)
-    blocks[3] = place(mix(176,144,slide),topY,lift)
+    blocks[3] = lift===0 ? {x:mix(176,144,slide),y:baseY,angle:0}
+      : carry(lift,[[0,144,baseY],[.12,128,baseY],[.32,128,baseY-28],[.5,111,baseY-36],[.64,98,topY-8],[.86,68,topY-10],[1,68,topY]])
     const grip1=point(blocks[2]!.x+16,blocks[2]!.y-24)
     const hold1=span(p,.08,.14)*(1-span(p,.34,.4))
-    left=blendSceneArm(left,bentReach('left',grip1),hold1)
-    if(hold1>.999)contacts.push(contact('block-first',left.palm,grip1))
     const b=blocks[3]!, lp=point(b.x+8,b.y-24),rp=point(b.x+26,b.y-18)
     const rightHold=span(p,.4,.45)*(1-span(second,.28,.42))
     const leftHold=span(second,.15,.27)*(1-span(p,.7,.75))
     right=blendSceneArm(right,bentReach('right',rp),rightHold)
-    left=blendSceneArm(left,bentReach('left',lp),leftHold)
     if(rightHold>.999)contacts.push(contact('block-slide',right.palm,rp))
-    if(leftHold>.999)contacts.push(contact('block-second',left.palm,lp))
     const raise=span(p,.8,.94)
     const flagSeat = topY-BLOCK_HEIGHT-3
-    flag.x = mix(132,92,span(raise,.30,.86))
-    flag.y = mix(214,flagSeat-9,span(raise,0,.52)) + 9*span(raise,.84,1)
+    flag.x = mix(132,80,span(raise,0,.5))
+    flag.y = mix(214,flagSeat-9,span(raise,.3,.8)) + 9*span(raise,.84,1)
     const fg=transformScenePoint(point(0,-13),flag), flagHold=span(p,.76,.8)*(1-span(p,.94,1))
-    left=blendSceneArm(left,bentReach('left',fg),flagHold)
+    // The three left-hand holds never overlap. The palm travels between its resting
+    // place and the current grip; only the start of each reach blends with the rest arm.
+    // Grips out by the tower are reached around the shoulder, below it, never through it.
+    const [grip,hold] = flagHold>0 ? [fg,flagHold] as const : leftHold>0 ? [lp,leftHold] as const : [grip1,hold1] as const
+    if(hold>0){
+      const rest=restLeft.palm, via=grip.x<111?point(Math.min(grip.x,100),176):pointMix(rest,grip,.5)
+      const palm=pointMix(pointMix(rest,via,hold),pointMix(via,grip,hold),hold)
+      left=blendSceneArm(restLeft,towerReach(palm),span(hold,0,.3))
+    }
+    if(hold1>.999)contacts.push(contact('block-first',left.palm,grip1))
+    if(leftHold>.999)contacts.push(contact('block-second',left.palm,lp))
     if(flagHold>.999)contacts.push(contact('flag-stem',left.palm,fg))
   } else if(input.id==='F8'||input.id==='R2') {
     body.lean=-5;gaze.x=-2;gaze.y=-4

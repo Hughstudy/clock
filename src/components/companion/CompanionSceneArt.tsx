@@ -21,10 +21,8 @@ function Table({tea=false}:{tea?:boolean}){return tea?<g data-scene-part="tea-ta
 function Mat(){return <g data-scene-part="mat"><P d="M59 196 Q160 184 267 199 L285 217 Q154 238 37 218 Z" c="light"/><P d="M55 217 Q160 231 271 215" c="softline"/></g>}
 function Cushion(){return <g data-scene-part="cushion"><P d="M103 191 Q86 182 91 206 Q151 231 230 209 Q244 191 224 188 Q165 204 103 191Z" c="light"/><P d="M106 209 Q165 218 219 207" c="softline"/></g>}
 function SideTable(){return <g data-scene-part="side-table"><P d="M222 184 L222 220 M266 184 L266 218"/><E x={244} y={184} rx={30} ry={10} c="table"/><E x={244} y={182} rx={22} ry={4} c="paper"/></g>}
-function Steam({x, y, amount = 1, driftLeft = false}: {x: number; y: number; amount?: number; driftLeft?: boolean}) {
-  const curls = driftLeft
-    ? ['M0 0 C-7 -8 -18 -6 -19 -16 S-33 -23 -30 -33']
-    : ['M0 0 C12 -9 -9 -17 1 -28', 'M13 0 C27 -13 3 -22 15 -37', 'M-12 1 C0 -12 -22 -23 -9 -43']
+function Steam({x, y, amount = 1}: {x: number; y: number; amount?: number}) {
+  const curls = ['M0 0 C12 -9 -9 -17 1 -28', 'M13 0 C27 -13 3 -22 15 -37', 'M-12 1 C0 -12 -22 -23 -9 -43']
   return <g data-scene-part="steam" transform={`translate(${x} ${y})`} className="scene-rig-steam">
     {curls.map((d,i) => <P key={d} d={d} c="steam" opacity={clamp(amount-i)*.7}/>)}
   </g>
@@ -162,12 +160,12 @@ export function CompanionSceneArt({scene,frame:provided}:Props){
   </>
   if(id==='F2'){const h=13+42*p;objects=<><E x={92} y={180} rx={32} ry={5} c="edge"/><g data-scene-part="plant"><P d="M68 144 L116 144 L110 174 Q92 182 74 174Z" c="table"/><E x={92} y={144} rx={26} ry={6} c="edge"/><P d={`M92 143 Q95 ${141-h/2} 91 ${143-h}`}/><P d={`M92 ${139-h*.3} Q67 ${134-h*.7} 70 ${128-h*.7} Q91 ${125-h*.5} 92 ${139-h*.3} Z M92 ${135-h*.6} Q113 ${127-h} 118 ${132-h} Q116 ${147-h*.5} 92 ${135-h*.6} Z`} c="green"/><g transform={`translate(91 ${143-h}) scale(${.3+.7*stage(p,.7,1)})`}>{[-1,1].map(n=><E key={n} x={n*9} y={0} rx={8} ry={9} c="pink" opacity={stage(p,.6,.9)}/>)}<E x={0} y={-9} rx={8} ry={9} c="pink" opacity={stage(p,.6,.9)}/><E x={0} y={9} rx={8} ry={9} c="pink" opacity={stage(p,.6,.9)}/><E x={0} y={0} rx={5} ry={5} c="edge" opacity={stage(p,.6,.9)}/></g></g></>}
   if(id==='F3')objects=<Book frame={f}/>
-  if(id==='F4'){objects=<><E x={131} y={183} rx={26} ry={4} c="edge"/><E x={169} y={183} rx={20} ry={4} c="paper"/><Kettle frame={f}/><Steam x={f.kettle.x} y={f.kettle.y-38} amount={.5+2.5*p}/><P d={`M${f.kettle.spout.x} ${f.kettle.spout.y} Q${f.cup.x-9} ${f.kettle.spout.y+12} ${169} ${165}`} c="pour" opacity={f.kettle.pour}/></>;held=<><Cup frame={f}/><Steam x={f.cup.x} y={f.cup.y-17} amount={f.cup.liquid*(.6+f.cup.held*.5)}/></>}
+  if(id==='F4'){objects=<><E x={131} y={183} rx={26} ry={4} c="edge"/><E x={169} y={183} rx={20} ry={4} c="paper"/><Kettle frame={f}/><Steam x={f.kettle.x} y={f.kettle.y-38} amount={.5+2.5*p}/><P d={`M${f.kettle.spout.x} ${f.kettle.spout.y} Q${f.cup.x-9} ${f.kettle.spout.y+12} ${169} ${165}`} c="pour" opacity={f.kettle.pour}/></>;held=<><Cup frame={f}/><Steam x={f.cup.x} y={f.cup.y-17} amount={f.cup.liquid*(.6+f.cup.held*.5)*(1-stage(f.cup.x,186,204))}/></>}
   if(id==='F5')objects=<Bubbles frame={f}/>
   if(id==='F6')objects=<Boat frame={f}/>
   if(id==='F7')objects=<g data-scene-part="block-inventory">{f.blocks.map((b,i)=><g key={i} data-block={i}><Block {...b} c={['green','table','light','green'][i]??'green'}/></g>)}<E x={132} y={214} rx={5} ry={2} c="edge"/><g data-scene-part="flag" transform={`translate(${f.flag.x} ${f.flag.y}) rotate(${f.flag.angle})`}><P d="M0 0 L0 -24"/><path className="scene-draw-pink" d="M0 -24 L16 -18 L0 -12Z" stroke="var(--scene-line)" strokeWidth="1.4"/></g></g>
   if(id==='F8')back=<g data-scene-part="sky"><P d="M44 42 C19 49 28 75 49 70 C30 67 32 49 44 42Z" c="paper"/>{[[260,44],[75,31],[285,105],[224,23],[36,116],[252,85]].map(([x=0,y=0],i)=><g className="scene-rig-star" key={i}><Star x={x} y={y} opacity={i<2?1:stage(p,(i-2)*.17,.2+(i-2)*.17)}/></g>)}<P d="M260 44 L252 85 L285 105" c="softline" opacity={stage(p,.3,.6)}/><g opacity={stage(p,.92,1)}><P d="M211 32 L174 51 M214 37 L187 53" c="softline"/><Star x={216} y={31} r={7}/></g></g>
   if(id==='R2')back=<g data-scene-part="clouds"><Cloud x={63} y={58} scale={.67}/><Cloud x={252} y={91} scale={.5}/></g>
-  if(id==='R3'){objects=<SideTable/>;held=<><Cup frame={f}/><Steam x={f.cup.x-13} y={f.cup.y-18} amount={1} driftLeft/></>}
+  if(id==='R3'){objects=<SideTable/>;held=<><Cup frame={f}/><Steam x={f.cup.x-13} y={f.cup.y-18} amount={1-f.cup.held}/></>}
   return <g className="scene-rig" style={material} transform="scale(.75)" data-scene-part={`scene-${id}`} data-pose-progress={f.progress} data-contact-count={f.contacts.filter(c=>c.active).length} aria-hidden="true"><CompanionPaint id={paint}/><CompanionScenery scene={id}/><Ground/>{!usesTable&&id!=='F4'&&<Mat/>}{['F8','R2','R3'].includes(id)&&<Cushion/>}{back}<g transform={lean}><Body frame={f} happy={scene.status==='ended'||p===1}/></g>{usesTable&&<Table/>}{id==='F4'&&<Table tea/>}{objects}<g transform={lean} data-scene-part="arms"><path className="scene-draw-body" data-scene-hand="left" d={sceneArmPath(f.left)}/><path className="scene-draw-body" data-scene-hand="right" d={sceneArmPath(f.right)}/></g>{held}{f.contacts.map(c=><g key={c.name} data-scene-contact={c.name} data-contact-active={c.active} data-hand-x={c.hand.x} data-hand-y={c.hand.y} data-prop-x={c.prop.x} data-prop-y={c.prop.y}/>)}</g>
 }
