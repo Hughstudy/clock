@@ -50,4 +50,10 @@ Generated screenshots/recordings remain ignored local evidence in `.preview/`; n
 
 ## Delivery
 
-Integration, publication and deployment are distinct. The completed source will be committed and pushed directly to `main` under the owner's standing workflow, then its exact GitHub Actions run and published `/clock/` build will be checked independently.
+Integration commit: [`dda7754df87705d21de7c195d7e7a15899b053b4`](https://github.com/Hughstudy/clock/commit/dda7754df87705d21de7c195d7e7a15899b053b4), pushed directly to `main`. Local and remote-tracking main matched, with a clean working tree after that commit.
+
+[GitHub Actions run 41455692604](https://github.com/Hughstudy/clock/actions/runs/41455692604) completed successfully for that exact source commit: both build (including unit/browser checks) and Pages deployment passed.
+
+The [published application](https://hughstudy.github.io/clock/) was independently checked at 2026-11-02 13:47:59 UTC in a new Chrome profile. HTTP 200 and the JavaScript/CSS hashes match the locally tested payload. Start, pause and manual end saved one record; an encouragement favorite appeared in Records; snapshot v8 retained one ended record and no active timer. No browser runtime/console errors occurred. See [publication evidence](interaction-v35/publication.json).
+
+This documentation follow-up records the completed publication without changing the application payload.
