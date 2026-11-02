@@ -4,7 +4,7 @@ import { CompanionScenery } from './CompanionScenery'
 import type { CompanionScene } from '../../contracts/presentation'
 import { blueCompanionSpec } from '../../data/blue-companion'
 import { sceneArtPalette, sceneArtSketch } from '../../data/scene-art'
-import { BLOCK_HEIGHT, BUBBLE_WAND, sampleScenePose, sceneArmPath, sceneSmooth, type ScenePoseFrame } from '../../logic/scene-pose'
+import { BLOCK_HEIGHT, BUBBLE_WAND, PLANT_POT, sampleScenePose, sceneArmPath, sceneSmooth, type ScenePoseFrame } from '../../logic/scene-pose'
 
 export function ScenePart({ name, className, transform }: { name: string; className?: string; transform?: string }) {
   return <g className={className} transform={transform} data-scene-part={name}>
@@ -28,6 +28,24 @@ function Steam({x, y, amount = 1}: {x: number; y: number; amount?: number}) {
   </g>
 }
 function Cup({frame}:{frame:ScenePoseFrame}){const c=frame.cup;return <g data-scene-part="cup" data-held={c.held>.99} transform={`translate(${c.x} ${c.y}) rotate(${c.angle}) scale(${c.scale})`}><P d="M20 -18 C37 -21 38 -3 21 -4 L21 -9 C31 -7 31 -17 21 -14" c="paper"/><P d="M-18 -21 L23 -21 L20 -3 Q1 7 -14 -3 Z" c="paper"/><E x={2} y={-21} rx={20} ry={4} c="paper"/><E x={2} y={-21} rx={18} ry={3} c="edge" opacity={c.liquid}/></g>}
+function Plant({progress:p}:{progress:number}) {
+  const {x,rimY,rimWidth,rimDepth,bodyWidth,baseWidth,baseY,floorY}=PLANT_POT,h=13+42*p
+  return <g data-scene-part="plant">
+    <E x={x} y={floorY} rx={30} ry={4}/>
+    <g data-scene-part="plant-pot">
+      <P d={`M${x-bodyWidth} ${rimY} H${x+bodyWidth} L${x+baseWidth} ${baseY} Q${x} ${baseY+6} ${x-baseWidth} ${baseY} Z`} c="table"/>
+      <E x={x} y={rimY} rx={rimWidth} ry={rimDepth} c="edge"/>
+    </g>
+    <g data-scene-part="plant-growth" transform={`translate(${x-92} ${rimY-144})`}>
+      <P d={`M92 143 Q95 ${141-h/2} 91 ${143-h}`}/>
+      <P d={`M92 ${139-h*.3} Q67 ${134-h*.7} 70 ${128-h*.7} Q91 ${125-h*.5} 92 ${139-h*.3} Z M92 ${135-h*.6} Q113 ${127-h} 118 ${132-h} Q116 ${147-h*.5} 92 ${135-h*.6} Z`} c="green"/>
+      <g transform={`translate(91 ${143-h}) scale(${.3+.7*stage(p,.7,1)})`}>
+        {[-1,1].map(n=><E key={n} x={n*9} y={0} rx={8} ry={9} c="pink" opacity={stage(p,.6,.9)}/>)}
+        <E x={0} y={-9} rx={8} ry={9} c="pink" opacity={stage(p,.6,.9)}/><E x={0} y={9} rx={8} ry={9} c="pink" opacity={stage(p,.6,.9)}/><E x={0} y={0} rx={5} ry={5} c="edge" opacity={stage(p,.6,.9)}/>
+      </g>
+    </g>
+  </g>
+}
 function Kettle({frame}:{frame:ScenePoseFrame}){const k=frame.kettle;return <g data-scene-part="kettle" transform={`translate(${k.x} ${k.y}) rotate(${k.angle})`}><P d="M-17 -29 C-28 -49 28 -49 17 -29" c="handle"/><P d="M15 -28 L32 -36 L36 -27 L20 -13Z" c="green"/><P d="M-19 -29 Q-27 -16 -20 -3 Q0 6 21 -3 Q27 -18 18 -29 Z" c="green"/><P d="M-20 -29 Q0 -40 20 -29Z" c="green"/><R x={-4} y={-37} w={8} h={5} c="edge"/></g>}
 function FoodDish({x,y,kind,detail}:{x:number;y:number;kind:'greens'|'rice'|'soup';detail:number}) {
   const d=clamp(detail),riceHeight=.08+.92*d
@@ -158,7 +176,7 @@ export function CompanionSceneArt({scene,frame:provided}:Props){
     <FoodSpoon grip={f.food.spoon} tip={f.food.tip} held={f.food.leftHeld} name="serving-spoon"/><FoodSpoon grip={f.food.soupSpoon} tip={f.food.soupTip} held={f.food.rightHeld} name="soup-spoon"/>
     <Steam x={225} y={155} amount={f.food.soup*1.4}/>
   </>
-  if(id==='F2'){const h=13+42*p;objects=<><E x={92} y={180} rx={32} ry={5} c="edge"/><g data-scene-part="plant"><P d="M68 144 L116 144 L110 174 Q92 182 74 174Z" c="table"/><E x={92} y={144} rx={26} ry={6} c="edge"/><P d={`M92 143 Q95 ${141-h/2} 91 ${143-h}`}/><P d={`M92 ${139-h*.3} Q67 ${134-h*.7} 70 ${128-h*.7} Q91 ${125-h*.5} 92 ${139-h*.3} Z M92 ${135-h*.6} Q113 ${127-h} 118 ${132-h} Q116 ${147-h*.5} 92 ${135-h*.6} Z`} c="green"/><g transform={`translate(91 ${143-h}) scale(${.3+.7*stage(p,.7,1)})`}>{[-1,1].map(n=><E key={n} x={n*9} y={0} rx={8} ry={9} c="pink" opacity={stage(p,.6,.9)}/>)}<E x={0} y={-9} rx={8} ry={9} c="pink" opacity={stage(p,.6,.9)}/><E x={0} y={9} rx={8} ry={9} c="pink" opacity={stage(p,.6,.9)}/><E x={0} y={0} rx={5} ry={5} c="edge" opacity={stage(p,.6,.9)}/></g></g></>}
+  if(id==='F2')objects=<><Plant progress={p}/><E x={f.right.palm.x+2} y={f.right.palm.y+5} rx={10} ry={2}/></>
   if(id==='F3')objects=<Book frame={f}/>
   if(id==='F4'){objects=<><E x={131} y={183} rx={26} ry={4} c="edge"/><E x={169} y={183} rx={20} ry={4} c="paper"/><Kettle frame={f}/><Steam x={f.kettle.x} y={f.kettle.y-38} amount={.5+2.5*p}/><P d={`M${f.kettle.spout.x} ${f.kettle.spout.y} Q${f.cup.x-9} ${f.kettle.spout.y+12} ${169} ${165}`} c="pour" opacity={f.kettle.pour}/></>;held=<><Cup frame={f}/><Steam x={f.cup.x} y={f.cup.y-17} amount={f.cup.liquid*(.6+f.cup.held*.5)*(1-stage(f.cup.x,186,204))}/></>}
   if(id==='F5')objects=<Bubbles frame={f}/>

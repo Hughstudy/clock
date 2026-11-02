@@ -1,0 +1,18 @@
+{
+  "viewport": "375x812 CSS px, DPR 2",
+  "browser": "156.0.8078.74",
+  "demoData": true,
+  "before": {
+    "modesBottom": 167.578125,
+    "contentTop": 273.546875,
+    "headerHeight": null
+  },
+  "after": {
+    "modesBottom": 172.78125,
+    "contentTop": 188.765625,
+    "headerHeight": 44
+  },
+  "beforeGap": 105.96875,
+  "afterGap": 15.984375,
+  "errors": []
+}

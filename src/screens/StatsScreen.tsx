@@ -98,6 +98,7 @@ export function StatsScreen({ view, thoughts, canEdit, onEditThought, onContinue
   readingRef.current = reading
   const [monthPanel, setMonthPanel] = useState(false)
   const [statusPanel, setStatusPanel] = useState(false)
+  const statusDescriptionId = useId()
   useFocusTaskBack(monthPanel || statusPanel, () => { setMonthPanel(false); setStatusPanel(false) })
   const [year, setYear] = useState(view.todayKey.slice(0, 4))
   const composing = useRef(false)
@@ -262,19 +263,28 @@ export function StatsScreen({ view, thoughts, canEdit, onEditThought, onContinue
   const displayDate = (date: string) => knownDate(date) ? view.dayHeading(date) : '日期不详的记录'
   const empty = mode === 'scenes' ? '还没有可回看的伙伴活动。' : current.search ? '没有找到匹配的想法。' : current.month && current.month !== 'unknown' ? '这个月还没有记录。' : current.month === 'unknown' ? '没有日期不详的记录。' : mode === 'thoughts' ? '还没有想法。' : '还没有记录。'
   const stateLine = view.active ? `${PHASE_LABELS[view.active.phase]} · ${view.active.status === 'paused' ? '已暂停' : '正在计时'}（未计入汇总）`
-    : hasSaveError || result.hasPendingRecords ? '有结果待保存，原内容仍在。' : activeSeen ? '本段已结束，可继续阅读。' : ''
+    : activeSeen ? '本段已结束，可继续阅读。' : ''
+  const pendingSave = hasSaveError || result.hasPendingRecords || view.pendingThoughtIds.size > 0 || !!favorites?.problems.length
+  const saveLine = pendingSave ? '有内容待保存，原内容仍在。' : ''
+  const phaseLabel = view.active?.phase === 'focus' ? '专注' : '休息'
+  const statusLabel = view.active
+    ? `${phaseLabel}${view.active.status === 'paused' ? '暂停' : '计时'}`
+    : pendingSave ? '有待保存' : systemNoticeSummary ? '状态提示' : activeSeen ? '计时结束' : '查看状态'
+  const secondaryStatusLabel = view.active ? pendingSave ? '有待保存' : systemNoticeSummary ? '状态提示' : '' : ''
+  const statusDescription = [stateLine, saveLine, systemNoticeSummary].filter(Boolean).join(' ')
   const yearValue = Number(year)
   const validYear = /^\d{1,4}$/.test(year) && yearValue >= 1 && yearValue <= 9999
 
   return <section ref={screen} className="screen stats records-v35" aria-labelledby="stats-title">
-    <h2 id="stats-title" className="screen-title">记录</h2>
+    <div className="records-header">
+      <h2 id="stats-title" className="screen-title">记录</h2>
+      <button type="button" className="link-button records-status-button" aria-label={`查看状态${statusLabel === '查看状态' ? '' : `：${statusLabel}`}${secondaryStatusLabel ? `，${secondaryStatusLabel}` : ''}`}
+        aria-describedby={statusDescription ? statusDescriptionId : undefined} aria-haspopup="dialog" aria-expanded={statusPanel}
+        onClick={() => { setMonthPanel(false); setStatusPanel(true) }}><span>{statusLabel}</span>{secondaryStatusLabel && <span>{secondaryStatusLabel}</span>}</button>
+      <span id={statusDescriptionId} className="sr-only">{statusDescription}</span>
+    </div>
     <div className="records-switch records-modes" role="group" aria-label="记录内容">
       {(Object.keys(MODES) as Mode[]).map(value => <button type="button" key={value} aria-pressed={mode === value} onClick={() => selectMode(value)}>{MODES[value]}</button>)}
-    </div>
-    <div className="records-session-status">
-      <p>{stateLine || <span aria-hidden="true">{'\u00a0'}</span>}</p>
-      <div className="records-system-status"><span className="records-system-summary">{systemNoticeSummary || <span aria-hidden="true">{'\u00a0'}</span>}</span>
-        {systemNoticeSummary && <button type="button" className="link-button" onClick={() => { setMonthPanel(false); setStatusPanel(true) }}>查看状态</button>}</div>
     </div>
     {mode === 'all' && <section className="records-summary" aria-label="计时汇总">
       <p>近{length}天 · {incomplete ? '计时汇总暂不可确认' : <><strong>{formatMinutes(totals.focusMs)}</strong> · {totals.count} 段已结束专注</>}</p>
@@ -361,6 +371,11 @@ export function StatsScreen({ view, thoughts, canEdit, onEditThought, onContinue
       <div className="records-month-grid">{Array.from({ length: 12 }, (_, index) => <button type="button" className="pill pill--ghost" key={index} disabled={!validYear} onClick={() => chooseMonth(`${String(yearValue).padStart(4, '0')}-${String(index + 1).padStart(2, '0')}`)}>{index + 1}月</button>)}</div>
       <button type="button" className="link-button" onClick={() => chooseMonth(null)}>查看全部日期</button>
     </FocusTaskDialog>}
-    {statusPanel && <FocusTaskDialog title="应用状态" closeLabel="返回记录" onClose={() => setStatusPanel(false)}>{systemNotices ?? <p>目前没有需要处理的应用状态。</p>}</FocusTaskDialog>}
+    {statusPanel && <FocusTaskDialog title="应用状态" closeLabel="返回记录" onClose={() => setStatusPanel(false)}>
+      {stateLine && <p>{stateLine}</p>}
+      {saveLine && <p>{saveLine}</p>}
+      {systemNotices ?? (systemNoticeSummary && <p>{systemNoticeSummary}</p>)}
+      {!stateLine && !saveLine && !systemNoticeSummary && <p>目前没有需要处理的应用状态。</p>}
+    </FocusTaskDialog>}
   </section>
 }

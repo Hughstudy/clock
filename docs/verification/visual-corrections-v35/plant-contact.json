@@ -1,0 +1,65 @@
+{
+  "browser": "156.0.8078.74",
+  "checks": [
+    {
+      "name": "Early ended",
+      "distalRimOverlapSamples": 50,
+      "passed": true
+    },
+    {
+      "name": "Mid running",
+      "distalRimOverlapSamples": 50,
+      "passed": true
+    },
+    {
+      "name": "Full ended",
+      "distalRimOverlapSamples": 50,
+      "passed": true
+    },
+    {
+      "name": "Action 0/8",
+      "distalRimOverlapSamples": 50,
+      "passed": true
+    },
+    {
+      "name": "Action 1/8",
+      "distalRimOverlapSamples": 50,
+      "passed": true
+    },
+    {
+      "name": "Action 2/8",
+      "distalRimOverlapSamples": 51,
+      "passed": true
+    },
+    {
+      "name": "Action 3/8",
+      "distalRimOverlapSamples": 54,
+      "passed": true
+    },
+    {
+      "name": "Action 4/8",
+      "distalRimOverlapSamples": 57,
+      "passed": true
+    },
+    {
+      "name": "Action 5/8",
+      "distalRimOverlapSamples": 59,
+      "passed": true
+    },
+    {
+      "name": "Action 6/8",
+      "distalRimOverlapSamples": 59,
+      "passed": true
+    },
+    {
+      "name": "Action 7/8",
+      "distalRimOverlapSamples": 54,
+      "passed": true
+    },
+    {
+      "name": "Action 8/8",
+      "distalRimOverlapSamples": 50,
+      "passed": true
+    }
+  ]
+}

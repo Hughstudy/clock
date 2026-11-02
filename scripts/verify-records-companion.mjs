@@ -31,7 +31,7 @@ async function start(page) {
 async function end(page) { await press(page, '结束专注'); await press(page, '确认结束') }
 async function retrySave(page) {
   let retry = page.getByRole('button', { name: '重试保存', exact: true }).first()
-  if (!await retry.isVisible()) { await press(page, '查看状态'); retry = page.getByRole('button', { name: '重试保存', exact: true }).first() }
+  if (!await retry.isVisible()) { await page.locator('.records-status-button').click(); retry = page.getByRole('button', { name: '重试保存', exact: true }).first() }
   await retry.click()
   const status = page.getByRole('dialog', { name: '应用状态', exact: true })
   if (await status.isVisible()) await status.getByRole('button', { name: '返回记录', exact: true }).click()
@@ -121,12 +121,12 @@ try {
   await monthTask.waitFor({ state: 'hidden' })
   check('System Back cancels the month picker without applying its draft or leaving Records',
     await page.locator('.records-v35').isVisible() && (await page.locator('.records-filter-row').innerText()).includes('全部日期') && await page.getByRole('button', { name: '选择月份', exact: true }).evaluate(element => element === document.activeElement))
-  await press(page, '查看状态')
+  await page.locator('.records-status-button').click()
   await page.waitForFunction(() => history.state?.clockFocusTask === true)
   await page.evaluate(() => history.back())
   await page.getByRole('dialog', { name: '应用状态', exact: true }).waitFor({ state: 'hidden' })
   check('System Back closes application status, returns focus and creates no business write',
-    await page.getByRole('button', { name: '查看状态', exact: true }).evaluate(element => element === document.activeElement) && (await snapshot(page)).revision === beforePanels)
+    await page.locator('.records-status-button').evaluate(element => element === document.activeElement) && (await snapshot(page)).revision === beforePanels)
   const openFirst = row(page, first).locator('.record-summary')
   await openFirst.focus(); await page.keyboard.press('Enter')
   check('Keyboard expands one record and retains focus on its trigger', await openFirst.getAttribute('aria-expanded') === 'true' && await openFirst.evaluate(el => el === document.activeElement) && await row(page, latest).locator('.record-summary').getAttribute('aria-expanded') === 'false')
@@ -282,6 +282,88 @@ try {
   check('Favorite insertion preserves its pixel anchor and restores the recreated reading trigger focus',
     Math.abs((await boundaryQuote.boundingBox()).y - favoriteTop) <= 2 && await boundaryQuote.locator('.record-summary').evaluate(element => element === document.activeElement))
   await favoriteContext.close()
+
+  // Ordinary timer/save/system feedback changes the title-row control, never
+  // inserts a strip between the mode selector and the current reading object.
+  for (const width of widths) for (const textScale of [100, 200]) {
+    const statusSample = makeSample(base, 30)
+    statusSample.thoughtDraft = null
+    const { context: statusContext, page: statusPage } = await seedPage(browser, statusSample)
+    await statusPage.setViewportSize({ width, height: 812 })
+    if (textScale === 200) await statusPage.addStyleTag({ content: 'html { font-size: 200% !important; }' })
+    await openRecords(statusPage); await press(statusPage, '我的收藏')
+    const statusButton = statusPage.locator('.records-status-button')
+    await statusButton.click()
+    const statusDialog = statusPage.getByRole('dialog', { name: '应用状态', exact: true })
+    const dismiss = statusDialog.getByRole('button', { name: '知道了', exact: true })
+    if (await dismiss.isVisible()) await dismiss.click()
+    await statusDialog.getByRole('button', { name: '返回记录', exact: true }).click()
+    const quote = statusPage.locator('.records-favorites .record-summary')
+    await quote.click()
+    await statusPage.evaluate(() => window.scrollTo(0, 0))
+    const measure = () => statusPage.evaluate(() => {
+      const rect = selector => { const { x, y, width, height } = document.querySelector(selector).getBoundingClientRect(); return { x, y, width, height } }
+      return { modes: rect('.records-modes'), list: rect('.records-list'), status: rect('.records-status-button') }
+    })
+    const baseline = await measure()
+    if (width === 375 && textScale === 100) {
+      await statusPage.evaluate(async () => { await document.fonts.ready; document.activeElement?.blur() })
+      await statusPage.mouse.move(374, 1)
+      await statusPage.screenshot({ path: path.join(output, 'records-status-quiet-375.png') })
+      await quote.focus()
+    }
+    const stable = async () => {
+      const next = await measure()
+      return ['modes', 'list', 'status'].every(key => ['x', 'y', 'width', ...(key === 'list' ? [] : ['height'])].every(axis => Math.abs(next[key][axis] - baseline[key][axis]) <= 1))
+    }
+    check(`${width}px/${textScale}% quiet favorites sit immediately below the modes with an accessible status control`,
+      baseline.list.y - (baseline.modes.y + baseline.modes.height) <= 20 && baseline.status.width >= 44 && baseline.status.height >= 44 &&
+      await statusPage.locator('.records-session-status').count() === 0 && await statusButton.getAttribute('aria-haspopup') === 'dialog' &&
+      await statusPage.evaluate(() => document.documentElement.scrollWidth <= innerWidth))
+    const peer = await statusContext.newPage()
+    await peer.clock.setFixedTime(t0)
+    await peer.goto(url)
+    await start(peer)
+    await statusPage.waitForFunction(() => document.querySelector('.records-status-button').textContent.includes('专注计时'))
+    check(`${width}px/${textScale}% active timer does not move modes or the current reading`, await stable() && await quote.evaluate(element => element === document.activeElement))
+    await press(peer, '暂停专注')
+    await statusPage.waitForFunction(() => document.querySelector('.records-status-button').textContent.includes('专注暂停'))
+    check(`${width}px/${textScale}% paused status keeps the same control and reading geometry`, await stable())
+    await statusButton.click()
+    check(`${width}px/${textScale}% status details explain paused activity outside saved totals`, (await statusDialog.innerText()).includes('已暂停（未计入汇总）'))
+    await statusDialog.getByRole('button', { name: '返回记录', exact: true }).click()
+    check(`${width}px/${textScale}% closing status restores its source focus and layout`, await statusButton.evaluate(element => element === document.activeElement) && await stable())
+    await press(peer, '继续专注')
+    await statusPage.waitForFunction(() => document.querySelector('.records-status-button').textContent.includes('专注计时'))
+    await failWrites(statusPage)
+    await press(statusPage, '取消收藏')
+    await statusPage.waitForFunction(() => document.querySelector('.records-status-button').textContent.includes('有待保存'))
+    check(`${width}px/${textScale}% save failure stays visible alongside the timer without pushing content`,
+      (await statusButton.innerText()).includes('专注计时') && await stable() && await quote.isVisible())
+    await statusButton.click()
+    check(`${width}px/${textScale}% save failure has complete status details and retry`,
+      (await statusDialog.innerText()).includes('尚未保存') && await statusDialog.getByRole('button', { name: '重试保存', exact: true }).isVisible())
+    await statusDialog.getByRole('button', { name: '返回记录', exact: true }).click()
+    await statusPage.evaluate(async () => { await document.fonts.ready; document.activeElement?.blur(); window.scrollTo(0, 0) })
+    await statusPage.mouse.move(width - 1, 1)
+    await statusPage.screenshot({ path: path.join(output, `records-status-active-error-${width}-${textScale}.png`) })
+    await statusPage.evaluate(() => window.restoreRecordWrites())
+    await statusPage.getByRole('button', { name: '重试保存', exact: true }).first().click()
+    await statusPage.waitForFunction(k => JSON.parse(localStorage.getItem(k)).quoteFavorites[0].deletedAt !== null, key)
+    // The explicit cancellation removed its object and its retry control was
+    // below the fold at large text. Return to this test's comparison viewport
+    // before checking the subsequent, unsolicited timer expiry.
+    await statusPage.evaluate(() => window.scrollTo(0, 0))
+    await fixTime(peer, t0 + 1_500_001)
+    await statusPage.waitForFunction(() => !document.querySelector('.records-status-button').textContent.includes('专注计时'))
+    check(`${width}px/${textScale}% retry and natural expiry keep title and modes fixed`, await stable())
+    if (width === 375 && textScale === 100) {
+      await statusPage.evaluate(async () => { await document.fonts.ready; document.activeElement?.blur(); window.scrollTo(0, 0) })
+      await statusPage.mouse.move(374, 1)
+      await statusPage.screenshot({ path: path.join(output, 'records-status-compact-375.png') })
+    }
+    await statusContext.close()
+  }
 
   assert.deepEqual(errors, [], 'Unexpected browser errors')
   const report = { browser: browser.version(), platform: process.platform, widths, checks, errors, scaleResults, screenshot: 'records-375.png', physicalDevice: false }
