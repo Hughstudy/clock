@@ -28,6 +28,7 @@ export interface FeedbackCatalog {
   readonly copyVersion: string
   readonly reviewStatus: 'candidate'
   readonly entries: readonly Encouragement[]
+  readonly interfaceCopyVersion: 'prd-v35'
   readonly interfaceCopy: readonly FixedCopy[]
   readonly errors: readonly ErrorCopy[]
   readonly welcomeNote: { readonly id: 'WELCOME_NOTE'; readonly text: string; readonly copyVersion: string; readonly reviewStatus: 'candidate' }
@@ -48,6 +49,7 @@ export function parseFeedbackCatalog(value: unknown): FeedbackCatalog {
   const root = object(value, '$')
   if (root.schemaVersion !== 1 || root.reviewStatus !== 'candidate') fail('schemaVersion/reviewStatus')
   const version = text(root.copyVersion, 'copyVersion')
+  if (root.interfaceCopyVersion !== 'prd-v35') fail('interfaceCopyVersion')
   if (!Array.isArray(root.entries) || root.entries.length !== 136) fail('entries count')
   const seen = new Set<string>()
   for (const item of root.entries as unknown[]) {
@@ -72,7 +74,7 @@ export function parseFeedbackCatalog(value: unknown): FeedbackCatalog {
       if (!seen.has(`${pool}${String(i).padStart(2, '0')}`)) fail(`${pool}.coverage`)
     }
   }
-  for (const [key, prefix, count] of [['interfaceCopy', 'UI', 44], ['errors', 'ERR', 14]] as const) {
+  for (const [key, prefix, count] of [['interfaceCopy', 'UI', 99], ['errors', 'ERR', 14]] as const) {
     const items = root[key]
     if (!Array.isArray(items) || items.length !== count) fail(`${key}.count`)
     const ids = new Set<string>()

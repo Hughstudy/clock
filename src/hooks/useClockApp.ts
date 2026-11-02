@@ -7,12 +7,14 @@ import { createChime } from '../adapters/sound'
 import type { Persistence, StoreNotice } from '../adapters/storage'
 import type { SaveState } from '../contracts/focus'
 import { spec } from '../data/spec'
-import { applyAction, resolveSessionResult, shouldChime, type AppAction, type SessionResult, type ThoughtAction, type ThoughtChange } from '../logic/app'
+import { applyAction, resolveSessionResult, shouldChime, type AppAction, type FavoriteAction, type SessionResult, type ThoughtAction, type ThoughtChange } from '../logic/app'
 import { feedbackFromTransition, type AppFeedbackEvent } from '../logic/feedback-host'
 import type { FeedbackEvent } from '../logic/feedback'
 import type { SettingsPatch } from '../logic/settings'
 import type { AppSnapshot, Phase, Thought } from '../logic/types'
 import { datePendingDeletion } from '../logic/thoughts'
+import type { SavedQuote } from '../contracts/favorites'
+import { feedbackCatalog } from '../data/encouragement'
 
 export type UserAction =
   | { type: 'start' | 'startFocus'; durationMinutes?: number; step?: string }
@@ -36,6 +38,8 @@ export interface ClockApp {
   snapshot: AppSnapshot
   savedRecordIds: ReadonlySet<string>
   durableThoughts: readonly Thought[]
+  durableFavorites: readonly SavedQuote[]
+  timerPending: boolean
   persistence: Persistence
   notice: StoreNotice | null
   saveError: string | null
@@ -44,6 +48,9 @@ export interface ClockApp {
   thoughtResult: ThoughtResult | null
   thoughtReceipts: ReadonlyMap<string, ThoughtResult>
   submitThought: (action: ThoughtAction, operationId: string, generation: number) => Promise<boolean>
+  submitFavorite: (action: FavoriteAction, operationId: string, generation: number) => Promise<{ accepted: boolean; rejected: boolean }>
+  hasPendingOperations: boolean
+  checkReload: () => Promise<boolean>
   dispatch: (action: UserAction) => void
   result: SessionResult | null
 }
@@ -53,6 +60,7 @@ interface CommitOptions {
   operationId?: string
   quiet?: boolean
   onlyPending?: boolean
+  onRejected?: () => void
 }
 interface Pending {
   action: AppAction
@@ -61,7 +69,12 @@ interface Pending {
   /** An applied change only needs its snapshot written. Never replay its timer transition. */
   applied: boolean
 }
+interface PendingThought extends Thought {
+  retirement?: { previous: string | null; next: string }
+}
 const EMPTY_THOUGHTS: readonly Thought[] = []
+const EMPTY_FAVORITES: readonly SavedQuote[] = []
+const TIMER_COMMANDS = new Set(['start', 'startFocus', 'startBreak', 'pause', 'resume', 'end', 'skipBreak', 'prepare'])
 
 export function useClockApp(): ClockApp {
   const [store] = useState(() => openBrowserStore(spec))
@@ -74,13 +87,15 @@ export function useClockApp(): ClockApp {
   const [thoughtResult, setThoughtResult] = useState<ThoughtResult | null>(null)
   const [thoughtReceipts, setThoughtReceipts] = useState<ReadonlyMap<string, ThoughtResult>>(new Map())
   const receipts = useRef(new Map<string, ThoughtResult>())
-  const unconfirmed = useRef(new Map<string, Thought>())
+  const unconfirmed = useRef(new Map<string, PendingThought>())
   const pending = useRef(new Map<string, Pending>())
   const [result, setResult] = useState<SessionResult | null>(null)
-  const lastMark = useRef<{ at: number; key: string } | null>(null)
+  const lastMark = useRef<{ at: number; key: string; id: string; inFlight: boolean } | null>(null)
   const generation = useRef(store.snapshot.datasetGeneration)
   const queue = useRef(Promise.resolve())
   const inFlight = useRef(0)
+  const queuedOperations = useRef(0)
+  const [timerPendingCount, setTimerPendingCount] = useState(0)
 
   const remember = useCallback((receipt: ThoughtResult) => {
     receipts.current.set(receipt.operationId, receipt)
@@ -112,6 +127,14 @@ export function useClockApp(): ClockApp {
         const found = stored.thoughts.find(t => t.id === wanted.id)
         if (!receipt || !found) continue
         if (found.rev === wanted.rev && found.text === wanted.text && found.status === wanted.status && found.deletedAt === wanted.deletedAt) {
+          // Unchanged text can already match the durable note before this save.
+          // A save is confirmed only when its draft retirement also reached disk.
+          if (wanted.retirement && stored.draftStamp !== wanted.retirement.next) {
+            if (stored.draftStamp === wanted.retirement.previous) continue
+            unconfirmed.current.delete(id)
+            remember({ ...receipt, change: 'rejected' })
+            continue
+          }
           unconfirmed.current.delete(id)
           remember({ ...receipt, saved: true })
         } else if (found.rev >= wanted.rev) {
@@ -127,8 +150,11 @@ export function useClockApp(): ClockApp {
     setSaveState(store.status.persistence !== 'saved' ? store.status.persistence : saveError ? 'pending' : 'saved')
   }, [store, remember])
 
-  const commit = useCallback((input: AppAction, { origin = 'user', operationId = newId(), quiet = false, onlyPending = false }: CommitOptions = {}): Promise<boolean> => {
+  const commit = useCallback((input: AppAction, { origin = 'user', operationId = newId(), quiet = false, onlyPending = false, onRejected }: CommitOptions = {}): Promise<boolean> => {
     const action = { ...input, generation: input.generation ?? store.snapshot.datasetGeneration }
+    queuedOperations.current++
+    const timerCommand = TIMER_COMMANDS.has(action.type)
+    if (timerCommand) setTimerPendingCount(count => count + 1)
     const at = nowMs()
     if (!quiet) {
       inFlight.current++
@@ -154,13 +180,14 @@ export function useClockApp(): ClockApp {
               }
             }
           }
-          const t = applyAction(before, action, { now, dateKeyOf: dateKeyInZone }, spec)
+          const t = applyAction(before, action, { now, dateKeyOf: dateKeyInZone, quoteCatalog: feedbackCatalog.entries }, spec)
           return { snapshot: t.snapshot, changed: t.changed || before !== latest, value: { transition: t, before } }
         })
         refresh()
         if (action.generation !== store.snapshot.datasetGeneration) return false
         const { transition, before } = write.value
-        const accepted = !transition.draftConflict && transition.thought?.change !== 'rejected'
+        const accepted = !transition.draftConflict && !transition.favoriteRejected && transition.thought?.change !== 'rejected'
+        if (!accepted) onRejected?.()
         if (write.saved) {
           // One successful snapshot write includes prior applied changes. A lock failure
           // has no applied change and keeps its original, separately retryable command.
@@ -171,7 +198,10 @@ export function useClockApp(): ClockApp {
         const noted = transition.thought
         if (noted) {
           const wanted = write.snapshot.thoughts.find(t => t.id === noted.id)
-          if (wanted && !write.saved && accepted) unconfirmed.current.set(operationId, wanted)
+          if (wanted && !write.saved && accepted) unconfirmed.current.set(operationId, {
+            ...wanted,
+            ...(action.type === 'saveThoughtText' && action.stamp ? { retirement: { previous: before.draftStamp, next: action.stamp } } : {}),
+          })
           remember({ operationId, generation: action.generation, thoughtId: noted.id, revision: wanted?.rev ?? null,
             change: noted.change, saved: write.saved && accepted })
         }
@@ -198,6 +228,8 @@ export function useClockApp(): ClockApp {
         if ('thoughtId' in action) remember({ operationId, generation: action.generation, thoughtId: action.thoughtId, change: null, saved: false, revision: null })
         return false
       } finally {
+        queuedOperations.current--
+        if (timerCommand) setTimerPendingCount(count => Math.max(0, count - 1))
         if (!quiet) inFlight.current--
         refresh()
         if (inFlight.current && store.status.persistence === 'saved') setSaveState('saving')
@@ -246,12 +278,32 @@ export function useClockApp(): ClockApp {
 
   const submitThought = useCallback((action: ThoughtAction, operationId: string, gen: number) =>
     commit({ ...action, generation: gen }, { operationId, quiet: action.type === 'writeDraft' }), [commit])
+  const submitFavorite = useCallback(async (action: FavoriteAction, operationId: string, gen: number) => {
+    let rejected = false
+    const accepted = await commit({ ...action, generation: gen }, { operationId, quiet: true, onRejected: () => { rejected = true } })
+    return { accepted, rejected }
+  }, [commit])
+
+  const checkReload = useCallback(async () => {
+    await queue.current
+    if (pending.current.size || unconfirmed.current.size || queuedOperations.current) return false
+    // A newer-schema fallback has no editable data. Reloading is its recovery
+    // path; do not try to decode, transact or overwrite the protected raw data.
+    if (store.status.notice?.kind === 'newer') return true
+    if (store.status.persistence !== 'saved') return false
+    const checkedGeneration = store.snapshot.datasetGeneration
+    try {
+      const checked = await store.transact(latest => ({ snapshot: latest, changed: false, value: !latest.timer.session && !latest.thoughtDraft }))
+      refresh()
+      return checked.saved && checked.value && checked.snapshot.datasetGeneration === checkedGeneration && !pending.current.size && !queuedOperations.current
+    } catch { return false }
+  }, [store, refresh])
 
   const dispatch = useCallback((action: UserAction) => {
     if (store.status.persistence === 'read-only') return
     const { timer, datasetGeneration } = view.snapshot
     if (action.type === 'start' || action.type === 'startFocus' || action.type === 'startBreak' || action.type === 'resume') chime.unlock()
-    if (action.type === 'updateSettings' && action.patch.soundEnabled === true) { chime.unlock(); chime.play() }
+    if (action.type === 'updateSettings' && action.patch.soundEnabled === true) chime.unlock()
     switch (action.type) {
       case 'start':
       case 'startFocus':
@@ -271,9 +323,14 @@ export function useClockApp(): ClockApp {
         const activation = performance.now()
         const session = timer.phase === 'focus' && !(timer.session?.status === 'running' && timer.session.deadline <= at) ? timer.session : null
         const key = JSON.stringify([datasetGeneration, session?.id ?? null])
-        if (lastMark.current?.key === key && activation - lastMark.current.at < spec.thoughts.markCoalesceMs) return
-        lastMark.current = { at: activation, key }
-        return void commit({ type: 'markThought', thoughtId: newId(), timeZone: session?.timeZone ?? currentTimeZone(), owner: { at, sessionId: session?.id ?? null }, generation: datasetGeneration })
+        const last = lastMark.current
+        const previous = last && store.snapshot.thoughts.find(t => t.id === last.id)
+        if (last?.key === key && activation - last.at < spec.thoughts.markCoalesceMs &&
+            (last.inFlight || previous?.deletedAt === null && previous.rev === 1 && previous.text === '')) return
+        const id = newId(), mark = { at: activation, key, id, inFlight: true }
+        lastMark.current = mark
+        return void commit({ type: 'markThought', thoughtId: id, timeZone: session?.timeZone ?? currentTimeZone(), owner: { at, sessionId: session?.id ?? null }, generation: datasetGeneration })
+          .finally(() => { if (lastMark.current === mark) mark.inFlight = false })
       }
       case 'resetDurations':
         return void commit({ type: 'resetDurations', generation: datasetGeneration })
@@ -285,6 +342,9 @@ export function useClockApp(): ClockApp {
   }, [store, commit, chime, view.snapshot, recover])
 
   const durable = store.durableSnapshot?.datasetGeneration === view.snapshot.datasetGeneration ? store.durableSnapshot : null
-  return { ...view, saveState, feedbackEvent, thoughtResult, thoughtReceipts, submitThought, dispatch, result,
+  return { ...view, saveState, feedbackEvent, thoughtResult, thoughtReceipts, submitThought, submitFavorite, dispatch, result,
+    timerPending: timerPendingCount > 0, durableFavorites: durable?.quoteFavorites ?? EMPTY_FAVORITES,
+    hasPendingOperations: pending.current.size > 0 || unconfirmed.current.size > 0 || queuedOperations.current > 0 || timerPendingCount > 0,
+    checkReload,
     durableThoughts: durable?.thoughts ?? EMPTY_THOUGHTS }
 }

@@ -1,11 +1,12 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { currentTimeZone, dateKeyInZone, nowMs } from '../adapters/calendar'
 import { newId } from '../adapters/ids'
 import { onAppHide } from '../adapters/lifecycle'
 import { spec } from '../data/spec'
 import { uiText } from '../data/ui-copy'
 import type { ClockApp, ThoughtResult } from './useClockApp'
-import type { Thought, ThoughtDraft } from '../logic/types'
+import type { AppSnapshot, Thought, ThoughtDraft } from '../logic/types'
+import { isWellFormedUnicode } from '../logic/thoughts'
 
 export interface ThoughtStatus { text: string; kind: 'status' | 'error' }
 
@@ -20,11 +21,14 @@ export interface Thoughts {
   length: number
   canSave: boolean
   isExisting: boolean
+  hasDraft: boolean
+  clearingExistingText: boolean
   originalEnded: boolean
   conflict: boolean
   pendingEdit: boolean
   writeAnother: () => void
   discardAndSwitch: () => void
+  saveAndSwitch: () => void
   cancelSwitch: () => void
   reloadLatest: () => void
   discard: () => void
@@ -37,11 +41,24 @@ export interface Thoughts {
   reopen: (thoughtId: string) => void
   remove: (thoughtId: string) => void
   undo: { label: string; run: () => void } | null
+  undos: { id: string; label: string; run: () => void }[]
+  pendingIds: ReadonlySet<string>
+  retry: () => void
   status: ThoughtStatus | null
 }
 
 interface Editor { draft: ThoughtDraft; stamp: string | null; generation: number }
 interface Submission { operationId: string; draftId: string; text: string }
+
+/** A successful submission owns its resulting stamp, never a later peer's slot. */
+export function continueSavedDraft(editing: Editor, receipt: Pick<ThoughtResult, 'generation' | 'thoughtId'> & { revision: number },
+  stored: Pick<AppSnapshot, 'draftStamp' | 'thoughtDraft' | 'datasetGeneration'>, nextDraftId: string): { editor: Editor; conflict: boolean } {
+  return {
+    editor: { generation: receipt.generation, stamp: editing.stamp,
+      draft: { ...editing.draft, id: nextDraftId, thoughtId: receipt.thoughtId, baseRev: receipt.revision } },
+    conflict: stored.datasetGeneration !== receipt.generation || stored.draftStamp !== editing.stamp || stored.thoughtDraft !== null,
+  }
+}
 const errorStatus = (text: string): ThoughtStatus => ({ text, kind: 'error' })
 function statusOf(result: ThoughtResult): ThoughtStatus {
   if (result.change === 'rejected') return errorStatus('这项操作的对象已改变，未覆盖现有内容。')
@@ -54,6 +71,22 @@ function statusOf(result: ThoughtResult): ThoughtStatus {
 /** Each edit retains its original owner and base versions independently of the timer and delayed receipts. */
 export function useThoughts(app: ClockApp): Thoughts {
   const { snapshot, dispatch, submitThought } = app
+  const thoughtById = useMemo(() => new Map(snapshot.thoughts.map(thought => [thought.id, thought])), [snapshot.thoughts])
+  const durableById = useMemo(() => new Map(app.durableThoughts.map(thought => [thought.id, thought])), [app.durableThoughts])
+  const endedSessionIds = useMemo(() => new Set(snapshot.records.map(record => record.sessionId)), [snapshot.records])
+  const pendingIds = useMemo(() => {
+    const pending = new Set<string>()
+    for (const thought of snapshot.thoughts) {
+      const saved = durableById.get(thought.id)
+      if (!saved || saved.rev !== thought.rev || saved.text !== thought.text || saved.deletedAt !== thought.deletedAt || saved.status !== thought.status) pending.add(thought.id)
+    }
+    for (const result of app.thoughtReceipts.values()) {
+      if (!result.saved && result.change !== 'rejected' && result.generation === snapshot.datasetGeneration) pending.add(result.thoughtId)
+    }
+    return pending
+  }, [snapshot.thoughts, snapshot.datasetGeneration, durableById, app.thoughtReceipts])
+  const undoCandidates = useMemo(() => app.durableThoughts.filter(thought => thought.deletedAt !== null && !pendingIds.has(thought.id))
+    .sort((a, b) => (b.deletedAt ?? 0) - (a.deletedAt ?? 0)), [app.durableThoughts, pendingIds])
   const initial = snapshot.thoughtDraft ? { draft: snapshot.thoughtDraft, stamp: snapshot.draftStamp, generation: snapshot.datasetGeneration } : null
   const [editor, setEditor] = useState<Editor | null>(initial)
   const current = useRef(editor)
@@ -61,6 +94,7 @@ export function useThoughts(app: ClockApp): Thoughts {
   const [open, setOpenState] = useState(false)
   const [conflict, setConflict] = useState(false)
   const [switchTarget, setSwitchTarget] = useState<{ id: string | null } | null>(null)
+  const saveThenSwitch = useRef<{ id: string | null } | null>(null)
   const [submission, setSubmission] = useState<Submission | null>(null)
   const submitting = useRef<Submission | null>(null)
   const timer = useRef<number | undefined>(undefined)
@@ -87,9 +121,12 @@ export function useThoughts(app: ClockApp): Thoughts {
     cancelTimer()
     const editing = current.current
     if (!editing || editing.generation !== appRef.current.snapshot.datasetGeneration) return
+    // A submit retires its draft. Further typing is rebound to the same formal
+    // item only after that submit's receipt, never raced into a second item.
+    if (submitting.current?.draftId === editing.draft.id) return
     const { draft, generation, stamp: expectedStamp } = editing
     const stored = appRef.current.snapshot
-    const value = draft.thoughtId !== null || draft.text.trim() ? draft : null
+    const value = draft.thoughtId !== null || draft.text.length > 0 || draft.createdAt !== null ? draft : null
     if (stored.draftStamp === expectedStamp && (value === null ? !stored.thoughtDraft :
         stored.thoughtDraft?.id === draft.id && stored.thoughtDraft.text === draft.text)) return
     const stamp = newId()
@@ -106,22 +143,44 @@ export function useThoughts(app: ClockApp): Thoughts {
     hadGeneration.current = snapshot.datasetGeneration
     cancelTimer()
     changeEditor(snapshot.thoughtDraft ? { draft: snapshot.thoughtDraft, stamp: snapshot.draftStamp, generation: snapshot.datasetGeneration } : null)
-    submitting.current = null; setSubmission(null); setOpenState(false); setSwitchTarget(null); setConflict(false)
+    submitting.current = null; saveThenSwitch.current = null; setSubmission(null); setOpenState(false); setSwitchTarget(null); setConflict(false)
   }, [snapshot, cancelTimer, changeEditor])
 
   const receipt = submission ? app.thoughtReceipts.get(submission.operationId) : undefined
   useEffect(() => {
     if (!receipt || !submission || submitting.current?.operationId !== submission.operationId) return
     const editing = current.current
-    const sameInput = editing?.draft.id === submission.draftId && editing.draft.text === submission.text && editing.generation === receipt.generation
+    const sameEditor = editing?.draft.id === submission.draftId && editing.generation === receipt.generation
+    const sameInput = sameEditor && editing.draft.text === submission.text
     if (receipt.change === 'rejected') {
-      if (sameInput) setConflict(true)
+      if (sameEditor) setConflict(true)
     } else if (receipt.saved) {
-      if (sameInput) { changeEditor(null); setOpenState(false); setConflict(false) }
+      if (sameInput) {
+        const next = saveThenSwitch.current
+        if (next) {
+          const stored = appRef.current.snapshot
+          if (receipt.revision !== null && (stored.draftStamp !== editing.stamp || stored.thoughtDraft !== null)) {
+            const continuation = continueSavedDraft(editing, { ...receipt, revision: receipt.revision }, stored, newId())
+            changeEditor(continuation.editor); setConflict(true); setOpenState(true)
+          } else {
+            const target = stored.thoughts.find(t => t.id === next.id && t.deletedAt === null)
+            changeEditor(makeEditor(target)); setOpenState(true); setConflict(false)
+          }
+          setSwitchTarget(null)
+        } else { changeEditor(null); setOpenState(false); setConflict(false) }
+      } else if (sameEditor && receipt.revision !== null) {
+        const stored = appRef.current.snapshot
+        const continuation = continueSavedDraft(editing, { ...receipt, revision: receipt.revision }, stored, newId())
+        changeEditor(continuation.editor)
+        // Preserve the text typed while saving as a new draft of the same item.
+        if (!continuation.conflict) timer.current = window.setTimeout(flushDraft, spec.thoughts.draftSaveDelayMs)
+        setConflict(continuation.conflict)
+      }
     } else return
+    saveThenSwitch.current = null
     submitting.current = null
     setSubmission(null)
-  }, [receipt, submission, changeEditor])
+  }, [receipt, submission, changeEditor, flushDraft])
   const recent = app.thoughtResult
 
   const begin = (target?: Thought) => {
@@ -136,7 +195,8 @@ export function useThoughts(app: ClockApp): Thoughts {
     setOpenState(true)
   }
   const edit = (id: string) => {
-    const target = snapshot.thoughts.find(t => t.id === id && t.deletedAt === null)
+    const durable = durableById.get(id), local = thoughtById.get(id)
+    const target = durable?.deletedAt === null ? durable : local?.deletedAt === null ? local : undefined
     if (!target) return
     const existing = current.current?.draft ?? snapshot.thoughtDraft
     if (existing?.thoughtId === id) { openNew(); return }
@@ -187,28 +247,23 @@ export function useThoughts(app: ClockApp): Thoughts {
   }
 
   const setText = (text: string) => {
-    let editing = current.current ?? makeEditor()
+    const editing = current.current ?? makeEditor()
     let draft = editing.draft
-    if (submitting.current?.draftId === draft.id) {
-      // Input after Save is a new draft. The previous result can only clear the submitted text.
-      draft = { ...draft, id: newId(), thoughtId: null, baseRev: null, createdAt: null, dateKey: null }
-      editing = { ...editing, draft }
-    }
     if (draft.createdAt === null && text.trim()) {
       const at = nowMs()
       draft = { ...draft, createdAt: at, dateKey: dateKeyInZone(at, draft.timeZone) }
     }
     changeEditor({ ...editing, draft: { ...draft, text } })
     cancelTimer()
-    if (!conflict) timer.current = window.setTimeout(flushDraft, spec.thoughts.draftSaveDelayMs)
+    if (!conflict && !submitting.current) timer.current = window.setTimeout(flushDraft, spec.thoughts.draftSaveDelayMs)
   }
 
   const save = (asNew = false) => {
     const editing = current.current
     if (!editing || editing.generation !== snapshot.datasetGeneration) return
     let draft = editing.draft
-    if (Array.from(draft.text).length > spec.thoughts.maxLength || ((!draft.thoughtId || asNew) && !draft.text.trim())) return
-    if (submitting.current?.draftId === draft.id && submitting.current.text === draft.text && !asNew) { dispatch({ type: 'retrySave' }); return }
+    if (!isWellFormedUnicode(draft.text) || Array.from(draft.text).length > spec.thoughts.maxLength || ((!draft.thoughtId || asNew) && !draft.text.trim())) return
+    if (submitting.current?.draftId === draft.id && !asNew) { dispatch({ type: 'retrySave' }); return }
     cancelTimer()
     if (asNew) draft = { ...draft, id: newId(), thoughtId: null, baseRev: null }
     const storedDraft = snapshot.thoughtDraft
@@ -225,41 +280,53 @@ export function useThoughts(app: ClockApp): Thoughts {
   }
 
   const manage = (type: 'putAwayThought' | 'reopenThought' | 'deleteThought' | 'restoreThought', id: string, rev?: number) => {
-    const target = snapshot.thoughts.find(t => t.id === id)
+    const target = thoughtById.get(id)
     if (target) void submitThought({ type, thoughtId: id, expectedRev: rev ?? target.rev }, newId(), snapshot.datasetGeneration)
   }
-  const target = editor?.draft.thoughtId ? snapshot.thoughts.find(t => t.id === editor.draft.thoughtId) : null
+  const target = editor?.draft.thoughtId ? thoughtById.get(editor.draft.thoughtId) : null
   const stale = conflict || (!!editor?.draft.thoughtId && (!target || target.deletedAt !== null || target.rev !== editor.draft.baseRev) && !submission)
-  const undoTarget = recent?.saved && recent.generation === snapshot.datasetGeneration && recent.revision !== null
-    ? snapshot.thoughts.find(t => t.id === recent.thoughtId && t.rev === recent.revision) : null
+  const recentTarget = recent ? thoughtById.get(recent.thoughtId) : null
+  const undoTarget = recent?.saved && recent.generation === snapshot.datasetGeneration && recent.revision !== null && recentTarget?.rev === recent.revision
+    ? recentTarget : null
+  const undoNow = nowMs()
   let undo: Thoughts['undo'] = null
   if (undoTarget && recent?.change === 'marked') undo = { label: uiText('UI18'), run: () => manage('deleteThought', undoTarget.id, undoTarget.rev) }
-  if (undoTarget?.deletedAt != null && recent?.change === 'deleted' && nowMs() - undoTarget.deletedAt < spec.thoughts.undoPeriodMs) {
+  if (undoTarget?.deletedAt != null && recent?.change === 'deleted' && undoNow >= undoTarget.deletedAt && undoNow - undoTarget.deletedAt < spec.thoughts.undoPeriodMs) {
     undo = { label: '撤销删除', run: () => manage('restoreThought', undoTarget.id, undoTarget.rev) }
   }
+  const undos = undoCandidates.filter(t => t.deletedAt !== null && undoNow >= t.deletedAt && undoNow - t.deletedAt < spec.thoughts.undoPeriodMs).map(t => ({ id: t.id,
+      label: `撤销删除：${t.text ? Array.from(t.text).slice(0, 16).join('') : '空标记'}`, run: () => manage('restoreThought', t.id, t.rev) }))
   const text = editor?.draft.text ?? ''
-  const length = Array.from(text).length
+  const { length, validText } = useMemo(() => ({ length: Array.from(text).length, validText: isWellFormedUnicode(text) }), [text])
+  const durableItem = editor?.draft.thoughtId ? durableById.get(editor.draft.thoughtId) : null
+  const durableTarget = durableItem?.deletedAt === null ? durableItem : null
+  const newerInput = !!durableTarget && durableTarget.text !== text && recent?.saved && recent.thoughtId === durableTarget.id
   const saving = !!submission && submission.draftId === editor?.draft.id && !receipt
   const setOpen = (next: boolean) => {
     if (next) { openNew(); return }
     if (timer.current !== undefined) flushDraft()
     const editing = current.current
-    if (editing && editing.draft.thoughtId === null && !editing.draft.text.trim()) changeEditor(null)
+    if (editing && editing.draft.thoughtId === null && !editing.draft.text && editing.draft.createdAt === null) changeEditor(null)
     setSwitchTarget(null)
     setOpenState(false)
   }
   return {
     open, openNew, edit, setOpen,
     text, setText, maxLength: spec.thoughts.maxLength, length,
-    canSave: !stale && !saving && (editor?.draft.thoughtId != null || !!text.trim()) && length <= spec.thoughts.maxLength,
+    canSave: validText && !stale && !saving && (editor?.draft.thoughtId != null || !!text.trim()) && length <= spec.thoughts.maxLength,
     isExisting: editor?.draft.thoughtId != null,
-    originalEnded: !!editor?.draft.sessionId && snapshot.records.some(r => r.sessionId === editor.draft.sessionId),
+    hasDraft: !!(editor && (editor.draft.text || editor.draft.thoughtId || editor.draft.createdAt !== null) || snapshot.thoughtDraft),
+    clearingExistingText: !!editor?.draft.thoughtId && !!target?.text && !text.trim(),
+    originalEnded: !!editor?.draft.sessionId && endedSessionIds.has(editor.draft.sessionId),
     conflict: stale, pendingEdit: switchTarget !== null, writeAnother: () => setSwitchTarget({ id: null }),
     discardAndSwitch: () => void discardAndSwitch(), cancelSwitch: () => setSwitchTarget(null),
+    saveAndSwitch: () => { if (switchTarget) { saveThenSwitch.current = switchTarget; save() } },
     saveAsNew: () => save(true), discard: () => void discard(), reloadLatest,
     latestMarkerId: recent?.change === 'marked' && undoTarget?.deletedAt === null ? undoTarget.id : null, saving,
     mark: () => dispatch({ type: 'markThought' }), save: () => save(), putAway: id => manage('putAwayThought', id),
-    reopen: id => manage('reopenThought', id), remove: id => manage('deleteThought', id), undo,
-    status: stale ? errorStatus('另一窗口修改或删除了编辑对象。此页输入仍在，可查看最新内容或另存为新想法。') : recent ? statusOf(recent) : null,
+    reopen: id => manage('reopenThought', id), remove: id => manage('deleteThought', id), undo, undos, pendingIds,
+    retry: () => dispatch({ type: 'retrySave' }),
+    status: !validText ? errorStatus('文字中有无法保存的字符，请修正后重试。此页输入仍保留。') : stale ? errorStatus('另一窗口修改了草稿或编辑对象。此页输入仍在，可查看最新内容或另存为新想法。')
+      : newerInput ? { text: '上一版已保存，当前修改仍是草稿。', kind: 'status' } : recent ? statusOf(recent) : null,
   }
 }

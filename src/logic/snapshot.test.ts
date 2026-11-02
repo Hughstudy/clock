@@ -55,7 +55,7 @@ describe('snapshot v7 and migration', () => {
     const decoded = decodeSnapshot(JSON.stringify(legacy(version)), spec, ctx)
     if (decoded.kind !== 'ok') throw Error(decoded.kind)
     expect(decoded.issues).toEqual([])
-    expect(decoded.snapshot.version).toBe(7)
+    expect(decoded.snapshot.version).toBe(8)
     expect(decoded.snapshot.records).toEqual([{ ...record('s1', 5000) }])
     expect(decoded.snapshot.participations).toEqual(sample().participations)
     expect(decoded.snapshot.timer.session).toMatchObject({ status: 'paused', remainingMs: 600_000, startedAt: null, timeZone: version === 1 ? 'Asia/Tokyo' : 'Europe/Berlin' })

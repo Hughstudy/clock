@@ -1,3 +1,5 @@
+import type { SavedQuote } from '../contracts/favorites'
+
 export type Phase = 'focus' | 'shortBreak' | 'longBreak'
 
 export const PHASES: readonly Phase[] = ['focus', 'shortBreak', 'longBreak']
@@ -145,4 +147,6 @@ export interface AppSnapshot {
   /** Compare-and-swap token for the single recoverable draft, including after clearing it. */
   draftStamp: string | null
   scenes: SceneState
+  /** Quote snapshots and cancellation markers; never a story/scene ownership ledger. */
+  quoteFavorites: SavedQuote[]
 }

@@ -5,7 +5,8 @@ import { spec } from '../data/spec'
 import { applyAction, type AppAction } from '../logic/app'
 import { createSnapshot } from '../logic/snapshot'
 import type { AppSnapshot } from '../logic/types'
-import { useTimerView, type TimerView } from './useViews'
+import { useStatsView, useTimerView, type StatsView, type TimerView } from './useViews'
+import type { Thought } from '../logic/types'
 
 const T0 = Date.UTC(2026, 9, 31, 9)
 const act = (snapshot: AppSnapshot, action: AppAction, now = T0) => applyAction(snapshot, action, { now, dateKeyOf: () => '2026-10-31' }, spec).snapshot
@@ -15,6 +16,36 @@ function viewOf(snapshot: AppSnapshot, now: number): TimerView {
   renderToStaticMarkup(createElement(Probe))
   return value!
 }
+
+function statsOf(snapshot: AppSnapshot, saved: ReadonlySet<string>, durable: readonly Thought[]): StatsView {
+  let value: StatsView | undefined
+  function Probe() { value = useStatsView(snapshot, T0, saved, durable); return null }
+  renderToStaticMarkup(createElement(Probe))
+  return value!
+}
+
+describe('confirmed records and formal thought projection', () => {
+  it('keeps pending ended time out of totals until persistence confirms it', () => {
+    const ended = act(act(createSnapshot(spec), { type: 'start', sessionId: 'pending', timeZone: 'UTC' }), { type: 'end' }, T0 + 20_000)
+    const pending = statsOf(ended, new Set(), [])
+    expect(pending.totalsByDay.size).toBe(0)
+    expect(pending.recordBySession.get('pending')?.saved).toBe(false)
+    const saved = statsOf(ended, new Set(['pending']), [])
+    expect(saved.totalsByDay.get('2026-10-31')?.focusMs).toBe(20_000)
+  })
+
+  it.each(['delete', 'edit', 'putAway'] as const)('retains formal text and status during unconfirmed %s', change => {
+    const formal: Thought = { id: 'note', createdAt: T0, dateKey: '2026-10-31', sessionId: null, text: '原文', status: 'open', rev: 1, deletedAt: null }
+    const memory = { ...formal, rev: 2, ...(change === 'delete' ? { deletedAt: T0 } : change === 'edit' ? { text: '待保存新文' } : { status: 'putAway' as const }) }
+    const projected = statsOf({ ...createSnapshot(spec), thoughts: [memory] }, new Set(), [formal])
+    expect(projected.thoughtDays[0]?.entries[0]).toEqual({ kind: 'thought', thought: formal })
+    expect(projected.confirmedThoughtIds.has('note')).toBe(true)
+    expect(projected.pendingThoughtIds.has('note')).toBe(true)
+    const confirmed = statsOf({ ...createSnapshot(spec), thoughts: [memory] }, new Set(), [memory])
+    expect(confirmed.pendingThoughtIds.size).toBe(0)
+    expect(confirmed.thoughtDays.length).toBe(change === 'delete' ? 0 : 1)
+  })
+})
 
 describe('precise main-owned scene progress', () => {
   it('advances below the former one-percent threshold while the badge keeps remaining progress', () => {

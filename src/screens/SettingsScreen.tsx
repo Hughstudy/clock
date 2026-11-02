@@ -1,23 +1,29 @@
 import { PHASE_LABELS } from '../components/format'
 import type { SettingsForm } from '../hooks/useSettingsForm'
 import { useMotionPreference } from '../hooks/companion/useMotionPreference'
+import { useSoundPreview } from '../hooks/useSoundPreview'
+import type { ReactNode } from 'react'
 
 interface Props {
   form: SettingsForm
   /** False while saved data is shown read-only. */
   canEdit: boolean
   onBack: () => void
+  systemNoticeSummary?: string | null
+  systemNotices?: ReactNode
 }
 
-export function SettingsScreen({ form, canEdit, onBack }: Props) {
+export function SettingsScreen({ form, canEdit, onBack, systemNoticeSummary, systemNotices }: Props) {
   const { systemReducedMotion } = useMotionPreference(form.motionEnabled)
+  const sound = useSoundPreview()
   return (
     <section className="screen settings" aria-labelledby="settings-title">
       <header className="settings-header">
         <button type="button" className="pill pill--ghost" onClick={onBack}>‹ 回到专注</button>
         <h2 id="settings-title" className="screen-title">设置</h2>
       </header>
-      <form className="card settings-form" onSubmit={(e) => e.preventDefault()}>
+      <form className="card settings-form" aria-label="常用偏好" onSubmit={(e) => e.preventDefault()}>
+        <h3 className="card-title">常用偏好</h3>
         <fieldset disabled={!canEdit}>
           <legend className="card-title">计时时长（分钟）</legend>
           {form.fields.map((field) => {
@@ -72,6 +78,11 @@ export function SettingsScreen({ form, canEdit, onBack }: Props) {
           })}
         </fieldset>
 
+        <p className="hint">时长更改从下一段开始生效。单次选择不会改变默认值。</p>
+        <button type="button" className="btn btn-secondary" disabled={!canEdit} onClick={form.restoreDefaults}>
+          恢复默认时长
+        </button>
+
         <label className="switch-row">
           <span>到时提示音</span>
           <input
@@ -83,6 +94,10 @@ export function SettingsScreen({ form, canEdit, onBack }: Props) {
             onChange={(e) => form.setSoundEnabled(e.target.checked)}
           />
         </label>
+        <div className="sound-preview">
+          <button type="button" className="pill pill--ghost" disabled={sound.playing} onClick={() => void sound.preview()}>试听提示音</button>
+          <p className="hint" role="status">{sound.message || '试听不改变声音开关，也不影响计时。'}</p>
+        </div>
 
         <label className="switch-row">
           <span>伙伴动画</span>
@@ -125,29 +140,25 @@ export function SettingsScreen({ form, canEdit, onBack }: Props) {
         <p id="encouragement-hint" className="hint">
           {form.encouragementEnabled
             ? '开始、暂停、结束等时刻会附上一句鼓励。'
-            : '开始、暂停、结束时只显示状态；点伙伴仍可要一句鼓励。'}
+            : '开始、暂停、结束时只显示状态；仍可点“给我一句鼓励”。'}
         </p>
-
-        <p className="hint">时长更改从下一段开始生效。单次选择的时长不会改变这里的默认值。</p>
-        <button
-          type="button"
-          className="btn btn-secondary"
-          disabled={!canEdit}
-          onClick={form.restoreDefaults}
-        >
-          恢复默认时长
-        </button>
       </form>
 
-      <div className="card info">
-        <h3 className="card-title">你的数据</h3>
+      <details className="card settings-info">
+        <summary>应用状态</summary>
+        {systemNoticeSummary ? systemNotices : <p className="hint">目前没有需要处理的应用提示。</p>}
+      </details>
+
+      <details className="card info settings-info">
+        <summary>本机数据说明</summary>
         <p>
           记录只保存在当前设备的这个浏览器里。清除网站数据、隐私浏览或浏览器清理可能使记录丢失。
           添加到主屏幕的应用可能单独保存数据，不会自动同步。
         </p>
-      </div>
+      </details>
 
-      <div className="card info">
+      <details className="card info settings-info">
+        <summary>应用与安装说明</summary>
         <h3 className="card-title">添加到主屏幕</h3>
         <p>
           <strong>iPhone：</strong>用 Safari 打开，点分享，选择“添加到主屏幕”，再点“添加”。
@@ -155,16 +166,13 @@ export function SettingsScreen({ form, canEdit, onBack }: Props) {
         <p>
           <strong>Android：</strong>在 Chrome 中打开 ⋮ 菜单，选择“添加到主屏幕”或“安装应用”。
         </p>
-      </div>
-
-      <div className="card info">
         <h3 className="card-title">关于伙伴与素材</h3>
         <p>
           现在的蓝色小伙伴是原创造型原型，正式名称与品牌仍在探索。
           安装图标等保留的旧 Whale-chan 素材是代码绘制的非商业同人设计，灵感来自社区的 DeepSeek Whale-chan
           （设计者 ZipZipPipe 和上善无形），未使用第三方同人图片。本应用与 DeepSeek 无隶属或背书关系。
         </p>
-      </div>
+      </details>
     </section>
   )
 }

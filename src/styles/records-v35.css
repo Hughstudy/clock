@@ -1,0 +1,39 @@
+.records-v35 { gap: .6rem; padding-bottom: 1.5rem; }
+.records-v35 .screen-title { margin-bottom: 0; }
+.records-v35 .records-modes { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .45rem; z-index: 2; }
+.records-v35 .records-modes button { padding-inline: .5rem; white-space: normal; overflow-wrap: anywhere; }
+.records-v35 .records-session-status { margin: 0; font-size: .8125rem; color: var(--muted); }
+.records-v35 .records-session-status > p { min-block-size: 2.8em; margin: 0; }
+.records-v35 .records-system-status { min-block-size: 44px; display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: .4rem; }
+.records-v35 .records-system-summary { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.records-v35 .records-summary { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .25rem .6rem; padding: .4rem .7rem; border: 1px solid var(--line); border-radius: 16px; background: var(--card); }
+.records-v35 .records-summary > p { margin: 0; font-size: .9rem; }
+.records-v35 .records-summary-detail { flex-basis: 100%; padding-block: .45rem; }
+.records-v35 .records-tools { display: grid; gap: .3rem; }
+.records-v35 .records-filter-row { display: flex; align-items: center; flex-wrap: wrap; gap: .2rem .65rem; font-size: .875rem; }
+.records-v35 .records-search { display: grid; gap: .3rem; }
+.records-v35 .records-search > div { display: flex; gap: .4rem; }
+.records-v35 .records-search input { width: 100%; min-width: 0; min-height: 44px; font: inherit; border: 1px solid var(--line); border-radius: 12px; padding: .5rem .7rem; background: var(--card); color: var(--ink); }
+.records-v35 .records-search label { font-size: .875rem; }
+.records-v35 .records-list { min-width: 0; }
+.records-v35 .record-day h3 { font-size: .9rem; margin: .7rem 0 .2rem; font-weight: 700; }
+.records-v35 .record-day h3 small { color: var(--muted); font-weight: 400; }
+.records-v35 .focus-records { margin: 0; }
+.records-v35 .record-summary { scroll-margin-block-start: 7rem; }
+.records-v35 .record-day .thought-preview, .records-v35 .records-favorites .thought-preview { white-space: normal; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; font-size: 1rem; overflow-wrap: anywhere; }
+.records-v35 .record-detail { overflow-wrap: anywhere; }
+.records-v35 .thought-body { white-space: pre-wrap; overflow-wrap: anywhere; }
+.records-v35 .records-add-text { margin-left: .6rem; }
+.records-v35 .records-pagination { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: .3rem; margin-block: .75rem; padding-bottom: .5rem; }
+.records-v35 .records-pagination span { font-size: .85rem; }
+.records-v35 .records-feedback { min-block-size: 2.8rem; margin: .25rem 0; font-size: .875rem; overflow-wrap: anywhere; }
+.records-v35 .records-empty { padding: .7rem .2rem; color: var(--muted); }
+.records-v35 .records-scene-preview { display: block; width: min(100%, 240px); height: auto; margin-inline: auto; }
+.records-v35 .records-activity .record-detail .focus-records { border: 1px solid var(--line); border-radius: 12px; padding: .3rem; }
+.records-v35 .records-welcome { margin-top: .8rem; padding: .7rem; border: 1px solid var(--line); border-radius: 16px; background: var(--card); }
+.records-v35 .records-welcome h3, .records-v35 .records-favorites h3 { margin: .4rem 0; font-size: 1rem; }
+.records-year { display: flex; flex-wrap: wrap; align-items: center; gap: .6rem; }
+.records-year input { min-height: 44px; max-width: 100%; width: 8rem; padding: .5rem; font: inherit; border: 1px solid var(--line); border-radius: 12px; color: var(--ink); background: var(--card); }
+.records-month-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .5rem; margin-block: .8rem; }
+@media (max-width: 350px) { .records-v35 .records-pagination { justify-content: center; } }
+@media (max-width: 280px) { .records-v35 .records-modes { grid-template-columns: minmax(0, 1fr); } .records-month-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }

@@ -19,6 +19,7 @@ export interface DurationField {
 }
 
 export interface SettingsForm {
+  hasDraft: boolean
   fields: DurationField[]
   soundEnabled: boolean
   setSoundEnabled: (on: boolean) => void
@@ -86,6 +87,7 @@ export function useSettingsForm(saved: Settings, dispatch: (action: UserAction) 
 
   const defaults = defaultSettings(spec)
   return {
+    hasDraft: Object.keys(drafts).length > 0,
     fields,
     soundEnabled: settings.soundEnabled,
     setSoundEnabled: (on) => save({ soundEnabled: on }),

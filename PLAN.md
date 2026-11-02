@@ -1,16 +1,14 @@
-The current product source is the supplied **番茄钟_产品PRD_v26.md** (2026-11-01, [snapshot](docs/handoff-20261101/番茄钟_产品PRD_v26.md)). On 2026-11-01 the user approved the [interaction overhaul](docs/plans/INTERACTION_OVERHAUL_PLAN.md) and asked for it to be implemented and published: the companion's scene now fills the Focus page, one cream plate carries the time, 5/15/25 chips plus a custom length, a single 「开始专注」 and light secondary actions, and only a custom length, a thought and an end confirmation open a local panel. The drawing style is unchanged by owner decision. Evidence: [interaction-v26 verification](docs/verification/interaction-v26.md). A same-day follow-up keeps the bubble, panels and top controls clear of the companion on iPhone and iPad in both orientations, and keeps arms and carried props off its face ([layout-and-arms verification](docs/verification/layout-and-arms.md)). PRD v5 and its [interaction report](docs/verification/focus-interactions-v5.md) are history.
+The current product reference is the supplied **番茄钟_产品PRD_v35.md** (2026-11-02, [preserved snapshot](docs/handoff-20261102/番茄钟_产品PRD_v35.md)). On 2026-11-02, following the gap review, the owner authorized completing the interaction work in this version. The current rough.js drawing style is retained. The [v35 interaction plan](docs/plans/INTERACTION_V35_PLAN.md) defines this increment and its explicit boundaries. Validation and publication are tracked separately in the [verification report](docs/verification/interaction-v35.md).
 
-Records now opens with a short orchard scene for the viewer's local hour. Expanding a saved focus entry reveals its illustrated story. Pending rows show their actual time and save status. [Records design and implementation](docs/plans/RECORDS_COMPANION_PLAN.md) · [Production browser checks](docs/verification/records-companion/browser-review.json)
+This increment covers Focus control grouping and result preparation, one encouragement reader with durable quote favorites, thought-edit continuity and recoverable deletion, saved-only statistics, four Records views with month/search/20-item pagination and source-aware return, accessible targets/copy, sound preview and protected PWA updates. Snapshot v8 adds versioned quote favorites while retaining prior sessions, notes, preferences and scene assignments.
 
-The [companion scenery and motion review](docs/plans/COMPANION_SCENERY_AND_MOTION.md) records the baseline findings, visual research and implemented corrections. The ready view and eleven activities now share an orchard workroom, garden terrace and dusk setting. See the [browser verification](docs/verification/companion-scenery.md).
+The **生活场景** view currently reviews actual saved activity assignments and links to their original records. It does not claim that the v35 persistent cottage, object dialogue, provenance, day/night world view, or DAY05 continuation engine has shipped. Hash-assigned decorative stories no longer stand in for factual session history. Chapters/world state and full backup/replacement/clear remain independent implementation modules, outside this interaction increment. Physical-device and screen-reader acceptance remain unverified.
 
-Updated: 2026-10-31. This plan distinguishes implemented scope from remaining product proposals. The user explicitly authorized the complete animation-refinement plan, integration and publication. All eleven activities now use the shared production pose system, C2-P3 precise progress and snapshot v6 immediate scene access. See the [refinement implementation](docs/plans/ANIMATION_REFINEMENT_PLAN.md) and [verification evidence](docs/verification/animation-refinement.md). Physical-device acceptance and the wider P0 work remain separate.
-
-The selected direction is the soft blue creature with rounded hands. Tea has one constant-sized cup and a small side table; food develops into vegetables, rice and soup. The 44 catalogue keyframes and 47 contact drawings are exported from the same geometry used by the application. Main still owns time, persistence, selection and announcements; animation owns only cancellable presentation.
+Earlier approved work remains documented in the [v26 plan](docs/plans/INTERACTION_OVERHAUL_PLAN.md), [v26 verification](docs/verification/interaction-v26.md), [layout/arms verification](docs/verification/layout-and-arms.md), and [animation refinement verification](docs/verification/animation-refinement.md). Those are historical evidence, not v35 acceptance. The later v35 decisions above supersede older proposals below where they conflict.
 
 ## 1. Sources and current baseline
 
-- Use v5 §2.4 for prototype defaults, §§3–7 and 10 for behavior, and §§12.8–12.9 for acceptance. The [v3 handoff](docs/handoff-20261029/番茄钟_产品PRD_v3.md) records the earlier design.
+- Use v35 appendices A/B for interaction rules and D for acceptance. The v26/v5/v3 sources and reports are retained as historical references.
 - Subsequent user choice: friendly, cute animation with “a soft, round blue creature with expressive little arms.” Continue this prototype direction. The final name, brand icons, material and individual gestures remain open.
 - Implementation baseline: `e6daa66`, containing the complete handoff source and blue companion integration. On 2026-10-29 the user requested committing and pushing this implementation together with the English workstream plans. A fresh fetch found remote main at `0a57d03` with no divergent commits. This publication covers the current prototype, not the unfinished P0 plan; deployment results are tracked in [GitHub Actions](https://github.com/Hughstudy/clock/actions).
 - Handoff source baseline: `57ca8697cfa3a694f5e319e00d8dc4ee38b4c907`. Preserve the original PRD and [collaboration register snapshot](docs/handoff-20261029/番茄钟_开发协作.md) as historical references. Do not overwrite the cloud register or turn this plan into a duplicate cross-window ownership board.
@@ -18,18 +16,17 @@ The selected direction is the soft blue creature with rounded hands. Tea has one
 
 ## 2. Current differences from the PRD
 
-| Capability | Implemented now | Remaining work | PRD reference |
-| --- | --- | --- | --- |
-| F1 timing and accounting | Inline 5/15/25 choice and a validated one-off custom length (1–120) separate from one 「开始专注」, 25-minute default, optional step, captured deadlines, paused-time exclusion, factual end result, one-tap rest or 「再专注」 after a session, rest ending straight on focus ready | Daily chapters (DAY05) and process gains from PRD v26 §3.4 | v26 §§3.1, 5.2 |
-| Supportive feedback | Saved start/pause/resume/end/rest and thought-save events; requested encouragement with categories, next and dismiss; saved event-encouragement preference; factual result kept separate; no replay on recovery or synchronization | Welcome/return coverage and durable bookmarks | Section 7 |
-| Blue companion | Original rough.js artwork, seven semantic poses, direct pat/squish/high-five responses, quiet focus, saved motion preference; all eight focus and three rest activities with shared contact poses, finite handling actions, persistent ambient loops and static states (C2-P3) | Final integrated visual/device acceptance; contact with external UI surfaces; final artwork and icons | Section 8 |
-| F2 thought capture | One-tap markers, explicit item editing, a recoverable draft with its original context and date, version-checked writes and time-limited undo | Real phone keyboard and screen-reader trials | §5 |
-| F3 records | Inclusive 7/30-day totals, per-day entries, all-time thoughts, in-place editing, per-mode reading position and existing saved-entry stories | Collections depend on durable bookmarks and reviewed content | §6 |
-| Rewards | One participation record per new session and an encouragement library; all eleven scene activities immediately available, without completion gates or access notices | Revisitable session mementos, welcome content, bookmarks and other permanent illustrations; these separate mechanics still require review | Section 7 |
-| Persistence | Snapshot v7 migrates existing drafts and preserves history, active timers, preferences and scene bags. Draft writes check the original generation and version. Receipts track the operation and its object. | Reward and bookmark data, JSON backup, replacement restore and clear-all | §10 |
-| Settings and delivery | Duration/sound/motion/event-encouragement and scene-variety controls, two primary destinations, auxiliary Settings, static PWA and GitHub Pages configuration | Memento preferences and data management; complete physical-device, installation and accessibility acceptance | Sections 9, 12 |
+| Capability | Current interaction increment | Remaining scope |
+| --- | --- | --- |
+| Focus | 25-minute default, 5/15/25/custom selection; grouped pause/resume/end; explicit prepare then start; expiry keeps an open confirmation truthful; one task panel and stable thought controls | Daily chapter binding and process/world facts |
+| Encouragement/favorites | Dedicated reader and category view with contextual Back; captured quote identity/version/text; persisted favorite/cancel and welcome-note reading | Other permanent content requires approved assets and eligibility rules |
+| Thoughts | Formal/draft distinction; continued typing after Save remains the same item; durable original retained on failed edit/delete; all valid deletion undos reachable; whitespace retained | Physical keyboard, assistive-technology and broader restore/clear testing |
+| Records | Four modes; compact optional statistics; saved-only totals; year/month, full formal thought search, 20-item replacement pages, per-mode reading/source context | Persistent cottage, object dialogue and provenance; full v35 story snapshots |
+| Scenes | Existing eleven activity assignments and deterministic renderer retained; history uses saved assignment and actual timing | DAY05 story/continuation first, then additional chapters and a real new-object proof |
+| Persistence | Snapshot v8, quote relation tombstones and guarded operations; confirmed views distinct from unsaved memory | Complete JSON backup, previewed replacement and clear-all |
+| Settings/PWA | Existing preferences, explicit sound audition, grouped explanations, latest-state update check and input protection | Backup/restore/clear interfaces and full physical-device/PWA acceptance |
 
-The factual end result is now presented separately from encouragement. The scene ending reads the saved record's actual elapsed time; its illustration never replaces that factual line or serves as evidence of persistence.
+Implementation, automated validation, emulated browser checks and deployment each need their own evidence. The full PRD is not delivered by this increment.
 
 ## 3. Product goal and scope
 
@@ -39,7 +36,7 @@ Deliver through the existing static Web/PWA application and GitHub Pages. Retain
 
 P0 includes F1, F2, F3, the complete basic reward experience and preferences, backup/replacement restore/clear-all, reliable local data and phone usability. Encouragement and a participation counter alone do not complete the reward system or P0.
 
-Month/arbitrary-date filtering, individual focus-record deletion, CSV, backup merging and hiding seconds remain P1. Native applications, stores and commercialization require separate decisions. Exclude task trees, AI chat, growth/hunger/mood decay, streak pressure, multiple characters and decoration shops.
+Month filtering and thought search are part of the v35 interaction increment. Arbitrary-date ranges, individual focus-record deletion, CSV, backup merging and hiding seconds remain separate scope. Native applications, stores and commercialization require separate decisions. Exclude task trees, AI chat, growth/hunger/mood decay, streak pressure, multiple characters and decoration shops.
 
 ## 4. Concrete proposals for this review
 

@@ -4,61 +4,74 @@ import path from 'node:path'
 import { chromium } from 'playwright'
 import { build, preview } from 'vite'
 
-const output = path.resolve(process.env.RECORDS_REVIEW_OUTPUT || '.preview/records-companion')
-const outDir = path.resolve('.preview/records-companion-build')
+const output = path.resolve(process.env.RECORDS_REVIEW_OUTPUT || '.preview/records-v35')
+const outDir = path.resolve('.preview/records-v35-build')
 const key = 'whale-focus:snapshot'
 const url = 'http://127.0.0.1:4387/clock/'
-const checks = []
-const errors = []
+const checks = [], errors = [], scaleResults = []
 const widths = [320, 375, 430]
-const header = '.records-greeting'
-const row = (page, id) => page.locator(`.focus-records > li[data-record-id="${id}"]`)
+const t0 = Date.parse('2026-11-02T21:15:00+08:00')
+const row = (page, id) => page.locator(`.records-list li[data-record-id="${id}"]`)
 const press = (page, name) => page.getByRole('button', { name, exact: true }).click()
 const snapshot = page => page.evaluate(k => JSON.parse(localStorage.getItem(k)), key)
-const at = time => new Date(`2026-10-31T${time}+08:00`)
-
-function check(description, value) {
-  assert.ok(value, description)
-  checks.push(description)
-}
-
-async function timeOfDay(page, time) {
-  await page.clock.setFixedTime(at(time))
-  // Wake the production hour reader even if the page is currently idle.
-  await page.evaluate(() => window.dispatchEvent(new Event('focus')))
-}
-
-async function openRecords(page, band) {
-  await press(page, '记录')
-  await page.locator(`${header}[data-band="${band}"]`).waitFor()
-}
-
-async function start(page, sessionId, step) {
-  const prepare = page.getByRole('button', { name: '换个时长', exact: true })
-  if (await prepare.isVisible()) await prepare.click()
-  if (step) {
-    await page.locator('.fp-status .text-action').click()
-    await page.locator('.fp-step-input').fill(step)
-    await page.locator('.fp-step-input').press('Enter')
-  }
-  // Supply the next session ID only, so each real start selects a reproducible story.
-  await page.evaluate(id => {
-    crypto.randomUUID = () => { delete crypto.randomUUID; return id }
-  }, sessionId)
-  await page.locator('.fp-primary .btn-primary').click()
-  await page.waitForFunction(k => JSON.parse(localStorage.getItem(k))?.timer.session, key)
-  assert.equal((await snapshot(page)).timer.session.id, sessionId)
-  return sessionId
-}
-
-async function end(page) {
-  await press(page, '结束专注')
-  await press(page, '结束并记录')
-}
-
-function observe(page) {
+const check = (description, value) => { assert.ok(value, description); checks.push(description) }
+const observe = page => {
   page.on('console', message => { if (message.type() === 'error') errors.push(message.text()) })
   page.on('pageerror', error => errors.push(error.message))
+}
+const openRecords = async page => { await press(page, '记录'); await page.locator('.records-v35').waitFor() }
+const fixTime = async (page, now) => { await page.clock.setFixedTime(now); await page.evaluate(() => window.dispatchEvent(new Event('focus'))) }
+async function start(page) {
+  const prepare = page.getByRole('button', { name: '准备专注', exact: true })
+  if (await prepare.isVisible()) await prepare.click()
+  await press(page, '开始专注')
+  await page.waitForFunction(k => JSON.parse(localStorage.getItem(k))?.timer.session, key)
+  return (await snapshot(page)).timer.session.id
+}
+async function end(page) { await press(page, '结束专注'); await press(page, '确认结束') }
+async function retrySave(page) {
+  let retry = page.getByRole('button', { name: '重试保存', exact: true }).first()
+  if (!await retry.isVisible()) { await press(page, '查看状态'); retry = page.getByRole('button', { name: '重试保存', exact: true }).first() }
+  await retry.click()
+  const status = page.getByRole('dialog', { name: '应用状态', exact: true })
+  if (await status.isVisible()) await status.getByRole('button', { name: '返回记录', exact: true }).click()
+}
+async function failWrites(page) {
+  await page.evaluate(k => {
+    const original = Storage.prototype.setItem
+    Storage.prototype.setItem = function (name, value) {
+      if (name === k) throw new DOMException('Records QA quota failure', 'QuotaExceededError')
+      return original.call(this, name, value)
+    }
+    window.restoreRecordWrites = () => { Storage.prototype.setItem = original }
+  }, key)
+}
+async function seedPage(browser, sample) {
+  const context = await browser.newContext({ viewport: { width: 375, height: 900 }, timezoneId: 'Asia/Singapore', reducedMotion: 'reduce' })
+  const page = await context.newPage()
+  observe(page)
+  await page.clock.setFixedTime(t0)
+  await page.addInitScript(({ k, data }) => { if (!localStorage.getItem(k)) localStorage.setItem(k, JSON.stringify(data)) }, { k: key, data: sample })
+  await page.goto(url)
+  return { context, page }
+}
+function makeSample(base, count) {
+  const records = Array.from({ length: count }, (_, i) => {
+    const endedAt = t0 - i * 3_600_000
+    const dateKey = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Singapore', year: 'numeric', month: '2-digit', day: '2-digit' }).format(endedAt)
+    return { sessionId: `record-${i}`, startedAt: endedAt - 60_000, endedAt, dateKey, targetMs: 1_500_000, elapsedMs: 60_000, endReason: 'manual', source: 'native', step: `小步骤 ${i}`,
+      ...(i % 5 === 0 ? { scene: { sceneId: 'F3', ordinal: i + 1, selectionVersion: 2 } } : {}) }
+  })
+  const thoughts = Array.from({ length: 210 }, (_, i) => {
+    const createdAt = t0 - i * 86_400_000
+    const dateKey = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Singapore', year: 'numeric', month: '2-digit', day: '2-digit' }).format(createdAt)
+    return { id: `thought-${i}`, createdAt, dateKey, sessionId: null, text: i === 180 ? 'Café A+B. 找回旧念头' : i === 2 ? '' : `正式想法 ${i}`, status: i === 180 ? 'putAway' : 'open', rev: 1, deletedAt: null }
+  })
+  return { ...base, revision: 50, timer: { ...base.timer, phase: 'focus', session: null }, records, thoughts,
+    participations: records.map(record => ({ sessionId: record.sessionId, participatedAt: record.startedAt, dateKey: record.dateKey, source: 'native' })),
+    scenes: { ...base.scenes, lastEnded: null }, lastRestEnd: null,
+    thoughtDraft: { id: 'draft-qa', thoughtId: null, baseRev: null, sessionId: null, timeZone: 'Asia/Singapore', createdAt: t0, dateKey: '2026-11-02', text: '未提交的草稿，不是搜索结果' }, draftStamp: 'draft-stamp',
+    quoteFavorites: [{ id: 'qa-quote', text: '此刻的一小步，也值得被记住。', copyVersion: 'qa1', savedAt: t0, rev: 1, deletedAt: null }] }
 }
 
 await mkdir(output, { recursive: true })
@@ -68,325 +81,210 @@ const app = await preview({ build: { outDir }, preview: { host: '127.0.0.1', por
 let browser
 try {
   browser = await chromium.launch({ executablePath: process.env.SCENE_BROWSER_EXECUTABLE, channel: process.env.SCENE_BROWSER_CHANNEL })
-  const context = await browser.newContext({ viewport: { width: 375, height: 900 }, colorScheme: 'light' })
-  context.on('page', observe)
+  const context = await browser.newContext({ viewport: { width: 375, height: 900 }, timezoneId: 'Asia/Singapore' })
   const page = await context.newPage()
-  const localDevice = await context.newCDPSession(page)
-  await localDevice.send('Emulation.setTimezoneOverride', { timezoneId: 'Asia/Singapore' })
-  await page.clock.setFixedTime(at('05:59:59'))
+  observe(page)
+  await page.clock.setFixedTime(t0)
   await page.goto(url)
-  const dismiss = page.getByRole('button', { name: '知道了', exact: true })
-  if (await dismiss.isVisible()) await dismiss.click()
-
-  for (const [time, band, boundary, next] of [
-    ['05:59:59', 'night', '06:00:00', 'morning'],
-    ['11:59:59', 'morning', '12:00:00', 'afternoon'],
-    ['16:59:59', 'afternoon', '17:00:00', 'evening'],
-    ['20:59:59', 'evening', '21:00:00', 'night'],
-  ]) {
-    await timeOfDay(page, time)
-    await openRecords(page, band)
-    await page.waitForFunction(selector => document.querySelector(selector)?.getAnimations({ subtree: true }).some(a => a.playState === 'running'), header)
-    check(`Deliberate ${band} visit starts a real CSS gesture`, await page.locator(`${header} svg`).isVisible())
-    await page.waitForFunction(selector => !document.querySelector(selector).getAnimations({ subtree: true }).some(a => a.playState === 'running'), header)
-    await page.locator(`${header}[data-animate="false"]`).waitFor()
-    await press(page, '记录')
-    await timeOfDay(page, boundary)
-    await page.locator(`${header}[data-band="${next}"][data-animate="false"]`).waitFor()
-    check(`Repeated tab selection and ${boundary} boundary keep ${next} settled`,
-      !await page.locator(header).evaluate(node => node.getAnimations({ subtree: true }).some(a => a.playState === 'running')))
-    await press(page, '专注')
-  }
-
-  await openRecords(page, 'night')
-  await page.waitForFunction(selector => document.querySelector(selector).getAnimations({ subtree: true }).some(a => a.playState === 'running'), header)
-  await page.evaluate(() => window.dispatchEvent(new PageTransitionEvent('pagehide', { persisted: true })))
-  await page.locator(`${header}[data-animate="false"]`).waitFor()
-  await page.evaluate(() => window.dispatchEvent(new PageTransitionEvent('pageshow', { persisted: true })))
-  check('Hiding the page during a gesture cancels it and returning does not replay it',
-    await page.locator(header).getAttribute('data-animate') === 'false' &&
-    await page.locator(header).evaluate(node => !node.getAnimations({ subtree: true }).some(a => a.playState === 'running')))
-  await press(page, '专注')
-
-  await timeOfDay(page, '21:15:00')
-  const zero = await start(page, '31f470f8-c370-49bd-844b-cd175ab9d4d0')
+  const zero = await start(page)
   await end(page)
   await page.waitForFunction(k => JSON.parse(localStorage.getItem(k)).records.length === 1, key)
-  const first = await start(page, '31f470f8-c370-49bd-844b-cd175ab9d4d3', '读一页书')
-  await timeOfDay(page, '21:15:20')
+  const first = await start(page)
+  await fixTime(page, t0 + 20_000)
   await end(page)
   await page.waitForFunction(k => JSON.parse(localStorage.getItem(k)).records.length === 2, key)
-  const latest = await start(page, '31f470f8-c370-49bd-844b-cd175ab9d4d1', '写下一句话')
-  await page.clock.setFixedTime(at('21:15:40'))
-  await page.evaluate(k => {
-    const original = Storage.prototype.setItem
-    Storage.prototype.setItem = function (name, value) {
-      if (name === k) throw new DOMException('Test quota failure', 'QuotaExceededError')
-      return original.call(this, name, value)
-    }
-    window.restoreRecordWrites = () => { Storage.prototype.setItem = original }
-  }, key)
+  const latest = await start(page)
+  await fixTime(page, t0 + 40_000)
+  await failWrites(page)
   await end(page)
-  await page.getByRole('button', { name: '重试保存' }).waitFor()
-  await openRecords(page, 'night')
-  const failed = row(page, latest)
-  await failed.locator('button[aria-expanded]').click()
-  check('Quota failure preserves the timed row, withholds its story and keeps earlier stories visible',
-    await failed.getAttribute('data-saved') === 'false' && !await failed.getAttribute('data-story-id') &&
-    await failed.locator('.record-story').count() === 0 && (await failed.innerText()).includes('20 秒') &&
-    !(await failed.innerText()).includes('已保存') && !!await row(page, first).getAttribute('data-story-id') &&
-    (await snapshot(page)).records.length === 2)
+  await openRecords(page)
+  await row(page, latest).locator('.record-summary').click()
+  check('Failed end retains exact pending row, excludes it from formal totals and withholds saved activity',
+    await row(page, latest).getAttribute('data-saved') === 'false' &&
+    (await row(page, latest).innerText()).includes('20 秒') && await row(page, latest).locator('.record-story').count() === 0 &&
+    (await page.locator('.records-summary').innerText()).includes('20 秒') && (await snapshot(page)).records.length === 2)
   await page.evaluate(() => window.restoreRecordWrites())
-  await press(page, '重试保存')
-  await page.locator(`li[data-record-id="${latest}"][data-saved="true"] .record-story`).waitFor()
-  const saved = await snapshot(page)
-  check('Retry saves the same identity once with the exact duration', saved.records.length === 3 &&
-    saved.records.filter(r => r.sessionId === latest && r.elapsedMs === 20_000).length === 1)
-  check('Two 20-second records total 40 seconds, including a separately visible zero-second entry',
-    (await page.locator('.stat-value').first().innerText()).includes('40 秒') &&
-    (await row(page, zero).innerText()).includes('已开始过这一段') && !!await row(page, zero).getAttribute('data-story-id'))
-  const story = await failed.getAttribute('data-story-id')
-  check('The three native session identities consistently select star, leaf and map',
-    await row(page, zero).getAttribute('data-story-id') === 'star' && await row(page, first).getAttribute('data-story-id') === 'leaf' && story === 'map')
-  check('Expanded story has a readable caption and illustration', (await failed.locator('.record-story').innerText()).trim().length > 6 &&
-    await failed.locator('.record-story svg').isVisible() && (await failed.innerText()).includes('已保存'))
-
-  const toggle = row(page, first).locator('button[aria-expanded]')
-  await toggle.focus()
-  await page.keyboard.press('Enter')
-  check('Keyboard opens one entry, keeps focus on its button and closes the prior entry',
-    await toggle.getAttribute('aria-expanded') === 'true' && await toggle.evaluate(el => el === document.activeElement) &&
-    await failed.locator('button[aria-expanded]').getAttribute('aria-expanded') === 'false')
-  await failed.locator('button[aria-expanded]').click()
-  const initialRecord = saved.records.find(r => r.sessionId === latest)
+  await retrySave(page)
+  await page.locator(`li[data-record-id="${latest}"][data-saved="true"]`).waitFor()
+  const base = await snapshot(page)
+  check('Retry records same identity once; zero seconds stays visible and two 20-second segments total40', base.records.length === 3 && base.records.filter(record => record.sessionId === latest).length === 1 &&
+    (await row(page, zero).innerText()).includes('已开始过这一段') && (await page.locator('.records-summary').innerText()).includes('40 秒'))
+  check('All four modes are visible, hero is removed and statistics are collapsed initially',
+    await page.locator('.records-modes button').count() === 4 && await page.locator('.records-greeting').count() === 0 &&
+    await page.getByRole('button', { name: '查看统计', exact: true }).getAttribute('aria-expanded') === 'false' && await page.getByRole('button', { name: '近30天', exact: true }).count() === 0)
+  const beforePanels = (await snapshot(page)).revision
+  await press(page, '选择月份')
+  const monthTask = page.getByRole('dialog', { name: '选择月份', exact: true })
+  await monthTask.getByRole('spinbutton', { name: '年份', exact: true }).fill('2024')
+  await page.waitForFunction(() => history.state?.clockFocusTask === true)
+  await page.evaluate(() => history.back())
+  await monthTask.waitFor({ state: 'hidden' })
+  check('System Back cancels the month picker without applying its draft or leaving Records',
+    await page.locator('.records-v35').isVisible() && (await page.locator('.records-filter-row').innerText()).includes('全部日期') && await page.getByRole('button', { name: '选择月份', exact: true }).evaluate(element => element === document.activeElement))
+  await press(page, '查看状态')
+  await page.waitForFunction(() => history.state?.clockFocusTask === true)
+  await page.evaluate(() => history.back())
+  await page.getByRole('dialog', { name: '应用状态', exact: true }).waitFor({ state: 'hidden' })
+  check('System Back closes application status, returns focus and creates no business write',
+    await page.getByRole('button', { name: '查看状态', exact: true }).evaluate(element => element === document.activeElement) && (await snapshot(page)).revision === beforePanels)
+  const openFirst = row(page, first).locator('.record-summary')
+  await openFirst.focus(); await page.keyboard.press('Enter')
+  check('Keyboard expands one record and retains focus on its trigger', await openFirst.getAttribute('aria-expanded') === 'true' && await openFirst.evaluate(el => el === document.activeElement) && await row(page, latest).locator('.record-summary').getAttribute('aria-expanded') === 'false')
+  check('Record activity uses the persisted scene and has no invented hash story', await row(page, first).locator('.record-story').getAttribute('data-scene-id') === base.records.find(record => record.sessionId === first).scene.sceneId && await page.locator('[data-story-id]').count() === 0)
   for (const width of widths) {
     await page.setViewportSize({ width, height: 900 })
-    check(`Expanded Records fits ${width} CSS pixels`, await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth))
+    check(`Records has no horizontal overflow at ${width}px`, await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth))
   }
   await page.setViewportSize({ width: 320, height: 900 })
-  const fontStyle = await page.addStyleTag({ content: 'html { font-size: 200% !important; }' })
-  check('Expanded Records fits 320 CSS pixels with 200% text', await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth))
-  await fontStyle.evaluate(el => el.remove())
-  await page.setViewportSize({ width: 375, height: 930 })
-  if (await dismiss.isVisible()) await dismiss.click()
+  const larger = await page.addStyleTag({ content: 'html { font-size: 200% !important; }' })
+  check('Records remains accessible at320px and200% text', await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth) && await page.locator('.records-modes button').count() === 4)
+  await larger.evaluate(node => node.remove())
+  await page.setViewportSize({ width: 375, height: 900 })
   await page.evaluate(async () => { await document.fonts.ready; window.scrollTo(0, 0) })
-  await page.screenshot({ path: path.join(output, 'records-night-375.png') })
-  check('Browsing and expanding records creates no writes', (await snapshot(page)).revision === saved.revision)
+  await page.screenshot({ path: path.join(output, 'records-375.png'), fullPage: true })
+  const revisionBefore = (await snapshot(page)).revision
+  await press(page, '生活场景')
+  await page.locator('.records-activity .record-summary').first().click()
+  await press(page, '查看原记录')
+  check('Activity opens its original record without a new world or fabricated acquired objects', await page.getByRole('button', { name: '返回伙伴活动', exact: true }).isVisible() && await page.locator('.records-activity .record-story').isVisible())
+  await press(page, '全部记录'); await press(page, '生活场景')
+  check('Changing mode retains original-record depth and its activity source', await page.getByRole('button', { name: '返回伙伴活动', exact: true }).isVisible())
+  await press(page, '返回伙伴活动')
+  check('Returning from original record restores source action focus', await page.getByRole('button', { name: '查看原记录', exact: true }).evaluate(el => el === document.activeElement))
+  await press(page, '我的收藏'); await press(page, '欢迎笺'); await press(page, '关闭欢迎笺')
+  check('Welcome is read-only and close returns focus; browsing never creates writes', await page.getByRole('button', { name: '欢迎笺', exact: true }).evaluate(el => el === document.activeElement) && (await snapshot(page)).revision === revisionBefore)
+  await context.close()
 
-  const other = await context.newPage()
-  const travelingDevice = await context.newCDPSession(other)
-  await travelingDevice.send('Emulation.setTimezoneOverride', { timezoneId: 'Asia/Singapore' })
-  await other.clock.setFixedTime(at('21:15:40'))
-  await other.goto(url)
-  await other.emulateMedia({ reducedMotion: 'reduce' })
-  await openRecords(other, 'night')
-  check('Reduced motion shows the settled scene without animation',
-    await other.locator(`${header} svg`).isVisible() && await other.locator(header).getAttribute('data-animate') === 'false' &&
-    await other.locator(header).evaluate(el => el.getAnimations({ subtree: true }).length === 0))
-  check('Another tab reads the same story and historical date',
-    await row(other, latest).getAttribute('data-story-id') === story && (await row(other, latest).evaluate((el, d) => el.closest('.record-day')?.dataset.date === d, initialRecord.dateKey)))
-  await other.reload()
-  await openRecords(other, 'night')
-  check('Reload keeps the story without announcing a past success',
-    await row(other, latest).getAttribute('data-story-id') === story && !(await other.locator('.sr-only[aria-live]').innerText()))
-  await travelingDevice.send('Emulation.setTimezoneOverride', { timezoneId: 'America/Los_Angeles' })
-  await other.evaluate(() => window.dispatchEvent(new Event('focus')))
-  // Singapore 21:15 is Los Angeles 06:15 on the test date.
-  await other.locator(`${header}[data-band="morning"][data-animate="false"]`).waitFor()
-  check('Travel changes the room while the saved story and date remain fixed',
-    await row(other, latest).getAttribute('data-story-id') === story && (await row(other, latest).evaluate((el, d) => el.closest('.record-day')?.dataset.date === d, initialRecord.dateKey)))
-  await other.emulateMedia({ reducedMotion: 'no-preference' })
-  await press(other, '专注')
-  await press(other, '设置')
-  await other.getByRole('switch', { name: '伙伴动画' }).uncheck()
-  await other.waitForFunction(k => JSON.parse(localStorage.getItem(k)).settings.motionEnabled === false, key)
-  await openRecords(other, 'morning')
-  check('The app motion switch alone keeps the greeting illustration and disables its gesture',
-    await other.locator(`${header} svg`).isVisible() && await other.locator(header).getAttribute('data-animate') === 'false' &&
-    await other.locator(header).evaluate(node => node.getAnimations({ subtree: true }).length === 0))
-  await press(other, '专注')
-  await press(other, '设置')
-  await other.getByRole('switch', { name: '伙伴小场景' }).uncheck()
-  await openRecords(other, 'morning')
-  const otherStory = row(other, latest).locator('button[aria-expanded]')
-  if (await otherStory.getAttribute('aria-expanded') !== 'true') await otherStory.click()
-  check('Scene art can be hidden while entry facts and story text stay readable',
-    await other.locator(`${header} svg`).count() === 0 && await row(other, latest).locator('.records-art').count() === 0 &&
-    (await row(other, latest).locator('.record-story').innerText()).trim().length > 6 && (await row(other, latest).innerText()).includes('20 秒'))
-  await page.locator(`${header} svg`).waitFor({ state: 'detached' })
-  check('Cross-tab preference sync keeps the open story and never replays the entrance',
-    await failed.locator('button[aria-expanded]').getAttribute('aria-expanded') === 'true' &&
-    await failed.getAttribute('data-story-id') === story && await page.locator(header).getAttribute('data-animate') === 'false')
-
-  const legacy = await browser.newPage({ timezoneId: 'Asia/Singapore', reducedMotion: 'reduce' })
-  observe(legacy)
-  await legacy.clock.setFixedTime(at('21:15:40'))
-  const knownStories = new Map([['legacy-qa-0', 'map'], ['legacy-qa-1', 'leaf'], ['legacy-qa-3', 'star']])
-  const legacySnapshot = {
-    ...saved, version: 5, records: [...knownStories.keys()].map((id, index) => ({
-      ...saved.records[index], scene: undefined, source: 'legacy', startedAt: null, sessionId: id,
-    })), participations: saved.participations.map((p, index) => ({ ...p, sessionId: [...knownStories.keys()][index] })),
-    scenes: { ...saved.scenes, lastEnded: null },
+  for (const count of [1000, 10000]) {
+    const sample = makeSample(base, count)
+    const { context: scaleContext, page: scale } = await seedPage(browser, sample)
+    const started = performance.now()
+    await openRecords(scale)
+    check(`${count} records initially render at most20 logical rows`, await scale.locator('.records-list [data-entry-id]').count() === 20)
+    const firstPageIds = await scale.locator('.records-list [data-entry-id]').evaluateAll(nodes => nodes.map(node => node.dataset.entryId))
+    await press(scale, '下一页')
+    const secondIds = await scale.locator('.records-list [data-entry-id]').evaluateAll(nodes => nodes.map(node => node.dataset.entryId))
+    check(`${count} records page2 replaces page1 and focuses its first object`, secondIds.length === 20 && secondIds.every(id => !firstPageIds.includes(id)) && await scale.locator('.records-list [data-entry-id] button').first().evaluate(el => el === document.activeElement))
+    await press(scale, '查看统计'); await press(scale, '近30天')
+    check(`${count} statistics window does not change history page`, (await scale.locator('.records-pagination').innerText()).includes('第2页') && (await scale.locator('.records-list [data-entry-id]').first().getAttribute('data-entry-id')) === secondIds[0])
+    await press(scale, '选择月份')
+    const monthDialog = scale.getByRole('dialog', { name: '选择月份' })
+    await monthDialog.getByRole('spinbutton', { name: '年份' }).fill('2026')
+    await monthDialog.getByRole('button', { name: '10月', exact: true }).click()
+    check(`${count} direct year/month starts matching page1 without changing summary window`, (await scale.locator('.records-pagination').innerText()).includes('第1页') &&
+      (await scale.locator('.record-day').evaluateAll(nodes => nodes.every(node => node.dataset.date.startsWith('2026-10-')))) && await scale.getByRole('button', { name: '近30天', exact: true }).getAttribute('aria-pressed') === 'true')
+    await press(scale, '下一页')
+    await scale.locator('.records-list .record-summary').first().click()
+    const monthAnchor = await scale.locator('.records-list [data-entry-id]').first().getAttribute('data-entry-id')
+    if (count === 1000) {
+      const anchor = scale.locator(`[data-entry-id="${monthAnchor}"]`).first()
+      const top = (await anchor.boundingBox()).y
+      const beforeCount = Number(await scale.locator('.records-list').getAttribute('data-result-count'))
+      const peer = await scaleContext.newPage()
+      await peer.goto(url)
+      await peer.evaluate(k => {
+        const data = JSON.parse(localStorage.getItem(k))
+        const endedAt = Date.parse('2026-10-31T23:59:00+08:00')
+        const incoming = { ...data.records[0], sessionId: 'incoming-peer', dateKey: '2026-10-31', endedAt, startedAt: endedAt - 60_000 }
+        data.records.push(incoming)
+        data.participations.push({ sessionId: incoming.sessionId, participatedAt: incoming.startedAt, dateKey: incoming.dateKey, source: 'native' })
+        data.revision += 1; data.writer = 'records-qa-peer'
+        localStorage.setItem(k, JSON.stringify(data))
+      }, key)
+      await scale.waitForFunction(expected => Number(document.querySelector('.records-list').dataset.resultCount) === expected, beforeCount + 1)
+      check('A committed second-tab insertion preserves the current month object and pixel anchor', Math.abs((await anchor.boundingBox()).y - top) <= 2)
+      await peer.close()
+    }
+    await press(scale, '只看想法')
+    check(`${count} thought mode has its own all-date scope, no timer summary, and a draft entry`, (await scale.locator('.records-filter-row').innerText()).includes('全部日期') && await scale.locator('.records-summary').count() === 0 && await scale.getByRole('button', { name: '继续草稿', exact: true }).isVisible())
+    const search = scale.getByRole('searchbox', { name: '搜索想法' })
+    await search.fill('A+B.')
+    await search.dispatchEvent('compositionstart')
+    await search.press('Enter')
+    check(`${count} IME selection does not submit search or replace current results`, await scale.locator('.records-list [data-thought-id]').count() === 20 && !(await scale.locator('.records-filter-row').innerText()).includes('A+B.'))
+    await search.dispatchEvent('compositionend')
+    await press(scale, '搜索')
+    const matched = scale.locator('[data-thought-id="thought-180"]')
+    await matched.waitFor()
+    check(`${count} full-history literal search finds archived note beyond the loaded pages`, await scale.locator('.records-list [data-thought-id]').count() === 1 && (await matched.innerText()).includes('已收起'))
+    await matched.locator('.record-summary').click()
+    await matched.getByRole('button', { name: '编辑文字', exact: true }).click()
+    const editor = scale.getByRole('dialog', { name: '编辑想法' })
+    // The existing independent draft must be protected before opening another item.
+    const discard = editor.getByRole('button', { name: /放弃.*|丢弃.*/ }).first()
+    if (await discard.isVisible()) await discard.click()
+    const editorText = editor.getByRole('textbox')
+    await editorText.waitFor()
+    {
+      await editorText.fill('保存后不再匹配之前的关键词')
+      await editor.getByRole('button', { name: '保存想法', exact: true }).click()
+      await editor.waitFor({ state: 'hidden' })
+      check(`${count} a saved edit leaving search stays readable until explicitly closed`, await scale.locator('.records-detached').isVisible() && (await scale.locator('.records-detached').innerText()).includes('保存后不再匹配'))
+    }
+    await press(scale, '全部记录')
+    check(`${count} mode return keeps month, page2 and expanded identity`, (await scale.locator('.records-filter-row').innerText()).includes('2026年10月') && (await scale.locator('.records-pagination').innerText()).includes('第2页') && await scale.locator(`[data-entry-id="${monthAnchor}"]`).isVisible() && await scale.locator(`[data-entry-id="${monthAnchor}"] .record-summary`).getAttribute('aria-expanded') === 'true')
+    await press(scale, '专注'); await openRecords(scale)
+    check(`${count} temporary Focus visit retains query and page`, (await scale.locator('.records-filter-row').innerText()).includes('2026年10月') && (await scale.locator('.records-pagination').innerText()).includes('第2页'))
+    await press(scale, '我的收藏')
+    await scale.locator('.records-favorites .record-summary').click()
+    await failWrites(scale)
+    await press(scale, '取消收藏')
+    await scale.getByRole('button', { name: '重试保存', exact: true }).first().waitFor()
+    check(`${count} failed favorite cancellation keeps the saved text`, await scale.locator('.records-favorites .record-summary').isVisible() && (await snapshot(scale)).quoteFavorites[0].deletedAt === null)
+    await scale.evaluate(() => window.restoreRecordWrites())
+    await scale.getByRole('button', { name: '重试保存', exact: true }).first().click()
+    await scale.waitForFunction(k => JSON.parse(localStorage.getItem(k)).quoteFavorites[0].deletedAt !== null, key)
+    check(`${count} successful cancellation removes only that quote and leaves welcome readable`, await scale.locator('.records-favorites .record-summary').count() === 0 && await scale.getByRole('button', { name: '欢迎笺', exact: true }).isVisible())
+    const elapsedMs = Math.round(performance.now() - started)
+    scaleResults.push({ records: count, steps: 'page→month→thought search→edit→return→favorite failure/retry', elapsedMs, correctObjects: true })
+    await scaleContext.close()
   }
-  await legacy.addInitScript(({ storageKey, data }) => {
-    if (localStorage.getItem(storageKey) === null) localStorage.setItem(storageKey, JSON.stringify(data))
-  }, { storageKey: key, data: legacySnapshot })
-  await legacy.goto(url)
-  await openRecords(legacy, 'night')
-  for (const [id, expected] of knownStories) {
-    const entry = row(legacy, id)
-    await entry.locator('button[aria-expanded]').click()
-    check(`Version 5 history shows the original date with its stable ${expected} illustration and caption`,
-      await entry.getAttribute('data-story-id') === expected && await entry.locator('.record-story svg').isVisible() &&
-      (await entry.locator('.record-story').innerText()).trim().length > 6 &&
-      (await entry.evaluate((el, d) => el.closest('.record-day')?.dataset.date === d, saved.records[0].dateKey)))
-  }
 
-  // Exercise a real decode repair in this disposable profile. One valid record survives.
-  await legacy.evaluate(k => {
+  const { context: deletionContext, page: deletion } = await seedPage(browser, makeSample(base, 30))
+  await openRecords(deletion); await press(deletion, '只看想法')
+  const target = deletion.locator('[data-thought-id="thought-0"]')
+  await target.locator('.record-summary').click()
+  await failWrites(deletion); await target.getByRole('button', { name: '删除这条想法', exact: true }).click()
+  await deletion.getByRole('button', { name: '重试保存', exact: true }).first().waitFor()
+  check('Failed thought deletion retains formal text and exposes retry without inventing success', await target.isVisible() && (await target.innerText()).includes('正式想法 0') && (await snapshot(deletion)).thoughts.find(note => note.id === 'thought-0').deletedAt === null)
+  await deletion.evaluate(() => window.restoreRecordWrites())
+  await deletion.getByRole('button', { name: '重试保存', exact: true }).first().click()
+  await target.waitFor({ state: 'detached' })
+  check('Confirmed deletion returns keyboard focus to the next thought', await deletion.locator('[data-thought-id="thought-1"] .record-summary').evaluate(element => element === document.activeElement))
+  await deletion.getByRole('button', { name: /撤销删除/ }).first().click()
+  await target.waitFor()
+  check('Undo restores the same identity and original text once', (await snapshot(deletion)).thoughts.filter(note => note.id === 'thought-0' && note.deletedAt === null).length === 1)
+  await deletion.reload(); await openRecords(deletion)
+  check('Cold open resets viewing choices and keeps historical dates', await deletion.getByRole('button', { name: '全部记录', exact: true }).getAttribute('aria-pressed') === 'true' && await deletion.getByRole('button', { name: '查看统计', exact: true }).getAttribute('aria-expanded') === 'false' && (await snapshot(deletion)).records[0].dateKey === '2026-11-02')
+  await deletionContext.close()
+
+  const favoriteSample = makeSample(base, 30)
+  favoriteSample.quoteFavorites = Array.from({ length: 45 }, (_, index) => ({ id: `quote-${index}`, text: `值得保留的第${index}句话。`, copyVersion: 'qa1', savedAt: t0 - index, rev: 1, deletedAt: null }))
+  const { context: favoriteContext, page: favoritePage } = await seedPage(browser, favoriteSample)
+  await favoritePage.setViewportSize({ width: 375, height: 450 })
+  await openRecords(favoritePage); await press(favoritePage, '我的收藏'); await press(favoritePage, '下一页')
+  const boundaryQuote = favoritePage.locator('.records-favorites li').filter({ hasText: '值得保留的第39句话。' })
+  await boundaryQuote.locator('.record-summary').click()
+  await boundaryQuote.evaluate(element => window.scrollTo(0, window.scrollY + element.getBoundingClientRect().top - 120))
+  const favoriteTop = (await boundaryQuote.boundingBox()).y
+  const favoritePeer = await favoriteContext.newPage()
+  await favoritePeer.goto(url)
+  await favoritePeer.evaluate(k => {
     const data = JSON.parse(localStorage.getItem(k))
-    data.records = [data.records[0], { ...data.records[1], elapsedMs: -1 }]
+    data.quoteFavorites.push({ id: 'newer-peer-quote', text: '另一窗口刚收藏的句子。', copyVersion: 'qa1', savedAt: Date.parse('2026-11-02T21:15:01+08:00'), rev: 1, deletedAt: null })
+    data.revision += 1; data.writer = 'favorite-qa-peer'
     localStorage.setItem(k, JSON.stringify(data))
   }, key)
-  await legacy.reload()
-  await openRecords(legacy, 'night')
-  const survivor = row(legacy, 'legacy-qa-0')
-  await survivor.locator('button[aria-expanded]').click()
-  check('A dropped record shows an incomplete-history notice and keeps the surviving saved story readable',
-    await legacy.getByText('历史数据未能完整读取。这里只展示当前能确认的内容。', { exact: true }).isVisible() &&
-    await legacy.locator('.focus-records > li').count() === 1 && await survivor.getAttribute('data-saved') === 'true' &&
-    await survivor.locator('.record-story[data-story-id="map"] figcaption').isVisible())
-  check('Incomplete history displays no numeric period totals or weekly trend',
-    await legacy.locator('.stats .stat-value').count() === 0 && await legacy.getByRole('button', { name: '查看趋势' }).count() === 0)
-
-  // A real origin-wide clear in the second tab sends a storage event with a null key.
-  await other.evaluate(() => localStorage.clear())
-  await page.getByText(/浏览器中的专注数据已被清除/).waitFor()
-  check('A second-tab storage clear removes all saved badges and stories but keeps the local rows readable',
-    await page.locator('.focus-records > li[data-saved="false"]').count() === 3 &&
-    await page.locator('.focus-records [data-story-id]').count() === 0 &&
-    (await failed.innerText()).includes('20 秒') && (await failed.innerText()).includes('仅在此页'))
-  await row(page, first).locator('button[aria-expanded]').click()
-  await press(page, '专注')
-  await page.evaluate(() => window.dispatchEvent(new Event('focus')))
-  await openRecords(page, 'night')
-  check('Returning to the stale tab and browsing records cannot write deleted data back', await snapshot(page) === null)
-  await page.reload()
-  await openRecords(page, 'night')
-  check('Reload after removal opens empty history without resurrecting data',
-    await page.locator('.focus-records > li').count() === 0 && await snapshot(page) === null)
-
-  const calendarContext = await browser.newContext({ timezoneId: 'Asia/Singapore', reducedMotion: 'reduce' })
-  const calendar = await calendarContext.newPage()
-  observe(calendar)
-  await calendar.clock.setFixedTime(at('21:15:40'))
-  const instant = date => Date.parse(date + 'T12:00:00+08:00')
-  const entry = (id, day, elapsedMs) => ({
-    ...saved.records[0], sessionId: id, dateKey: day, elapsedMs, startedAt: instant(day) - elapsedMs,
-    endedAt: instant(day), endReason: 'manual', step: null,
-  })
-  const note = (id, dateKey, text, sessionId = null) => ({
-    id, dateKey, createdAt: instant(dateKey), text, sessionId, rev: 1, status: 'open', deletedAt: null,
-  })
-  const sample = {
-    ...saved, timer: { ...saved.timer, phase: 'focus', session: null }, scenes: { ...saved.scenes, lastEnded: null },
-    records: [entry('oct24', '2026-10-24', 3000), entry('small-b', '2026-10-25', 600),
-      entry('small-a', '2026-10-25', 600), entry('oct31', '2026-10-31', 0)],
-    thoughts: [note('long-ago', '2026-09-01', '九月的念头'), note('solo', '2026-10-27', '独立想法'),
-      note('linked', '2026-10-24', '跨日想法', 'small-a')],
-  }
-  await calendar.addInitScript(({ k, data }) => {
-    if (localStorage.getItem(k) === null) localStorage.setItem(k, JSON.stringify(data))
-  }, { k: key, data: sample })
-  await calendar.goto(url)
-  await start(calendar, 'ongoing-bd07')
-  await openRecords(calendar, 'night')
-  const amount = calendar.locator('.stats .stat-value')
-  check('BD07 totals Oct 25 through 31, keeps the active session separate and still lists older days', await amount.innerText() === '1 秒' &&
-    await calendar.getByText(/10月25日 – 10月31日/).isVisible() &&
-    await calendar.getByText(/正在计时，未计入/).isVisible() && await row(calendar, 'oct24').isVisible())
-  const group = calendar.locator('.record-day[data-date="2026-10-25"]')
-  check('Two 600 ms entries each display below one second and the day sums to one second', (await group.locator('h4').innerText()).includes('1 秒') &&
-    await group.getByText('不到 1 秒', { exact: true }).count() === 2 &&
-    await group.locator('[data-record-id]').first().getAttribute('data-record-id') === 'small-a')
-  check('Independent thought appears on its own zero-time date without duplicating a linked thought',
-    await calendar.locator('[data-date="2026-10-27"] [data-thought-id="solo"]').isVisible() &&
-    !await calendar.locator('[data-thought-id="linked"]').count())
-  await row(calendar, 'small-a').locator('.record-summary').click()
-  check('A cross-day thought retains its original date inside the session', (await row(calendar, 'small-a').innerText()).includes('10月24日 · 跨日想法'))
-  check('History ends with an explicit end-of-list note, and the window only labels the total', await row(calendar, 'oct24').isVisible() &&
-    await calendar.getByText('没有更早的记录了', { exact: true }).isVisible() && await calendar.getByText(/只统计这段日期的计时/).isVisible())
-  await press(calendar, '近30天')
-  check('The 30-day window switches the total and its dates without hiding or collapsing history', await amount.innerText() === '4 秒' &&
-    await calendar.getByText(/10月2日 – 10月31日/).isVisible() && await row(calendar, 'oct24').isVisible() &&
-    await row(calendar, 'small-a').locator('.record-summary').getAttribute('aria-expanded') === 'true')
-  await calendar.setViewportSize({ width: 375, height: 450 })
-  await calendar.evaluate(() => window.scrollTo(0, 220))
-  await calendar.waitForFunction(() => window.scrollY === 220)
-  const recordsOffset = await calendar.evaluate(() => window.scrollY)
-  await press(calendar, '只看想法')
-  const oldNote = calendar.locator('[data-thought-id="long-ago"]')
-  await oldNote.locator('button[aria-expanded]').click()
-  check('All-time thoughts include a September entry and hide focus totals', await oldNote.isVisible() && !await amount.count())
-  const editNote = oldNote.getByRole('button', { name: '编辑文字', exact: true })
-  await editNote.click()
-  const editor = calendar.getByRole('dialog', { name: '编辑想法' })
-  await editor.getByRole('textbox').fill('九月的念头，已补充')
-  await editor.getByRole('button', { name: '保存想法', exact: true }).click()
-  await editor.waitFor({ state: 'hidden' })
-  check('Editing a September note in Records updates the same identity and returns focus to its open entry',
-    (await snapshot(calendar)).thoughts.find(t => t.id === 'long-ago').text === '九月的念头，已补充' &&
-    await oldNote.locator('button[aria-expanded]').getAttribute('aria-expanded') === 'true' &&
-    await editNote.evaluate(el => el === document.activeElement) && await calendar.locator('.stats').isVisible())
-  await press(calendar, '全部记录')
-  check('Returning to history preserves the selected range and expanded session', await calendar.getByRole('button', { name: '近30天' }).getAttribute('aria-pressed') === 'true' &&
-    await row(calendar, 'small-a').locator('.record-summary').getAttribute('aria-expanded') === 'true')
-  check('A mode switch restores the prior history scroll offset', Math.abs(await calendar.evaluate(() => window.scrollY) - recordsOffset) <= 1)
-  await press(calendar, '只看想法')
-  await press(calendar, '专注')
-  await openRecords(calendar, 'night')
-  check('Returning from Focus restores the thought mode and original open note', await oldNote.locator('button[aria-expanded]').getAttribute('aria-expanded') === 'true' &&
-    !await amount.count())
-  await calendar.reload()
-  await openRecords(calendar, 'night')
-  check('A cold navigation opens all records with the seven-day window', await calendar.getByRole('button', { name: '近7天' }).getAttribute('aria-pressed') === 'true' &&
-    await row(calendar, 'small-a').locator('.record-summary').getAttribute('aria-expanded') === 'false')
-  const peer = await calendarContext.newPage()
-  observe(peer)
-  await peer.clock.setFixedTime(at('21:16:40'))
-  await peer.goto(url)
-  await press(calendar, '专注')
-  await timeOfDay(calendar, '21:16:40')
-  await calendar.evaluate(k => {
-    const original = Storage.prototype.setItem
-    Storage.prototype.setItem = function (name, value) {
-      if (name === k) throw new DOMException('Pause write failed', 'QuotaExceededError')
-      return original.call(this, name, value)
-    }
-    window.restorePauseWrite = () => { Storage.prototype.setItem = original }
-  }, key)
-  await calendar.locator('.fp-primary .btn-primary').click()
-  const retry = calendar.getByRole('button', { name: '重试保存', exact: true }).first()
-  await retry.waitFor()
-  await press(peer, '设置')
-  await peer.getByRole('switch', { name: '伙伴动画' }).uncheck()
-  await peer.waitForFunction(k => JSON.parse(localStorage.getItem(k)).settings.motionEnabled === false, key)
-  await calendar.evaluate(() => window.restorePauseWrite())
-  await retry.click()
-  await calendar.waitForFunction(k => JSON.parse(localStorage.getItem(k)).timer.session?.status === 'paused', key)
-  await timeOfDay(calendar, '21:19:40')
-  await end(calendar)
-  await calendar.waitForFunction(k => JSON.parse(localStorage.getItem(k)).records.some(r => r.sessionId === 'ongoing-bd07'), key)
-  const recovered = await snapshot(calendar)
-  check('A failed pause survives an independent settings write from a real second tab and excludes the next three minutes',
-    recovered.settings.motionEnabled === false && recovered.records.filter(r => r.sessionId === 'ongoing-bd07' && r.elapsedMs === 60_000).length === 1)
-  await calendarContext.close()
+  await favoritePage.waitForFunction(() => document.querySelector('.records-list')?.dataset.resultCount === '46')
+  await favoritePage.waitForFunction(() => document.querySelector('.records-pagination')?.textContent.includes('第3页'))
+  check('A new favorite in another tab retains the open quote across the20-item page boundary',
+    await boundaryQuote.locator('.record-summary').getAttribute('aria-expanded') === 'true' && (await favoritePage.locator('.records-pagination').innerText()).includes('第3页'))
+  check('Favorite insertion preserves its pixel anchor and restores the recreated reading trigger focus',
+    Math.abs((await boundaryQuote.boundingBox()).y - favoriteTop) <= 2 && await boundaryQuote.locator('.record-summary').evaluate(element => element === document.activeElement))
+  await favoriteContext.close()
 
   assert.deepEqual(errors, [], 'Unexpected browser errors')
-  const report = { browser: browser.version(), platform: process.platform, widths, checks, errors, screenshot: 'records-night-375.png' }
+  const report = { browser: browser.version(), platform: process.platform, widths, checks, errors, scaleResults, screenshot: 'records-375.png', physicalDevice: false }
   await writeFile(path.join(output, 'browser-review.json'), JSON.stringify(report, null, 2) + '\n')
-  console.log(`${checks.length} Records checks passed in Chromium ${report.browser}. Evidence: ${output}`)
-} finally {
-  await browser?.close()
-  await app.close()
-}
+  console.log(`${checks.length} Records v35 checks passed in Chromium ${report.browser}. Evidence: ${output}`)
+} finally { await browser?.close(); await app.close() }

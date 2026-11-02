@@ -1,9 +1,14 @@
 import type { Thought } from './types'
 
+export const isWellFormedUnicode = (text: string): boolean => Array.from(text).every(character => {
+  const point = character.codePointAt(0)!
+  return point < 0xd800 || point > 0xdfff
+})
+
 /** Optional small step: empty means none. */
 export function normalizeStep(text: string | undefined, maxLength: number): string | null {
-  const step = Array.from((text ?? '').replace(/\s+/g, ' ').trim()).slice(0, maxLength).join('')
-  return step || null
+  const step = text ?? ''
+  return step.trim() && isWellFormedUnicode(step) && Array.from(step).length <= maxLength ? step : null
 }
 
 export const isLive = (thought: Thought): boolean => thought.deletedAt === null

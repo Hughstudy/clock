@@ -3,16 +3,18 @@ import { defaultSettings, isValidDuration, sanitizeSettings } from './settings'
 import { hasMissingScenes, initialScenes, isFocusSceneId, isSceneId, mergeSceneStates, selectScene } from './scenes'
 import type { Spec } from './spec'
 import { hasNewerThoughts, mergeThoughts } from './thoughts'
+import { hasNewerFavorites, mergeFavorites } from './favorites'
+import { quoteKey, type SavedQuote } from '../contracts/favorites'
 import { initialTimer } from './timer'
 import { PHASES, type AppSnapshot, type FocusRecord, type FocusSceneId, type ParticipationRecord, type Phase, type SceneAssignment, type SceneRotation, type SceneState, type SceneUnlock, type Session, type Thought, type ThoughtDraft, type TimerState } from './types'
 
-/** v7 protects draft identity, attribution and conflict tokens from older writers. */
-export const SNAPSHOT_VERSION = 7
+/** v8 adds durable quote snapshots and cancellation markers. */
+export const SNAPSHOT_VERSION = 8
 
 export function createSnapshot(spec: Spec): AppSnapshot {
   return {
     version: SNAPSHOT_VERSION, revision: 0, writer: '', datasetGeneration: 0, settings: defaultSettings(spec), timer: initialTimer(),
-    records: [], participations: [], lastRestEnd: null, lastFocusMinutes: null, focusDefaultsRevision: 0, thoughts: [], thoughtDraft: null, draftStamp: null, scenes: initialScenes(),
+    records: [], participations: [], lastRestEnd: null, lastFocusMinutes: null, focusDefaultsRevision: 0, thoughts: [], thoughtDraft: null, draftStamp: null, scenes: initialScenes(), quoteFavorites: [],
   }
 }
 
@@ -83,6 +85,7 @@ export const MIGRATIONS: Readonly<Record<number, Migration>> = {
       baseRev: target?.rev ?? null, sessionId: target?.sessionId ?? null, createdAt: target?.createdAt ?? null,
       dateKey: target?.dateKey ?? null } }
   },
+  7: old => ({ ...old, version: 8, quoteFavorites: [] }),
 }
 
 export type Decoded =
@@ -193,6 +196,22 @@ function readDraft(raw: unknown, issues: string[]): ThoughtDraft | null {
   return null
 }
 
+function readFavorites(raw: unknown, issues: string[]): SavedQuote[] {
+  if (!Array.isArray(raw)) { issues.push('quoteFavorites'); return [] }
+  const result: SavedQuote[] = [], seen = new Set<string>()
+  for (const q of raw) {
+    if (!isRecord(q) || !isId(q.id) || !isId(q.copyVersion) || !isText(q.text, 4000) || (q.deletedAt === null ? !q.text.trim() : q.text !== '') ||
+        !isCount(q.savedAt) || !isCount(q.rev) || q.rev < 1 || !(q.deletedAt === null || isCount(q.deletedAt)) ||
+        !(q.category === undefined || isText(q.category, 128))) { issues.push('quoteFavorites.item'); continue }
+    const quote: SavedQuote = { id: q.id, copyVersion: q.copyVersion, text: q.text, savedAt: q.savedAt, rev: q.rev, deletedAt: q.deletedAt,
+      ...(q.category === undefined ? {} : { category: q.category }) }
+    const key = quoteKey(quote)
+    if (seen.has(key)) { issues.push('quoteFavorites.duplicate'); continue }
+    seen.add(key); result.push(quote)
+  }
+  return result
+}
+
 function readLastFocus(raw: unknown, spec: Spec, issues: string[]): number | null {
   if (raw === null) return null
   if (isValidDuration('focus', raw, spec)) return raw
@@ -276,6 +295,7 @@ export function decodeSnapshot(text: string, spec: Spec, context: MigrationConte
   issues.push(...settingIssues)
   let timer = readTimer(data.timer, records.filter((r) => r.endReason === 'deadline').length, issues)
   const thoughts = readThoughts(data.thoughts, spec, issues)
+  const quoteFavorites = readFavorites(data.quoteFavorites, issues)
   const thoughtDraft = readDraft(data.thoughtDraft, issues)
   const draftStamp = isId(data.draftStamp) ? data.draftStamp : null
   if (draftStamp === null && (data.draftStamp !== null || thoughtDraft !== null)) issues.push('draftStamp')
@@ -298,7 +318,7 @@ export function decodeSnapshot(text: string, spec: Spec, context: MigrationConte
   return { kind: 'ok', issues, snapshot: {
     version: SNAPSHOT_VERSION, revision: isCount(data.revision) ? data.revision : 0,
     writer: typeof data.writer === 'string' ? data.writer : '', datasetGeneration: data.datasetGeneration,
-    settings, timer, lastRestEnd, records, participations, lastFocusMinutes, focusDefaultsRevision, thoughts, thoughtDraft, draftStamp, scenes,
+    settings, timer, lastRestEnd, records, participations, lastFocusMinutes, focusDefaultsRevision, thoughts, thoughtDraft, draftStamp, scenes, quoteFavorites,
   } }
 }
 
@@ -323,11 +343,12 @@ export function mergeSnapshots(a: AppSnapshot, b: AppSnapshot): AppSnapshot {
   const participated = new Set(base.participations.map((p) => p.sessionId))
   const missingParticipation = other.participations.filter((p) => !participated.has(p.sessionId))
   const thoughts = mergeThoughts(base.thoughts, other.thoughts)
+  const quoteFavorites = mergeFavorites(base.quoteFavorites, other.quoteFavorites)
   const scenes = mergeSceneStates(base.scenes, other.scenes)
-  if (!missing.length && !missingParticipation.length && thoughts === base.thoughts && scenes === base.scenes) return base
+  if (!missing.length && !missingParticipation.length && thoughts === base.thoughts && scenes === base.scenes && quoteFavorites === base.quoteFavorites) return base
   const records = [...base.records, ...missing].sort((x, y) => x.endedAt - y.endedAt || x.sessionId.localeCompare(y.sessionId))
   return { ...base, records, participations: [...base.participations, ...missingParticipation].sort((x, y) => x.sessionId.localeCompare(y.sessionId)),
-    thoughts: [...thoughts], scenes,
+    thoughts: [...thoughts], scenes, quoteFavorites: [...quoteFavorites],
     timer: { ...base.timer, completedFocusCount: Math.max(base.timer.completedFocusCount, records.filter((r) => r.endReason === 'deadline').length) } }
 }
 
@@ -337,5 +358,5 @@ export function hasMissingRecords(a: AppSnapshot, b: AppSnapshot): boolean {
   const records = new Set(a.records.map((r) => r.sessionId))
   const participations = new Set(a.participations.map((p) => p.sessionId))
   return b.records.some((r) => !records.has(r.sessionId)) || b.participations.some((p) => !participations.has(p.sessionId)) ||
-    hasNewerThoughts(a.thoughts, b.thoughts) || hasMissingScenes(a.scenes, b.scenes)
+    hasNewerThoughts(a.thoughts, b.thoughts) || hasMissingScenes(a.scenes, b.scenes) || hasNewerFavorites(a.quoteFavorites, b.quoteFavorites)
 }

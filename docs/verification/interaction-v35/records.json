@@ -1,0 +1,73 @@
+{
+  "browser": "156.0.8078.74",
+  "platform": "darwin",
+  "widths": [
+    320,
+    375,
+    430
+  ],
+  "checks": [
+    "Failed end retains exact pending row, excludes it from formal totals and withholds saved activity",
+    "Retry records same identity once; zero seconds stays visible and two 20-second segments total40",
+    "All four modes are visible, hero is removed and statistics are collapsed initially",
+    "System Back cancels the month picker without applying its draft or leaving Records",
+    "System Back closes application status, returns focus and creates no business write",
+    "Keyboard expands one record and retains focus on its trigger",
+    "Record activity uses the persisted scene and has no invented hash story",
+    "Records has no horizontal overflow at 320px",
+    "Records has no horizontal overflow at 375px",
+    "Records has no horizontal overflow at 430px",
+    "Records remains accessible at320px and200% text",
+    "Activity opens its original record without a new world or fabricated acquired objects",
+    "Changing mode retains original-record depth and its activity source",
+    "Returning from original record restores source action focus",
+    "Welcome is read-only and close returns focus; browsing never creates writes",
+    "1000 records initially render at most20 logical rows",
+    "1000 records page2 replaces page1 and focuses its first object",
+    "1000 statistics window does not change history page",
+    "1000 direct year/month starts matching page1 without changing summary window",
+    "A committed second-tab insertion preserves the current month object and pixel anchor",
+    "1000 thought mode has its own all-date scope, no timer summary, and a draft entry",
+    "1000 IME selection does not submit search or replace current results",
+    "1000 full-history literal search finds archived note beyond the loaded pages",
+    "1000 a saved edit leaving search stays readable until explicitly closed",
+    "1000 mode return keeps month, page2 and expanded identity",
+    "1000 temporary Focus visit retains query and page",
+    "1000 failed favorite cancellation keeps the saved text",
+    "1000 successful cancellation removes only that quote and leaves welcome readable",
+    "10000 records initially render at most20 logical rows",
+    "10000 records page2 replaces page1 and focuses its first object",
+    "10000 statistics window does not change history page",
+    "10000 direct year/month starts matching page1 without changing summary window",
+    "10000 thought mode has its own all-date scope, no timer summary, and a draft entry",
+    "10000 IME selection does not submit search or replace current results",
+    "10000 full-history literal search finds archived note beyond the loaded pages",
+    "10000 a saved edit leaving search stays readable until explicitly closed",
+    "10000 mode return keeps month, page2 and expanded identity",
+    "10000 temporary Focus visit retains query and page",
+    "10000 failed favorite cancellation keeps the saved text",
+    "10000 successful cancellation removes only that quote and leaves welcome readable",
+    "Failed thought deletion retains formal text and exposes retry without inventing success",
+    "Confirmed deletion returns keyboard focus to the next thought",
+    "Undo restores the same identity and original text once",
+    "Cold open resets viewing choices and keeps historical dates",
+    "A new favorite in another tab retains the open quote across the20-item page boundary",
+    "Favorite insertion preserves its pixel anchor and restores the recreated reading trigger focus"
+  ],
+  "errors": [],
+  "scaleResults": [
+    {
+      "records": 1000,
+      "steps": "page→month→thought search→edit→return→favorite failure/retry",
+      "elapsedMs": 1011,
+      "correctObjects": true
+    },
+    {
+      "records": 10000,
+      "steps": "page→month→thought search→edit→return→favorite failure/retry",
+      "elapsedMs": 1548,
+      "correctObjects": true
+    }
+  ],
+  "physicalDevice": false
+}

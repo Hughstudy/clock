@@ -1,6 +1,6 @@
 # Whale Focus
 
-The current prototype follows the first interaction upgrade from the October 31 product PRD v5. Select a duration before starting, mark a moment without a keyboard, or write a thought that stays with its original session across expiry. Records offers 7-day and 30-day totals along with an all-history thoughts view. Snapshot v7 preserves earlier sessions and saved preferences. [Interaction guide and verification](docs/verification/focus-interactions-v5.md)
+The current prototype implements the authorized interaction increment from the November 2 PRD v35. Focus keeps timing and thought controls in stable groups, results require explicit preparation before another start, and encouragement has a category reader with saved favorites. Records offers four views, full-history thought search, month selection and 20-item pages. Snapshot v8 preserves earlier data and adds quote favorites. See the [v35 scope](docs/plans/INTERACTION_V35_PLAN.md) and [verification](docs/verification/interaction-v35.md).
 
 The implementation baseline `e6daa66` contains the supplied 2026-10-29 PRD v3 handoff and
 the blue companion integration. This includes start, pause/resume, manual early
@@ -13,8 +13,7 @@ features below are not yet complete.
 The user selected a soft, round blue creature with expressive arms for the
 working prototype. Home uses original rough.js artwork, short event-driven
 gestures, quiet focus and reduced-motion poses. Final artwork, product name and
-brand assets remain open. Thought capture and draft recovery are implemented. Full history/reflection,
-additional rewards and favorites, backup/restore/clear UI and final branding remain pending.
+brand assets remain open. Thought capture and draft recovery are implemented. Full persistent cottage/world interactions, authored chapter continuation, backup/restore/clear UI and final branding remain pending.
 
 The English [PLAN.md](PLAN.md) is the current review draft: it records the PRD
 gaps, proposed choices, shared interface and integration order. Work is split into
@@ -36,12 +35,12 @@ preference does not change the application's UI language.
 
 Touch the blue companion for a physical response or choose **给我一句鼓励** to read a phrase. The reader stays open while a session changes. Automatic feedback follows actual session and save events. Early and full endings receive the same consideration. Settings opens from Focus, and either the app or operating system can request reduced motion.
 
-Open **记录** to see the orchard at the device’s local hour. Expand a saved focus entry to see which discovery the blue companion found in its book. Its story stays with that entry. [Records design and browser checks](docs/plans/RECORDS_COMPANION_PLAN.md)
+Open **记录** for actual focus time, thoughts, saved activity history and encouragement favorites. The activity view uses each session’s saved assignment and links to its original record. It does not invent a historical discovery or implement the PRD’s persistent cottage. Reading the welcome note does not create a favorite.
 
 A mobile-first Pomodoro-style focus timer built with React 18, TypeScript,
 Vite and rough.js. Early and full endings receive equal supportive feedback.
 Actual time excludes pauses, includes sub-minute sessions, and is saved locally.
-The optional five-minute start does not change the default 25-minute setting.
+Selecting five minutes changes only the next session; it does not change the default 25-minute setting.
 
 See [PLAN.md](PLAN.md) for scope, invariants and acceptance checks, and
 [AGENTS.md](AGENTS.md) for architecture rules.
@@ -54,6 +53,7 @@ Requires Node.js 20.19+ (CI uses Node 24).
 npm ci            # install from the lockfile
 npm run dev       # dev server at http://localhost:5173/ (service worker disabled)
 npm test          # unit and architecture tests (Vitest)
+npm run test:e2e  # production browser checks (requires Playwright Chromium)
 npm run typecheck # strict TypeScript, including a DOM-free check of src/logic
 npm run build     # typecheck + production build into dist/
 ```
@@ -109,16 +109,11 @@ One-time setup: in the repository's **Settings → Pages**, set **Source** to
 - Service-worker caches are namespaced `whale-focus`; cache cleanup never
   touches saved progress.
 - When a new version is deployed, the app offers a reload between sessions
-  rather than forcing one during a countdown.
+  only after checking current inputs, pending writes and the latest shared timer state. A newer-schema read-only fallback can update without rewriting protected data.
 
 ## Current verification
 
-See [the continuation report](docs/verification/friendly-companion.md) for source
-comparison, checks, browser evidence and remaining device work. Its branch and
-integration status describe the time of testing; the baseline and publication request above
-reflect subsequent actions. The documentation update did not rerun application
-tests. The [supplied handoff](docs/handoff-20261029/README.md) and PRD remain
-immutable reference snapshots, not a live task board.
+See [the v35 interaction report](docs/verification/interaction-v35.md) for current tests, production-browser evidence and delivery status. Earlier reports retain their historical scope and counts. Desktop emulation does not establish physical-phone or screen-reader acceptance. Supplied PRD/register snapshots are immutable references, not a live task board.
 
 ## Credits
 

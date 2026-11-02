@@ -10,6 +10,8 @@ import type { Spec } from '../logic/spec'
 import { mergeSceneStates } from '../logic/scenes'
 import type { AppSnapshot, TimerState } from '../logic/types'
 import type { LockRunner } from './locks'
+import { quoteKey } from '../contracts/favorites'
+import { sameFavorite } from '../logic/favorites'
 
 export interface KeyValueStorage {
   getItem(key: string): string | null
@@ -253,8 +255,16 @@ export class SnapshotStore {
       changed = true
       return accepted
     })
+    const originalFavorites = new Map(base.quoteFavorites.map(q => [quoteKey(q), q]))
+    const durableFavorites = new Map(disk.quoteFavorites.map(q => [quoteKey(q), q]))
+    const quoteFavorites = merged.quoteFavorites.map(q => {
+      const accepted = durableFavorites.get(quoteKey(q))
+      if (!accepted || originalFavorites.get(quoteKey(q))?.rev === accepted.rev || sameFavorite(accepted, q)) return q
+      changed = true
+      return accepted
+    })
     this.pendingBase = disk
-    return changed ? { ...merged, thoughts } : merged
+    return changed ? { ...merged, thoughts, quoteFavorites } : merged
   }
 
   /** Reads storage and merges it with memory. `behind` means storage lacks something memory has. */

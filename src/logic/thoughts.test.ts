@@ -19,6 +19,24 @@ const draft = (text: string, thoughtId: string | null = null): ThoughtDraft => (
 const write = (value: ThoughtDraft): AppAction => ({ type: 'writeDraft', draft: value, expectedStamp: null, stamp: 'draft1' })
 
 describe('thought capture', () => {
+  it('retires a saved unchanged empty-marker draft without changing its formal revision', () => {
+    const marked = step(createSnapshot(spec), T0, { type: 'markThought', thoughtId: 'same', timeZone: tz }).snapshot
+    const editing = { ...draft('', 'same'), id: 'same-editor' }
+    const saved = step(marked, T0 + 1, { type: 'saveThoughtText', thoughtId: 'same', text: '', timeZone: tz,
+      draft: editing, expectedStamp: null, stamp: 'retired' }).snapshot
+    expect(saved.thoughts[0]).toEqual(marked.thoughts[0])
+    expect(saved.draftStamp).toBe('retired')
+    expect(saved.thoughtDraft).toBeNull()
+  })
+
+  it('preserves valid whitespace but rejects unpaired Unicode surrogate values', () => {
+    const raw = '\u3000 line one\n line two \t'
+    const result = step(createSnapshot(spec), T0, { type: 'saveThoughtText', thoughtId: 'unicode', text: raw, timeZone: tz })
+    expect(result.snapshot.thoughts[0]?.text).toBe(raw)
+    expect(step(createSnapshot(spec), T0, { type: 'saveThoughtText', thoughtId: 'invalid', text: '\ud800', timeZone: tz }).thought?.change).toBe('rejected')
+    expect(step(createSnapshot(spec), T0, { type: 'start', sessionId: 'invalid-step', timeZone: tz, step: '\udfff' }).changed).toBe(false)
+  })
+
   it('saves an empty marker then text during a running session without touching the timer, and links it to the ended record', () => {
     let s = run(createSnapshot(spec), [[T0, { type: 'start', sessionId: 'f1', timeZone: tz }]])
     const before = s.timer
@@ -33,7 +51,7 @@ describe('thought capture', () => {
     s = run(texted.snapshot, [[T0 + 3 * MIN, { type: 'end', sessionId: 'f1' }]])
     expect(s.timer.session).toBeNull()
     expect(s.records).toMatchObject([{ sessionId: 'f1', elapsedMs: 3 * MIN }])
-    expect(s.thoughts.filter((t) => t.sessionId === 'f1').map((t) => t.text)).toEqual(['', 'Pick up the parcel tonight'])
+    expect(s.thoughts.filter((t) => t.sessionId === 'f1').map((t) => t.text)).toEqual(['', '  Pick up the parcel tonight '])
   })
 
   it('is idempotent for a repeated delivery of the same marker', () => {
@@ -192,9 +210,9 @@ describe('v5 interaction boundaries', () => {
 describe('session step and one-off focus length', () => {
   it('captures an optional step at start and keeps it on manual and deadline endings', () => {
     let s = run(createSnapshot(spec), [[T0, { type: 'start', sessionId: 'f1', timeZone: tz, step: '  outline   the intro ' }]])
-    expect(s.timer.session?.step).toBe('outline the intro')
+    expect(s.timer.session?.step).toBe('  outline   the intro ')
     s = run(s, [[T0 + MIN, { type: 'end', sessionId: 'f1' }], [T0 + MIN, { type: 'skipBreak' }]])
-    expect(s.records[0]).toMatchObject({ step: 'outline the intro', elapsedMs: MIN })
+    expect(s.records[0]).toMatchObject({ step: '  outline   the intro ', elapsedMs: MIN })
 
     s = run(s, [[T0 + 2 * MIN, { type: 'start', sessionId: 'f2', timeZone: tz, step: '   ' }]])
     expect(s.timer.session?.step).toBeNull()

@@ -1,9 +1,12 @@
 import { applySettingsPatch, defaultSettings, isValidDuration, sameSettings, type SettingsPatch } from './settings'
 import { selectScene } from './scenes'
 import type { Spec } from './spec'
-import { canRestore, isLive, normalizeStep, purgeExpiredText } from './thoughts'
+import { canRestore, isLive, isWellFormedUnicode, normalizeStep, purgeExpiredText } from './thoughts'
 import { breakAfterFocus, expireSession, pauseSession, remainingMs, resetSession, resumeSession, skipBreak, startSession } from './timer'
 import type { AppSnapshot, DateKey, FocusRecord, Phase, Settings, Thought, ThoughtDraft } from './types'
+import { quoteKey, type FavoriteQuote } from '../contracts/favorites'
+
+export type FavoriteAction = { type: 'setQuoteFavorite'; quote: FavoriteQuote; selected: boolean; expectedRev: number | null; requestedAt: number }
 
 export type ThoughtAction =
   /** One tap: an empty marker, linked to the running or paused focus session if there is one. */
@@ -23,11 +26,12 @@ export type AppAction = (
   | { type: 'resetDurations' }
   | { type: 'prepare'; phase: Phase; expectedPhase: Phase }
   | { type: 'updateSettings'; patch: SettingsPatch }
-  | ThoughtAction) & { generation?: number }
+  | ThoughtAction | FavoriteAction) & { generation?: number }
 
 export interface ActionContext {
   now: number
   dateKeyOf: (epochMs: number, timeZone: string) => DateKey
+  quoteCatalog?: readonly FavoriteQuote[]
 }
 
 export interface Completion {
@@ -48,6 +52,7 @@ export interface Transition {
   /** The thought an action changed. `rejected` when the target was deleted or the request no longer applies. */
   thought: { id: string; change: ThoughtChange | 'rejected' } | null
   draftConflict?: boolean
+  favoriteRejected?: boolean
   changed: boolean
 }
 
@@ -118,6 +123,25 @@ function act(snapshot: AppSnapshot, action: AppAction, ctx: ActionContext, spec:
   if ((action.type === 'pause' || action.type === 'resume' || action.type === 'end') &&
       action.sessionId !== undefined && snapshot.timer.session?.id !== action.sessionId) return unchanged(snapshot)
   switch (action.type) {
+    case 'setQuoteFavorite': {
+      const { quote, selected, expectedRev } = action
+      if (!quote.id || quote.id.length > 128 || !quote.copyVersion || quote.copyVersion.length > 128 ||
+          !quote.text.trim() || Array.from(quote.text).length > 4000) return { ...unchanged(snapshot), favoriteRejected: true }
+      const key = quoteKey(quote)
+      const existing = snapshot.quoteFavorites.find(q => quoteKey(q) === key)
+      if (selected && existing?.deletedAt === null) return unchanged(snapshot)
+      if ((existing?.rev ?? null) !== expectedRev) return { ...unchanged(snapshot), favoriteRejected: true }
+      if ((existing?.deletedAt === null) === selected) return unchanged(snapshot)
+      if (selected && (!Number.isSafeInteger(action.requestedAt) || action.requestedAt < 0 || !ctx.quoteCatalog?.some(q => q.id === quote.id && q.copyVersion === quote.copyVersion && q.text === quote.text))) {
+        return { ...unchanged(snapshot), favoriteRejected: true }
+      }
+      // Cancellation retires the saved relationship's metadata; only a later
+      // explicit favorite captures the newly displayed content version.
+      const next = { ...(selected ? quote : existing ?? quote), text: selected ? quote.text : '', savedAt: selected ? action.requestedAt : existing?.savedAt ?? now,
+        rev: (existing?.rev ?? 0) + 1, deletedAt: selected ? null : now }
+      return { ...unchanged(snapshot), changed: true, snapshot: { ...snapshot,
+        quoteFavorites: existing ? snapshot.quoteFavorites.map(q => quoteKey(q) === key ? next : q) : [...snapshot.quoteFavorites, next] } }
+    }
     case 'reconcile': return unchanged(snapshot)
     case 'prepare': return snapshot.timer.session || snapshot.timer.phase !== action.expectedPhase || snapshot.timer.phase === action.phase
       ? unchanged(snapshot) : withTimer({ ...snapshot.timer, phase: action.phase })
@@ -134,7 +158,7 @@ function act(snapshot: AppSnapshot, action: AppAction, ctx: ActionContext, spec:
       const chosen = action.durationMinutes
       if (chosen !== undefined && !isValidDuration(timer.phase, chosen, spec)) return unchanged(snapshot)
       const duration = chosen ?? (focus ? nextFocusMinutes(snapshot, spec) : undefined)
-      if (focus && action.type !== 'startBreak' && Array.from(action.step ?? '').length > spec.timer.stepMaxLength) return unchanged(snapshot)
+      if (focus && action.type !== 'startBreak' && (!isWellFormedUnicode(action.step ?? '') || Array.from(action.step ?? '').length > spec.timer.stepMaxLength)) return unchanged(snapshot)
       const step = focus && action.type !== 'startBreak' ? normalizeStep(action.step, spec.timer.stepMaxLength) : null
       const started = startSession(timer, snapshot.settings, now, action.sessionId, action.timeZone, duration, step)
       const selection = selectScene(snapshot.scenes, focus ? 'focus' : 'rest', action.sessionId)
@@ -224,9 +248,9 @@ function actOnThought(snapshot: AppSnapshot, action: ThoughtAction, ctx: ActionC
       return commit(owner ? { ...marker, sessionId: owner.sessionId, createdAt: owner.at, dateKey: ctx.dateKeyOf(owner.at, action.timeZone) } : marker, 'marked')
     }
     case 'saveThoughtText': {
-      const text = action.text.trim()
+      const text = action.text.trim() ? action.text : ''
       const draft = action.draft
-      if (Array.from(action.text).length > maxLength || (!existing && !text) ||
+      if (!isWellFormedUnicode(action.text) || Array.from(action.text).length > maxLength || (!existing && !text) ||
           (action.expectedStamp !== undefined && snapshot.draftStamp !== action.expectedStamp) ||
           (draft && (draft.thoughtId === null ? !!existing : draft.thoughtId !== existing?.id || draft.baseRev !== existing.rev))) return rejected(action.thoughtId)
       const clearDraft = draft && snapshot.thoughtDraft?.id === draft.id
@@ -237,7 +261,8 @@ function actOnThought(snapshot: AppSnapshot, action: ThoughtAction, ctx: ActionC
           dateKey: draft.dateKey ?? ctx.dateKeyOf(now, draft.timeZone) } : thought, 'text', extra)
       }
       if (!isLive(existing)) return rejected(existing.id)
-      if (existing.text === text && !action.stamp && !clearDraft) return { ...unchanged(snapshot), thought: { id: existing.id, change: 'text' } }
+      if (existing.text === text) return { ...unchanged(snapshot), snapshot: { ...snapshot, ...extra },
+        changed: !!action.stamp || !!clearDraft, thought: { id: existing.id, change: 'text' } }
       return commit({ ...existing, text, rev: existing.rev + 1 }, 'text', extra)
     }
     case 'writeDraft':

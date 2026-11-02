@@ -42,11 +42,11 @@ async function sceneAttribute(page, name) { return page.locator('.home .blue-com
 async function endEarly(page) {
   const id = (await readSaved(page)).data.timer.session.id
   await page.getByRole('button', { name: '结束专注', exact: true }).click()
-  await page.getByRole('dialog').getByRole('button', { name: '结束并记录', exact: true }).click()
+  await page.getByRole('dialog').getByRole('button', { name: '确认结束', exact: true }).click()
   await untilSaved(page, s => s.records.some(record => record.sessionId === id), 'confirmed early end')
 }
 async function focusReady(page) {
-  const back = page.getByRole('button', { name: /^(换个时长|回到专注)$/ })
+  const back = page.getByRole('button', { name: /^(准备专注|返回专注)$/ })
   if (await back.isVisible()) await back.click()
 }
 try {
@@ -69,8 +69,10 @@ try {
   await page.clock.install({ time: new Date('2026-10-29T04:00:00Z') })
   await page.goto(appUrl)
   await page.evaluate(() => navigator.serviceWorker.ready)
-  await page.getByText('已准备好离线使用。', { exact: true }).waitFor()
+  await page.getByRole('button', { name: '查看状态', exact: true }).waitFor()
+  await page.getByRole('button', { name: '查看状态', exact: true }).click()
   await page.getByRole('button', { name: '知道了', exact: true }).click()
+  await page.getByRole('dialog').getByRole('button', { name: '返回', exact: true }).click()
   const primary = page.locator('.fp-primary .btn-primary')
   const beforeStart = await primary.boundingBox()
   await primary.click()
@@ -78,7 +80,7 @@ try {
   const firstId = initial.timer.session.id
   const firstScene = initial.timer.session.scene.sceneId
   const focusScenes = [firstScene]
-  check('New focus uses the full shipped pool and v2 selection', focusPool.includes(firstScene) && initial.version === 7 && initial.timer.session.scene.selectionVersion === 2 && await sceneAttribute(page, '') === firstScene)
+  check('New focus uses the full shipped pool and v2 selection', focusPool.includes(firstScene) && initial.version === 8 && initial.timer.session.scene.selectionVersion === 2 && await sceneAttribute(page, '') === firstScene)
   check('Permitted start has a scene entrance', await sceneAttribute(page, 'phase') === 'open')
   const afterStart = await primary.boundingBox()
   check('Start and Pause keep the same target', ['x', 'y', 'width', 'height'].every(key => Math.abs(beforeStart[key] - afterStart[key]) < 1))
@@ -103,7 +105,7 @@ try {
   await untilSaved(page, s => s.timer.session?.status === 'running', 'resume')
   check('Resume retains session and activity', (await readSaved(page)).data.timer.session.id === firstId && await sceneAttribute(page, '') === firstScene)
 
-  await page.getByRole('button', { name: '写想法', exact: true }).click()
+  await page.getByRole('button', { name: '记下想法', exact: true }).click()
   await page.locator('#thought-text').fill('Scene E2E draft')
   check('Thought editor suspends scene motion', await svg.getAttribute('data-scene-motion') === 'false' && await svg.evaluate(el => el.getAnimations({ subtree: true }).every(animation => animation.playState !== 'running')))
   await page.getByRole('button', { name: '回到计时', exact: true }).click()
@@ -221,7 +223,7 @@ try {
   for (let i = 0; i < 3; i++) {
     if (i > 0) {
       await focusReady(page)
-      await page.getByRole('button', { name: '休息一下', exact: true }).click()
+      await page.getByRole('button', { name: '选择休息', exact: true }).click()
     }
     await page.getByRole('button', { name: /^(开始休息|休息 \d+ 分钟)$/ }).click()
     const rest = await untilSaved(page, s => s.timer.phase !== 'focus' && !!s.timer.session, 'rest start')

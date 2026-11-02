@@ -6,6 +6,7 @@ import type { AppSnapshot } from '../logic/types'
 import { createLock, type LockRunner } from './locks'
 import { SnapshotStore, type KeyValueStorage } from './storage'
 import { onExternalWrite, SNAPSHOT_KEY } from './browser-store'
+import { feedbackCatalog } from '../data/encouragement'
 
 const KEY = 'test:snapshot'
 const MIN = 60_000
@@ -44,10 +45,50 @@ function tab(storage: KeyValueStorage | null, writerId: string, lock: LockRunner
 
 function act(store: SnapshotStore, action: AppAction, now: number) {
   return store.transact((latest) => {
-    const t = applyAction(latest, action, { now, dateKeyOf: utcKey }, spec)
+    const t = applyAction(latest, action, { now, dateKeyOf: utcKey, quoteCatalog: feedbackCatalog.entries }, spec)
     return { snapshot: t.snapshot, changed: t.changed, value: t.completion }
   })
 }
+
+describe('durable quote favorites', () => {
+  const quote = feedbackCatalog.entries.find(q => q.pool === 'ASKG')!
+  const favorite = (selected: boolean, expectedRev: number | null): AppAction =>
+    ({ type: 'setQuoteFavorite', quote, selected, expectedRev, requestedAt: T0 })
+
+  it('keeps old durable favorite visible through failed cancellation and retry', async () => {
+    const storage = new MemoryStorage(), store = tab(storage, 'a')
+    await act(store, favorite(true, null), T0)
+    storage.failWrites = true
+    expect((await act(store, favorite(false, 1), T0 + 1)).saved).toBe(false)
+    expect(store.snapshot.quoteFavorites[0]?.text).toBe('')
+    expect(store.durableSnapshot?.quoteFavorites[0]?.text).toBe(quote.text)
+    storage.failWrites = false
+    await act(store, { type: 'reconcile' }, T0 + 2)
+    expect(store.durableSnapshot?.quoteFavorites[0]?.deletedAt).toBe(T0 + 1)
+    expect(store.durableSnapshot?.quoteFavorites).toHaveLength(1)
+  })
+
+  it('does not replay a failed stale cancellation over a newer explicit refavorite', async () => {
+    const storage = new MemoryStorage(), lock = sharedLock(), local = tab(storage, 'a', lock)
+    await act(local, favorite(true, null), T0)
+    const remote = tab(storage, 'b', lock)
+    storage.failWrites = true
+    await act(local, favorite(false, 1), T0 + 1)
+    storage.failWrites = false
+    await act(remote, favorite(false, 1), T0 + 2)
+    await act(remote, favorite(true, 2), T0 + 3)
+    await act(local, { type: 'reconcile' }, T0 + 4)
+    expect(local.snapshot.quoteFavorites[0]).toMatchObject({ rev: 3, deletedAt: null, text: quote.text })
+    expect(stored(storage).quoteFavorites).toHaveLength(1)
+  })
+
+  it('serializes duplicate clicks in two tabs without changing the captured time', async () => {
+    const storage = new MemoryStorage(), lock = sharedLock(), a = tab(storage, 'a', lock), b = tab(storage, 'b', lock)
+    await Promise.all([act(a, favorite(true, null), T0), act(b, favorite(true, null), T0 + 100)])
+    expect(stored(storage).quoteFavorites).toHaveLength(1)
+    expect(stored(storage).quoteFavorites[0]).toMatchObject({ rev: 1, savedAt: T0, deletedAt: null })
+  })
+})
 
 function stored(storage: MemoryStorage): AppSnapshot {
   return JSON.parse(storage.data.get(KEY) ?? 'null') as AppSnapshot
@@ -336,7 +377,7 @@ describe('SnapshotStore across tabs', () => {
     const assignment = upgraded.snapshot.timer.session?.scene
     expect(assignment).toEqual(old.timer.session.scene)
     await act(upgraded, { type: 'reconcile' }, T0 + MIN)
-    expect(stored(storage).version).toBe(7)
+    expect(stored(storage).version).toBe(8)
     expect(stored(storage).timer).toEqual(old.timer)
     expect(stored(storage).scenes.focus).toEqual({ ...old.scenes.focus, remaining: [] })
     expect(tab(storage, 'reloaded').snapshot.timer.session?.scene).toEqual(assignment)
@@ -652,7 +693,7 @@ describe('durable early ends and recovery', () => {
     const upgraded = tab(storage, 'new')
     expect(upgraded.savedRecordIds.has('old-focus')).toBe(true)
     await act(upgraded, { type: 'reconcile' }, T0)
-    expect(stored(storage).version).toBe(7)
+    expect(stored(storage).version).toBe(8)
     expect(stored(storage).settings.soundEnabled).toBe(false)
     expect(tab(storage, 'reload').savedRecordIds.has('old-focus')).toBe(true)
   })

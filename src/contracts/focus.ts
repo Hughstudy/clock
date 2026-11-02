@@ -1,7 +1,7 @@
 /**
- * Focus and thought slice, snapshot v7. Edits retain their owner, first input
+ * Focus and thought slice, snapshot v8. Edits retain their owner, first input
  * date and base revisions. Receipts identify the operation and dataset generation.
- * Rewards, bookmarks and import/export are not yet public contracts.
+ * Quote favorites have a separate contract. Story/world and import/export remain pending.
  */
 export type { AppSnapshot, FocusRecord, ParticipationRecord, Session, Thought, ThoughtDraft, TimerState } from '../logic/types'
 export type { AppAction, ThoughtAction, ThoughtChange, Transition } from '../logic/app'

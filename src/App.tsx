@@ -13,6 +13,7 @@ import { useNow } from './hooks/useNow'
 import { usePwaUpdate } from './hooks/usePwaUpdate'
 import { useSettingsForm } from './hooks/useSettingsForm'
 import { useThoughts } from './hooks/useThoughts'
+import { useQuoteFavorites } from './hooks/useQuoteFavorites'
 import { useStatsView, useTimerView } from './hooks/useViews'
 import { HomeScreen } from './screens/HomeScreen'
 import { SettingsScreen } from './screens/SettingsScreen'
@@ -49,6 +50,10 @@ export function App() {
   }, [appDispatch])
   const form = useSettingsForm(app.snapshot.settings, settingsDispatch)
   const thoughts = useThoughts(app)
+  const favorites = useQuoteFavorites(app)
+  const [focusTaskOpen, setFocusTaskOpen] = useState(false)
+  const [checkingUpdate, setCheckingUpdate] = useState(false)
+  const [updateConflict, setUpdateConflict] = useState(false)
   useFocusTaskBack(screen === 'stats' && thoughts.open, () => thoughts.setOpen(false))
   // The companion consumes hidden events silently. Announce a Records edit or
   // undo in the same app-level live region, only on a fresh object receipt.
@@ -67,13 +72,43 @@ export function App() {
     }
   }, [screen, receiptKey, noteText, noteKind])
   const focusId = app.snapshot.timer.session?.id ?? app.result?.sessionId
-  const linkedThoughts = useMemo(() => app.snapshot.thoughts.filter(t =>
-    t.deletedAt === null && t.sessionId === focusId), [app.snapshot.thoughts, focusId])
+  const linkedThoughts = useMemo(() => statsView.thoughtDays.flatMap(day => day.entries.flatMap(entry =>
+    entry.kind === 'thought' && entry.thought.sessionId === focusId ? [entry.thought] : [])), [statsView.thoughtDays, focusId])
   const companion = useFeedback(app, { active: screen === 'home', completedProgress: timerView.completedProgress })
   const motion = useMotionPreference(app.snapshot.settings.motionEnabled)
   const pwa = usePwaUpdate()
   const canEdit = app.persistence !== 'read-only'
-  const announcement = screen === 'stats' ? recordAnnouncement : companion.feedback.announcement
+  const [announcement, setAnnouncement] = useState<{ id: string; text: string; priority: 'polite' | 'assertive' } | null>(null)
+  const announcementSequence = useRef(0)
+  const announce = useCallback((text: string) => setAnnouncement({ id: `local-${++announcementSequence.current}`, text, priority: 'polite' }), [])
+  const sourceAnnouncement = screen === 'stats' ? recordAnnouncement : screen === 'home' ? companion.feedback.announcement : null
+  const sourceAnnouncementId = sourceAnnouncement?.id
+  useEffect(() => { setAnnouncement(sourceAnnouncement) }, [screen, sourceAnnouncementId])
+  useEffect(() => { if (favorites.status) announce(favorites.status) }, [favorites.status, announce])
+  useEffect(() => {
+    // Closed status panels cannot announce quiet draft/settings write failures.
+    // Object-specific thought/favorite failures already use this same region.
+    if (!app.saveError || screen === 'home' || favorites.problems.length || (screen === 'stats' && noteKind === 'error')) return
+    setAnnouncement({ id: `save-error-${++announcementSequence.current}`, text: '最新更改尚未保存。请保留页面，可通过查看状态重试保存。', priority: 'assertive' })
+  }, [app.saveError, screen])
+  const protectedInput = thoughts.open || thoughts.hasDraft || !!thoughts.text || form.hasDraft || focusTaskOpen
+  const updateBlocked = timerView.sessionId ? '新版本已准备好。请在这段计时结束后更新。'
+    : protectedInput ? '新版本已准备好。请先保存或处理当前输入，再更新。'
+    : app.hasPendingOperations || (app.saveState !== 'saved' && app.notice?.kind !== 'newer') ? '新版本已准备好。请先确认当前更改已保存，再更新。'
+    : null
+  const updateGuard = useRef({ protectedInput, sessionId: timerView.sessionId })
+  updateGuard.current = { protectedInput, sessionId: timerView.sessionId }
+  useEffect(() => setUpdateConflict(false), [app.snapshot.revision, protectedInput, timerView.sessionId])
+  const update = async () => {
+    if (checkingUpdate || updateGuard.current.protectedInput || updateGuard.current.sessionId) return
+    setCheckingUpdate(true)
+    try {
+      const safe = await app.checkReload()
+      if (safe && !updateGuard.current.protectedInput && !updateGuard.current.sessionId) pwa.applyUpdate()
+      else setUpdateConflict(true)
+    } catch { setUpdateConflict(true) }
+    finally { setCheckingUpdate(false) }
+  }
 
   useDocumentTitle(
     timerView.status === 'ready'
@@ -81,20 +116,28 @@ export function App() {
       : `${formatClock(timerView.remainingMs)} · ${PHASE_LABELS[timerView.phase]} — Whale Focus`,
   )
 
-  return (
-    <div className="app" data-screen={screen} data-reduced-motion={motion.reducedMotion}>
-      <Notices
+  const systemNoticeSummary = app.notice ? '数据状态需要查看' : app.saveError ? '有更改尚未保存' : pwa.updateReady ? '新版本已准备好' : pwa.offlineReady ? '已准备好离线使用。' : null
+  const notices = (
+    <Notices
+        inline={app.notice?.kind !== 'newer'}
         announceSaveError={screen !== 'home' && !(screen === 'stats' && noteKind === 'error')}
         onRetry={() => app.dispatch({ type: 'retrySave' })}
         persistence={app.persistence}
         notice={app.notice}
         saveError={screen === 'home' ? null : app.saveError}
-        // Offer updates only between sessions so a countdown is never interrupted.
         updateReady={pwa.updateReady && timerView.status === 'ready'}
+        updateBlocked={updateBlocked}
+        checkingUpdate={checkingUpdate}
+        updateError={updateConflict}
         offlineReady={pwa.offlineReady}
-        onUpdate={pwa.applyUpdate}
+        onUpdate={() => void update()}
         onDismissPwa={pwa.dismiss}
       />
+  )
+
+  return (
+    <div className="app" data-screen={screen} data-reduced-motion={motion.reducedMotion}>
+      {app.notice?.kind === 'newer' && notices}
       <main className="app-main">
         {app.notice?.kind === 'newer' ? (
           <p role="status">历史数据由更新版本保存，当前无法读取。请更新应用后查看。</p>
@@ -103,10 +146,15 @@ export function App() {
             <div hidden={screen !== 'home'}>
               <HomeScreen key={app.snapshot.datasetGeneration} view={timerView} companion={companion} thoughts={thoughts} reducedMotion={motion.reducedMotion}
                 active={screen === 'home'} result={app.result} linkedThoughts={linkedThoughts} defaultsIntent={defaultsIntent}
+                favorites={favorites} timerPending={app.timerPending} onTaskChange={setFocusTaskOpen}
+                systemNoticeSummary={systemNoticeSummary} systemNotices={notices}
                 saveState={app.saveState} canEdit={canEdit} dispatch={app.dispatch} onSettings={() => setScreen('settings')} />
             </div>
             {screen === 'stats' && <StatsScreen key={app.snapshot.datasetGeneration} view={statsView} thoughts={thoughts} canEdit={canEdit} visit={recordsVisit}
               onEditThought={thoughts.edit}
+              favorites={favorites} hasDraft={thoughts.hasDraft} onContinueDraft={() => thoughts.setOpen(true)}
+              onAnnounce={announce}
+              systemNoticeSummary={systemNoticeSummary} systemNotices={notices}
               persistence={app.persistence} notice={app.notice} hasSaveError={!!app.saveError}
               showArt={app.snapshot.settings.sceneVarietyEnabled} reducedMotion={motion.reducedMotion} />}
             {screen === 'stats' && thoughts.open && <FocusTaskDialog title="编辑想法" onClose={() => thoughts.setOpen(false)}>
@@ -114,7 +162,8 @@ export function App() {
               {app.saveState === 'pending' && <p className="panel-save-error">有更改尚未保存。
                 <button type="button" className="link-button" onClick={() => app.dispatch({ type: 'retrySave' })}>重试保存</button></p>}
             </FocusTaskDialog>}
-            {screen === 'settings' && <SettingsScreen form={form} canEdit={canEdit} onBack={() => setScreen('home')} />}
+            {screen === 'settings' && <SettingsScreen form={form} canEdit={canEdit} onBack={() => setScreen('home')}
+              systemNoticeSummary={systemNoticeSummary} systemNotices={notices} />}
           </>
         )}
       </main>

@@ -11,6 +11,10 @@ interface Props {
   onUpdate: () => void
   onDismissPwa: () => void
   announceSaveError?: boolean
+  updateBlocked?: string | null
+  checkingUpdate?: boolean
+  updateError?: boolean
+  inline?: boolean
 }
 
 function storeMessage(notice: StoreNotice, persistence: Persistence): string {
@@ -34,11 +38,11 @@ function storeMessage(notice: StoreNotice, persistence: Persistence): string {
   }
 }
 
-export function Notices({ persistence, notice, saveError, updateReady, offlineReady, onRetry, onUpdate, onDismissPwa, announceSaveError = true }: Props) {
+export function Notices({ persistence, notice, saveError, updateReady, offlineReady, onRetry, onUpdate, onDismissPwa, announceSaveError = true, updateBlocked = null, checkingUpdate = false, updateError = false, inline = false }: Props) {
   const [dismissed, setDismissed] = useState(false)
   const dismissible = notice?.kind === 'repaired' || notice?.kind === 'unreadable'
   return (
-    <div className="notices">
+    <div className={inline ? 'notices notices--inline' : 'notices'}>
       {notice && !(dismissible && dismissed && persistence === 'saved') && (
         <div className="notice notice-warn" role="status">
           <p>{storeMessage(notice, persistence)}</p>
@@ -57,9 +61,9 @@ export function Notices({ persistence, notice, saveError, updateReady, offlineRe
       )}
       {updateReady && (
         <div className="notice" role="status">
-          <p>新版本已准备好，可以更新了。</p>
-          <button type="button" className="notice-action" onClick={onUpdate}>
-            更新并重载
+          <p>{updateBlocked || (updateError ? '本机状态刚有变化，请重新核对后更新。' : '新版本已准备好，可以更新了。')}</p>
+          <button type="button" className="notice-action" onClick={onUpdate} disabled={checkingUpdate || !!updateBlocked}>
+            {checkingUpdate ? '正在核对…' : '更新并重载'}
           </button>
           <button type="button" className="notice-action subtle" onClick={onDismissPwa}>
             稍后

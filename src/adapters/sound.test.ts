@@ -39,4 +39,25 @@ describe('createChime', () => {
       chime.play()
     }).not.toThrow()
   })
+
+  it('reports blocked and unsupported previews without promising playback', async () => {
+    expect(await createChime(() => undefined).preview()).toBe('unavailable')
+    expect(await createChime(() => BlockedAudioContext as unknown as new () => AudioContext).preview()).toBe('blocked')
+    expect(await createChime(() => class { state = 'suspended'; resume = () => Promise.resolve() } as unknown as new () => AudioContext).preview()).toBe('blocked')
+  })
+
+  it('schedules one deliberate preview only after the audio context is running', async () => {
+    const starts: number[] = []
+    class AvailableAudioContext {
+      state = 'suspended'
+      currentTime = 10
+      destination = {}
+      async resume() { this.state = 'running' }
+      createOscillator() { return { type: '', frequency: { value: 0 }, connect: () => ({ connect: () => {} }), start: (t: number) => starts.push(t), stop: () => {} } }
+      createGain() { return { gain: { setValueAtTime: () => {}, exponentialRampToValueAtTime: () => {} } } }
+    }
+    expect(await createChime(() => AvailableAudioContext as unknown as new () => AudioContext).preview()).toBe('played')
+    expect(starts).toHaveLength(3)
+    expect(starts[0]).toBeCloseTo(10.05)
+  })
 })

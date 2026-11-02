@@ -16,7 +16,8 @@ describe('PRD copy resource integrity', () => {
     for (const pool of ASK_POOLS) expect(feedbackCatalog.entries.filter(e => e.pool === pool)).toHaveLength(14)
     expect(feedbackCatalog.entries.filter(e => e.level === 'deep')).toHaveLength(24)
     expect(feedbackCatalog.entries.every(e => e.collectible && e.reviewStatus === 'candidate')).toBe(true)
-    expect(feedbackCatalog.interfaceCopy).toHaveLength(44)
+    expect(feedbackCatalog.interfaceCopy).toHaveLength(99)
+    expect(feedbackCatalog.interfaceCopyVersion).toBe('prd-v35')
     expect(feedbackCatalog.errors).toHaveLength(14)
   })
 

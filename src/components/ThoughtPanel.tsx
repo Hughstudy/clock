@@ -11,10 +11,12 @@ interface Props {
 export function ThoughtPanel({ thoughts, canEdit }: Props) {
   const composing = useRef(false)
   const tooLong = thoughts.length > thoughts.maxLength
-  const clearing = thoughts.isExisting && !thoughts.text.trim()
+  const clearing = thoughts.clearingExistingText
   if (thoughts.pendingEdit) return (
     <div className="focus-task__body">
       <p>{copy.switchDraft}</p>
+      <button type="button" className="btn btn-primary" disabled={!canEdit || !thoughts.canSave || thoughts.saving}
+        onClick={thoughts.saveAndSwitch}>保存当前想法后继续</button>
       <button type="button" className="btn btn-secondary" onClick={thoughts.cancelSwitch}>{copy.keepDraft}</button>
       <button type="button" className="btn btn-secondary" onClick={thoughts.discardAndSwitch}>{copy.discardAndSwitch}</button>
     </div>
