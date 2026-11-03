@@ -7,7 +7,6 @@ describe('parseSpec', () => {
     const spec = parseSpec(raw)
     expect(spec.timer.longBreakEvery).toBe(4)
     expect(spec.timer.completionSoundWindowMs).toBe(60_000)
-    expect(spec.calendar.weekStartsOn).toBe(1)
     expect(spec.presentation.motionEnabledDefault).toBe(true)
   })
 
@@ -35,7 +34,7 @@ describe('parseSpec', () => {
 
   it('rejects a zero seed, which rough.js would treat as random', () => {
     const bad = structuredClone(raw)
-    bad.decor.seeds.logo = 0
-    expect(() => parseSpec(bad)).toThrow(/decor\.seeds\.logo/)
+    bad.decor.seeds.chart = 0
+    expect(() => parseSpec(bad)).toThrow(/decor\.seeds\.chart/)
   })
 })

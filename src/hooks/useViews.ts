@@ -4,9 +4,9 @@ import { spec } from '../data/spec'
 import { nextFocusMinutes } from '../logic/app'
 import { dayHeading, shortDate } from '../logic/calendar'
 import { recordsBand, type RecordsBand } from '../logic/record-stories'
-import { dayTotal, groupEntries, indexByDay, rangeTotals, type DayIndex, type DayTotal, type HistoryDay, type RangeLength } from '../logic/stats'
+import { groupEntries, indexByDay, rangeTotals, type DayIndex, type HistoryDay, type RangeLength } from '../logic/stats'
 import { isLive } from '../logic/thoughts'
-import { cycleProgress, isBreak, remainingMs, totalMs, type CycleProgress } from '../logic/timer'
+import { isBreak, remainingMs, totalMs } from '../logic/timer'
 import type { AppSnapshot, FocusRecord, Phase, Session, Thought } from '../logic/types'
 
 const MINUTE_MS = 60_000
@@ -31,13 +31,10 @@ export interface TimerView {
   progress: number
   /** Precise elapsed focus proportion, 0 at start, 1 at deadline; pauses retain the value. */
   completedProgress: number
-  cycle: CycleProgress
-  today: DayTotal
 }
 
 export function useTimerView(snapshot: AppSnapshot, now: number): TimerView {
-  const { timer, settings, records } = snapshot
-  const index = useMemo(() => indexByDay(records), [records])
+  const { timer, settings } = snapshot
   const next = nextFocusMinutes(snapshot, spec)
   const readyFocus = !timer.session && timer.phase === 'focus'
   const remaining = readyFocus ? next * MINUTE_MS : remainingMs(timer, settings, now)
@@ -58,8 +55,6 @@ export function useTimerView(snapshot: AppSnapshot, now: number): TimerView {
     progress: total > 0 ? remaining / total : 0,
     completedProgress: timer.session && !isBreak(timer.phase) && total > 0
       ? Math.min(1, Math.max(0, 1 - remaining / total)) : 0,
-    cycle: cycleProgress(timer, spec.timer.longBreakEvery),
-    today: dayTotal(index, localDateKey(now)),
   }
 }
 

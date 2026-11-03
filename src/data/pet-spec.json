@@ -28,9 +28,6 @@
     "completionSoundWindowSeconds": 60,
     "stepMaxLength": 80
   },
-  "calendar": {
-    "weekStartsOn": 1
-  },
   "thoughts": {
     "maxLength": 500,
     "undoPeriodSeconds": 600,
@@ -42,11 +39,7 @@
     "roughness": 1.3,
     "bowing": 1.1,
     "seeds": {
-      "logo": 7,
-      "dial": 11,
-      "cycle": 31,
       "chart": 23,
-      "underline": 41,
       "character": 53
     }
   },

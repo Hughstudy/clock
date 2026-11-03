@@ -1,11 +1,9 @@
 import { memo, useId } from 'react'
 import { blueCompanionSpec } from '../../data/blue-companion'
-import type { RecordStoryId, RecordsBand } from '../../logic/record-stories'
+import type { RecordsBand } from '../../logic/record-stories'
 import { ScenePart } from './CompanionSceneArt'
 import { CompanionPaint } from './CompanionPaint'
 import '../../styles/records-art.css'
-
-type Pose = RecordsBand | RecordStoryId
 
 const roomColors = {
   morning:   { wall: '#f6e7c9', sky: '#c7e3df', horizon: '#fff1c5', hill: '#a4c4a8', trees: '#86ad92', wood: '#d3ae87' },
@@ -21,28 +19,12 @@ function PressedLeaf() {
   </g>
 }
 
-function ChairMap() {
-  return <g strokeLinecap="round" strokeLinejoin="round">
-    <path d="M-14-8L-5-11L4-8L14-11L13 8L4 11L-5 8L-14 11Z" fill="#fff1cc" stroke="#aa875d" strokeWidth="1.2"/>
-    <path d="M-5-10V7M4-7V10" stroke="#d8b88a" strokeWidth=".9"/>
-    <path d="M-11 4Q-12-3-7-2T0 1Q3 0 6-4" fill="none" stroke="#b96c57" strokeWidth="1.1" strokeDasharray="1.3 1.6"/>
-    <path d="M6-6H10V-2H6ZM6-2H11L10 0H6ZM6 0L5 3M10 0L11 3" fill="#bb9671" stroke="#7a6855" strokeWidth=".85"/>
-    <circle cx="-11" cy="4" r="1.2" fill="#75978a"/>
-  </g>
-}
-
-function Find({ story }: { story: RecordStoryId }) {
-  if (story === 'leaf') return <PressedLeaf/>
-  if (story === 'map') return <ChairMap/>
-  return <ScenePart name="star"/>
-}
-
 function OpenBook() {
   return <>{['bookLeft', 'bookRight', 'bookCover', 'bookLines', 'bookmark'].map(name => <ScenePart key={name} name={name}/>)}</>
 }
 
 /** Keep the Focus silhouette, coat gradients and expressions at their native coordinates. */
-function Creature({ paint, pose }: { paint: string; pose: Pose }) {
+function Creature({ paint, pose }: { paint: string; pose: RecordsBand }) {
   const { parts, palette, outlineWidth } = blueCompanionSpec
   const color = (tone?: string) => tone === 'body' || tone === 'belly'
     ? `url(#${paint}-${tone})` : tone ? palette[tone] : 'none'
@@ -50,33 +32,30 @@ function Creature({ paint, pose }: { paint: string; pose: Pose }) {
     const shape = parts[name]
     return shape && <path key={name} d={shape.d} fill={color(shape.fill)} stroke={color(shape.stroke)} strokeWidth={shape.width ?? outlineWidth}/>
   }
-  const leaf = pose === 'leaf' || pose === 'evening'
+  const leaf = pose === 'evening'
   const lookX = leaf ? 5 : pose === 'afternoon' || pose === 'morning' ? -5 : 0
   return <g strokeLinecap="round" strokeLinejoin="round">
     {['footLeft','footRight','tuft','body','shine','belly','bellyDimple','cheekLeft','cheekRight'].map(part)}
-    {pose === 'map' ? part('eyesHappy') : <g transform={`translate(${lookX} ${pose === 'night' ? 3 : 0})`}>
+    <g transform={`translate(${lookX} ${pose === 'night' ? 3 : 0})`}>
       <g className="records-art__gaze">
-        <g transform={pose === 'star' ? 'translate(9 2)' : undefined}>{part('eyeLeft')}{part('eyeShineLeft')}</g>
-        <g transform={pose === 'star' ? 'translate(-9 2)' : undefined}>{part('eyeRight')}{part('eyeShineRight')}</g>
+        {part('eyeLeft')}{part('eyeShineLeft')}
+        {part('eyeRight')}{part('eyeShineRight')}
       </g>
-    </g>}
-    {pose === 'map' ? <>{part('mouthHappy')}{part('tongue')}</> : part('mouth')}
+    </g>
+    {part('mouth')}
     {leaf ? <>
       {part('armLeftPaused')}
       <g className="records-art__leaf-hand">
         <g transform="translate(170 81) rotate(26) scale(1.55)"><PressedLeaf/></g>
         <path d="M168 107Q164 98 164 94Q163 87 158 88C151 91 151 103 158 112Q165 117 170 111" fill={palette.body} stroke={palette.outline} strokeWidth="1.5"/>
       </g>
-    </> : pose === 'night' || pose === 'map' ? <g className="records-art__book-hands">
-      {pose === 'night'
-        ? <g transform="translate(81 121) scale(1.08 .92)"><OpenBook/></g>
-        : <g transform="translate(121 136) rotate(-5) scale(2.4 1.65)"><ChairMap/></g>}
+    </> : pose === 'night' ? <g className="records-art__book-hands">
+      <g transform="translate(81 121) scale(1.08 .92)"><OpenBook/></g>
       {part('armLeftPaused')}{part('armRightPaused')}
     </g> : <>
-      <g className="records-art__curtain-hand">{part(pose === 'star' ? 'armLeftHappy' : 'armLeft')}</g>
-      {part(pose === 'star' ? 'armRightPaused' : 'armRight')}
+      <g className="records-art__curtain-hand">{part('armLeft')}</g>
+      {part('armRight')}
     </>}
-    {pose === 'star' && <g transform="translate(121 103) rotate(-14) scale(.82)"><Find story="star"/></g>}
   </g>
 }
 
@@ -146,24 +125,5 @@ export const RecordsGreetingArt = memo(function RecordsGreetingArt({ band, anima
     <g transform="translate(67 7) scale(.67)">
       <g transform={band === 'afternoon' ? 'rotate(-5 120 165)' : undefined}><Creature paint={id} pose={band}/></g>
     </g>
-  </svg>
-})
-
-export const RecordStoryArt = memo(function RecordStoryArt({ storyId, compact = false }: { storyId: RecordStoryId; compact?: boolean }) {
-  const id = `records-story-${useId().replace(/:/g, '')}`
-  if (compact) return <svg className="records-art records-art--token" data-story={storyId} viewBox="-18 -18 36 36" aria-hidden="true" focusable="false">
-    <circle r="17" fill="#f7edd7"/><Find story={storyId}/>
-  </svg>
-  return <svg className="records-art records-art--story" data-story={storyId} viewBox="0 0 152 96" aria-hidden="true" focusable="false">
-    <CompanionPaint id={id}/>
-    <rect x="1" y="1" width="150" height="94" rx="12" fill="#f7edd9"/>
-    <path d="M1 80Q66 77 151 80V83Q151 95 139 95H13Q1 95 1 83Z" fill="#ecd9ba"/>
-    <ellipse cx="62" cy="84" rx="33" ry="3.5" fill="#baaa96" opacity=".6"/>
-    {storyId === 'map' ? <g stroke="#9d8166" strokeWidth="1.6" strokeLinejoin="round">
-      <path d="M111 54Q118 51 128 52L127 67L111 68Z" fill="#a5ba9e"/>
-      <path d="M108 67L127 65L134 69L114 73Z" fill="#d8b38c"/>
-      <path d="M110 70L107 82M130 70L133 82M118 72L117 84" fill="none" strokeWidth="2.8"/>
-    </g> : <g transform="translate(104 67) rotate(-6) scale(.46)"><OpenBook/></g>}
-    <g transform="translate(-4 -4) scale(.53)"><Creature paint={id} pose={storyId}/></g>
   </svg>
 })

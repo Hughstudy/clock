@@ -7,7 +7,7 @@ export interface DurationBounds {
   max: number
 }
 
-export const DECOR_SEEDS = ['logo', 'dial', 'cycle', 'chart', 'underline', 'character'] as const
+export const DECOR_SEEDS = ['chart', 'character'] as const
 export type DecorSeed = (typeof DECOR_SEEDS)[number]
 
 export const POSES = ['idle', 'rice'] as const
@@ -54,10 +54,6 @@ export interface Spec {
     longBreakEvery: number
     soundEnabledDefault: boolean
     completionSoundWindowMs: number
-  }
-  calendar: {
-    /** 0 = Sunday … 6 = Saturday. */
-    weekStartsOn: number
   }
   thoughts: {
     maxLength: number
@@ -226,7 +222,6 @@ export function parseSpec(raw: unknown): Spec {
     PHASES.map((phase) => [phase, bounds(durations[phase], `timer.durationsMinutes.${phase}`)]),
   ) as Record<Phase, DurationBounds>
 
-  const calendar = section(root.calendar, 'calendar')
   const decor = section(root.decor, 'decor')
   const seeds = section(decor.seeds, 'decor.seeds')
   const presentation = section(root.presentation, 'presentation')
@@ -245,9 +240,6 @@ export function parseSpec(raw: unknown): Spec {
       soundEnabledDefault: bool(timer.soundEnabledDefault, 'timer.soundEnabledDefault'),
       completionSoundWindowMs:
         int(timer.completionSoundWindowSeconds, 'timer.completionSoundWindowSeconds', 0) * 1000,
-    },
-    calendar: {
-      weekStartsOn: int(calendar.weekStartsOn, 'calendar.weekStartsOn', 0, 6),
     },
     thoughts: {
       maxLength: int(thoughts.maxLength, 'thoughts.maxLength', 1, 5000),

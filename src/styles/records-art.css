@@ -6,8 +6,6 @@
 }
 
 .records-art--greeting { width: 250px; }
-.records-art--story { width: 152px; }
-.records-art--token { width: 32px; height: 32px; }
 
 .records-switch, .range-chart-labels {
   display: flex;

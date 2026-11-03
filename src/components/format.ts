@@ -43,7 +43,3 @@ export function formatMinutes(ms: number): string {
   if (seconds || total === 0) parts.push(`${seconds} 秒`)
   return parts.join(' ')
 }
-
-export function plural(count: number, one: string, many: string): string {
-  return `${count} ${count === 1 ? one : many}`
-}

@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { addDays, dayHeading, fromDayNumber, isDateKey, shortDate, startOfWeek, toDayNumber, weekday } from './calendar'
-import { groupEntries, indexByDay, rangeTotals, weekTotals } from './stats'
-import { currentStreak } from './streak'
+import { addDays, dayHeading, fromDayNumber, isDateKey, shortDate, toDayNumber, weekday } from './calendar'
+import { groupEntries, indexByDay, rangeTotals } from './stats'
 import type { FocusRecord, Thought } from './types'
 
 describe('calendar keys', () => {
@@ -30,12 +29,8 @@ describe('calendar keys', () => {
     expect(isDateKey(20261028)).toBe(false)
   })
 
-  it('finds weekdays and Monday-based week starts', () => {
+  it('finds weekdays', () => {
     expect(weekday('2026-10-28')).toBe(3) // Wednesday
-    expect(startOfWeek('2026-10-28', 1)).toBe('2026-10-26')
-    expect(startOfWeek('2026-11-01', 1)).toBe('2026-10-26') // Sunday belongs to the previous Monday's week
-    expect(startOfWeek('2026-10-26', 1)).toBe('2026-10-26')
-    expect(startOfWeek('2026-10-28', 0)).toBe('2026-10-25')
   })
 })
 
@@ -74,7 +69,7 @@ describe('stats', () => {
     expect(days.map(day => day.dateKey)).toEqual(['2026-10-26', dateKey])
     expect(days[1]?.entries.map(e => e.kind === 'record' ? e.record.sessionId : e.thought.id)).toEqual(['b', 't', 'a', 'z'])
   })
-  it('groups by recorded date key and totals the local week', () => {
+  it('groups by recorded date key and totals a seven-day range', () => {
     const index = indexByDay([
       record('a', '2026-10-25'), // previous Sunday: outside the week
       record('b', '2026-10-26'),
@@ -83,38 +78,11 @@ describe('stats', () => {
       record('e', '2026-11-01'),
       record('f', '2026-11-02'), // next Monday
     ])
-    const week = weekTotals(index, '2026-10-28', 1)
+    const week = rangeTotals(index, '2026-11-01', 7)
     expect(week.startKey).toBe('2026-10-26')
     expect(week.days.map((d) => d.count)).toEqual([1, 0, 2, 0, 0, 0, 1])
     expect(week.focusMs).toBe((25 + 30 + 25 + 25) * 60_000)
     expect(week.count).toBe(4)
-  })
-})
-
-describe('streak', () => {
-  const index = indexByDay([
-    record('a', '2026-10-24'),
-    record('b', '2026-10-26'),
-    record('c', '2026-10-27'),
-    record('d', '2026-10-27'),
-  ])
-
-  it('keeps yesterday’s streak alive while today is in progress', () => {
-    expect(currentStreak(index, '2026-10-28')).toEqual({ days: 2, includesToday: false })
-  })
-
-  it('counts today once it qualifies', () => {
-    const withToday = indexByDay([record('a', '2026-10-27'), record('b', '2026-10-28')])
-    expect(currentStreak(withToday, '2026-10-28')).toEqual({ days: 2, includesToday: true })
-  })
-
-  it('breaks only after a fully missed day', () => {
-    expect(currentStreak(index, '2026-10-29')).toEqual({ days: 0, includesToday: false })
-  })
-
-  it('crosses month boundaries by calendar day', () => {
-    const days = indexByDay([record('a', '2026-10-30'), record('b', '2026-10-31'), record('c', '2026-11-01')])
-    expect(currentStreak(days, '2026-11-01').days).toBe(3)
   })
 })
 

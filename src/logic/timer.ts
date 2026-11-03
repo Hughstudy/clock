@@ -36,10 +36,6 @@ export function totalMs(timer: TimerState, settings: Settings): number {
   return timer.session ? timer.session.durationMs : phaseDurationMs(settings, timer.phase)
 }
 
-export function isExpired(timer: TimerState, now: number): boolean {
-  return timer.session?.status === 'running' && now >= timer.session.deadline
-}
-
 export function startSession(
   timer: TimerState,
   settings: Settings,
@@ -138,17 +134,4 @@ export function expireSession(
     }
   }
   return { timer: { ...timer, phase: 'focus', session: null }, expired }
-}
-
-export interface CycleProgress {
-  /** Focus sessions finished in the current run towards a long break. */
-  done: number
-  total: number
-}
-
-export function cycleProgress(timer: TimerState, longBreakEvery: number): CycleProgress {
-  const inCycle = timer.completedFocusCount % longBreakEvery
-  // While the long break itself is pending or running, the cycle shows as full.
-  const done = timer.phase === 'longBreak' && inCycle === 0 && timer.completedFocusCount > 0 ? longBreakEvery : inCycle
-  return { done, total: longBreakEvery }
 }

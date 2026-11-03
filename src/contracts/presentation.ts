@@ -9,9 +9,3 @@ export { CUE_KINDS, PRESENTATION_CONTRACT, type CompanionView, type CompanionSce
 export type { SceneId, FocusSceneId, RestSceneId } from '../logic/types'
 export type { FeedbackFrame, FeedbackMessage, FeedbackResult } from '../logic/feedback'
 
-/** Callbacks a renderer may forward on a deliberate user action only — never from an animated touch. */
-export interface CompanionCallbacks {
-  requestEncouragement: () => void
-  nextEncouragement: () => void
-  dismissEncouragement: () => void
-}

@@ -1,4 +1,4 @@
-import { addDays, startOfWeek } from './calendar'
+import { addDays } from './calendar'
 import type { FocusRecord, DateKey, Thought } from './types'
 
 export interface DayTotal {
@@ -28,12 +28,6 @@ export interface WeekTotals {
   days: DayTotal[]
   count: number
   focusMs: number
-}
-
-/** Totals for the local calendar week containing `todayKey`. */
-export function weekTotals(index: DayIndex, todayKey: DateKey, weekStartsOn: number): WeekTotals {
-  const startKey = startOfWeek(todayKey, weekStartsOn)
-  return totalsFrom(index, startKey, 7)
 }
 
 export type RangeLength = 7 | 30

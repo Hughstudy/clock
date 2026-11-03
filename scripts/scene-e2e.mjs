@@ -169,11 +169,11 @@ try {
       const settledRevision = completed.revision
       await page.clock.fastForward(4000)
       check('Quiet time schedules no unlock notice or claim write',
-        !(await page.locator('.companion-feedback__content').getByText(/伙伴有了新活动/).isVisible()) &&
+        !(await page.getByText(/伙伴有了新活动/).isVisible()) &&
         (await readSaved(page)).data.revision === settledRevision)
       await page.reload()
       check('Reload never replays an ending or access notice',
-        !(await page.locator('.companion-feedback__content').getByText(/伙伴有了新活动/).isVisible()) && await sceneAttribute(page, 'phase') === 'idle')
+        !(await page.getByText(/伙伴有了新活动/).isVisible()) && await sceneAttribute(page, 'phase') === 'idle')
     }
   }
   check('Four full focus sessions still suggest a long break', (await readSaved(page)).data.timer.phase === 'longBreak')
@@ -188,7 +188,7 @@ try {
   await second.clock.install({ time: new Date(await page.evaluate(() => Date.now())) })
   await second.goto(appUrl)
   check('Another tab agrees on the running scene without an entrance', await sceneAttribute(second, '') === finalScene && await sceneAttribute(second, 'phase') === 'idle')
-  check('Another tab has no scene-access notices', !(await second.locator('.companion-feedback__content').getByText(/伙伴有了新活动/).isVisible()))
+  check('Another tab has no scene-access notices', !(await second.getByText(/伙伴有了新活动/).isVisible()))
   await second.close()
   await page.bringToFront()
 

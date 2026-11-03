@@ -72,11 +72,6 @@ export function weekday(key: DateKey): number {
   return (((toDayNumber(key) + 4) % 7) + 7) % 7
 }
 
-export function startOfWeek(key: DateKey, weekStartsOn: number): DateKey {
-  const offset = (weekday(key) - weekStartsOn + 7) % 7
-  return addDays(key, -offset)
-}
-
 const WEEKDAYS = ['周日', '周一', '周二', '周三', '周四', '周五', '周六']
 
 /** `11月1日`, with the year only when it differs from `todayKey`'s. */
