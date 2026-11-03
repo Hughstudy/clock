@@ -51,7 +51,7 @@ describe('C2-P3 presentation fixtures', () => {
   it('keeps the recorded time factual alongside encouragement for every ending', () => {
     for (const name of ['ended-elapsed', 'ended-early', 'ended-zero'] as const) {
       const f = fixtures.find((x) => x.name === name)!
-      expect(f.feedback.frame.status.result).toBe(true)
+      expect(f.feedback.frame.status.id).toMatch(/^UI3[01]$/)
     }
     expect(fixtures.find((x) => x.name === 'ended-early')!.feedback.frame.status.text).toContain('3分钟20秒')
   })

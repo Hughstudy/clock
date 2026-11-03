@@ -48,8 +48,6 @@ export function feedbackContext(snapshot: AppSnapshot, persistence: FeedbackCont
     phase: snapshot.timer.phase === 'focus' ? 'focus' : 'break',
     status: snapshot.timer.session?.status ?? 'ready',
     persistence,
-    initialized: true,
-    history: snapshot.records.length ? 'nonempty' : 'empty',
     participationSaved: persistence === 'saved' && event?.sessionId !== undefined &&
       snapshot.participations.some(p => p.sessionId === event.sessionId),
   }

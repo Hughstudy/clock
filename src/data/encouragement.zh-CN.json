@@ -2,208 +2,8 @@
   "schemaVersion": 1,
   "copyVersion": "prd-v3-r7",
   "reviewStatus": "candidate",
-  "source": "产品PRD v3 第7.10节，文档修订7",
+  "source": "产品PRD v3 第7.10节，文档修订7；此处只保留应用已使用的文案，其余见 docs/handoff-20261102/番茄钟_产品PRD_v35.md",
   "entries": [
-    {
-      "id": "WEL01",
-      "pool": "WEL",
-      "text": "很高兴见到你，先做一点也很好。",
-      "level": "light",
-      "states": [
-        "focus-ready",
-        "break-ready"
-      ],
-      "requiredFacts": [
-        "initialized",
-        "firstVisit"
-      ],
-      "tags": [
-        "presence"
-      ],
-      "copyVersion": "prd-v3-r7",
-      "collectible": true,
-      "reviewStatus": "candidate"
-    },
-    {
-      "id": "WEL02",
-      "pool": "WEL",
-      "text": "你好，这里可以按你的节奏来。",
-      "level": "light",
-      "states": [
-        "focus-ready",
-        "break-ready"
-      ],
-      "requiredFacts": [
-        "initialized",
-        "firstVisit"
-      ],
-      "tags": [
-        "autonomy"
-      ],
-      "copyVersion": "prd-v3-r7",
-      "collectible": true,
-      "reviewStatus": "candidate"
-    },
-    {
-      "id": "WEL03",
-      "pool": "WEL",
-      "text": "先选一个舒服的时长吧。",
-      "level": "light",
-      "states": [
-        "focus-ready",
-        "break-ready"
-      ],
-      "requiredFacts": [
-        "initialized",
-        "firstVisit"
-      ],
-      "tags": [
-        "presence"
-      ],
-      "copyVersion": "prd-v3-r7",
-      "collectible": true,
-      "reviewStatus": "candidate"
-    },
-    {
-      "id": "WEL04",
-      "pool": "WEL",
-      "text": "从你想做的那一小步开始就好。",
-      "level": "light",
-      "states": [
-        "focus-ready",
-        "break-ready"
-      ],
-      "requiredFacts": [
-        "initialized",
-        "firstVisit"
-      ],
-      "tags": [
-        "small-step"
-      ],
-      "copyVersion": "prd-v3-r7",
-      "collectible": true,
-      "reviewStatus": "candidate"
-    },
-    {
-      "id": "WEL05",
-      "pool": "WEL",
-      "text": "给眼前这件事，留一小段时间吧。",
-      "level": "light",
-      "states": [
-        "focus-ready",
-        "break-ready"
-      ],
-      "requiredFacts": [
-        "initialized",
-        "firstVisit"
-      ],
-      "tags": [
-        "patience"
-      ],
-      "copyVersion": "prd-v3-r7",
-      "collectible": true,
-      "reviewStatus": "candidate"
-    },
-    {
-      "id": "RET01",
-      "pool": "RET",
-      "text": "欢迎回来，从现在这一刻开始就好。",
-      "level": "light",
-      "states": [
-        "focus-ready",
-        "break-ready"
-      ],
-      "requiredFacts": [
-        "initialized",
-        "returnVisit"
-      ],
-      "tags": [
-        "return"
-      ],
-      "copyVersion": "prd-v3-r7",
-      "collectible": true,
-      "reviewStatus": "candidate"
-    },
-    {
-      "id": "RET02",
-      "pool": "RET",
-      "text": "见到你真好，今天也按你的节奏来。",
-      "level": "light",
-      "states": [
-        "focus-ready",
-        "break-ready"
-      ],
-      "requiredFacts": [
-        "initialized",
-        "returnVisit"
-      ],
-      "tags": [
-        "autonomy"
-      ],
-      "copyVersion": "prd-v3-r7",
-      "collectible": true,
-      "reviewStatus": "candidate"
-    },
-    {
-      "id": "RET03",
-      "pool": "RET",
-      "text": "这一回，想从哪一小步开始？",
-      "level": "light",
-      "states": [
-        "focus-ready",
-        "break-ready"
-      ],
-      "requiredFacts": [
-        "initialized",
-        "returnVisit"
-      ],
-      "tags": [
-        "small-step"
-      ],
-      "copyVersion": "prd-v3-r7",
-      "collectible": true,
-      "reviewStatus": "candidate"
-    },
-    {
-      "id": "RET04",
-      "pool": "RET",
-      "text": "新的这一段，选个舒服的时长吧。",
-      "level": "light",
-      "states": [
-        "focus-ready",
-        "break-ready"
-      ],
-      "requiredFacts": [
-        "initialized",
-        "returnVisit"
-      ],
-      "tags": [
-        "presence"
-      ],
-      "copyVersion": "prd-v3-r7",
-      "collectible": true,
-      "reviewStatus": "candidate"
-    },
-    {
-      "id": "RET05",
-      "pool": "RET",
-      "text": "欢迎，接下来想做的事可以慢慢选。",
-      "level": "light",
-      "states": [
-        "focus-ready",
-        "break-ready"
-      ],
-      "requiredFacts": [
-        "initialized",
-        "returnVisit"
-      ],
-      "tags": [
-        "patience"
-      ],
-      "copyVersion": "prd-v3-r7",
-      "collectible": true,
-      "reviewStatus": "candidate"
-    },
     {
       "id": "STA01",
       "pool": "STA",
@@ -220,7 +20,6 @@
         "small-step"
       ],
       "copyVersion": "prd-v3-r7",
-      "collectible": true,
       "reviewStatus": "candidate"
     },
     {
@@ -239,7 +38,6 @@
         "small-step"
       ],
       "copyVersion": "prd-v3-r7",
-      "collectible": true,
       "reviewStatus": "candidate"
     },
     {
@@ -258,7 +56,6 @@
         "small-step"
       ],
       "copyVersion": "prd-v3-r7",
-      "collectible": true,
       "reviewStatus": "candidate"
     },
     {
@@ -277,7 +74,6 @@
         "patience"
       ],
       "copyVersion": "prd-v3-r7",
-      "collectible": true,
       "reviewStatus": "candidate"
     },
     {
@@ -296,7 +92,6 @@
         "small-step"
       ],
       "copyVersion": "prd-v3-r7",
-      "collectible": true,
       "reviewStatus": "candidate"
     },
     {
@@ -314,7 +109,6 @@
         "autonomy"
       ],
       "copyVersion": "prd-v3-r7",
-      "collectible": true,
       "reviewStatus": "candidate"
     },
     {
@@ -332,7 +126,6 @@
         "rest"
       ],
       "copyVersion": "prd-v3-r7",
-      "collectible": true,
       "reviewStatus": "candidate"
     },
     {
@@ -350,7 +143,6 @@
         "presence"
       ],
       "copyVersion": "prd-v3-r7",
-      "collectible": true,
       "reviewStatus": "candidate"
     },
     {
@@ -368,7 +160,6 @@
         "autonomy"
       ],
       "copyVersion": "prd-v3-r7",
-      "collectible": true,
       "reviewStatus": "candidate"
     },
     {
@@ -386,7 +177,6 @@
         "autonomy"
       ],
       "copyVersion": "prd-v3-r7",
-      "collectible": true,
       "reviewStatus": "candidate"
     },
     {
@@ -404,7 +194,6 @@
         "return"
       ],
       "copyVersion": "prd-v3-r7",
-      "collectible": true,
       "reviewStatus": "candidate"
     },
     {
@@ -422,7 +211,6 @@
         "rest"
       ],
       "copyVersion": "prd-v3-r7",
-      "collectible": true,
       "reviewStatus": "candidate"
     },
     {
@@ -440,7 +228,6 @@
         "return"
       ],
       "copyVersion": "prd-v3-r7",
-      "collectible": true,
       "reviewStatus": "candidate"
     },
     {
@@ -458,7 +245,6 @@
         "autonomy"
       ],
       "copyVersion": "prd-v3-r7",
-      "collectible": true,
       "reviewStatus": "candidate"
     },
     {
@@ -476,7 +262,6 @@
         "patience"
       ],
       "copyVersion": "prd-v3-r7",
-      "collectible": true,
       "reviewStatus": "candidate"
     },
     {
@@ -496,7 +281,6 @@
         "patience"
       ],
       "copyVersion": "prd-v3-r7",
-      "collectible": true,
       "reviewStatus": "candidate"
     },
     {
@@ -516,7 +300,6 @@
         "presence"
       ],
       "copyVersion": "prd-v3-r7",
-      "collectible": true,
       "reviewStatus": "candidate"
     },
     {
@@ -536,7 +319,6 @@
         "presence"
       ],
       "copyVersion": "prd-v3-r7",
-      "collectible": true,
       "reviewStatus": "candidate"
     },
     {
@@ -556,7 +338,6 @@
         "presence"
       ],
       "copyVersion": "prd-v3-r7",
-      "collectible": true,
       "reviewStatus": "candidate"
     },
     {
@@ -576,7 +357,6 @@
         "autonomy"
       ],
       "copyVersion": "prd-v3-r7",
-      "collectible": true,
       "reviewStatus": "candidate"
     },
     {
@@ -597,7 +377,6 @@
         "small-step"
       ],
       "copyVersion": "prd-v3-r7",
-      "collectible": true,
       "reviewStatus": "candidate"
     },
     {
@@ -618,7 +397,6 @@
         "small-step"
       ],
       "copyVersion": "prd-v3-r7",
-      "collectible": true,
       "reviewStatus": "candidate"
     },
     {
@@ -639,7 +417,6 @@
         "autonomy"
       ],
       "copyVersion": "prd-v3-r7",
-      "collectible": true,
       "reviewStatus": "candidate"
     },
     {
@@ -660,7 +437,6 @@
         "small-step"
       ],
       "copyVersion": "prd-v3-r7",
-      "collectible": true,
       "reviewStatus": "candidate"
     },
     {
@@ -681,7 +457,6 @@
         "autonomy"
       ],
       "copyVersion": "prd-v3-r7",
-      "collectible": true,
       "reviewStatus": "candidate"
     },
     {
@@ -705,7 +480,6 @@
         "stored"
       ],
       "copyVersion": "prd-v3-r7",
-      "collectible": true,
       "reviewStatus": "candidate"
     },
     {
@@ -729,7 +503,6 @@
         "autonomy"
       ],
       "copyVersion": "prd-v3-r7",
-      "collectible": true,
       "reviewStatus": "candidate"
     },
     {
@@ -753,7 +526,6 @@
         "stored"
       ],
       "copyVersion": "prd-v3-r7",
-      "collectible": true,
       "reviewStatus": "candidate"
     },
     {
@@ -777,7 +549,6 @@
         "presence"
       ],
       "copyVersion": "prd-v3-r7",
-      "collectible": true,
       "reviewStatus": "candidate"
     },
     {
@@ -801,7 +572,6 @@
         "stored"
       ],
       "copyVersion": "prd-v3-r7",
-      "collectible": true,
       "reviewStatus": "candidate"
     },
     {
@@ -825,7 +595,6 @@
         "stored"
       ],
       "copyVersion": "prd-v3-r7",
-      "collectible": true,
       "reviewStatus": "candidate"
     },
     {
@@ -849,7 +618,6 @@
         "stored"
       ],
       "copyVersion": "prd-v3-r7",
-      "collectible": true,
       "reviewStatus": "candidate"
     },
     {
@@ -873,7 +641,6 @@
         "stored"
       ],
       "copyVersion": "prd-v3-r7",
-      "collectible": true,
       "reviewStatus": "candidate"
     },
     {
@@ -897,7 +664,6 @@
         "stored"
       ],
       "copyVersion": "prd-v3-r7",
-      "collectible": true,
       "reviewStatus": "candidate"
     },
     {
@@ -921,102 +687,6 @@
         "rest"
       ],
       "copyVersion": "prd-v3-r7",
-      "collectible": true,
-      "reviewStatus": "candidate"
-    },
-    {
-      "id": "BCK01",
-      "pool": "BCK",
-      "text": "回到这里，慢慢接上就好。",
-      "level": "light",
-      "states": [
-        "focus-running",
-        "focus-paused"
-      ],
-      "requiredFacts": [
-        "returnedToSession"
-      ],
-      "tags": [
-        "return"
-      ],
-      "copyVersion": "prd-v3-r7",
-      "collectible": true,
-      "reviewStatus": "candidate"
-    },
-    {
-      "id": "BCK02",
-      "pool": "BCK",
-      "text": "眼前这一步，还在这里。",
-      "level": "light",
-      "states": [
-        "focus-running",
-        "focus-paused"
-      ],
-      "requiredFacts": [
-        "returnedToSession"
-      ],
-      "tags": [
-        "presence"
-      ],
-      "copyVersion": "prd-v3-r7",
-      "collectible": true,
-      "reviewStatus": "candidate"
-    },
-    {
-      "id": "BCK03",
-      "pool": "BCK",
-      "text": "接下来怎么做，还是你来选。",
-      "level": "light",
-      "states": [
-        "focus-running",
-        "focus-paused"
-      ],
-      "requiredFacts": [
-        "returnedToSession"
-      ],
-      "tags": [
-        "presence"
-      ],
-      "copyVersion": "prd-v3-r7",
-      "collectible": true,
-      "reviewStatus": "candidate"
-    },
-    {
-      "id": "BCK04",
-      "pool": "BCK",
-      "text": "先看眼前这一件就好。",
-      "level": "light",
-      "states": [
-        "focus-running",
-        "focus-paused"
-      ],
-      "requiredFacts": [
-        "returnedToSession"
-      ],
-      "tags": [
-        "presence"
-      ],
-      "copyVersion": "prd-v3-r7",
-      "collectible": true,
-      "reviewStatus": "candidate"
-    },
-    {
-      "id": "BCK05",
-      "pool": "BCK",
-      "text": "好，给自己一点重新接上的时间。",
-      "level": "light",
-      "states": [
-        "focus-running",
-        "focus-paused"
-      ],
-      "requiredFacts": [
-        "returnedToSession"
-      ],
-      "tags": [
-        "return"
-      ],
-      "copyVersion": "prd-v3-r7",
-      "collectible": true,
       "reviewStatus": "candidate"
     },
     {
@@ -1034,7 +704,6 @@
         "rest"
       ],
       "copyVersion": "prd-v3-r7",
-      "collectible": true,
       "reviewStatus": "candidate"
     },
     {
@@ -1052,7 +721,6 @@
         "rest"
       ],
       "copyVersion": "prd-v3-r7",
-      "collectible": true,
       "reviewStatus": "candidate"
     },
     {
@@ -1070,7 +738,6 @@
         "presence"
       ],
       "copyVersion": "prd-v3-r7",
-      "collectible": true,
       "reviewStatus": "candidate"
     },
     {
@@ -1088,7 +755,6 @@
         "presence"
       ],
       "copyVersion": "prd-v3-r7",
-      "collectible": true,
       "reviewStatus": "candidate"
     },
     {
@@ -1106,7 +772,6 @@
         "rest"
       ],
       "copyVersion": "prd-v3-r7",
-      "collectible": true,
       "reviewStatus": "candidate"
     },
     {
@@ -1125,7 +790,6 @@
         "autonomy"
       ],
       "copyVersion": "prd-v3-r7",
-      "collectible": true,
       "reviewStatus": "candidate"
     },
     {
@@ -1144,7 +808,6 @@
         "rest"
       ],
       "copyVersion": "prd-v3-r7",
-      "collectible": true,
       "reviewStatus": "candidate"
     },
     {
@@ -1163,7 +826,6 @@
         "rest"
       ],
       "copyVersion": "prd-v3-r7",
-      "collectible": true,
       "reviewStatus": "candidate"
     },
     {
@@ -1182,7 +844,6 @@
         "autonomy"
       ],
       "copyVersion": "prd-v3-r7",
-      "collectible": true,
       "reviewStatus": "candidate"
     },
     {
@@ -1201,497 +862,6 @@
         "presence"
       ],
       "copyVersion": "prd-v3-r7",
-      "collectible": true,
-      "reviewStatus": "candidate"
-    },
-    {
-      "id": "REV01",
-      "pool": "REV",
-      "text": "每一次开始，都在这里留了一笔。",
-      "level": "light",
-      "states": [
-        "focus-ready",
-        "focus-running",
-        "focus-paused",
-        "break-ready",
-        "break-running",
-        "break-paused"
-      ],
-      "requiredFacts": [
-        "historyReadable",
-        "hasRecords"
-      ],
-      "tags": [
-        "small-step"
-      ],
-      "copyVersion": "prd-v3-r7",
-      "collectible": true,
-      "reviewStatus": "candidate"
-    },
-    {
-      "id": "REV02",
-      "pool": "REV",
-      "text": "这些记录，可以慢慢看。",
-      "level": "light",
-      "states": [
-        "focus-ready",
-        "focus-running",
-        "focus-paused",
-        "break-ready",
-        "break-running",
-        "break-paused"
-      ],
-      "requiredFacts": [
-        "historyReadable",
-        "hasRecords"
-      ],
-      "tags": [
-        "stored"
-      ],
-      "copyVersion": "prd-v3-r7",
-      "collectible": true,
-      "reviewStatus": "candidate"
-    },
-    {
-      "id": "REV03",
-      "pool": "REV",
-      "text": "你的节奏，值得被认真了解。",
-      "level": "light",
-      "states": [
-        "focus-ready",
-        "focus-running",
-        "focus-paused",
-        "break-ready",
-        "break-running",
-        "break-paused"
-      ],
-      "requiredFacts": [
-        "historyReadable",
-        "hasRecords"
-      ],
-      "tags": [
-        "autonomy"
-      ],
-      "copyVersion": "prd-v3-r7",
-      "collectible": true,
-      "reviewStatus": "candidate"
-    },
-    {
-      "id": "REV04",
-      "pool": "REV",
-      "text": "今天想看看哪一段？",
-      "level": "light",
-      "states": [
-        "focus-ready",
-        "focus-running",
-        "focus-paused",
-        "break-ready",
-        "break-running",
-        "break-paused"
-      ],
-      "requiredFacts": [
-        "historyReadable",
-        "hasRecords"
-      ],
-      "tags": [
-        "presence"
-      ],
-      "copyVersion": "prd-v3-r7",
-      "collectible": true,
-      "reviewStatus": "candidate"
-    },
-    {
-      "id": "REV05",
-      "pool": "REV",
-      "text": "这一点一滴，都是你的经历。",
-      "level": "light",
-      "states": [
-        "focus-ready",
-        "focus-running",
-        "focus-paused",
-        "break-ready",
-        "break-running",
-        "break-paused"
-      ],
-      "requiredFacts": [
-        "historyReadable",
-        "hasRecords"
-      ],
-      "tags": [
-        "presence"
-      ],
-      "copyVersion": "prd-v3-r7",
-      "collectible": true,
-      "reviewStatus": "candidate"
-    },
-    {
-      "id": "EMP01",
-      "pool": "EMP",
-      "text": "这里会记下你开启的每一小段。",
-      "level": "light",
-      "states": [
-        "focus-ready",
-        "focus-running",
-        "focus-paused",
-        "break-ready",
-        "break-running",
-        "break-paused"
-      ],
-      "requiredFacts": [
-        "historyReadable",
-        "noRecords"
-      ],
-      "tags": [
-        "stored"
-      ],
-      "copyVersion": "prd-v3-r7",
-      "collectible": true,
-      "reviewStatus": "candidate"
-    },
-    {
-      "id": "EMP02",
-      "pool": "EMP",
-      "text": "第一笔，留给你想开始的时候。",
-      "level": "light",
-      "states": [
-        "focus-ready",
-        "focus-running",
-        "focus-paused",
-        "break-ready",
-        "break-running",
-        "break-paused"
-      ],
-      "requiredFacts": [
-        "historyReadable",
-        "noRecords"
-      ],
-      "tags": [
-        "small-step"
-      ],
-      "copyVersion": "prd-v3-r7",
-      "collectible": true,
-      "reviewStatus": "candidate"
-    },
-    {
-      "id": "EMP03",
-      "pool": "EMP",
-      "text": "想留下记录时，从一小段开始就好。",
-      "level": "light",
-      "states": [
-        "focus-ready",
-        "focus-running",
-        "focus-paused",
-        "break-ready",
-        "break-running",
-        "break-paused"
-      ],
-      "requiredFacts": [
-        "historyReadable",
-        "noRecords"
-      ],
-      "tags": [
-        "stored"
-      ],
-      "copyVersion": "prd-v3-r7",
-      "collectible": true,
-      "reviewStatus": "candidate"
-    },
-    {
-      "id": "EMP04",
-      "pool": "EMP",
-      "text": "空白也很自在，什么时候开始由你。",
-      "level": "light",
-      "states": [
-        "focus-ready",
-        "focus-running",
-        "focus-paused",
-        "break-ready",
-        "break-running",
-        "break-paused"
-      ],
-      "requiredFacts": [
-        "historyReadable",
-        "noRecords"
-      ],
-      "tags": [
-        "autonomy"
-      ],
-      "copyVersion": "prd-v3-r7",
-      "collectible": true,
-      "reviewStatus": "candidate"
-    },
-    {
-      "id": "EMP05",
-      "pool": "EMP",
-      "text": "慢慢来，这里有地方放你的记录。",
-      "level": "light",
-      "states": [
-        "focus-ready",
-        "focus-running",
-        "focus-paused",
-        "break-ready",
-        "break-running",
-        "break-paused"
-      ],
-      "requiredFacts": [
-        "historyReadable",
-        "noRecords"
-      ],
-      "tags": [
-        "stored"
-      ],
-      "copyVersion": "prd-v3-r7",
-      "collectible": true,
-      "reviewStatus": "candidate"
-    },
-    {
-      "id": "MEM01",
-      "pool": "MEM",
-      "text": "这一份，记着你愿意开始的时刻。",
-      "level": "light",
-      "states": [
-        "focus-ready",
-        "focus-running",
-        "focus-paused",
-        "break-ready",
-        "break-running",
-        "break-paused"
-      ],
-      "requiredFacts": [
-        "mementoSaved",
-        "explicitView"
-      ],
-      "tags": [
-        "small-step"
-      ],
-      "copyVersion": "prd-v3-r7",
-      "collectible": true,
-      "reviewStatus": "candidate"
-    },
-    {
-      "id": "MEM02",
-      "pool": "MEM",
-      "text": "把这次开始，留作一个小纪念。",
-      "level": "light",
-      "states": [
-        "focus-ready",
-        "focus-running",
-        "focus-paused",
-        "break-ready",
-        "break-running",
-        "break-paused"
-      ],
-      "requiredFacts": [
-        "mementoSaved",
-        "explicitView"
-      ],
-      "tags": [
-        "stored"
-      ],
-      "copyVersion": "prd-v3-r7",
-      "collectible": true,
-      "reviewStatus": "candidate"
-    },
-    {
-      "id": "MEM03",
-      "pool": "MEM",
-      "text": "给刚才的自己，留一点可爱的记忆。",
-      "level": "light",
-      "states": [
-        "focus-ready",
-        "focus-running",
-        "focus-paused",
-        "break-ready",
-        "break-running",
-        "break-paused"
-      ],
-      "requiredFacts": [
-        "mementoSaved",
-        "explicitView"
-      ],
-      "tags": [
-        "return"
-      ],
-      "copyVersion": "prd-v3-r7",
-      "collectible": true,
-      "reviewStatus": "candidate"
-    },
-    {
-      "id": "MEM04",
-      "pool": "MEM",
-      "text": "这一小份，是这次开始留下的印记。",
-      "level": "light",
-      "states": [
-        "focus-ready",
-        "focus-running",
-        "focus-paused",
-        "break-ready",
-        "break-running",
-        "break-paused"
-      ],
-      "requiredFacts": [
-        "mementoSaved",
-        "explicitView"
-      ],
-      "tags": [
-        "small-step"
-      ],
-      "copyVersion": "prd-v3-r7",
-      "collectible": true,
-      "reviewStatus": "candidate"
-    },
-    {
-      "id": "MEM05",
-      "pool": "MEM",
-      "text": "以后翻到它，还能看看这一段。",
-      "level": "light",
-      "states": [
-        "focus-ready",
-        "focus-running",
-        "focus-paused",
-        "break-ready",
-        "break-running",
-        "break-paused"
-      ],
-      "requiredFacts": [
-        "mementoSaved",
-        "explicitView"
-      ],
-      "tags": [
-        "presence"
-      ],
-      "copyVersion": "prd-v3-r7",
-      "collectible": true,
-      "reviewStatus": "candidate"
-    },
-    {
-      "id": "NEW01",
-      "pool": "NEW",
-      "text": "有一份新内容，放进你的收藏了。",
-      "level": "light",
-      "states": [
-        "focus-ready",
-        "focus-running",
-        "focus-paused",
-        "break-ready",
-        "break-running",
-        "break-paused"
-      ],
-      "requiredFacts": [
-        "rewardApproved",
-        "rewardContentReady",
-        "rewardSaved",
-        "quietRewardMoment"
-      ],
-      "tags": [
-        "stored"
-      ],
-      "copyVersion": "prd-v3-r7",
-      "collectible": true,
-      "reviewStatus": "candidate"
-    },
-    {
-      "id": "NEW02",
-      "pool": "NEW",
-      "text": "送你一点新鲜感，喜欢时再打开看看。",
-      "level": "light",
-      "states": [
-        "focus-ready",
-        "focus-running",
-        "focus-paused",
-        "break-ready",
-        "break-running",
-        "break-paused"
-      ],
-      "requiredFacts": [
-        "rewardApproved",
-        "rewardContentReady",
-        "rewardSaved",
-        "quietRewardMoment"
-      ],
-      "tags": [
-        "presence"
-      ],
-      "copyVersion": "prd-v3-r7",
-      "collectible": true,
-      "reviewStatus": "candidate"
-    },
-    {
-      "id": "NEW03",
-      "pool": "NEW",
-      "text": "收藏里，多了一点新的小趣味。",
-      "level": "light",
-      "states": [
-        "focus-ready",
-        "focus-running",
-        "focus-paused",
-        "break-ready",
-        "break-running",
-        "break-paused"
-      ],
-      "requiredFacts": [
-        "rewardApproved",
-        "rewardContentReady",
-        "rewardSaved",
-        "quietRewardMoment"
-      ],
-      "tags": [
-        "stored"
-      ],
-      "copyVersion": "prd-v3-r7",
-      "collectible": true,
-      "reviewStatus": "candidate"
-    },
-    {
-      "id": "NEW04",
-      "pool": "NEW",
-      "text": "这一份小惊喜，已经替你收好了。",
-      "level": "light",
-      "states": [
-        "focus-ready",
-        "focus-running",
-        "focus-paused",
-        "break-ready",
-        "break-running",
-        "break-paused"
-      ],
-      "requiredFacts": [
-        "rewardApproved",
-        "rewardContentReady",
-        "rewardSaved",
-        "quietRewardMoment"
-      ],
-      "tags": [
-        "stored"
-      ],
-      "copyVersion": "prd-v3-r7",
-      "collectible": true,
-      "reviewStatus": "candidate"
-    },
-    {
-      "id": "NEW05",
-      "pool": "NEW",
-      "text": "新内容收好了，随时可以看看。",
-      "level": "light",
-      "states": [
-        "focus-ready",
-        "focus-running",
-        "focus-paused",
-        "break-ready",
-        "break-running",
-        "break-paused"
-      ],
-      "requiredFacts": [
-        "rewardApproved",
-        "rewardContentReady",
-        "rewardSaved",
-        "quietRewardMoment"
-      ],
-      "tags": [
-        "stored"
-      ],
-      "copyVersion": "prd-v3-r7",
-      "collectible": true,
       "reviewStatus": "candidate"
     },
     {
@@ -1714,7 +884,6 @@
         "care"
       ],
       "copyVersion": "companion-voice-v1",
-      "collectible": true,
       "reviewStatus": "candidate"
     },
     {
@@ -1737,7 +906,6 @@
         "autonomy"
       ],
       "copyVersion": "companion-voice-v1",
-      "collectible": true,
       "reviewStatus": "candidate"
     },
     {
@@ -1760,7 +928,6 @@
         "patience"
       ],
       "copyVersion": "companion-voice-v1",
-      "collectible": true,
       "reviewStatus": "candidate"
     },
     {
@@ -1783,7 +950,6 @@
         "care"
       ],
       "copyVersion": "companion-voice-v1",
-      "collectible": true,
       "reviewStatus": "candidate"
     },
     {
@@ -1806,7 +972,6 @@
         "patience"
       ],
       "copyVersion": "companion-voice-v1",
-      "collectible": true,
       "reviewStatus": "candidate"
     },
     {
@@ -1829,7 +994,6 @@
         "presence"
       ],
       "copyVersion": "companion-voice-v1",
-      "collectible": true,
       "reviewStatus": "candidate"
     },
     {
@@ -1852,7 +1016,6 @@
         "patience"
       ],
       "copyVersion": "companion-voice-v1",
-      "collectible": true,
       "reviewStatus": "candidate"
     },
     {
@@ -1875,7 +1038,6 @@
         "return"
       ],
       "copyVersion": "companion-voice-v1",
-      "collectible": true,
       "reviewStatus": "candidate"
     },
     {
@@ -1898,7 +1060,6 @@
         "care"
       ],
       "copyVersion": "companion-voice-v1",
-      "collectible": true,
       "reviewStatus": "candidate"
     },
     {
@@ -1921,7 +1082,6 @@
         "care"
       ],
       "copyVersion": "companion-voice-v1",
-      "collectible": true,
       "reviewStatus": "candidate"
     },
     {
@@ -1944,7 +1104,6 @@
         "patience"
       ],
       "copyVersion": "companion-voice-v1",
-      "collectible": true,
       "reviewStatus": "candidate"
     },
     {
@@ -1967,7 +1126,6 @@
         "possibility"
       ],
       "copyVersion": "companion-voice-v1",
-      "collectible": true,
       "reviewStatus": "candidate"
     },
     {
@@ -1990,7 +1148,6 @@
         "care"
       ],
       "copyVersion": "companion-voice-v1",
-      "collectible": true,
       "reviewStatus": "candidate"
     },
     {
@@ -2013,7 +1170,6 @@
         "autonomy"
       ],
       "copyVersion": "companion-voice-v1",
-      "collectible": true,
       "reviewStatus": "candidate"
     },
     {
@@ -2037,7 +1193,6 @@
         "small-step"
       ],
       "copyVersion": "companion-voice-v1",
-      "collectible": true,
       "reviewStatus": "candidate"
     },
     {
@@ -2061,7 +1216,6 @@
         "presence"
       ],
       "copyVersion": "companion-voice-v1",
-      "collectible": true,
       "reviewStatus": "candidate"
     },
     {
@@ -2085,7 +1239,6 @@
         "small-step"
       ],
       "copyVersion": "companion-voice-v1",
-      "collectible": true,
       "reviewStatus": "candidate"
     },
     {
@@ -2109,7 +1262,6 @@
         "small-step"
       ],
       "copyVersion": "companion-voice-v1",
-      "collectible": true,
       "reviewStatus": "candidate"
     },
     {
@@ -2133,7 +1285,6 @@
         "presence"
       ],
       "copyVersion": "companion-voice-v1",
-      "collectible": true,
       "reviewStatus": "candidate"
     },
     {
@@ -2157,7 +1308,6 @@
         "small-step"
       ],
       "copyVersion": "companion-voice-v1",
-      "collectible": true,
       "reviewStatus": "candidate"
     },
     {
@@ -2181,7 +1331,6 @@
         "small-step"
       ],
       "copyVersion": "companion-voice-v1",
-      "collectible": true,
       "reviewStatus": "candidate"
     },
     {
@@ -2205,7 +1354,6 @@
         "presence"
       ],
       "copyVersion": "companion-voice-v1",
-      "collectible": true,
       "reviewStatus": "candidate"
     },
     {
@@ -2229,7 +1377,6 @@
         "care"
       ],
       "copyVersion": "companion-voice-v1",
-      "collectible": true,
       "reviewStatus": "candidate"
     },
     {
@@ -2253,7 +1400,6 @@
         "care"
       ],
       "copyVersion": "companion-voice-v1",
-      "collectible": true,
       "reviewStatus": "candidate"
     },
     {
@@ -2277,7 +1423,6 @@
         "possibility"
       ],
       "copyVersion": "companion-voice-v1",
-      "collectible": true,
       "reviewStatus": "candidate"
     },
     {
@@ -2301,7 +1446,6 @@
         "small-step"
       ],
       "copyVersion": "companion-voice-v1",
-      "collectible": true,
       "reviewStatus": "candidate"
     },
     {
@@ -2325,7 +1469,6 @@
         "possibility"
       ],
       "copyVersion": "companion-voice-v1",
-      "collectible": true,
       "reviewStatus": "candidate"
     },
     {
@@ -2349,7 +1492,6 @@
         "care"
       ],
       "copyVersion": "companion-voice-v1",
-      "collectible": true,
       "reviewStatus": "candidate"
     },
     {
@@ -2373,7 +1515,6 @@
         "return"
       ],
       "copyVersion": "companion-voice-v1",
-      "collectible": true,
       "reviewStatus": "candidate"
     },
     {
@@ -2397,7 +1538,6 @@
         "presence"
       ],
       "copyVersion": "companion-voice-v1",
-      "collectible": true,
       "reviewStatus": "candidate"
     },
     {
@@ -2421,7 +1561,6 @@
         "autonomy"
       ],
       "copyVersion": "companion-voice-v1",
-      "collectible": true,
       "reviewStatus": "candidate"
     },
     {
@@ -2445,7 +1584,6 @@
         "return"
       ],
       "copyVersion": "companion-voice-v1",
-      "collectible": true,
       "reviewStatus": "candidate"
     },
     {
@@ -2469,7 +1607,6 @@
         "patience"
       ],
       "copyVersion": "companion-voice-v1",
-      "collectible": true,
       "reviewStatus": "candidate"
     },
     {
@@ -2493,7 +1630,6 @@
         "autonomy"
       ],
       "copyVersion": "companion-voice-v1",
-      "collectible": true,
       "reviewStatus": "candidate"
     },
     {
@@ -2517,7 +1653,6 @@
         "patience"
       ],
       "copyVersion": "companion-voice-v1",
-      "collectible": true,
       "reviewStatus": "candidate"
     },
     {
@@ -2541,7 +1676,6 @@
         "return"
       ],
       "copyVersion": "companion-voice-v1",
-      "collectible": true,
       "reviewStatus": "candidate"
     },
     {
@@ -2565,7 +1699,6 @@
         "possibility"
       ],
       "copyVersion": "companion-voice-v1",
-      "collectible": true,
       "reviewStatus": "candidate"
     },
     {
@@ -2589,7 +1722,6 @@
         "presence"
       ],
       "copyVersion": "companion-voice-v1",
-      "collectible": true,
       "reviewStatus": "candidate"
     },
     {
@@ -2613,7 +1745,6 @@
         "autonomy"
       ],
       "copyVersion": "companion-voice-v1",
-      "collectible": true,
       "reviewStatus": "candidate"
     },
     {
@@ -2637,7 +1768,6 @@
         "autonomy"
       ],
       "copyVersion": "companion-voice-v1",
-      "collectible": true,
       "reviewStatus": "candidate"
     },
     {
@@ -2661,7 +1791,6 @@
         "care"
       ],
       "copyVersion": "companion-voice-v1",
-      "collectible": true,
       "reviewStatus": "candidate"
     },
     {
@@ -2685,7 +1814,6 @@
         "autonomy"
       ],
       "copyVersion": "companion-voice-v1",
-      "collectible": true,
       "reviewStatus": "candidate"
     },
     {
@@ -2709,7 +1837,6 @@
         "rest"
       ],
       "copyVersion": "companion-voice-v1",
-      "collectible": true,
       "reviewStatus": "candidate"
     },
     {
@@ -2733,7 +1860,6 @@
         "care"
       ],
       "copyVersion": "companion-voice-v1",
-      "collectible": true,
       "reviewStatus": "candidate"
     },
     {
@@ -2757,7 +1883,6 @@
         "patience"
       ],
       "copyVersion": "companion-voice-v1",
-      "collectible": true,
       "reviewStatus": "candidate"
     },
     {
@@ -2781,7 +1906,6 @@
         "autonomy"
       ],
       "copyVersion": "companion-voice-v1",
-      "collectible": true,
       "reviewStatus": "candidate"
     },
     {
@@ -2805,7 +1929,6 @@
         "rest"
       ],
       "copyVersion": "companion-voice-v1",
-      "collectible": true,
       "reviewStatus": "candidate"
     },
     {
@@ -2829,7 +1952,6 @@
         "rest"
       ],
       "copyVersion": "companion-voice-v1",
-      "collectible": true,
       "reviewStatus": "candidate"
     },
     {
@@ -2853,7 +1975,6 @@
         "rest"
       ],
       "copyVersion": "companion-voice-v1",
-      "collectible": true,
       "reviewStatus": "candidate"
     },
     {
@@ -2877,7 +1998,6 @@
         "rest"
       ],
       "copyVersion": "companion-voice-v1",
-      "collectible": true,
       "reviewStatus": "candidate"
     },
     {
@@ -2901,7 +2021,6 @@
         "rest"
       ],
       "copyVersion": "companion-voice-v1",
-      "collectible": true,
       "reviewStatus": "candidate"
     },
     {
@@ -2925,7 +2044,6 @@
         "care"
       ],
       "copyVersion": "companion-voice-v1",
-      "collectible": true,
       "reviewStatus": "candidate"
     },
     {
@@ -2949,7 +2067,6 @@
         "care"
       ],
       "copyVersion": "companion-voice-v1",
-      "collectible": true,
       "reviewStatus": "candidate"
     },
     {
@@ -2973,7 +2090,6 @@
         "presence"
       ],
       "copyVersion": "companion-voice-v1",
-      "collectible": true,
       "reviewStatus": "candidate"
     },
     {
@@ -2997,7 +2113,6 @@
         "rest"
       ],
       "copyVersion": "companion-voice-v1",
-      "collectible": true,
       "reviewStatus": "candidate"
     },
     {
@@ -3021,55 +2136,14 @@
         "possibility"
       ],
       "copyVersion": "companion-voice-v1",
-      "collectible": true,
       "reviewStatus": "candidate"
     }
   ],
   "interfaceCopy": [
     {
-      "id": "UI01",
-      "text": "—",
-      "condition": "v12起不提供该入口。保留编号供旧快照及文案资源对照，不能绑定到时长选择。"
-    },
-    {
-      "id": "UI02",
-      "text": "开始专注",
-      "condition": "按钮旁时间显示当前选值，读屏可补充所选分钟数。显式激活后才开始。"
-    },
-    {
-      "id": "UI03",
-      "text": "暂停专注",
-      "condition": "仅暂停当前专注，保留原会话；休息使用UI46。"
-    },
-    {
-      "id": "UI04",
-      "text": "继续专注",
-      "condition": "只恢复原暂停专注；休息使用UI47。"
-    },
-    {
       "id": "UI05",
       "text": "结束专注",
       "condition": "与暂停／继续同组；只打开结束确认，不使用“结束这段”。"
-    },
-    {
-      "id": "UI06",
-      "text": "确认结束",
-      "condition": "只在“结束本次专注？”确认中执行；按实际时长结算，保存状态另行核对。"
-    },
-    {
-      "id": "UI07",
-      "text": "返回计时",
-      "condition": "返回原状态；原来暂停就继续保持暂停。"
-    },
-    {
-      "id": "UI08",
-      "text": "开始休息",
-      "condition": "旁边展示短／长休息及分钟数。仅切到休息模式时用模式名称。"
-    },
-    {
-      "id": "UI09",
-      "text": "—",
-      "condition": "结束后的准备入口改用UI45。"
     },
     {
       "id": "UI10",
@@ -3085,21 +2159,6 @@
       "id": "UI12",
       "text": "留个标记",
       "condition": "一次点击立即创建空标记，不开键盘；不称为分心计数。"
-    },
-    {
-      "id": "UI13",
-      "text": "补充文字",
-      "condition": "仅绑定可辨的指定条目，打开编辑；不暗中选最近一条。读屏可补“给这条标记补充文字”。"
-    },
-    {
-      "id": "UI14",
-      "text": "想法先放这里",
-      "condition": "不显示“分心原因必填”。"
-    },
-    {
-      "id": "UI15",
-      "text": "想记下什么？",
-      "condition": "新空文字不可正式保存，可关闭；只留空条目走UI12，失败保留实际草稿。"
     },
     {
       "id": "UI16",
@@ -3120,36 +2179,6 @@
       "id": "UI19",
       "text": "给我一句鼓励",
       "condition": "直接显示ASKG，不强制先分类。"
-    },
-    {
-      "id": "UI20",
-      "text": "换一句",
-      "condition": "不耗币、不记分。"
-    },
-    {
-      "id": "UI21",
-      "text": "收藏这句",
-      "condition": "操作成功后才切换收藏状态。"
-    },
-    {
-      "id": "UI22",
-      "text": "已收藏",
-      "condition": "已经收藏的同一句不重复建条目。"
-    },
-    {
-      "id": "UI23",
-      "text": "取消收藏",
-      "condition": "只用于真实存在的主动句子收藏关系；不套到欢迎笺或已获资格。不询问是否舍得角色，不删除专注与故事。"
-    },
-    {
-      "id": "UI24",
-      "text": "我的收藏",
-      "condition": "按内容性质展示主动收藏短句、欢迎笺与确已交付长期内容；每段纪念在原记录／生活场景查看，不新增底部主页面。"
-    },
-    {
-      "id": "UI25",
-      "text": "喜欢的句子和小纪念，可以收在这里。",
-      "condition": "确认收藏可读且为空才使用；静态呈现，不要求收集满，不用于读取失败。"
     },
     {
       "id": "UI26",
@@ -3207,36 +2236,6 @@
       "condition": "不声称用户已经休息好。"
     },
     {
-      "id": "UI37",
-      "text": "这一天没有计时记录。",
-      "condition": "仅说明该日计时，独立想法等内容仍保留；不追加“赶快补上”，未加载或读取失败不得使用。"
-    },
-    {
-      "id": "UI38",
-      "text": "累计计时{elapsed}。",
-      "condition": "依[C.3](#rule-total)取确认已存的结束专注，先毫秒求和再格式化；旁有对应范围及必要待存说明。部分／未知不报完整，更新中不把新范围配旧数字；与真实注意力区分。"
-    },
-    {
-      "id": "UI39",
-      "text": "已加入我的收藏。",
-      "condition": "仅用于真实进入我的收藏的对应内容；生活场景中物件随故事留下不使用本句，也不自动弹领取反馈。"
-    },
-    {
-      "id": "UI40",
-      "text": "当前内容已全部获得。",
-      "condition": "仅在资格规则实际交付时使用；不用于生活场景完成率或催集齐，不预告未制作内容或要求重置。"
-    },
-    {
-      "id": "UI41",
-      "text": "节点鼓励已关闭。",
-      "condition": "成功保存偏好后显示；主动索取仍可用。"
-    },
-    {
-      "id": "UI42",
-      "text": "节点鼓励已开启。",
-      "condition": "不把开启开关当成长或奖励事件。"
-    },
-    {
       "id": "UI43",
       "text": "这一段计时结束了。",
       "condition": "仅在平台支持且用户启用时发送；不带任务、便签或情绪分类。"
@@ -3245,302 +2244,9 @@
       "id": "UI44",
       "text": "休息计时结束了，下一步按你的节奏来。",
       "condition": "不自动启动工作；不使用“该努力了”。"
-    },
-    {
-      "id": "UI45",
-      "text": "准备专注",
-      "condition": "仅回专注准备，可修改时长；点UI02才新开会话，不立即启动。"
-    },
-    {
-      "id": "UI46",
-      "text": "暂停休息",
-      "condition": "只暂停原休息，不改专注或想法。"
-    },
-    {
-      "id": "UI47",
-      "text": "继续休息",
-      "condition": "只继续原休息，不新开专注。"
-    },
-    {
-      "id": "UI48",
-      "text": "结束休息",
-      "condition": "与暂停／继续休息同组；结束后回专注准备，不自动开始。"
-    },
-    {
-      "id": "UI49",
-      "text": "记下想法",
-      "condition": "打开新文字编辑，尚未生成正式条目；已有草稿按A.2处理，不冒充补字。"
-    },
-    {
-      "id": "UI50",
-      "text": "继续草稿",
-      "condition": "仅有可恢复草稿时出现，保持原对象与归属，用户主动进入才开键盘。"
-    },
-    {
-      "id": "UI51",
-      "text": "保存想法",
-      "condition": "提交眼前合法快照，成功前不显示“已保存”；空值与并发按A.2处理。"
-    },
-    {
-      "id": "UI52",
-      "text": "换一种鼓励",
-      "condition": "原位进入类型选择，不自动换句；不使用“按现在的需要选”。"
-    },
-    {
-      "id": "UI53",
-      "text": "收到鼓励了",
-      "condition": "仅关闭整次鼓励阅读并回原入口，不改变收藏、想法、计时或奖励；不记录“已领取”或情绪变化，不改为新的确认流程。"
-    },
-    {
-      "id": "UI54",
-      "text": "返回鼓励",
-      "condition": "取消本次类型选择，回原句与原类别，不重新抽句。"
-    },
-    {
-      "id": "UI55",
-      "text": "日常鼓励",
-      "condition": "对应ASKG，首次请求直接使用；替代“想被支持一下”类别名。"
-    },
-    {
-      "id": "UI56",
-      "text": "开始有点难",
-      "condition": "对应ASKS，只在本次主动选择后使用。"
-    },
-    {
-      "id": "UI57",
-      "text": "刚被打断",
-      "condition": "对应ASKB，只在本次主动选择后使用，不自动暂停。"
-    },
-    {
-      "id": "UI58",
-      "text": "有点累了",
-      "condition": "对应ASKT，只在本次主动选择后使用，不自动开始休息。"
-    },
-    {
-      "id": "UI59",
-      "text": "返回专注",
-      "condition": "仅准备休息时使用；活动休息用UI48，避免以“返回”掩盖结束。"
-    },
-    {
-      "id": "UI60",
-      "text": "结束本次专注？",
-      "condition": "对应UI05打开的确认；确认前到期则撤下旧确认动作并说明已结束。"
-    },
-    {
-      "id": "UI61",
-      "text": "本次将按实际计时时长记录。",
-      "condition": "说明意图，不声称已保存；执行仍按原截止点与保存规则。"
-    },
-    {
-      "id": "UI62",
-      "text": "选择鼓励类型",
-      "condition": "下方显示UI55—58及当前选中状态，退出分别用UI54／UI53。"
-    },
-    {
-      "id": "UI63",
-      "text": "全部记录",
-      "condition": "专注经历与独立想法；不隐含休息历史、日志或草稿正式记录。"
-    },
-    {
-      "id": "UI64",
-      "text": "只看想法",
-      "condition": "正式文字与空标记，含已收起；草稿另有恢复入口。"
-    },
-    {
-      "id": "UI65",
-      "text": "生活场景",
-      "condition": "打开同一间逐渐丰富的小屋，白天／夜晚共享物件事实，不等同于主动收藏句子。"
-    },
-    {
-      "id": "UI66",
-      "text": "查看统计",
-      "condition": "原位展开窗口选择及趋势入口，不自动开趋势。"
-    },
-    {
-      "id": "UI67",
-      "text": "收起统计",
-      "condition": "保留窗口并回紧凑汇总，不清历史。"
-    },
-    {
-      "id": "UI68",
-      "text": "选择月份",
-      "condition": "打开年份和月份选择器，点选月份即关闭选择器并过滤当前列表，未选时关闭不改条件。"
-    },
-    {
-      "id": "UI69",
-      "text": "查看全部日期",
-      "condition": "保留关键词及计时窗口，回当前模式全部日期的第1页。"
-    },
-    {
-      "id": "UI70",
-      "text": "—",
-      "condition": "原“加载更早”不再显示，列表改用UI97／98明确翻页；编号保留且不复用。"
-    },
-    {
-      "id": "UI71",
-      "text": "查看物件",
-      "condition": "按画面区域阅读已有物件与来由，初始布景单独标明，不是物件背包或领取。"
-    },
-    {
-      "id": "UI72",
-      "text": "重新加载",
-      "condition": "只重试当前读取范围，不用于重试保存。"
-    },
-    {
-      "id": "UI73",
-      "text": "搜索想法",
-      "condition": "搜索已保存的正式正文，规则见A.5.7.3。"
-    },
-    {
-      "id": "UI74",
-      "text": "搜索",
-      "condition": "提交眼前查询；中文组合输入未结束时不提交。"
-    },
-    {
-      "id": "UI75",
-      "text": "清除搜索",
-      "condition": "保留当前月份，回该范围未搜索结果的第1页。"
-    },
-    {
-      "id": "UI76",
-      "text": "返回小屋",
-      "condition": "回综合场景及原来源位置，不跳全部记录顶端。"
-    },
-    {
-      "id": "UI77",
-      "text": "查看这次记录",
-      "condition": "打开对应会话只读详情，不改变计时。"
-    },
-    {
-      "id": "UI78",
-      "text": "返回场景",
-      "condition": "回来源物件或故事条目，再可返回小屋。"
-    },
-    {
-      "id": "UI79",
-      "text": "旧故事片段",
-      "condition": "保留可信历史与来源，不伪造物件、日期或获得资格。"
-    },
-    {
-      "id": "UI80",
-      "text": "日期不详的记录",
-      "condition": "与已知月份分开，仍可加载与查看。"
-    },
-    {
-      "id": "UI81",
-      "text": "一些经历，会在小屋里留下痕迹。",
-      "condition": "不承诺每段都新增物件，也不表示用户供养伙伴。"
-    },
-    {
-      "id": "UI82",
-      "text": "这里还没有新的故事痕迹。",
-      "condition": "初始小屋仍完整展示；待保存／读取失败／旧内容不能归属分别说明。"
-    },
-    {
-      "id": "UI83",
-      "text": "这个月还没有记录。",
-      "condition": "保留月份与全部日期入口，非整库为空。"
-    },
-    {
-      "id": "UI84",
-      "text": "没有找到匹配的想法。",
-      "condition": "保留查询与月份，不作为读取失败提示。"
-    },
-    {
-      "id": "UI85",
-      "text": "—",
-      "condition": "页内仅显示部分记录，不再使用“已显示全部记录”；末页以页码及下一页不可用表达。"
-    },
-    {
-      "id": "UI86",
-      "text": "—",
-      "condition": "改用页码及下一页不可用；不将已显示一页说成全部物件。"
-    },
-    {
-      "id": "UI87",
-      "text": "正在加载…",
-      "condition": "当前请求区域显示；保留已读内容，不声称已保存。"
-    },
-    {
-      "id": "UI88",
-      "text": "查看趋势",
-      "condition": "展示同一计时窗口的日趋势，不筛选历史列表。"
-    },
-    {
-      "id": "UI89",
-      "text": "收起趋势",
-      "condition": "仅隐藏趋势，保留窗口和统计模块。"
-    },
-    {
-      "id": "UI90",
-      "text": "白天",
-      "condition": "只切当前回顾画面的背景与光线，物件事实不变。"
-    },
-    {
-      "id": "UI91",
-      "text": "夜晚",
-      "condition": "与白天共享物件、布局与来源，不是另一份收藏。"
-    },
-    {
-      "id": "UI92",
-      "text": "回看故事",
-      "condition": "查看所有可读故事片段，无新物件的经历也保留。"
-    },
-    {
-      "id": "UI93",
-      "text": "—",
-      "condition": "原“查看更多物件”不再显示，物件列表同样用UI97／98按页查看。"
-    },
-    {
-      "id": "UI94",
-      "text": "查看来由",
-      "condition": "打开当前物件的真实状态和相关经历；初始物件不编获得记录。"
-    },
-    {
-      "id": "UI95",
-      "text": "收起这段话",
-      "condition": "只清当前物件选择与小话，不移除物件、不取消收藏，不改变计时。"
-    },
-    {
-      "id": "UI96",
-      "text": "点一个物件，看看伙伴想说什么。",
-      "condition": "静态提示，可忽略；没有未读红点或自动开话，不暗示语音播放。"
-    },
-    {
-      "id": "UI97",
-      "text": "上一页",
-      "condition": "当前条件内读取前一页；第一页不可操作，成功后替换列表。"
-    },
-    {
-      "id": "UI98",
-      "text": "下一页",
-      "condition": "当前条件内读取后一页；可信末页不可操作，成功后替换列表，不追加。"
-    },
-    {
-      "id": "UI99",
-      "text": "第{page}页／共{pages}页",
-      "condition": "来自同条件、同版本的可信总数；未知总数只显示当前页及加载状态，空结果不显示第1／0页。"
     }
   ],
   "errors": [
-    {
-      "id": "ERR01",
-      "text": "这次记录还没保存成功，可以重试。",
-      "suggestedAction": "重试保存",
-      "condition": "仅说明实际失败；内存结果继续保留，不能庆祝已保存。"
-    },
-    {
-      "id": "ERR02",
-      "text": "暂时无法读取历史，可以重试。",
-      "suggestedAction": "重试读取",
-      "condition": "保留原文；不把历史显示为0，不套普通空状态。"
-    },
-    {
-      "id": "ERR03",
-      "text": "这些记录来自更新的版本，更新应用后再试。",
-      "suggestedAction": "查看更新说明",
-      "condition": "只有确认数据版本不受支持时使用；不承诺更新一定成功。"
-    },
     {
       "id": "ERR04",
       "text": "这条想法还没保存成功，文字暂留在当前页面。",
@@ -3552,60 +2258,6 @@
       "text": "这个标记还没记下来，可以重试。",
       "suggestedAction": "重试记录",
       "condition": "重试沿用原ID，不重复计数。"
-    },
-    {
-      "id": "ERR06",
-      "text": "这个文件暂时无法导入，请选择本应用导出的完整备份。",
-      "suggestedAction": "重新选文件",
-      "condition": "仅用于格式或结构校验不通过；未修改现有数据。"
-    },
-    {
-      "id": "ERR07",
-      "text": "备份版本较新，请更新应用后再试。",
-      "suggestedAction": "查看更新说明",
-      "condition": "与无效文件分开，保留待恢复文件。"
-    },
-    {
-      "id": "ERR08",
-      "text": "备份还没生成成功，可以重试。",
-      "suggestedAction": "重新导出",
-      "condition": "不得显示“已备份”或分享不存在的文件。"
-    },
-    {
-      "id": "ERR09",
-      "text": "恢复未完成，原有数据保持不变。",
-      "suggestedAction": "重新尝试",
-      "condition": "仅在验证原数据未改变或回滚成功时使用；状态不明则准确说明无法确认结果。"
-    },
-    {
-      "id": "ERR10",
-      "text": "清理还没完成，暂时无法确认全部删除。",
-      "suggestedAction": "重试清理",
-      "condition": "不称“已全部清空”；不追加角色挽留。"
-    },
-    {
-      "id": "ERR11",
-      "text": "专注时长可以设为1到120之间的整数分钟。",
-      "suggestedAction": "恢复上次值",
-      "condition": "休息时长分别使用自身范围，不能复用120这个上限。"
-    },
-    {
-      "id": "ERR12",
-      "text": "提示音暂时无法播放。",
-      "suggestedAction": "检查声音设置",
-      "condition": "计时状态独立显示；不能在到时后谎称仍在继续，不自动反复响铃。"
-    },
-    {
-      "id": "ERR13",
-      "text": "这份内容还没保存成功，可以重试。",
-      "suggestedAction": "重试保存",
-      "condition": "待发奖励用原ID恢复，不宣布永久获得。"
-    },
-    {
-      "id": "ERR14",
-      "text": "这句话还没收藏成功，可以重试。",
-      "suggestedAction": "重试收藏",
-      "condition": "不提前显示“已收藏”。"
     }
   ],
   "welcomeNote": {

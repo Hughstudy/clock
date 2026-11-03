@@ -6,7 +6,7 @@ import type { AppSnapshot, SceneId } from './types'
 export const PRESENTATION_CONTRACT = 'C2-P3'
 
 /** Semantic results a renderer may react to. No species, asset, reward or ranking identity. */
-export const CUE_KINDS = ['welcome', 'begin', 'pause', 'resume', 'settle', 'rest', 'thought-saved', 'support'] as const
+export const CUE_KINDS = ['begin', 'pause', 'resume', 'settle', 'rest', 'thought-saved', 'support'] as const
 export type CueKind = (typeof CUE_KINDS)[number]
 
 /**
@@ -52,7 +52,7 @@ export interface CompanionView {
 }
 
 const CUES: Partial<Record<FeedbackEvent['kind'], CueKind>> = {
-  welcome: 'welcome', 'focus-started': 'begin', paused: 'pause', resumed: 'resume', 'focus-ended': 'settle',
+  'focus-started': 'begin', paused: 'pause', resumed: 'resume', 'focus-ended': 'settle',
   'break-started': 'rest', 'break-ended': 'settle', 'note-saved': 'thought-saved', 'encouragement-requested': 'support',
 }
 

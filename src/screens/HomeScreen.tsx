@@ -218,8 +218,7 @@ export function HomeScreen({ active, view, result, linkedThoughts, defaultsInten
         </div>
         {spoken && <ShortCompanionMessage text={spoken.text} onRead={target => { setMessage(spoken.text); show('message', target) }} />}
         <div className="fp-art">
-          <CompanionFeedback feedback={companion.feedback} compact reducedMotion={reducedMotion} motionEnabled={!reducedMotion}
-            quietStatus announce={false} hideContent renderCharacter={(presentation, keyboardPat) =>
+          <CompanionFeedback feedback={companion.feedback} reducedMotion={reducedMotion} renderCharacter={(presentation, keyboardPat) =>
               <BlueCompanion presentation={presentation} keyboardPat={keyboardPat} cueId={companion.cue?.id} scene={scene}
                 panelOpen={!!panel} sceneryEnabled={companion.sceneryEnabled} />} />
         </div>
