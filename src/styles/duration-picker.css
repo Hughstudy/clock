@@ -1,0 +1,31 @@
+.home .fp-clock-trigger { color: inherit; background: none; padding: 0 30px; border: 0; font: inherit; letter-spacing: inherit;
+  min-inline-size: 44px; min-block-size: 44px; border-radius: 8px; position: relative; }
+.home .fp-clock-edit { position: absolute; inset-inline-end: 6px; inset-block-start: 50%; transform: translateY(-50%); inline-size: 18px; block-size: 18px; color: var(--muted); }
+.home .fp-duration-surface[data-layout='local'] { inset-inline: 8px; inset-block: var(--picker-top) auto; max-block-size: var(--picker-space);
+  padding: 4px 12px; background: var(--cream); box-shadow: none; border-radius: 16px; }
+.home .fp-duration-surface .focus-panel__header h2 { font-size: .94rem; }
+.home .fp-duration-surface .focus-panel__header { gap: 4px; }
+.home .fp-duration-surface[data-layout='local'] .focus-panel__timer { display: none; }
+.home .duration-ruler { display: grid; grid-template-columns: minmax(0, 1fr); gap: 4px; }
+.home .duration-ruler__frame { position: relative; block-size: 60px; border-radius: 14px; }
+.home .duration-ruler__frame:has(:focus-visible) { outline: 3px solid var(--focus); outline-offset: 1px; }
+.home .duration-ruler__track { display: flex; align-items: flex-start; block-size: 100%; overflow-x: auto; overflow-y: hidden; overscroll-behavior: contain;
+  scroll-snap-type: x mandatory; scrollbar-width: none; touch-action: pan-x; user-select: none; -webkit-user-select: none; cursor: grab; outline: none;
+  mask-image: linear-gradient(90deg, transparent, #000 20%, #000 80%, transparent); }
+.home .duration-ruler__track::-webkit-scrollbar { display: none; }
+.home .duration-ruler__track[data-dragging] { scroll-snap-type: none; cursor: grabbing; }
+.home .duration-ruler__spacer { flex: none; inline-size: calc(50% - 5px); }
+.home .duration-ruler__tick { position: relative; flex: none; inline-size: 10px; block-size: 100%; scroll-snap-align: center; }
+.home .duration-ruler__tick::before { content: ''; position: absolute; inset-block-start: 6px; inset-inline-start: 4px; inline-size: 2px; block-size: 14px;
+  border-radius: 2px; background: var(--cream-line); }
+.home .duration-ruler__tick--major::before { block-size: 24px; background: var(--muted); }
+.home .duration-ruler__tick b { position: absolute; inset-block-start: 34px; inset-inline-start: 50%; transform: translateX(-50%); color: var(--muted);
+  font-size: .75rem; font-weight: 700; font-variant-numeric: tabular-nums; }
+.home .duration-ruler__marker { position: absolute; inset-block-start: 2px; inset-inline-start: 50%; inline-size: 4px; block-size: 32px; margin-inline-start: -2px;
+  border-radius: 4px; background: var(--whale); pointer-events: none; }
+.home .duration-ruler .fp-hint { margin: 0; font-size: .75rem; line-height: 1.3; text-align: center; }
+.home .duration-ruler__footer { display: flex; justify-content: space-between; align-items: center; gap: 10px; color: var(--muted); }
+.home .duration-ruler__footer input { inline-size: 4rem; min-block-size: 44px; font: inherit; font-size: max(1rem,16px);
+  border: 1px solid var(--cream-line); border-radius: 12px; text-align: center; background: var(--paper); color: var(--ink); }
+.home .fp-plate[data-panel='duration'] > :not(.fp-digits):not(.fp-duration-surface) { visibility: hidden; }
+.home .fp-plate[data-panel='duration'] .fp-clock-trigger { pointer-events: none; }

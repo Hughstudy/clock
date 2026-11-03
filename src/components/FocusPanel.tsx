@@ -43,7 +43,11 @@ export function FocusPanel({ title, onClose, onBack = onClose, timerSummary, chi
       const topControls = scene?.querySelector<HTMLElement>(plate ? '.fp-digits' : '.fp-top')?.getBoundingClientRect()
       const localTop = Math.max((topControls?.bottom ?? (box?.top ?? 0) + 64) + (plate ? 4 : 12), top + 8)
       const localBottom = Math.min((box?.bottom ?? 0) - (plate ? 4 : 18), top + height - 8)
-      if (plate) panel.style.setProperty('--dial-space', `${Math.max(0, localBottom - localTop)}px`)
+      if (plate) {
+        panel.style.setProperty('--picker-space', `${Math.max(0, localBottom - localTop)}px`)
+        const digits = scene?.querySelector<HTMLElement>('.fp-digits')
+        if (digits) panel.style.setProperty('--picker-top', `${digits.offsetTop + digits.offsetHeight + 4}px`)
+      }
       // This budget is independent of the panel's own layout, so switching to
       // the wider viewport cannot trigger an endless local/modal resize loop.
       const font = Number.parseFloat(getComputedStyle(document.documentElement).fontSize) || 16

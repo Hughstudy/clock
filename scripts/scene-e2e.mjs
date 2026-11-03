@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict'
-import { prepareMinutes } from './focus-dial-actions.mjs'
+import { prepareMinutes } from './focus-duration-actions.mjs'
 import { mkdtemp, mkdir, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import path from 'node:path'

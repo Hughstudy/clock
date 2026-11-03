@@ -33,7 +33,7 @@ references, preserved in their original language; no cloud register has been
 updated. Maintained local project documentation uses English. This documentation
 preference does not change the application's UI language.
 
-Tap **开始专注** to start the displayed time. Hold it or tap the digits to adjust a one-off length on the dial. Applying the new value returns to preparation. Choose **给我一句鼓励** to hear from the companion in a speech bubble and optionally favorite its words. Reading stays open while the timer changes.
+Tap **开始专注** to start the displayed time. Tap the digits or the pencil to adjust the length on the ruler. Applying the new value returns to preparation. Choose **给我一句鼓励** to hear from the companion in a speech bubble and optionally favorite its words. Reading stays open while the timer changes.
 
 Open **记录 → 生活场景** to find a session by its activity. For example, the paper-boat picture opens the list of saved paper-boat records. The room's furniture is initial scenery. The shelf indexes saved activities and grows by one picture per distinct focus activity.
 

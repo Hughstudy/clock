@@ -1,7 +1,7 @@
 import { focusCopy as copy } from '../data/focus-copy'
 import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react'
 import { EncouragementReader } from '../components/EncouragementReader'
-import { DurationDial } from '../components/DurationDial'
+import { DurationRuler } from '../components/DurationRuler'
 import { ShortCompanionMessage } from '../components/ShortCompanionMessage'
 import { FocusPanel } from '../components/FocusPanel'
 import { formatClock, formatElapsedClock, formatMinutes, PHASE_LABELS, spokenClock } from '../components/format'
@@ -181,8 +181,8 @@ export function HomeScreen({ active, view, result, linkedThoughts, defaultsInten
   const tone = focusResult ? 'done' : paused ? 'paused' : isRest ? 'rest' : 'focus'
 
   const duration = validateDurationDraft(draft, view.focusMinutesRange.min, view.focusMinutesRange.max)
-  const dialAvailable = active && readyFocus && canEdit && !timerPending
-  useEffect(() => { if (!dialAvailable && task === 'duration') setTask(null) }, [task, dialAvailable])
+  const pickerAvailable = active && readyFocus && canEdit && !timerPending
+  useEffect(() => { if (!pickerAvailable && task === 'duration') setTask(null) }, [task, pickerAvailable])
 
   const frame = companion.feedback.frame
   const requested = frame.placement === 'requested' ? frame.encouragement : null
@@ -258,13 +258,13 @@ export function HomeScreen({ active, view, result, linkedThoughts, defaultsInten
       <div className="fp-plate" data-panel={panel ?? ''} data-attention={needsAttention}>
         <p className="fp-digits" {...(ready ? {} : { role: 'timer', 'aria-label': `${PHASE_LABELS[view.phase]}还剩${spokenClock(view.remainingMs)}` })}>
           {readyFocus ? <button type="button" className="fp-clock-trigger" aria-label={`调整专注时长，当前 ${focusMinutes} 分钟`}
-            disabled={!dialAvailable} tabIndex={panel === 'duration' ? -1 : undefined} aria-haspopup="dialog" aria-expanded={panel === 'duration'}
+            disabled={!pickerAvailable} tabIndex={panel === 'duration' ? -1 : undefined} aria-haspopup="dialog" aria-expanded={panel === 'duration'}
             onClick={event => { if (panel !== 'duration') show('duration', event.currentTarget) }}>{panel === 'duration' && duration.ok ? formatClock(duration.minutes * 60000) : digits}
               {panel !== 'duration' && <svg className="fp-clock-edit" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="m5 15-1 5 5-1L20 8l-4-4zM14 6l4 4"/></svg>}</button> : digits}
         </p>
-        {panel === 'duration' && dialAvailable && <FocusPanel title={titles.duration} placement="plate" timerSummary={timerSummary}
+        {panel === 'duration' && pickerAvailable && <FocusPanel title={titles.duration} placement="plate" timerSummary={timerSummary}
           onClose={close} closeLabel={copy.cancel}>
-          <DurationDial draft={draft} minutes={focusMinutes} {...view.focusMinutesRange}
+          <DurationRuler draft={draft} minutes={focusMinutes} {...view.focusMinutesRange}
             onChange={setDraft} onApply={value => { pick(value); close() }} />
           {pending && <p className="fp-hint fp-hint--error">{copy.pending}
             <button type="button" className="text-action" onClick={() => dispatch({ type: 'retrySave' })}>{copy.retry}</button></p>}

@@ -24,18 +24,3 @@ export function validateDurationDraft(draft: string, min: number, max: number): 
   const minutes = Number(text)
   return minutes >= min && minutes <= max ? { ok: true, minutes } : { ok: false, reason: 'range' }
 }
-
-/**
- * The whole minute a dial angle (radians clockwise from twelve) points at, on
- * the lap `current` is already on. Twelve closes a lap, so it reads 60, never 0.
- */
-export function minuteAtDialAngle(angle: number, current: number, min: number, max: number): number {
-  const turn = ((angle / (2 * Math.PI)) % 1 + 1) % 1
-  const lap = Math.floor((Math.max(1, current) - 1) / 60)
-  return Math.max(min, Math.min(max, lap * 60 + (Math.round(turn * 60) || 60)))
-}
-
-/** Travel past either end stays within one lap of it, so the hand rejoins the finger on the way back. */
-export function boundDialTravel(travel: number, min: number, max: number): number {
-  return travel < min - 60 ? travel + 60 : travel > max + 60 ? travel - 60 : travel
-}

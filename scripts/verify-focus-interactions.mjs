@@ -3,8 +3,8 @@ import path from 'node:path'
 import { mkdir, writeFile } from 'node:fs/promises'
 import { chromium } from 'playwright'
 import { build, preview } from 'vite'
-import { focusTime, prepareMinutes } from './focus-dial-actions.mjs'
-import { checkDialGestures } from './check-dial-gestures.mjs'
+import { focusTime, prepareMinutes } from './focus-duration-actions.mjs'
+import { checkDurationRuler } from './check-duration-ruler.mjs'
 import { checkTimerNotices } from './check-timer-notices.mjs'
 
 const output = path.resolve(process.env.FOCUS_REVIEW_OUTPUT || '.preview/v35-interactions')
@@ -278,7 +278,7 @@ try {
   const retried = await snapshot(page)
   check('Retry updates the original thought to B once and retains draft C', retried.thoughts.filter(t => t.text === '回执 B').length === 1 && !retried.thoughts.some(t => t.text === '回执 A') &&
     await editor.inputValue() === '后续草稿 C')
-  await checkDialGestures(browser, url, check)
+  await checkDurationRuler(browser, url, check)
   await checkTimerNotices(browser, url, check)
   check('No runtime or console errors', errors.length === 0)
   await writeFile(path.join(output, 'report.json'), JSON.stringify({ browser: browser.version(), checks, errors }, null, 2))
