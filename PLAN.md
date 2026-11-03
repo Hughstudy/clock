@@ -22,7 +22,7 @@ Earlier approved work remains documented in the [v26 plan](docs/plans/INTERACTIO
 
 | Capability | Current interaction increment | Remaining scope |
 | --- | --- | --- |
-| Focus | 25-minute first-use default, tap to start and hold or tap the digits to adjust. Stable timer controls, separate thought tools and explicit prepare then start | Daily chapter binding and process/world facts |
+| Focus | 25-minute first-use default, tap to start, and tap the digits or pencil to adjust. Stable timer controls, separate thought tools and explicit prepare then start | Daily chapter binding and process/world facts |
 | Encouragement/favorites | Companion speech bubble, inline tools and adaptive reading with contextual Back. Captured quote identity/version/text, persistent favorites and welcome-note reading | Other permanent content requires approved assets and eligibility rules |
 | Thoughts | Formal/draft distinction; continued typing after Save remains the same item; durable original retained on failed edit/delete; all valid deletion undos reachable; whitespace retained | Physical keyboard, assistive-technology and broader restore/clear testing |
 | Records | Four modes; compact optional statistics; saved-only totals; year/month, full formal thought search, 20-item replacement pages, per-mode reading/source context | Persistent cottage, object dialogue and provenance; full v35 story snapshots |

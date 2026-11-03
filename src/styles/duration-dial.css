@@ -1,7 +1,6 @@
-.home .fp-clock-trigger { color: inherit; background: none; padding: 0 4px; border: 0; font: inherit; letter-spacing: inherit;
+.home .fp-clock-trigger { color: inherit; background: none; padding: 0 30px; border: 0; font: inherit; letter-spacing: inherit;
   min-inline-size: 44px; min-block-size: 44px; border-radius: 8px; position: relative; }
-.home .fp-clock-edit { position: absolute; inset-inline-start: 100%; inset-block-start: 50%; transform: translateY(-50%); inline-size: .5em; block-size: .5em; color: var(--muted); }
-.home [data-hold-dial] { touch-action: none; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
+.home .fp-clock-edit { position: absolute; inset-inline-end: 6px; inset-block-start: 50%; transform: translateY(-50%); inline-size: 18px; block-size: 18px; color: var(--muted); }
 .home .fp-duration-surface[data-layout='local'] { inset-inline: 8px; inset-block: auto; margin-block-start: 4px; max-block-size: var(--dial-space);
   padding: 4px 12px; background: var(--cream); box-shadow: none; border-radius: 16px; }
 .home .fp-duration-surface .focus-panel__header h2 { font-size: .94rem; }

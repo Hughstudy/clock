@@ -1,5 +1,5 @@
-import { type PointerEventHandler, type RefObject } from 'react'
 import { focusCopy as copy } from '../data/focus-copy'
+import { useDialGesture } from '../hooks/useDialGesture'
 import { validateDurationDraft } from '../hooks/useDurationChoice'
 import '../styles/duration-dial.css'
 
@@ -8,24 +8,23 @@ interface Props {
   minutes: number
   min: number
   max: number
-  face: RefObject<HTMLDivElement>
-  onDrag: PointerEventHandler<HTMLDivElement>
   onChange: (value: string) => void
   onApply: (value: number) => void
 }
 
-export function DurationDial({ draft, minutes, min, max, face, onDrag, onChange, onApply }: Props) {
+export function DurationDial({ draft, minutes, min, max, onChange, onApply }: Props) {
   const checked = validateDurationDraft(draft, min, max)
   const value = checked.ok ? checked.minutes : minutes
+  const gesture = useDialGesture({ minutes: value, min, max, onPreview: next => onChange(String(next)) })
   const step = (amount: number) => onChange(String(Math.max(min, Math.min(max, value + amount))))
   return <form className="duration-dial" onSubmit={event => {
     event.preventDefault()
     if (checked.ok) onApply(checked.minutes)
   }}>
     <div className="duration-dial__layout">
-      <div ref={face} className="duration-dial__face" data-initial-focus role="slider" tabIndex={0}
+      <div className="duration-dial__face" data-initial-focus role="slider" tabIndex={0}
         aria-label="时长表盘" aria-valuemin={min} aria-valuemax={max} aria-valuenow={value} aria-valuetext={copy.minutes(value)}
-        onPointerDown={onDrag}
+        {...gesture}
         onKeyDown={event => {
           if (['ArrowUp', 'ArrowRight', '+', 'ArrowDown', 'ArrowLeft', '-'].includes(event.key)) {
             event.preventDefault(); step(['ArrowUp', 'ArrowRight', '+'].includes(event.key) ? 1 : -1)

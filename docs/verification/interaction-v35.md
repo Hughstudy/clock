@@ -53,13 +53,15 @@ Generated screenshots/recordings remain ignored local evidence in `.preview/`; n
 After a first-use review, the owner approved five fixes. Banner wording, the dial's lap rule and the ten-second message period are implementation choices within that approval.
 
 - **Timer endings away from Focus:** Records and Settings show a floating notice with the result and save state, offering 「查看结果」 or 「回到专注」 and 「知道了」. It uses the app's single live region, names the ending in the tab title and does not move the page. An ending already seen on Focus is not repeated. A deadline settled first by another tab is reported the same way, including the Focus result; a manual end in another tab is not. A later successful retry updates the announcement as well as the banner. Sound still defaults to off.
-- **Duration hint:** the hint reads 「点时间或长按按钮调时」 and the digits show an edit mark. Holding the start button still opens the dial.
-- **Dial:** touching the face moves the hand to that minute on the current lap, with the top mark as 60. Dragging then follows the finger, crosses twelve into the next lap and rejoins after passing either limit. A hold from the start button still turns relatively, because the finger is not on the face, and it stops at the limit so turning back responds on the first tick.
+- **Adjusting the duration:** the digits show a pencil, and tapping either opens the dial. After review the owner removed the long-press gesture and the text hint, so holding 「开始专注」 just starts the focus on release.
+- **Dial:** touching the face moves the hand to that minute on the current lap, with the top mark as 60. Dragging then follows the finger, crosses twelve into the next lap and rejoins after passing either limit.
 - **Dial position:** the panel now sits directly under the digits. Previously it was anchored to the plate's bottom edge, which put 「用这个时长」 under navigation at 320×568.
 - **Remembered length:** the wording now says a started length carries to the next session, matching `nextFocusMinutes`. The behavior is unchanged.
 - **Stale messages:** thought success text leaves after 10 seconds (`thoughts.statusVisibleSeconds`), but stays while keyboard focus is in the feedback row or status panel. 「撤销标记」 and 「补充文字」 stay until the next thought action or a session change. Undoing a mark keeps a named 「撤销删除：空标记」 on Focus for the ten-minute period; deletions made on Records stay in the Records list. The offline-ready note leaves like the text. Failures stay until resolved. Details appears only for failures, unsaved states and system notices. Favorite status messages are unchanged.
 
 Checks: `scripts/check-timer-notices.mjs` and additions to `scripts/check-dial-gestures.mjs`, run as part of `npm run test:e2e`, with unit tests for the dial mapping. Physical touch devices and screen readers remain unverified.
+
+- **Plate height:** the note tools and feedback share two rows instead of three, returning 48px to the scene at 375×812. 「本段想法」 replaces the 「随手记」 label when a session has thoughts, and 「继续草稿」 moved into the feedback row. Reading an encouragement borrows the feedback row unless something needs attention, so the plate keeps its height.
 
 ## Architecture cleanup (2026-11-03)
 

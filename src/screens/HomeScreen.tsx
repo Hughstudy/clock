@@ -15,7 +15,6 @@ import type { QuoteFavoritesController } from '../contracts/favorites'
 import { uiText } from '../data/ui-copy'
 import type { useFeedback } from '../hooks/companion/useFeedback'
 import { useDurationChoice, validateDurationDraft } from '../hooks/useDurationChoice'
-import { useDialGesture } from '../hooks/useDialGesture'
 import { useFocusTaskBack } from '../hooks/useFocusTaskBack'
 import { useSceneFit } from '../hooks/useSceneFit'
 import type { SessionResult, UserAction } from '../hooks/useClockApp'
@@ -183,12 +182,6 @@ export function HomeScreen({ active, view, result, linkedThoughts, defaultsInten
 
   const duration = validateDurationDraft(draft, view.focusMinutesRange.min, view.focusMinutesRange.max)
   const dialAvailable = active && readyFocus && canEdit && !timerPending
-  const dialGesture = useDialGesture({
-    enabled: dialAvailable, identity: identity + '/' + focusMinutes, task: panel,
-    open: panel === 'duration', minutes: panel === 'duration' && duration.ok ? duration.minutes : focusMinutes,
-    ...view.focusMinutesRange, onOpen: target => show('duration', target), onPreview: value => setDraft(String(value)),
-    onCancel: () => setTask(current => current === 'duration' ? null : current),
-  })
   useEffect(() => { if (!dialAvailable && task === 'duration') setTask(null) }, [task, dialAvailable])
 
   const frame = companion.feedback.frame
@@ -198,6 +191,7 @@ export function HomeScreen({ active, view, result, linkedThoughts, defaultsInten
   useEffect(() => { if (!requested) setAskOpen(false) }, [requested])
   const noteStatus = thoughts.status
   const pending = saveState === 'pending'
+  const needsAttention = pending || noteStatus?.kind === 'error' || !!systemNoticeSummary || saveState === 'memory-only' || saveState === 'read-only'
   const timerSummary = ready ? focusResult ? `${copy.focusElapsed} ${formatMinutes(focusResult.elapsedMs)}` : preparingRest ? `准备休息 · ${restMinutes} 分钟` : `准备专注 · ${focusMinutes} 分钟`
     : `${PHASE_LABELS[view.phase]} · ${paused ? copy.paused : copy.running} · 剩余 ${formatClock(view.remainingMs)}`
   const statusLine = focusResult
@@ -261,7 +255,7 @@ export function HomeScreen({ active, view, result, linkedThoughts, defaultsInten
         </FocusPanel>}
       </div>
 
-      <div className="fp-plate" data-panel={panel ?? ''}>
+      <div className="fp-plate" data-panel={panel ?? ''} data-attention={needsAttention}>
         <p className="fp-digits" {...(ready ? {} : { role: 'timer', 'aria-label': `${PHASE_LABELS[view.phase]}还剩${spokenClock(view.remainingMs)}` })}>
           {readyFocus ? <button type="button" className="fp-clock-trigger" aria-label={`调整专注时长，当前 ${focusMinutes} 分钟`}
             disabled={!dialAvailable} tabIndex={panel === 'duration' ? -1 : undefined} aria-haspopup="dialog" aria-expanded={panel === 'duration'}
@@ -270,13 +264,12 @@ export function HomeScreen({ active, view, result, linkedThoughts, defaultsInten
         </p>
         {panel === 'duration' && dialAvailable && <FocusPanel title={titles.duration} placement="plate" timerSummary={timerSummary}
           onClose={close} closeLabel={copy.cancel}>
-          <DurationDial draft={draft} minutes={focusMinutes} {...view.focusMinutesRange} face={dialGesture.face} onDrag={dialGesture.beginDrag}
+          <DurationDial draft={draft} minutes={focusMinutes} {...view.focusMinutesRange}
             onChange={setDraft} onApply={value => { pick(value); close() }} />
           {pending && <p className="fp-hint fp-hint--error">{copy.pending}
             <button type="button" className="text-action" onClick={() => dispatch({ type: 'retrySave' })}>{copy.retry}</button></p>}
         </FocusPanel>}
         <div className="fp-status">
-          {readyFocus && !editingStep && <small className="fp-hold-hint">{copy.durationHint}</small>}
           {readyFocus && !restEnded ? (editingStep
             ? <input className="fp-step-input" aria-label={uiText('UI10')} placeholder={uiText('UI11')} value={step} autoFocus
                 enterKeyHint="done" aria-invalid={stepTooLong} disabled={!canEdit}
@@ -296,8 +289,7 @@ export function HomeScreen({ active, view, result, linkedThoughts, defaultsInten
         <div className="fp-controls" role="group" aria-label="计时控制">
           {!ready && <div className="fp-progress" aria-hidden="true"><i style={{ width: `${Math.round(Math.min(1, Math.max(0, view.progress)) * 1000) / 10}%` }} /></div>}
           <div className="fp-primary" ref={primaryRef}>
-            <TimerActionButton identity={readyFocus ? identity + '/' + focusMinutes : identity} primary disabled={!canEdit || (readyFocus && stepTooLong)} busy={timerPending} onActivate={primary.run}
-              {...(dialAvailable && panel !== 'duration' ? { onHoldStart: dialGesture.beginHold } : {})}>
+            <TimerActionButton identity={readyFocus ? identity + '/' + focusMinutes : identity} primary disabled={!canEdit || (readyFocus && stepTooLong)} busy={timerPending} onActivate={primary.run}>
               {timerPending ? '正在处理…' : primary.label}</TimerActionButton>
           </div>
           <div className="fp-control-secondary">
@@ -318,24 +310,23 @@ export function HomeScreen({ active, view, result, linkedThoughts, defaultsInten
             {...(favorites ? { favorites } : {})} onNext={companion.next} onChooseMode={() => setAskOpen(true)} onReturn={() => setAskOpen(false)}
             onChoose={pool => { if (pool !== requested.pool) companion.request(pool); setAskOpen(false) }} /> : <>
             <div className="fp-secondary fp-thought-tools" role="group" aria-label="想法工具">
-              <span className="fp-tools-label">随手记</span>
+              {linkedThoughts.length
+                ? <button type="button" className="text-action fp-tools-label" onClick={event => show('thoughts', event.currentTarget)}>{copy.sessionThoughts}（{linkedThoughts.length}）</button>
+                : <span className="fp-tools-label">随手记</span>}
               <button ref={markButton} type="button" className="text-action" disabled={!canEdit}
                 onClick={thoughts.mark} onKeyDown={e => { if (e.repeat && (e.key === 'Enter' || e.key === ' ')) e.preventDefault() }}>
                 <svg width="16" height="16" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6"><path d="M6 4h12v16l-6-4-6 4zM9 9h6m-3-3v6"/></svg>{copy.mark}</button>
               <button type="button" className="text-action" disabled={!canEdit} onClick={e => show('thought', e.currentTarget)}>
                 <svg width="16" height="16" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6"><path d="m5 15-1 5 5-1L20 8l-4-4zM14 6l4 4"/></svg>{copy.write}</button>
             </div>
-            <div className="fp-thought-context">
-              {thoughts.hasDraft && <button type="button" className="text-action" onClick={event => {
-                opener.current = event.currentTarget; companion.dismiss(); setTask(null); thoughts.openNew()
-              }}>{copy.resumeDraft}</button>}
-              {!!linkedThoughts.length && <button type="button" className="text-action" onClick={event => show('thoughts', event.currentTarget)}>{copy.sessionThoughts}（{linkedThoughts.length}）</button>}
-            </div>
           </>}
         </div>
 
         <div className="fp-note" aria-label="想法与保存状态" data-status-actions>
           <span className="fp-note__text">{pending ? copy.pending : noteStatus?.text ?? (saveState === 'memory-only' ? copy.memoryOnly : saveState === 'read-only' ? '当前只读' : systemNoticeSummary ?? '')}</span>
+          {thoughts.hasDraft && <button type="button" className="text-action" onClick={event => {
+            opener.current = event.currentTarget; companion.dismiss(); setTask(null); thoughts.openNew()
+          }}>{copy.resumeDraft}</button>}
           {thoughts.latestMarkerId && <button type="button" className="text-action" disabled={!canEdit}
             onClick={event => edit(thoughts.latestMarkerId!, event.currentTarget)}>{copy.supplement}</button>}
           {thoughts.undo && <button type="button" className="text-action" disabled={!canEdit} onClick={event => {
@@ -344,7 +335,7 @@ export function HomeScreen({ active, view, result, linkedThoughts, defaultsInten
             // The restore button goes once it works; keep keyboard focus on the tool it came from.
             if (undo.removesItself && event.detail === 0) markButton.current?.focus()
           }}>{thoughts.undo.label}</button>}
-          {(pending || noteStatus?.kind === 'error' || systemNoticeSummary || saveState === 'memory-only' || saveState === 'read-only') && <button type="button" className="text-action"
+          {needsAttention && <button type="button" className="text-action"
             aria-label={copy.statusDetails} onClick={event => show('status', event.currentTarget)}>详情</button>}
         </div>
       </div>
