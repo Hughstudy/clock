@@ -14,7 +14,7 @@ interface Options {
 export function useDurationRuler({ value, min, max, onChange }: Options) {
   const track = useRef<HTMLDivElement>(null)
   // The minute the ruler last showed. A scroll reporting it back must not reposition the moving ruler.
-  const shown = useRef<number | null>(null)
+  const shown = useRef(value ?? min)
   const ready = useRef(false)
   const mouse = useRef<{ x: number; start: number; moved: boolean } | null>(null)
   const justDragged = useRef(false)
@@ -42,7 +42,7 @@ export function useDurationRuler({ value, min, max, onChange }: Options) {
     // The panel has no layout on its first render, and resizing can lose the offset.
     const sizes = new ResizeObserver(() => {
       if (!element.clientWidth) return
-      place(shown.current ?? latest.current.value ?? latest.current.min)
+      place(shown.current)
       ready.current = true
     })
     sizes.observe(element)
@@ -50,7 +50,7 @@ export function useDurationRuler({ value, min, max, onChange }: Options) {
       if (Math.abs(event.deltaY) <= Math.abs(event.deltaX) || !event.deltaY) return
       event.preventDefault()
       const current = latest.current
-      const next = Math.max(current.min, Math.min(current.max, (shown.current ?? current.min) + Math.sign(event.deltaY)))
+      const next = Math.max(current.min, Math.min(current.max, shown.current + Math.sign(event.deltaY)))
       place(next)
       current.onChange(next)
     }
@@ -78,7 +78,7 @@ export function useDurationRuler({ value, min, max, onChange }: Options) {
       onChange(next)
     },
     onKeyDown: (event: KeyboardEvent<HTMLElement>) => {
-      const from = shown.current ?? min
+      const from = shown.current
       const targets: Record<string, number> = { ArrowRight: from + 1, ArrowUp: from + 1, '+': from + 1, ArrowLeft: from - 1, ArrowDown: from - 1, '-': from - 1,
         PageUp: from + 5, PageDown: from - 5, Home: min, End: max }
       const target = targets[event.key]
@@ -105,7 +105,7 @@ export function useDurationRuler({ value, min, max, onChange }: Options) {
     onClick: (event: MouseEvent<HTMLElement>) => {
       if (justDragged.current) { justDragged.current = false; return }
       const box = event.currentTarget.getBoundingClientRect()
-      choose((shown.current ?? min) + Math.round((event.clientX - box.left - box.width / 2) / RULER_TICK_PX))
+      choose(shown.current + Math.round((event.clientX - box.left - box.width / 2) / RULER_TICK_PX))
     },
   }
 }
