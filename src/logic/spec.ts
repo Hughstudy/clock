@@ -67,6 +67,8 @@ export interface Spec {
     markCoalesceMs: number
     /** Draft text is written after typing pauses for this long. */
     draftSaveDelayMs: number
+    /** How long a success message and its shortcuts stay in the feedback slot. */
+    statusVisibleMs: number
   }
   decor: {
     roughness: number
@@ -252,6 +254,7 @@ export function parseSpec(raw: unknown): Spec {
       undoPeriodMs: int(thoughts.undoPeriodSeconds, 'thoughts.undoPeriodSeconds', 1, 86_400) * 1000,
       markCoalesceMs: int(thoughts.markCoalesceMs, 'thoughts.markCoalesceMs', 0, 5000),
       draftSaveDelayMs: int(thoughts.draftSaveDelayMs, 'thoughts.draftSaveDelayMs', 0, 10_000),
+      statusVisibleMs: int(thoughts.statusVisibleSeconds, 'thoughts.statusVisibleSeconds', 1, 600) * 1000,
     },
     decor: {
       roughness: positive(decor.roughness, 'decor.roughness'),

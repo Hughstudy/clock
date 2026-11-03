@@ -25,7 +25,7 @@ export function SettingsScreen({ form, canEdit, onBack, systemNoticeSummary, sys
       <form className="card settings-form" aria-label="常用偏好" onSubmit={(e) => e.preventDefault()}>
         <h3 className="card-title">常用偏好</h3>
         <fieldset disabled={!canEdit}>
-          <legend className="card-title">计时时长（分钟）</legend>
+          <legend className="card-title">默认时长（分钟）</legend>
           {form.fields.map((field) => {
             const id = `duration-${field.phase}`
             const errorId = `${id}-error`
@@ -78,7 +78,7 @@ export function SettingsScreen({ form, canEdit, onBack, systemNoticeSummary, sys
           })}
         </fieldset>
 
-        <p className="hint">时长更改从下一段开始生效。单次选择不会改变默认值。</p>
+        <p className="hint">更改从下一段开始生效。专注页调过的时长会沿用到下次；改这里的专注时长或恢复默认后，专注页回到这里的时长。</p>
         <button type="button" className="btn btn-secondary" disabled={!canEdit} onClick={form.restoreDefaults}>
           恢复默认时长
         </button>

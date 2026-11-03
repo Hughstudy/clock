@@ -50,7 +50,7 @@ export function DurationDial({ draft, minutes, min, max, face, onDrag, onChange,
     </div>
     <div className="duration-dial__footer">
       <p id="custom-minutes-hint" className={checked.ok ? 'fp-hint' : 'fp-hint fp-hint--error'}>
-        {checked.ok ? '顺时针增加，一圈 60 分钟' : copy.durationError(min, max)}
+        {checked.ok ? <>{copy.dialHint}<br />{copy.durationKept}</> : copy.durationError(min, max)}
         {!checked.ok && <button type="button" className="text-action" onClick={() => onChange(String(minutes))}>{copy.restoreDuration}</button>}
       </p>
       <button type="submit" className="pill pill--solid" disabled={!checked.ok}>{copy.useDuration}</button>

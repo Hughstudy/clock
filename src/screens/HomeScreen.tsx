@@ -46,7 +46,7 @@ interface Props {
   onSettings: () => void
 }
 
-const titles = { duration: '调这一次的时长', end: copy.endQuestion, thought: copy.write,
+const titles = { duration: copy.durationTitle, end: copy.endQuestion, thought: copy.write,
   thoughts: copy.sessionThoughts, encouragement: copy.encouragementTitle, message: copy.encouragementTitle, status: copy.statusTitle }
 
 /**
@@ -265,7 +265,8 @@ export function HomeScreen({ active, view, result, linkedThoughts, defaultsInten
         <p className="fp-digits" {...(ready ? {} : { role: 'timer', 'aria-label': `${PHASE_LABELS[view.phase]}还剩${spokenClock(view.remainingMs)}` })}>
           {readyFocus ? <button type="button" className="fp-clock-trigger" aria-label={`调整专注时长，当前 ${focusMinutes} 分钟`}
             disabled={!dialAvailable} tabIndex={panel === 'duration' ? -1 : undefined} aria-haspopup="dialog" aria-expanded={panel === 'duration'}
-            onClick={event => { if (panel !== 'duration') show('duration', event.currentTarget) }}>{panel === 'duration' && duration.ok ? formatClock(duration.minutes * 60000) : digits}</button> : digits}
+            onClick={event => { if (panel !== 'duration') show('duration', event.currentTarget) }}>{panel === 'duration' && duration.ok ? formatClock(duration.minutes * 60000) : digits}
+              {panel !== 'duration' && <svg className="fp-clock-edit" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="m5 15-1 5 5-1L20 8l-4-4zM14 6l4 4"/></svg>}</button> : digits}
         </p>
         {panel === 'duration' && dialAvailable && <FocusPanel title={titles.duration} placement="plate" timerSummary={timerSummary}
           onClose={close} closeLabel={copy.cancel}>
@@ -275,7 +276,7 @@ export function HomeScreen({ active, view, result, linkedThoughts, defaultsInten
             <button type="button" className="text-action" onClick={() => dispatch({ type: 'retrySave' })}>{copy.retry}</button></p>}
         </FocusPanel>}
         <div className="fp-status">
-          {readyFocus && !editingStep && <small className="fp-hold-hint">长按开始或点时间调时</small>}
+          {readyFocus && !editingStep && <small className="fp-hold-hint">{copy.durationHint}</small>}
           {readyFocus && !restEnded ? (editingStep
             ? <input className="fp-step-input" aria-label={uiText('UI10')} placeholder={uiText('UI11')} value={step} autoFocus
                 enterKeyHint="done" aria-invalid={stepTooLong} disabled={!canEdit}
@@ -333,12 +334,12 @@ export function HomeScreen({ active, view, result, linkedThoughts, defaultsInten
           </>}
         </div>
 
-        <div className="fp-note" aria-label="想法与保存状态">
+        <div className="fp-note" aria-label="想法与保存状态" data-status-actions>
           <span className="fp-note__text">{pending ? copy.pending : noteStatus?.text ?? (saveState === 'memory-only' ? copy.memoryOnly : saveState === 'read-only' ? '当前只读' : systemNoticeSummary ?? '')}</span>
           {thoughts.latestMarkerId && <button type="button" className="text-action" disabled={!canEdit}
             onClick={event => edit(thoughts.latestMarkerId!, event.currentTarget)}>{copy.supplement}</button>}
           {thoughts.undo && <button type="button" className="text-action" disabled={!canEdit} onClick={thoughts.undo.run}>{thoughts.undo.label}</button>}
-          {(pending || noteStatus || systemNoticeSummary || thoughts.undos.length > 0 || saveState === 'memory-only' || saveState === 'read-only') && <button type="button" className="text-action"
+          {(pending || noteStatus?.kind === 'error' || systemNoticeSummary || saveState === 'memory-only' || saveState === 'read-only') && <button type="button" className="text-action"
             aria-label={copy.statusDetails} onClick={event => show('status', event.currentTarget)}>详情</button>}
         </div>
       </div>

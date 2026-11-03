@@ -7,6 +7,7 @@ import { uiText } from '../data/ui-copy'
 import type { ClockApp, ThoughtResult } from './useClockApp'
 import type { AppSnapshot, Thought, ThoughtDraft } from '../logic/types'
 import { isWellFormedUnicode } from '../logic/thoughts'
+import { useStatusExpiry } from './useStatusExpiry'
 
 export interface ThoughtStatus { text: string; kind: 'status' | 'error' }
 
@@ -182,6 +183,12 @@ export function useThoughts(app: ClockApp): Thoughts {
     setSubmission(null)
   }, [receipt, submission, changeEditor, flushDraft])
   const recent = app.thoughtResult
+  // Success leaves its slot once read. A failure stays until it is resolved.
+  const recentKey = recent && [recent.generation, recent.operationId, recent.change, recent.saved].join('/')
+  const canFade = !!recent?.saved && !!recent.change && recent.change !== 'rejected'
+  const [fadedKey, setFadedKey] = useState<string | null>(null)
+  useStatusExpiry(canFade ? recentKey : null, () => setFadedKey(recentKey))
+  const showRecent = recentKey !== fadedKey
 
   const begin = (target?: Thought) => {
     changeEditor(makeEditor(target))
@@ -290,8 +297,8 @@ export function useThoughts(app: ClockApp): Thoughts {
     ? recentTarget : null
   const undoNow = nowMs()
   let undo: Thoughts['undo'] = null
-  if (undoTarget && recent?.change === 'marked') undo = { label: uiText('UI18'), run: () => manage('deleteThought', undoTarget.id, undoTarget.rev) }
-  if (undoTarget?.deletedAt != null && recent?.change === 'deleted' && undoNow >= undoTarget.deletedAt && undoNow - undoTarget.deletedAt < spec.thoughts.undoPeriodMs) {
+  if (showRecent && undoTarget && recent?.change === 'marked') undo = { label: uiText('UI18'), run: () => manage('deleteThought', undoTarget.id, undoTarget.rev) }
+  if (showRecent && undoTarget?.deletedAt != null && recent?.change === 'deleted' && undoNow >= undoTarget.deletedAt && undoNow - undoTarget.deletedAt < spec.thoughts.undoPeriodMs) {
     undo = { label: '撤销删除', run: () => manage('restoreThought', undoTarget.id, undoTarget.rev) }
   }
   const undos = undoCandidates.filter(t => t.deletedAt !== null && undoNow >= t.deletedAt && undoNow - t.deletedAt < spec.thoughts.undoPeriodMs).map(t => ({ id: t.id,
@@ -322,11 +329,11 @@ export function useThoughts(app: ClockApp): Thoughts {
     discardAndSwitch: () => void discardAndSwitch(), cancelSwitch: () => setSwitchTarget(null),
     saveAndSwitch: () => { if (switchTarget) { saveThenSwitch.current = switchTarget; save() } },
     saveAsNew: () => save(true), discard: () => void discard(), reloadLatest,
-    latestMarkerId: recent?.change === 'marked' && undoTarget?.deletedAt === null ? undoTarget.id : null, saving,
+    latestMarkerId: showRecent && recent?.change === 'marked' && undoTarget?.deletedAt === null ? undoTarget.id : null, saving,
     mark: () => dispatch({ type: 'markThought' }), save: () => save(), putAway: id => manage('putAwayThought', id),
     reopen: id => manage('reopenThought', id), remove: id => manage('deleteThought', id), undo, undos, pendingIds,
     retry: () => dispatch({ type: 'retrySave' }),
     status: !validText ? errorStatus('文字中有无法保存的字符，请修正后重试。此页输入仍保留。') : stale ? errorStatus('另一窗口修改了草稿或编辑对象。此页输入仍在，可查看最新内容或另存为新想法。')
-      : newerInput ? { text: '上一版已保存，当前修改仍是草稿。', kind: 'status' } : recent ? statusOf(recent) : null,
+      : newerInput ? { text: '上一版已保存，当前修改仍是草稿。', kind: 'status' } : recent && showRecent ? statusOf(recent) : null,
   }
 }

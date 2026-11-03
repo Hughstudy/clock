@@ -1,4 +1,5 @@
 import { useLayoutEffect, useRef, type PointerEvent as ReactPointerEvent } from 'react'
+import { boundDialTravel, minuteAtDialAngle } from '../logic/prepare'
 
 interface Options {
   enabled: boolean
@@ -21,6 +22,8 @@ interface Press {
   x: number
   y: number
   timer?: number
+  /** Began on the face, so the hand goes to the finger. A hold from the start button only turns it. */
+  onFace: boolean
   dragging: boolean
   angle: number | null
   value: number
@@ -53,15 +56,21 @@ export function useDialGesture(options: Options) {
     const dx = x - box.left - box.width / 2, dy = y - box.top - box.height / 2
     return Math.hypot(dx, dy) < 12 ? null : Math.atan2(dx, -dy)
   }
+  function jump(p: Press, to: number) {
+    const { min, max } = latest.current
+    p.value = minuteAtDialAngle(to, p.value, min, max)
+    latest.current.onPreview(p.value)
+  }
   function begin(event: ReactPointerEvent<HTMLElement>, fromDial: boolean) {
     if (!event.isPrimary || event.button !== 0 || press.current || !latest.current.enabled) return
     const target = event.currentTarget
     const p: Press = { id: event.pointerId, identity: latest.current.identity, task: latest.current.task, target, x: event.clientX, y: event.clientY,
-      dragging: fromDial, angle: null, value: latest.current.minutes }
+      onFace: fromDial, dragging: fromDial, angle: null, value: latest.current.minutes }
     press.current = p
     target.setPointerCapture(p.id)
     if (fromDial) {
       p.angle = angle(p.x, p.y)
+      if (p.angle !== null) jump(p, p.angle)
       return
     }
     p.timer = window.setTimeout(() => {
@@ -89,12 +98,14 @@ export function useDialGesture(options: Options) {
       if (!latest.current.open) return
       const nextAngle = angle(e.clientX, e.clientY)
       const previousAngle = p.angle ?? angle(p.x, p.y)
-      if (nextAngle !== null && previousAngle !== null) {
+      const { min, max } = latest.current
+      if (nextAngle !== null && p.onFace && p.angle === null) jump(p, nextAngle)
+      else if (nextAngle !== null && previousAngle !== null) {
         let delta = nextAngle - previousAngle
         if (delta > Math.PI) delta -= Math.PI * 2
         if (delta < -Math.PI) delta += Math.PI * 2
-        p.value = Math.max(latest.current.min, Math.min(latest.current.max, p.value + delta * 30 / Math.PI))
-        latest.current.onPreview(Math.round(p.value))
+        p.value = boundDialTravel(p.value + delta * 30 / Math.PI, min, max)
+        latest.current.onPreview(Math.max(min, Math.min(max, Math.round(p.value))))
       }
       p.angle = nextAngle
       p.x = e.clientX

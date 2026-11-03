@@ -48,6 +48,19 @@ Persistent cottage/room objects, object dialogue/provenance, authored DAY05+ con
 
 Generated screenshots/recordings remain ignored local evidence in `.preview/`; none are committed. Maintained documentation is English, while supplied snapshots and UI copy retain their original language.
 
+## Interaction review follow-up (2026-11-03)
+
+After a first-use review, the owner approved five fixes. Banner wording, the dial's lap rule and the ten-second message period are implementation choices within that approval.
+
+- **Timer endings away from Focus:** Records and Settings show a floating notice with the result and save state, offering 「查看结果」 or 「回到专注」 and 「知道了」. It uses the app's single live region, names the ending in the tab title and does not move the page. An ending already seen on Focus is not repeated. Sound still defaults to off.
+- **Duration hint:** the hint reads 「点时间可调时长」 and the digits show an edit mark. Holding the start button still opens the dial.
+- **Dial:** touching the face moves the hand to that minute on the current lap, with the top mark as 60. Dragging then follows the finger, crosses twelve into the next lap and rejoins after passing either limit. A hold from the start button still turns relatively, because the finger is not on the face.
+- **Dial position:** the panel now sits directly under the digits. Previously it was anchored to the plate's bottom edge, which put 「用这个时长」 under navigation at 320×568.
+- **Remembered length:** the wording now says a started length carries to the next session, matching `nextFocusMinutes`. The behavior is unchanged.
+- **Stale messages:** thought success messages and their shortcuts leave after 10 seconds (`thoughts.statusVisibleSeconds`), but stay while keyboard focus is on them. The offline-ready note leaves the same way. Failures stay until resolved. Details appears only for failures, unsaved states and system notices. Deletion undo remains available in Records for its ten-minute period. Favorite status messages are unchanged.
+
+Checks: `scripts/check-timer-notices.mjs` and additions to `scripts/check-dial-gestures.mjs`, run as part of `npm run test:e2e`, with unit tests for the dial mapping. Physical touch devices and screen readers remain unverified.
+
 ## Delivery
 
 Integration commit: [`dda7754df87705d21de7c195d7e7a15899b053b4`](https://github.com/Hughstudy/clock/commit/dda7754df87705d21de7c195d7e7a15899b053b4), pushed directly to `main`. Local and remote-tracking main matched, with a clean working tree after that commit.

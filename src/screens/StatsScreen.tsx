@@ -428,7 +428,7 @@ export function StatsScreen({ view, thoughts, canEdit, onEditThought, onContinue
         </section>
       </>}
     </div>
-    {mode !== 'favorites' && <div className="records-feedback">
+    {mode !== 'favorites' && <div className="records-feedback" data-status-actions>
       {thoughts.status?.text}
       {thoughts.status?.kind === 'error' && <button type="button" className="link-button" onClick={thoughts.retry}>重试保存</button>}
       {thoughts.undos.map(undo => <button type="button" key={undo.id} className="link-button" disabled={!canEdit} onClick={undo.run}>{undo.label}</button>)}

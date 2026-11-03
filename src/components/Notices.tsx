@@ -42,7 +42,7 @@ export function Notices({ persistence, notice, saveError, updateReady, offlineRe
   const [dismissed, setDismissed] = useState(false)
   const dismissible = notice?.kind === 'repaired' || notice?.kind === 'unreadable'
   return (
-    <div className={inline ? 'notices notices--inline' : 'notices'}>
+    <div className={inline ? 'notices notices--inline' : 'notices'} data-status-actions>
       {notice && !(dismissible && dismissed && persistence === 'saved') && (
         <div className="notice notice-warn" role="status">
           <p>{storeMessage(notice, persistence)}</p>

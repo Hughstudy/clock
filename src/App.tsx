@@ -4,6 +4,8 @@ import { ThoughtPanel } from './components/ThoughtPanel'
 import { formatClock, PHASE_LABELS } from './components/format'
 import { Notices } from './components/Notices'
 import { TabBar, type Screen } from './components/TabBar'
+import { TimerEndedBanner, timerEndedText } from './components/TimerEndedBanner'
+import { focusCopy } from './data/focus-copy'
 import { useFeedback } from './hooks/companion/useFeedback'
 import { useMotionPreference } from './hooks/companion/useMotionPreference'
 import { useClockApp, type UserAction } from './hooks/useClockApp'
@@ -12,6 +14,7 @@ import { useFocusTaskBack } from './hooks/useFocusTaskBack'
 import { useNow } from './hooks/useNow'
 import { usePwaUpdate } from './hooks/usePwaUpdate'
 import { useSettingsForm } from './hooks/useSettingsForm'
+import { useStatusExpiry } from './hooks/useStatusExpiry'
 import { useThoughts } from './hooks/useThoughts'
 import { useQuoteFavorites } from './hooks/useQuoteFavorites'
 import { useStatsView, useTimerView } from './hooks/useViews'
@@ -77,6 +80,7 @@ export function App() {
   const companion = useFeedback(app, { active: screen === 'home', completedProgress: timerView.completedProgress })
   const motion = useMotionPreference(app.snapshot.settings.motionEnabled)
   const pwa = usePwaUpdate()
+  useStatusExpiry(pwa.offlineReady && !pwa.updateReady ? 'offline-ready' : null, pwa.dismiss)
   const canEdit = app.persistence !== 'read-only'
   const [announcement, setAnnouncement] = useState<{ id: string; text: string; priority: 'polite' | 'assertive' } | null>(null)
   const announcementSequence = useRef(0)
@@ -110,10 +114,23 @@ export function App() {
     finally { setCheckingUpdate(false) }
   }
 
+  // An ending seen on Focus needs no second notice on the other screens.
+  const ended = app.result
+  const [seenEnding, setSeenEnding] = useState<string | null>(null)
+  useEffect(() => { if (screen === 'home') setSeenEnding(ended?.sessionId ?? null) }, [screen, ended?.sessionId])
+  const unseenEnding = ended && screen !== 'home' && seenEnding !== ended.sessionId ? ended : null
+  const unseenEndingId = unseenEnding?.sessionId
+  const unseenEndingText = unseenEnding && timerEndedText(unseenEnding)
+  useEffect(() => {
+    if (unseenEndingId && unseenEndingText) setAnnouncement({ id: `ended-${unseenEndingId}`, text: unseenEndingText, priority: 'polite' })
+  }, [unseenEndingId])
+
   useDocumentTitle(
-    timerView.status === 'ready'
-      ? 'Whale Focus'
-      : `${formatClock(timerView.remainingMs)} · ${PHASE_LABELS[timerView.phase]} — Whale Focus`,
+    timerView.status !== 'ready'
+      ? `${formatClock(timerView.remainingMs)} · ${PHASE_LABELS[timerView.phase]} — Whale Focus`
+      : ended && (screen === 'home' || unseenEnding)
+        ? `${ended.phase === 'focus' ? focusCopy.focusEndedTitle : focusCopy.restEndedTitle} — Whale Focus`
+        : 'Whale Focus',
   )
 
   const systemNoticeSummary = app.notice ? '数据状态需要查看' : app.saveError ? '有更改尚未保存' : pwa.updateReady ? '新版本已准备好' : pwa.offlineReady ? '已准备好离线使用。' : null
@@ -167,6 +184,7 @@ export function App() {
           </>
         )}
       </main>
+      {unseenEnding && <TimerEndedBanner result={unseenEnding} onView={() => setScreen('home')} onDismiss={() => setSeenEnding(unseenEnding.sessionId)} />}
       <TabBar active={screen} onSelect={next => {
         if (next === 'stats' && next !== screen) refresh()
         setScreen(next)

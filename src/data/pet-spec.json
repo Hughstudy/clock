@@ -35,7 +35,8 @@
     "maxLength": 500,
     "undoPeriodSeconds": 600,
     "markCoalesceMs": 800,
-    "draftSaveDelayMs": 600
+    "draftSaveDelayMs": 600,
+    "statusVisibleSeconds": 10
   },
   "decor": {
     "roughness": 1.3,
