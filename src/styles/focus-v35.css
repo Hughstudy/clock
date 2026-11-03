@@ -51,9 +51,7 @@
 .home .focus-panel__body { min-block-size: 0; min-inline-size: 0; overflow-y: auto; overflow-x: hidden; overscroll-behavior: contain; padding: 2px; }
 .home .focus-panel button { min-block-size: 44px; min-inline-size: 44px; }
 .home .focus-panel .fp-end { padding: 0; }
-.home .focus-panel .fp-end .fp-panel-actions { margin-inline: 0; }
-.home .fp-stepper input { min-block-size: 44px; }
-.home .fp-session-list { list-style: none; padding: 0; margin: 0; display: grid; gap: 12px; }
+.home .focus-panel .fp-end .fp-panel-actions { margin-inline: 0; }.home .fp-session-list { list-style: none; padding: 0; margin: 0; display: grid; gap: 12px; }
 .home .fp-session-list li { padding-bottom: 8px; border-bottom: 1px solid var(--line); }
 .home .fp-session-list p, .home .fp-full-message { white-space: pre-wrap; overflow-wrap: anywhere; }
 .home .fp-save-details { display: flex; flex-wrap: wrap; gap: 8px; }

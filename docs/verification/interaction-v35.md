@@ -61,6 +61,17 @@ After a first-use review, the owner approved five fixes. Banner wording, the dia
 
 Checks: `scripts/check-timer-notices.mjs` and additions to `scripts/check-dial-gestures.mjs`, run as part of `npm run test:e2e`, with unit tests for the dial mapping. Physical touch devices and screen readers remain unverified.
 
+## Architecture cleanup (2026-11-03)
+
+After an architecture review, the owner approved a deletion-only pass with no intended behavior change:
+
+- Removed the old whale, rice-bowl, streak, week-total, cycle and story-art code that no live path used, and the unreferenced `scripts/verify-focus-v35.mjs`. The character data stays because the icon test still draws from it.
+- Reduced `CompanionFeedback` to the pat button its one caller used.
+- Removed feedback events, context fields, pools and static placement for welcome, return, records-view, memento and reward features that never fire. The catalog parser now checks structure rather than exact counts, and the copy file holds only text the app uses. All removed text was confirmed present in the PRD v35 snapshot, so those features can restore it when they are built.
+- Removed about 80 CSS rules whose classes are never rendered.
+
+Sixteen app states at 375×812, 320×568 and 1280×800 were compared pixel for pixel against the previous build with a frozen clock and reduced motion. Forty-seven of the 48 screenshots were identical. The remaining one, the running Focus screen at 375×812, also differs intermittently when the old build is compared with itself, so it is rendering noise, not a change. Error states are covered by the browser suite rather than this comparison. Generated screenshots are not committed.
+
 ## Delivery
 
 Integration commit: [`dda7754df87705d21de7c195d7e7a15899b053b4`](https://github.com/Hughstudy/clock/commit/dda7754df87705d21de7c195d7e7a15899b053b4), pushed directly to `main`. Local and remote-tracking main matched, with a clean working tree after that commit.

@@ -29,17 +29,11 @@
   padding-block: .25rem;
   background: var(--paper);
 }
-.record-summary { scroll-margin-block-start: 4rem; }
-.records-range p { margin: .6rem 0; }
-.records-range .stat-value { font-size: 1.35rem; }
-.range-chart-labels { justify-content: space-between; font-size: .8125rem; }
+.record-summary { scroll-margin-block-start: 4rem; }.range-chart-labels { justify-content: space-between; font-size: .8125rem; }
 .record-day h4 { margin: .875rem 0 .25rem; }
 .record-day h4 small { font-weight: 500; color: var(--muted); }
 .record-day .thought-preview { font-size: 1rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .record-day .thought-body { white-space: pre-wrap; font-size: 1rem; color: var(--ink); }
-.records-outside { margin-block-start: 1rem; }
-.records-outside > p { color: var(--muted); font-size: .875rem; }
-
 /* Every base transform is the finished pose. Cancellation and reduced motion
    therefore display the same scene as a completed entrance. */
 @media (prefers-reduced-motion: no-preference) {
