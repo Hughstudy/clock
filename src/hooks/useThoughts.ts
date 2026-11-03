@@ -41,7 +41,7 @@ export interface Thoughts {
   putAway: (thoughtId: string) => void
   reopen: (thoughtId: string) => void
   remove: (thoughtId: string) => void
-  undo: { label: string; run: () => void } | null
+  undo: { label: string; run: () => void; removesItself?: true } | null
   undos: { id: string; label: string; run: () => void }[]
   pendingIds: ReadonlySet<string>
   retry: () => void
@@ -189,6 +189,12 @@ export function useThoughts(app: ClockApp): Thoughts {
   const [fadedKey, setFadedKey] = useState<string | null>(null)
   useStatusExpiry(canFade ? recentKey : null, () => setFadedKey(recentKey))
   const showRecent = recentKey !== fadedKey
+  // Text leaves on a timer. A shortcut stays until the next thought action or session change.
+  const sessionNow = snapshot.timer.session?.id ?? null
+  const shortcutOwner = useRef<{ key: string | null; session: string | null }>({ key: null, session: null })
+  if (shortcutOwner.current.key !== recentKey) shortcutOwner.current = { key: recentKey, session: sessionNow }
+  const shortcutsLive = shortcutOwner.current.session === sessionNow
+  const undoneMarker = useRef<string | null>(null)
 
   const begin = (target?: Thought) => {
     changeEditor(makeEditor(target))
@@ -297,12 +303,16 @@ export function useThoughts(app: ClockApp): Thoughts {
     ? recentTarget : null
   const undoNow = nowMs()
   let undo: Thoughts['undo'] = null
-  if (showRecent && undoTarget && recent?.change === 'marked') undo = { label: uiText('UI18'), run: () => manage('deleteThought', undoTarget.id, undoTarget.rev) }
-  if (showRecent && undoTarget?.deletedAt != null && recent?.change === 'deleted' && undoNow >= undoTarget.deletedAt && undoNow - undoTarget.deletedAt < spec.thoughts.undoPeriodMs) {
-    undo = { label: '撤销删除', run: () => manage('restoreThought', undoTarget.id, undoTarget.rev) }
+  const restoreLabel = (t: Thought) => `撤销删除：${t.text ? Array.from(t.text).slice(0, 16).join('') : '空标记'}`
+  if (shortcutsLive && undoTarget && recent?.change === 'marked') {
+    undo = { label: uiText('UI18'), run: () => { undoneMarker.current = undoTarget.id; manage('deleteThought', undoTarget.id, undoTarget.rev) } }
+  }
+  // Only a mark undone here restores here. Records lists its own deletions.
+  if (undoTarget?.deletedAt != null && undoneMarker.current === undoTarget.id && recent?.change === 'deleted' && undoNow >= undoTarget.deletedAt && undoNow - undoTarget.deletedAt < spec.thoughts.undoPeriodMs) {
+    undo = { label: restoreLabel(undoTarget), removesItself: true, run: () => manage('restoreThought', undoTarget.id, undoTarget.rev) }
   }
   const undos = undoCandidates.filter(t => t.deletedAt !== null && undoNow >= t.deletedAt && undoNow - t.deletedAt < spec.thoughts.undoPeriodMs).map(t => ({ id: t.id,
-      label: `撤销删除：${t.text ? Array.from(t.text).slice(0, 16).join('') : '空标记'}`, run: () => manage('restoreThought', t.id, t.rev) }))
+      label: restoreLabel(t), run: () => manage('restoreThought', t.id, t.rev) }))
   const text = editor?.draft.text ?? ''
   const { length, validText } = useMemo(() => ({ length: Array.from(text).length, validText: isWellFormedUnicode(text) }), [text])
   const durableItem = editor?.draft.thoughtId ? durableById.get(editor.draft.thoughtId) : null
@@ -329,7 +339,7 @@ export function useThoughts(app: ClockApp): Thoughts {
     discardAndSwitch: () => void discardAndSwitch(), cancelSwitch: () => setSwitchTarget(null),
     saveAndSwitch: () => { if (switchTarget) { saveThenSwitch.current = switchTarget; save() } },
     saveAsNew: () => save(true), discard: () => void discard(), reloadLatest,
-    latestMarkerId: showRecent && recent?.change === 'marked' && undoTarget?.deletedAt === null ? undoTarget.id : null, saving,
+    latestMarkerId: shortcutsLive && recent?.change === 'marked' && undoTarget?.deletedAt === null ? undoTarget.id : null, saving,
     mark: () => dispatch({ type: 'markThought' }), save: () => save(), putAway: id => manage('putAwayThought', id),
     reopen: id => manage('reopenThought', id), remove: id => manage('deleteThought', id), undo, undos, pendingIds,
     retry: () => dispatch({ type: 'retrySave' }),

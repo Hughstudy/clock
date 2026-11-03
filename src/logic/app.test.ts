@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { spec } from '../data/spec'
-import { applyAction, reconcile, resolveSessionResult, shouldChime, type ActionContext, type AppAction, type SessionResult } from './app'
+import { applyAction, expiredSessionResult, reconcile, resolveSessionResult, shouldChime, type ActionContext, type AppAction, type SessionResult } from './app'
 import { createSnapshot } from './snapshot'
 import { remainingMs } from './timer'
 import type { AppSnapshot } from './types'
@@ -31,6 +31,24 @@ describe('timer actions', () => {
     expect(resolveSessionResult(result, early, later)).toEqual({ ...result, elapsedMs: 20_000, saved: true })
     expect(resolveSessionResult({ ...result, saved: true }, early, null)).toEqual(result)
     expect(resolveSessionResult(null, early, early)).toBeNull()
+  })
+
+  it('reports a session that expired without this visit, but not one ended by hand', () => {
+    const started = run(createSnapshot(spec), [[T0, { type: 'start', sessionId: 'a', timeZone: 'UTC' }]])
+    const session = started.timer.session!
+    expect(expiredSessionResult(null, started)).toBeNull()
+    expect(expiredSessionResult(session, started)).toBeNull()
+    const expired = reconcile(started, ctx(T0 + session.durationMs + 1), spec).snapshot
+    expect(expiredSessionResult(session, expired)).toEqual({ sessionId: 'a', phase: 'focus', elapsedMs: session.durationMs, saved: false })
+    expect(expiredSessionResult(session, run(started, [[T0 + 10_000, { type: 'end', sessionId: 'a' }]]))).toBeNull()
+  })
+
+  it('reports a rest that expired elsewhere, but not one ended early', () => {
+    const resting = run(createSnapshot(spec), [[T0, { type: 'startBreak', phase: 'shortBreak', sessionId: 'r', timeZone: 'UTC' }]])
+    const session = resting.timer.session!
+    const expired = reconcile(resting, ctx(T0 + session.durationMs + 1), spec).snapshot
+    expect(expiredSessionResult(session, expired)).toEqual({ sessionId: 'r', phase: 'rest', elapsedMs: session.durationMs, saved: false })
+    expect(expiredSessionResult(session, run(resting, [[T0 + 10_000, { type: 'end', sessionId: 'r' }]]))).toBeNull()
   })
   it('uses a paused legacy rest’s remaining time for its result without a scene or a focus record', () => {
     const s = createSnapshot(spec)

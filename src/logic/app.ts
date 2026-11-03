@@ -3,7 +3,7 @@ import { selectScene } from './scenes'
 import type { Spec } from './spec'
 import { canRestore, isLive, isWellFormedUnicode, normalizeStep, purgeExpiredText } from './thoughts'
 import { breakAfterFocus, expireSession, pauseSession, remainingMs, resetSession, resumeSession, skipBreak, startSession } from './timer'
-import type { AppSnapshot, DateKey, FocusRecord, Phase, Settings, Thought, ThoughtDraft } from './types'
+import type { AppSnapshot, DateKey, FocusRecord, Phase, Session, Settings, Thought, ThoughtDraft } from './types'
 import { quoteKey, type FavoriteQuote } from '../contracts/favorites'
 
 export type FavoriteAction = { type: 'setQuoteFavorite'; quote: FavoriteQuote; selected: boolean; expectedRev: number | null; requestedAt: number }
@@ -68,6 +68,20 @@ export function resolveSessionResult(previous: SessionResult | null, current: Ap
   const confirmed = ending(durable)
   const fact = confirmed ?? ending(current)
   return fact ? { ...previous, elapsedMs: fact.elapsedMs, saved: !!confirmed } : null
+}
+
+/**
+ * The ending of a session this visit was showing, when it passed its deadline
+ * without this visit's own command, such as another tab settling it first. A
+ * manual end elsewhere is that person's own action and needs no result here.
+ */
+export function expiredSessionResult(previous: Session | null, current: AppSnapshot): SessionResult | null {
+  if (!previous || current.timer.session?.id === previous.id) return null
+  const record = current.records.find(r => r.sessionId === previous.id)
+  if (record) return record.endReason === 'deadline' ? { sessionId: previous.id, phase: 'focus', elapsedMs: record.elapsedMs, saved: false } : null
+  const rest = current.lastRestEnd
+  return rest?.sessionId === previous.id && rest.elapsedMs >= previous.durationMs
+    ? { sessionId: previous.id, phase: 'rest', elapsedMs: rest.elapsedMs, saved: false } : null
 }
 
 const unchanged = (snapshot: AppSnapshot): Transition => ({ snapshot, completion: null, ended: null, thought: null, changed: false })

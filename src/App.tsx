@@ -122,8 +122,8 @@ export function App() {
   const unseenEndingId = unseenEnding?.sessionId
   const unseenEndingText = unseenEnding && timerEndedText(unseenEnding)
   useEffect(() => {
-    if (unseenEndingId && unseenEndingText) setAnnouncement({ id: `ended-${unseenEndingId}`, text: unseenEndingText, priority: 'polite' })
-  }, [unseenEndingId])
+    if (unseenEndingId && unseenEndingText) setAnnouncement({ id: `ended-${unseenEndingId}-${unseenEndingText}`, text: unseenEndingText, priority: 'polite' })
+  }, [unseenEndingId, unseenEndingText])
 
   useDocumentTitle(
     timerView.status !== 'ready'

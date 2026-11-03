@@ -104,7 +104,9 @@ export function useDialGesture(options: Options) {
         let delta = nextAngle - previousAngle
         if (delta > Math.PI) delta -= Math.PI * 2
         if (delta < -Math.PI) delta += Math.PI * 2
-        p.value = boundDialTravel(p.value + delta * 30 / Math.PI, min, max)
+        const travel = p.value + delta * 30 / Math.PI
+        // On the face the hand waits for the finger to come back. A hold has no such place, so it stops at the limit.
+        p.value = p.onFace ? boundDialTravel(travel, min, max) : Math.max(min, Math.min(max, travel))
         latest.current.onPreview(Math.max(min, Math.min(max, Math.round(p.value))))
       }
       p.angle = nextAngle

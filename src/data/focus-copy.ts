@@ -7,7 +7,7 @@ export const focusCopy = {
   prepareFocus: '准备专注',
   minutes: (minutes: number) => `${minutes} 分钟`,
   target: (minutes: number) => `目标 ${minutes} 分钟`,
-  useDuration: '用这个时长', cancel: '取消', durationTitle: '调专注时长', durationHint: '点时间可调时长',
+  useDuration: '用这个时长', cancel: '取消', durationTitle: '调专注时长', durationHint: '点时间或长按按钮调时',
   dialHint: '点或拖表盘，一圈 60 分钟', durationKept: '开始后，下次沿用这个时长',
   durationError: (min: number, max: number) => `可以设为 ${min} 到 ${max} 之间的整数分钟。`,
   restoreDuration: '恢复上次值',

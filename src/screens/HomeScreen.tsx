@@ -67,6 +67,7 @@ export function HomeScreen({ active, view, result, linkedThoughts, defaultsInten
   const confirming = useRef<string | null>(null)
   const submittedStep = useRef<string | null>(null)
   const primaryRef = useRef<HTMLDivElement>(null)
+  const markButton = useRef<HTMLButtonElement>(null)
   const opener = useRef<HTMLElement | null>(null)
   const previousPanel = useRef<Panel>(null)
 
@@ -246,7 +247,7 @@ export function HomeScreen({ active, view, result, linkedThoughts, defaultsInten
             </details>}
             <ThoughtPanel thoughts={thoughts} canEdit={canEdit} />
           </>}
-          {panel === 'status' && <div className="fp-save-details">
+          {panel === 'status' && <div className="fp-save-details" data-status-actions>
             <p tabIndex={-1} data-initial-focus>{pending ? copy.pending : noteStatus?.text ?? (saveState === 'memory-only' ? '本次更改仅保留在当前页面，关闭后可能丢失。' : saveState === 'read-only' ? '当前数据暂时无法写入。' : '当前没有待处理的保存问题。')}</p>
             {thoughts.latestMarkerId && <button type="button" className="pill pill--soft" disabled={!canEdit}
               onClick={event => edit(thoughts.latestMarkerId!, event.currentTarget)}>{copy.supplement}</button>}
@@ -318,7 +319,7 @@ export function HomeScreen({ active, view, result, linkedThoughts, defaultsInten
             onChoose={pool => { if (pool !== requested.pool) companion.request(pool); setAskOpen(false) }} /> : <>
             <div className="fp-secondary fp-thought-tools" role="group" aria-label="想法工具">
               <span className="fp-tools-label">随手记</span>
-              <button type="button" className="text-action" disabled={!canEdit}
+              <button ref={markButton} type="button" className="text-action" disabled={!canEdit}
                 onClick={thoughts.mark} onKeyDown={e => { if (e.repeat && (e.key === 'Enter' || e.key === ' ')) e.preventDefault() }}>
                 <svg width="16" height="16" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6"><path d="M6 4h12v16l-6-4-6 4zM9 9h6m-3-3v6"/></svg>{copy.mark}</button>
               <button type="button" className="text-action" disabled={!canEdit} onClick={e => show('thought', e.currentTarget)}>
@@ -337,7 +338,12 @@ export function HomeScreen({ active, view, result, linkedThoughts, defaultsInten
           <span className="fp-note__text">{pending ? copy.pending : noteStatus?.text ?? (saveState === 'memory-only' ? copy.memoryOnly : saveState === 'read-only' ? '当前只读' : systemNoticeSummary ?? '')}</span>
           {thoughts.latestMarkerId && <button type="button" className="text-action" disabled={!canEdit}
             onClick={event => edit(thoughts.latestMarkerId!, event.currentTarget)}>{copy.supplement}</button>}
-          {thoughts.undo && <button type="button" className="text-action" disabled={!canEdit} onClick={thoughts.undo.run}>{thoughts.undo.label}</button>}
+          {thoughts.undo && <button type="button" className="text-action" disabled={!canEdit} onClick={event => {
+            const undo = thoughts.undo!
+            undo.run()
+            // The restore button goes once it works; keep keyboard focus on the tool it came from.
+            if (undo.removesItself && event.detail === 0) markButton.current?.focus()
+          }}>{thoughts.undo.label}</button>}
           {(pending || noteStatus?.kind === 'error' || systemNoticeSummary || saveState === 'memory-only' || saveState === 'read-only') && <button type="button" className="text-action"
             aria-label={copy.statusDetails} onClick={event => show('status', event.currentTarget)}>详情</button>}
         </div>

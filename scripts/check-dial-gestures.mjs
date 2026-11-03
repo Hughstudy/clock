@@ -93,6 +93,20 @@ export async function checkDialGestures(browser, url, check) {
     await dial.getByRole('button', { name: '用这个时长' }).click()
     check('Keyboard selection prepares 26 minutes without starting', await page.locator('.fp-digits').innerText() === '26:00' && !await session())
 
+    await page.getByRole('button', { name: /调整专注时长/ }).click()
+    await value.fill('120')
+    await dial.getByRole('button', { name: '用这个时长' }).click()
+    await dial.waitFor({ state: 'hidden' })
+    await touch('touchStart', anchor)
+    await dial.waitFor()
+    for (let i = 0; i <= 20; i++) await touch('touchMove', onRing(origin, r, start + i * Math.PI / 30))
+    check('A hold turned past the maximum stops at 120', await value.inputValue() === '120')
+    await touch('touchMove', onRing(origin, r, start + 19 * Math.PI / 30))
+    await page.waitForTimeout(100) // Chromium delivers the last touch move on the next frame.
+    check('Turning a hold back one tick from the limit gives 119 at once', await value.inputValue() === '119')
+    await touch('touchEnd')
+    await dial.getByRole('button', { name: '取消', exact: true }).click()
+
     const peer = await context.newPage()
     await peer.goto(url)
     await touch('touchStart', anchor)

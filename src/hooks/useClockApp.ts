@@ -7,7 +7,7 @@ import { createChime } from '../adapters/sound'
 import type { Persistence, StoreNotice } from '../adapters/storage'
 import type { SaveState } from '../contracts/focus'
 import { spec } from '../data/spec'
-import { applyAction, resolveSessionResult, shouldChime, type AppAction, type FavoriteAction, type SessionResult, type ThoughtAction, type ThoughtChange } from '../logic/app'
+import { applyAction, expiredSessionResult, resolveSessionResult, shouldChime, type AppAction, type FavoriteAction, type SessionResult, type ThoughtAction, type ThoughtChange } from '../logic/app'
 import { feedbackFromTransition, type AppFeedbackEvent } from '../logic/feedback-host'
 import type { FeedbackEvent } from '../logic/feedback'
 import type { SettingsPatch } from '../logic/settings'
@@ -90,6 +90,7 @@ export function useClockApp(): ClockApp {
   const unconfirmed = useRef(new Map<string, PendingThought>())
   const pending = useRef(new Map<string, Pending>())
   const [result, setResult] = useState<SessionResult | null>(null)
+  const shownSession = useRef(store.snapshot.timer.session)
   const lastMark = useRef<{ at: number; key: string; id: string; inFlight: boolean } | null>(null)
   const generation = useRef(store.snapshot.datasetGeneration)
   const queue = useRef(Promise.resolve())
@@ -144,7 +145,9 @@ export function useClockApp(): ClockApp {
       }
     }
     const ids = store.savedRecordIds
-    setResult(prev => resolveSessionResult(prev, snapshot, stored))
+    const expired = expiredSessionResult(shownSession.current, snapshot)
+    shownSession.current = snapshot.timer.session
+    setResult(prev => resolveSessionResult(expired ?? prev, snapshot, stored))
     const saveError = [...pending.current.values()].at(-1)?.error ?? null
     setView({ snapshot, savedRecordIds: ids, saveError, ...store.status })
     setSaveState(store.status.persistence !== 'saved' ? store.status.persistence : saveError ? 'pending' : 'saved')
