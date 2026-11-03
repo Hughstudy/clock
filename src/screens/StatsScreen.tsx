@@ -113,6 +113,7 @@ export function StatsScreen({ view, thoughts, canEdit, onEditThought, onContinue
   const previousIds = useRef<string[]>([])
   const restorePosition = useRef<Position | null>(null)
   const removedFocus = useRef<string | true | null>(null)
+  const restoredFocus = useRef<{ entry: string; holder: HTMLElement } | null>(null)
   const previousFavorites = useRef<string[]>([])
   const favoriteRestorePosition = useRef<Position | null>(null)
   const favoriteRemovedFocus = useRef<string | true | null>(null)
@@ -212,6 +213,13 @@ export function StatsScreen({ view, thoughts, canEdit, onEditThought, onContinue
       removedFocus.current = null
       const target = [...(list.current?.querySelectorAll<HTMLElement>('[data-entry-id]') ?? [])].find(element => element.dataset.entryId === next)
       ;(target?.querySelector<HTMLElement>('button') ?? screen.current?.querySelector<HTMLElement>('.records-modes [aria-pressed="true"]'))?.focus({ preventScroll: true })
+    }
+    if (restoredFocus.current) {
+      // Only take focus back from where the restore left it, never from somewhere the reader has moved to.
+      const { entry, holder } = restoredFocus.current
+      const target = list.current?.querySelector<HTMLElement>(`[data-entry-id="${CSS.escape(entry)}"] button`)
+      if (document.activeElement !== holder) restoredFocus.current = null
+      else if (target) { restoredFocus.current = null; target.focus({ preventScroll: true }) }
     }
     if (detachedThought && document.activeElement === document.body) list.current?.querySelector<HTMLElement>('.records-detached .record-summary')?.focus({ preventScroll: true })
   }, [result, queryKey])
@@ -431,7 +439,16 @@ export function StatsScreen({ view, thoughts, canEdit, onEditThought, onContinue
     {mode !== 'favorites' && <div className="records-feedback" data-status-actions>
       {thoughts.status?.text}
       {thoughts.status?.kind === 'error' && <button type="button" className="link-button" onClick={thoughts.retry}>重试保存</button>}
-      {thoughts.undos.map(undo => <button type="button" key={undo.id} className="link-button" disabled={!canEdit} onClick={undo.run}>{undo.label}</button>)}
+      {thoughts.undos.map(undo => <button type="button" key={undo.id} className="link-button" disabled={!canEdit} onClick={event => {
+        // The button goes once the restore works, so a keyboard needs somewhere to stay.
+        if (event.detail === 0) {
+          const next = event.currentTarget.nextElementSibling ?? event.currentTarget.previousElementSibling
+          const holder = next instanceof HTMLButtonElement ? next : screen.current?.querySelector<HTMLElement>('.records-modes [aria-pressed="true"]')
+          holder?.focus({ preventScroll: true })
+          if (holder) restoredFocus.current = { entry: `thought:${undo.id}`, holder }
+        }
+        undo.run()
+      }}>{undo.label}</button>)}
     </div>}
     {monthPanel && <FocusTaskDialog title="选择月份" closeLabel="返回记录" onClose={() => setMonthPanel(false)}>
       <label className="records-year">年份<input data-initial-focus inputMode="numeric" type="number" min="1" max="9999" value={year} onChange={event => setYear(event.target.value)} aria-invalid={!validYear} /></label>

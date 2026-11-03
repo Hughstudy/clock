@@ -117,6 +117,29 @@ export async function checkTimerNotices(browser, url, check) {
     await tab('专注').click()
     check('A deletion made on Records offers no restore on Focus', !await note.getByRole('button', { name: /^撤销删除/ }).count())
 
+    await tab('记录').click()
+    const feedback = page.locator('.records-feedback')
+    const undoButtons = feedback.getByRole('button', { name: /^撤销删除/ })
+    await page.locator('.record-summary').first().click()
+    await button('删除这条想法').click()
+    await undoButtons.nth(1).waitFor()
+    const focusIsOnEntry = () => page.evaluate(() => !!document.activeElement.closest('[data-entry-id]'))
+    await undoButtons.first().focus()
+    await page.keyboard.press('Enter')
+    await page.waitForFunction(() => document.querySelectorAll('.records-feedback button').length === 1)
+    await page.waitForFunction(() => !!document.activeElement.closest('[data-entry-id]')).catch(() => {})
+    check('Restoring by keyboard returns focus to the restored thought', await focusIsOnEntry())
+    const first = page.locator('.record-summary').first()
+    if (await first.getAttribute('aria-expanded') !== 'true') await first.click()
+    await button('删除这条想法').click()
+    await undoButtons.nth(1).waitFor()
+    await undoButtons.nth(1).focus()
+    await page.keyboard.press('Enter')
+    await page.waitForFunction(() => document.querySelectorAll('.records-feedback button').length === 1)
+    await page.waitForFunction(() => !!document.activeElement.closest('[data-entry-id]')).catch(() => {})
+    check('Restoring the last listed thought also keeps focus on it', await focusIsOnEntry())
+    await tab('专注').click()
+
     await page.evaluate(() => {
       window.originalSetItem = Storage.prototype.setItem
       Storage.prototype.setItem = function (name, value) {
@@ -128,7 +151,14 @@ export async function checkTimerNotices(browser, url, check) {
     await details.waitFor()
     await page.clock.runFor(10_100)
     check('A failed save stays with its details', await details.isVisible() && (await note.innerText()).trim() !== '')
+    await details.click()
     await page.evaluate(() => { Storage.prototype.setItem = window.originalSetItem })
+    const panelUndo = page.locator('.fp-save-details').getByRole('button', { name: /^撤销/ }).first()
+    await panelUndo.focus()
+    await page.keyboard.press('Enter')
+    await page.waitForTimeout(100)
+    check('An undo in the status panel leaves focus inside the panel', await page.evaluate(() => !!document.activeElement.closest('.focus-panel')))
+    await page.keyboard.press('Escape')
     await page.close()
 
     // Another tab settles the deadline; a save fails and is retried.

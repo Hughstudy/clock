@@ -1,5 +1,5 @@
 import { focusCopy as copy } from '../data/focus-copy'
-import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState, type MouseEvent, type ReactNode } from 'react'
 import { EncouragementReader } from '../components/EncouragementReader'
 import { DurationRuler } from '../components/DurationRuler'
 import { ShortCompanionMessage } from '../components/ShortCompanionMessage'
@@ -154,6 +154,10 @@ export function HomeScreen({ active, view, result, linkedThoughts, defaultsInten
     }
   }, [panel, confirmExpired])
 
+  // An undo button goes once it works, so a keyboard moves to the panel's close button first.
+  const keepPanelFocus = (event: MouseEvent<HTMLElement>) => {
+    if (event.detail === 0) event.currentTarget.closest('.focus-panel')?.querySelector<HTMLElement>('.focus-panel__header button')?.focus({ preventScroll: true })
+  }
   const pick = choice.pick
   const startFocus = (minutes: number) => {
     if (stepTooLong) return
@@ -245,9 +249,9 @@ export function HomeScreen({ active, view, result, linkedThoughts, defaultsInten
             <p tabIndex={-1} data-initial-focus>{pending ? copy.pending : noteStatus?.text ?? (saveState === 'memory-only' ? '本次更改仅保留在当前页面，关闭后可能丢失。' : saveState === 'read-only' ? '当前数据暂时无法写入。' : '当前没有待处理的保存问题。')}</p>
             {thoughts.latestMarkerId && <button type="button" className="pill pill--soft" disabled={!canEdit}
               onClick={event => edit(thoughts.latestMarkerId!, event.currentTarget)}>{copy.supplement}</button>}
-            {thoughts.undo && thoughts.latestMarkerId && <button type="button" className="pill pill--soft" disabled={!canEdit} onClick={thoughts.undo.run}>{thoughts.undo.label}</button>}
+            {thoughts.undo && thoughts.latestMarkerId && <button type="button" className="pill pill--soft" disabled={!canEdit} onClick={event => { keepPanelFocus(event); thoughts.undo!.run() }}>{thoughts.undo.label}</button>}
             {thoughts.undos.map(undo => <button key={undo.id} type="button" className="pill pill--soft"
-              disabled={!canEdit || thoughts.pendingIds.has(undo.id)} onClick={undo.run}>{undo.label}</button>)}
+              disabled={!canEdit || thoughts.pendingIds.has(undo.id)} onClick={event => { keepPanelFocus(event); undo.run() }}>{undo.label}</button>)}
             {systemNotices}
           </div>}
           {pending && <p className="fp-hint fp-hint--error">{copy.pending}
