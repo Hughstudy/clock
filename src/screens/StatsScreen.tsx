@@ -3,6 +3,7 @@ import type { Persistence, StoreNotice } from '../adapters/storage'
 import { FocusTaskDialog } from '../components/FocusTaskDialog'
 import { formatMinutes, PHASE_LABELS } from '../components/format'
 import { RecordEntry } from '../components/RecordEntry'
+import { RecordsRoom, RoomPreview } from '../components/RecordsRoom'
 import { WeekChart } from '../components/WeekChart'
 import { quoteKey, type QuoteFavoritesController } from '../contracts/favorites'
 import { sceneNames } from '../data/scene-copy'
@@ -12,7 +13,8 @@ import { useFocusTaskBack } from '../hooks/useFocusTaskBack'
 import { useHistoryRange, type RecordView, type StatsView } from '../hooks/useViews'
 import { useRecordsQuery, type RecordsMode as Mode, type MonthFilter } from '../hooks/useRecordsQuery'
 import type { RangeLength } from '../logic/stats'
-import type { Thought } from '../logic/types'
+import type { FocusSceneId, Thought } from '../logic/types'
+import type { RecordsBand } from '../logic/record-stories'
 import '../styles/records-art.css'
 
 const MODES: Record<Mode, string> = { all: '全部记录', thoughts: '只看想法', scenes: '生活场景', favorites: '我的收藏' }
@@ -23,6 +25,10 @@ export interface RecordsVisit {
   length: RangeLength
   summaryOpen: boolean
   trend: boolean
+  roomTag: FocusSceneId | null
+  roomBand: RecordsBand
+  roomOpener: 'spot' | 'label'
+  sourceTop: number | null
   browse: Record<Mode, Browse>
   positions: Record<Mode, Position>
 }
@@ -45,10 +51,10 @@ interface Props {
   visit: MutableRefObject<RecordsVisit | null>
 }
 
-function initialVisit(): RecordsVisit {
+function initialVisit(roomBand: RecordsBand): RecordsVisit {
   const browse = () => ({ month: null, search: '', draft: '', page: 1, expanded: null, sourceRecord: null })
   const position = () => ({ offset: 0, anchor: null, relative: 0, focus: null })
-  return { mode: 'all', length: 7, summaryOpen: false, trend: false,
+  return { mode: 'all', length: 7, summaryOpen: false, trend: false, roomTag: null, roomBand, roomOpener: 'label', sourceTop: null,
     browse: { all: browse(), thoughts: browse(), scenes: browse(), favorites: browse() },
     positions: { all: position(), thoughts: position(), scenes: position(), favorites: position() } }
 }
@@ -88,7 +94,7 @@ function ThoughtEntry({ item, expanded, toggle, view, persistence, canEdit, thou
 }
 
 export function StatsScreen({ view, thoughts, canEdit, onEditThought, onContinueDraft, hasDraft, favorites, systemNoticeSummary, systemNotices, onAnnounce, persistence, notice, hasSaveError, showArt, visit }: Props) {
-  const [reading, setReading] = useState<RecordsVisit>(() => visit.current ?? initialVisit())
+  const [reading, setReading] = useState<RecordsVisit>(() => visit.current ?? initialVisit(view.band))
   const { mode, length, summaryOpen, trend } = reading
   const current = reading.browse[mode]
   const screen = useRef<HTMLElement>(null)
@@ -99,7 +105,6 @@ export function StatsScreen({ view, thoughts, canEdit, onEditThought, onContinue
   const [monthPanel, setMonthPanel] = useState(false)
   const [statusPanel, setStatusPanel] = useState(false)
   const statusDescriptionId = useId()
-  useFocusTaskBack(monthPanel || statusPanel, () => { setMonthPanel(false); setStatusPanel(false) })
   const [year, setYear] = useState(view.todayKey.slice(0, 4))
   const composing = useRef(false)
   const pageFocus = useRef(false)
@@ -113,19 +118,21 @@ export function StatsScreen({ view, thoughts, canEdit, onEditThought, onContinue
   const favoriteRemovedFocus = useRef<string | true | null>(null)
   const localFocus = useRef<{ entry: string; source: boolean } | 'welcome' | null>(null)
   const sourceRecord = reading.browse.scenes.sourceRecord
-  const setSourceRecord = (sourceRecord: string | null) => setReading(value => ({ ...value, browse: { ...value.browse, scenes: { ...value.browse.scenes, sourceRecord } } }))
+  const roomReturn = useRef<FocusSceneId | null>(null)
+  const fromRoomPreview = useRef(false)
   const [activeSeen, setActiveSeen] = useState(!!view.active)
   const incomplete = notice?.kind === 'unreadable' || notice?.kind === 'unavailable' ||
     (notice?.kind === 'repaired' && notice.fields.some(field => field.startsWith('records')))
   const thoughtsIncomplete = notice?.kind === 'unreadable' || notice?.kind === 'unavailable' ||
     (notice?.kind === 'repaired' && notice.fields.some(field => field.startsWith('thoughts')))
   const { totals } = useHistoryRange(view, length)
-  const result = useRecordsQuery(view, mode, current)
+  const result = useRecordsQuery(view, mode, current, reading.roomTag)
   const { entryKey: entryId, isKnownDate: knownDate, hasUnknownDates: unknown } = result
   const selectedOriginal = sourceRecord ? view.recordBySession.get(sourceRecord) : null
+  const missingSource = sourceRecord && (!selectedOriginal?.saved || selectedOriginal.scene?.sceneId !== reading.roomTag)
   const detachedThought = mode === 'thoughts' && current.expanded?.startsWith('thought:') && !result.all.some(entry => entryId(entry) === current.expanded)
     ? result.thoughtById.get(current.expanded) : undefined
-  const queryKey = `${mode}/${current.month}/${current.search}`
+  const queryKey = `${mode}/${current.month}/${current.search}/${mode === 'scenes' ? reading.roomTag : ''}`
   const savedQuotes = favorites?.saved ?? []
   const favPageCount = Math.ceil(savedQuotes.length / 20)
   const favPage = Math.min(current.page, Math.max(1, favPageCount))
@@ -142,6 +149,13 @@ export function StatsScreen({ view, thoughts, canEdit, onEditThought, onContinue
     visit.current = { ...readingRef.current, positions: positions.current }
   }
   useLayoutEffect(() => { visit.current = { ...reading, positions: positions.current } }, [reading, visit])
+  // Records restores its own per-view anchors. A Back from a local task must
+  // not restore the browser's earlier absolute offset over that position.
+  useLayoutEffect(() => {
+    const previous = history.scrollRestoration
+    history.scrollRestoration = 'manual'
+    return () => { history.scrollRestoration = previous }
+  }, [])
   useLayoutEffect(() => {
     const position = positions.current[mode]
     const anchor = [...(screen.current?.querySelectorAll<HTMLElement>('[data-entry-id]') ?? [])].find(element => element.dataset.entryId === position.anchor)
@@ -169,13 +183,13 @@ export function StatsScreen({ view, thoughts, canEdit, onEditThought, onContinue
     previousQuery.current = queryKey
     previousIds.current = ids
     const position = positions.current[mode]
-    const anchor = position.anchor ?? current.expanded
+    const anchor = mode === 'scenes' && sourceRecord ? `record:${sourceRecord}` : position.anchor ?? current.expanded
     if (changed && !pageFocus.current && position.anchor && ids.includes(position.anchor)) restorePosition.current = { ...position }
     if (changed && current.expanded && !ids.includes(current.expanded) && !result.thoughtById.has(current.expanded) && document.activeElement === document.body) {
       const removedAt = oldIds.indexOf(current.expanded)
       removedFocus.current = ids[Math.min(Math.max(0, removedAt), ids.length - 1)] ?? true
     }
-    const page = changed ? result.pageForAnchor(anchor, result.page) : result.page
+    const page = changed || (mode === 'scenes' && sourceRecord) ? result.pageForAnchor(anchor, result.page) : result.page
     if (page !== current.page) { patch({ page }); return }
     if (restorePosition.current) {
       const savedPosition = restorePosition.current
@@ -190,7 +204,8 @@ export function StatsScreen({ view, thoughts, canEdit, onEditThought, onContinue
     }
     if (announceQuery.current) {
       announceQuery.current = false
-      onAnnounce?.(`${MODES[mode]}，${monthLabel(current.month)}，${incomplete || thoughtsIncomplete ? '当前可读取' : '共'}${result.total}条${result.total ? `，第${result.page}页` : ''}。`)
+      const scope = mode === 'scenes' && reading.roomTag ? sceneNames[reading.roomTag] : monthLabel(current.month)
+      onAnnounce?.(`${MODES[mode]}，${scope}，${incomplete || thoughtsIncomplete ? '当前可读取' : '共'}${result.total}条${result.total ? `，第${result.page}页` : ''}。`)
     }
     if (removedFocus.current) {
       const next = removedFocus.current
@@ -235,23 +250,36 @@ export function StatsScreen({ view, thoughts, canEdit, onEditThought, onContinue
     if (current.expanded?.startsWith('favorite:')) remember('favorites')
   }, [savedQuotes, mode, current.page, current.expanded, favPage])
   useLayoutEffect(() => {
+    if (fromRoomPreview.current && mode === 'scenes') {
+      fromRoomPreview.current = false
+      screen.current?.querySelector<HTMLElement>('.records-room h3')?.focus({ preventScroll: true })
+    }
+    if (roomReturn.current && mode === 'scenes' && !reading.roomTag) {
+      const id = roomReturn.current
+      roomReturn.current = null
+      const opener = screen.current?.querySelector<HTMLElement>(`[data-room-${reading.roomOpener}="${id}"]`)
+      ;(opener ?? screen.current?.querySelector<HTMLElement>('.records-modes [aria-pressed="true"]'))?.focus()
+    }
     const target = localFocus.current
     if (!target) return
     localFocus.current = null
     if (target === 'welcome') { screen.current?.querySelector<HTMLElement>('.records-welcome > button')?.focus({ preventScroll: true }); return }
     const entry = [...(list.current?.querySelectorAll<HTMLElement>('.records-activity') ?? [])].find(element => element.dataset.entryId === target.entry)
-    entry?.querySelector<HTMLElement>(target.source ? '[data-return-activity]' : '[data-view-original]')?.focus({ preventScroll: true })
-  }, [sourceRecord, current.expanded])
+    const control = entry?.querySelector<HTMLElement>(target.source ? '[data-return-activity]' : '[data-view-original]')
+    control?.focus({ preventScroll: true })
+    if (!target.source && entry && reading.sourceTop !== null) {
+      window.scrollTo(0, window.scrollY + entry.getBoundingClientRect().top - reading.sourceTop)
+    }
+  }, [sourceRecord, current.expanded, reading.roomTag, mode])
 
   const changeConditions = (changes: Partial<Browse>) => {
     announceQuery.current = true
     positions.current[mode].anchor = null
-    if (mode === 'scenes') setSourceRecord(null)
     patch({ ...changes, page: 1, expanded: null })
   }
   const chooseMonth = (month: MonthFilter) => { changeConditions({ month }); setMonthPanel(false) }
-  const changePage = (page: number) => { positions.current[mode].anchor = null; pageFocus.current = true; announceQuery.current = true; patch({ page, expanded: null }) }
-  const toggle = (id: string) => { if (mode === 'scenes') setSourceRecord(null); patch({ expanded: current.expanded === id ? null : id }) }
+  const changePage = (page: number) => { positions.current[mode].anchor = null; pageFocus.current = true; announceQuery.current = true; patch({ page, expanded: null, sourceRecord: null }) }
+  const toggle = (id: string) => patch({ expanded: current.expanded === id ? null : id })
   const recordEntry = (record: RecordView, expanded: boolean, onToggle: () => void) => <RecordEntry key={record.sessionId} record={record} expanded={expanded}
     onToggle={onToggle} persistence={persistence} showArt={showArt} confirmedThoughtIds={view.confirmedThoughtIds} pendingThoughtIds={view.pendingThoughtIds}
     editThought={canEdit ? onEditThought : undefined} formatDate={view.shortDate} />
@@ -261,6 +289,31 @@ export function StatsScreen({ view, thoughts, canEdit, onEditThought, onContinue
     setReading(value => ({ ...value, mode: next }))
   }
   const displayDate = (date: string) => knownDate(date) ? view.dayHeading(date) : '日期不详的记录'
+  const selectTag = (id: FocusSceneId, opener: HTMLButtonElement) => {
+    positions.current.scenes.anchor = null
+    pageFocus.current = true
+    announceQuery.current = true
+    setReading(value => ({ ...value, roomTag: id, roomOpener: opener.dataset.roomSpot ? 'spot' : 'label', sourceTop: null,
+      browse: { ...value.browse, scenes: { ...value.browse.scenes, page: 1, expanded: null, sourceRecord: null } } }))
+  }
+  const returnToRoom = () => {
+    roomReturn.current = reading.roomTag
+    setReading(value => ({ ...value, roomTag: null, browse: { ...value.browse, scenes: { ...value.browse.scenes, expanded: null, sourceRecord: null, page: 1 } } }))
+  }
+  const returnToTag = () => {
+    if (!sourceRecord) return
+    localFocus.current = { entry: `record:${sourceRecord}`, source: false }
+    patch({ sourceRecord: null, expanded: null })
+    if (missingSource && reading.roomTag) {
+      if (result.roomActivities.has(reading.roomTag)) pageFocus.current = true
+      else returnToRoom()
+    }
+  }
+  useFocusTaskBack(monthPanel || statusPanel || (mode === 'scenes' && !!reading.roomTag), () => {
+    if (monthPanel || statusPanel) { setMonthPanel(false); setStatusPanel(false) }
+    else if (sourceRecord) returnToTag()
+    else returnToRoom()
+  }, [monthPanel, statusPanel, sourceRecord, reading.roomTag].join('/'))
   const empty = mode === 'scenes' ? '还没有可回看的伙伴活动。' : current.search ? '没有找到匹配的想法。' : current.month && current.month !== 'unknown' ? '这个月还没有记录。' : current.month === 'unknown' ? '没有日期不详的记录。' : mode === 'thoughts' ? '还没有想法。' : '还没有记录。'
   const stateLine = view.active ? `${PHASE_LABELS[view.active.phase]} · ${view.active.status === 'paused' ? '已暂停' : '正在计时'}（未计入汇总）`
     : activeSeen ? '本段已结束，可继续阅读。' : ''
@@ -286,6 +339,11 @@ export function StatsScreen({ view, thoughts, canEdit, onEditThought, onContinue
     <div className="records-switch records-modes" role="group" aria-label="记录内容">
       {(Object.keys(MODES) as Mode[]).map(value => <button type="button" key={value} aria-pressed={mode === value} onClick={() => selectMode(value)}>{MODES[value]}</button>)}
     </div>
+    {mode === 'all' && <RoomPreview band={reading.roomBand} activities={result.roomActivities} showArt={showArt} onOpen={() => {
+      remember('all'); fromRoomPreview.current = true
+      positions.current.scenes = { offset: 0, anchor: null, relative: 0, focus: null }
+      setReading(value => ({ ...value, mode: 'scenes', roomTag: null, browse: { ...value.browse, scenes: { ...value.browse.scenes, page: 1, expanded: null, sourceRecord: null } } }))
+    }}/>}
     {mode === 'all' && <section className="records-summary" aria-label="计时汇总">
       <p>近{length}天 · {incomplete ? '计时汇总暂不可确认' : <><strong>{formatMinutes(totals.focusMs)}</strong> · {totals.count} 段已结束专注</>}</p>
       <button type="button" className="link-button" aria-expanded={summaryOpen} onClick={() => setReading(value => ({ ...value, summaryOpen: !value.summaryOpen }))}>{summaryOpen ? '收起统计' : '查看统计'}</button>
@@ -296,7 +354,7 @@ export function StatsScreen({ view, thoughts, canEdit, onEditThought, onContinue
       </div>}
     </section>}
     {(incomplete || thoughtsIncomplete) && <p className="hint">历史数据未能完整读取。这里只展示当前能确认的内容。</p>}
-    {mode !== 'favorites' && <div className="records-tools">
+    {(mode === 'all' || mode === 'thoughts') && <div className="records-tools">
       {mode === 'thoughts' && <>
         <form className="records-search" onSubmit={event => { event.preventDefault(); if (!composing.current) changeConditions({ search: current.draft.trim() }) }}>
           <label htmlFor="thought-search">搜索想法</label>
@@ -314,11 +372,16 @@ export function StatsScreen({ view, thoughts, canEdit, onEditThought, onContinue
         {unknown && current.month !== 'unknown' && <button type="button" className="link-button" onClick={() => changeConditions({ month: 'unknown' })}>日期不详的记录</button>}
       </div>
     </div>}
-    {mode === 'scenes' && <p className="hint">回看每段已记录的伙伴活动，或打开对应的专注记录。</p>}
+    {mode === 'scenes' && <RecordsRoom band={reading.roomBand} activities={result.roomActivities} selected={reading.roomTag} onSelect={selectTag} incomplete={incomplete}/>}
     <div className="records-list" ref={list} data-result-count={mode === 'favorites' ? savedQuotes.length : result.total}>
       {mode !== 'favorites' ? <>
+        {mode === 'scenes' && reading.roomTag && <div className="room-source-heading">
+          <h3>{sceneNames[reading.roomTag]}出现过的专注</h3>
+          <button type="button" className="link-button" onClick={returnToRoom}>返回小屋</button>
+        </div>}
+        {mode === 'scenes' && missingSource && <p>这段原记录目前无法读取。<button type="button" className="link-button" onClick={returnToTag}>返回小屋画签</button></p>}
         {detachedThought && <section className="records-detached"><p className="hint">这条想法已不符合当前查找条件，关闭后返回原结果。</p><ol className="focus-records"><ThoughtEntry item={detachedThought} expanded toggle={() => patch({ expanded: null })} view={view} persistence={persistence} canEdit={canEdit} thoughts={thoughts} edit={onEditThought} /></ol></section>}
-        {result.total === 0 && <p className="records-empty">{incomplete || thoughtsIncomplete ? '目前没有可确认的条目。' : empty}</p>}
+        {result.total === 0 && (mode !== 'scenes' || reading.roomTag) && <p className="records-empty">{incomplete || thoughtsIncomplete ? '目前没有可确认的条目。' : empty}</p>}
         {result.days.map(day => <section className="record-day" key={day.dateKey} data-date={day.dateKey}>
           <h3>{knownDate(day.dateKey) ? <time dateTime={day.dateKey}>{displayDate(day.dateKey)}</time> : displayDate(day.dateKey)}
             {mode === 'all' && !incomplete && knownDate(day.dateKey) && <small> · {formatMinutes(view.totalsByDay.get(day.dateKey)?.focusMs ?? 0)}</small>}</h3>
@@ -328,12 +391,17 @@ export function StatsScreen({ view, thoughts, canEdit, onEditThought, onContinue
             if (mode !== 'scenes') return recordEntry(entry.record, current.expanded === id, () => toggle(id))
             const record = entry.record
             return <li key={id} data-entry-id={id} className="records-activity">
-              <button type="button" className="record-summary" aria-expanded={current.expanded === id} onClick={() => toggle(id)}>
-                <span className="record-identity"><span className="record-meta">{record.timeLabel}</span><strong>{record.scene ? sceneNames[record.scene.sceneId] : '伙伴活动'}</strong><span className="record-meta">本段计时 {formatMinutes(record.elapsedMs)}</span></span><span aria-hidden="true">{current.expanded === id ? '−' : '＋'}</span>
+              <button type="button" data-view-original className="record-summary" aria-expanded={sourceRecord === record.sessionId} onClick={event => {
+                if (sourceRecord === record.sessionId) { returnToTag(); return }
+                const sourceTop = event.currentTarget.getBoundingClientRect().top
+                localFocus.current = { entry: id, source: true }
+                setReading(value => ({ ...value, sourceTop, browse: { ...value.browse, scenes: { ...value.browse.scenes, expanded: id, sourceRecord: record.sessionId } } }))
+              }}>
+                <span className="record-identity"><span className="record-meta">{record.timeLabel}</span><strong>{formatMinutes(record.elapsedMs)}</strong></span><span className="record-meta">{sourceRecord === record.sessionId ? '收起原记录' : '查看原记录'}</span>
               </button>
-              {current.expanded === id && <div className="record-detail">
-                {sourceRecord === record.sessionId && selectedOriginal ? <><button data-return-activity type="button" className="link-button" onClick={() => { localFocus.current = { entry: id, source: false }; setSourceRecord(null) }}>返回伙伴活动</button><ol className="focus-records">{recordEntry(selectedOriginal, true, () => { localFocus.current = { entry: id, source: false }; setSourceRecord(null) })}</ol></>
-                  : <><p>{record.endReason === 'manual' ? '这段由你提前结束。' : '这段已到时结束。'}伙伴活动随本段计时保留。</p><button data-view-original type="button" className="link-button" onClick={() => { localFocus.current = { entry: id, source: true }; setSourceRecord(record.sessionId) }}>查看原记录</button></>}
+              {sourceRecord === record.sessionId && selectedOriginal && <div className="record-detail">
+                <button data-return-activity type="button" className="link-button" onClick={returnToTag}>返回{sceneNames[reading.roomTag!]}</button>
+                <ol className="focus-records">{recordEntry(selectedOriginal, true, returnToTag)}</ol>
               </div>}
             </li>
           })}</ol>

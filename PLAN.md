@@ -4,7 +4,9 @@ This increment covers Focus control grouping and result preparation, one encoura
 
 **Screenshot review follow-up, 2026-11-02:** the owner requested correcting the large empty Records status area and the F2 hand/flowerpot misalignment. Replace the empty strip with a compact, stable status entry and align the actual plant drawing with the hand contact throughout static and animated states. Keep the existing artwork style and accounting behavior. See [the visual correction verification](docs/verification/visual-corrections-v35.md).
 
-The **生活场景** view currently reviews actual saved activity assignments and links to their original records. It does not claim that the v35 persistent cottage, object dialogue, provenance, day/night world view, or DAY05 continuation engine has shipped. Hash-assigned decorative stories no longer stand in for factual session history. Chapters/world state and full backup/replacement/clear remain independent implementation modules, outside this interaction increment. Physical-device and screen-reader acceptance remain unverified.
+**Phone layout and room review, 2026-11-03.** The owner approved the companion-first mockup for implementation. Focus reclaims the quick-duration row for the scene. A tap starts the displayed duration, and holding Start or activating the digits opens the one-off dial. The companion gives requested encouragement in the first person. Records shows a compact room preview and a complete scene with illustrated tags derived from confirmed activity assignments. A picture can lead to many original records. An early end has the same eligibility as an elapsed session.
+
+The room's furnishings are initial scenery. Story objects with authored acquisition events, object dialogue, DAY05 continuation and full backup/replacement/clear remain separate modules. Phone layout and interaction evidence is recorded in the [implementation verification](docs/verification/companion-first.md). Physical-device and screen-reader acceptance remain open.
 
 Earlier approved work remains documented in the [v26 plan](docs/plans/INTERACTION_OVERHAUL_PLAN.md), [v26 verification](docs/verification/interaction-v26.md), [layout/arms verification](docs/verification/layout-and-arms.md), and [animation refinement verification](docs/verification/animation-refinement.md). Those are historical evidence, not v35 acceptance. The later v35 decisions above supersede older proposals below where they conflict.
 
@@ -20,11 +22,11 @@ Earlier approved work remains documented in the [v26 plan](docs/plans/INTERACTIO
 
 | Capability | Current interaction increment | Remaining scope |
 | --- | --- | --- |
-| Focus | 25-minute default, 5/15/25/custom selection; grouped pause/resume/end; explicit prepare then start; expiry keeps an open confirmation truthful; one task panel and stable thought controls | Daily chapter binding and process/world facts |
-| Encouragement/favorites | Dedicated reader and category view with contextual Back; captured quote identity/version/text; persisted favorite/cancel and welcome-note reading | Other permanent content requires approved assets and eligibility rules |
+| Focus | 25-minute first-use default, tap to start and hold or tap the digits to adjust. Stable timer controls, separate thought tools and explicit prepare then start | Daily chapter binding and process/world facts |
+| Encouragement/favorites | Companion speech bubble, inline tools and adaptive reading with contextual Back. Captured quote identity/version/text, persistent favorites and welcome-note reading | Other permanent content requires approved assets and eligibility rules |
 | Thoughts | Formal/draft distinction; continued typing after Save remains the same item; durable original retained on failed edit/delete; all valid deletion undos reachable; whitespace retained | Physical keyboard, assistive-technology and broader restore/clear testing |
 | Records | Four modes; compact optional statistics; saved-only totals; year/month, full formal thought search, 20-item replacement pages, per-mode reading/source context | Persistent cottage, object dialogue and provenance; full v35 story snapshots |
-| Scenes | Existing eleven activity assignments and deterministic renderer retained; history uses saved assignment and actual timing | DAY05 story/continuation first, then additional chapters and a real new-object proof |
+| Scenes | All eleven activities remain available. The illustrated room indexes the eight focus activities when they appear in confirmed records and returns readers to their source | DAY05 story/continuation first, then additional chapters and a real new-object proof |
 | Persistence | Snapshot v8, quote relation tombstones and guarded operations; confirmed views distinct from unsaved memory | Complete JSON backup, previewed replacement and clear-all |
 | Settings/PWA | Existing preferences, explicit sound audition, grouped explanations, latest-state update check and input protection | Backup/restore/clear interfaces and full physical-device/PWA acceptance |
 

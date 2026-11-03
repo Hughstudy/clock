@@ -21,12 +21,23 @@ describe('PRD copy resource integrity', () => {
     expect(feedbackCatalog.errors).toHaveLength(14)
   })
 
-  it.each(['id', 'facts', 'states', 'version', 'markup', 'missing', 'deep', 'ui', 'error'] as const)('rejects damaged %s before use', kind => {
+  it('versions the companion’s spoken lines independently from automatic and welcome copy', () => {
+    for (const entry of feedbackCatalog.entries) {
+      if (entry.pool.startsWith('ASK')) {
+        expect(entry.copyVersion).toBe('companion-voice-v1')
+        expect(entry.text).toContain('我')
+      } else expect(entry.copyVersion).toBe('prd-v3-r7')
+    }
+    expect(feedbackCatalog.welcomeNote.copyVersion).toBe('prd-v3-r7')
+  })
+
+  it.each(['id', 'facts', 'states', 'version', 'requested-version', 'markup', 'missing', 'deep', 'ui', 'error'] as const)('rejects damaged %s before use', kind => {
     const bad = structuredClone(raw)
     if (kind === 'id') bad.entries[1]!.id = bad.entries[0]!.id
     if (kind === 'facts') bad.entries[0]!.requiredFacts = ['guessedTired']
     if (kind === 'states') bad.entries[0]!.states = ['cry']
     if (kind === 'version') bad.entries[0]!.copyVersion = 'unknown'
+    if (kind === 'requested-version') bad.entries.find(e => e.pool === 'ASKG')!.copyVersion = bad.copyVersion
     if (kind === 'markup') bad.entries[0]!.text = '<script>alert(1)</script>'
     if (kind === 'missing') bad.entries.pop()
     if (kind === 'deep') bad.entries[0]!.level = 'deep'
@@ -259,7 +270,7 @@ describe('rotation, silence and one-result-per-action', () => {
 
   it('prepares a stable, versioned bookmark snapshot without claiming persistence', () => {
     const copy = feedbackCatalog.entries.find(c => c.id === 'ASKT09')!
-    expect(createEncouragementBookmark(copy)).toEqual({ copyId: 'ASKT09', text: copy.text, copyVersion: 'prd-v3-r7' })
+    expect(createEncouragementBookmark(copy)).toEqual({ copyId: 'ASKT09', text: copy.text, copyVersion: 'companion-voice-v1' })
     expect(createEncouragementBookmark(copy)).not.toHaveProperty('saved')
   })
 })

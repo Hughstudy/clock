@@ -1697,7 +1697,7 @@
     {
       "id": "ASKG01",
       "pool": "ASKG",
-      "text": "你值得被温柔地对待。",
+      "text": "我折纸船，也是一折一折来的。",
       "level": "light",
       "states": [
         "focus-ready",
@@ -1713,14 +1713,14 @@
       "tags": [
         "care"
       ],
-      "copyVersion": "prd-v3-r7",
+      "copyVersion": "companion-voice-v1",
       "collectible": true,
       "reviewStatus": "candidate"
     },
     {
       "id": "ASKG02",
       "pool": "ASKG",
-      "text": "你的节奏，可以由你自己决定。",
+      "text": "我有时只读一页，也很喜欢那一页。",
       "level": "light",
       "states": [
         "focus-ready",
@@ -1736,14 +1736,14 @@
       "tags": [
         "autonomy"
       ],
-      "copyVersion": "prd-v3-r7",
+      "copyVersion": "companion-voice-v1",
       "collectible": true,
       "reviewStatus": "candidate"
     },
     {
       "id": "ASKG03",
       "pool": "ASKG",
-      "text": "给自己一点耐心，也是一种支持。",
+      "text": "我喜欢慢慢把纸角抚平。慢一点也很好。",
       "level": "light",
       "states": [
         "focus-ready",
@@ -1759,14 +1759,14 @@
       "tags": [
         "patience"
       ],
-      "copyVersion": "prd-v3-r7",
+      "copyVersion": "companion-voice-v1",
       "collectible": true,
       "reviewStatus": "candidate"
     },
     {
       "id": "ASKG04",
       "pool": "ASKG",
-      "text": "愿意照顾自己，这件事就很珍贵。",
+      "text": "我喜欢听杯子落在桌上的轻响。小事也有意思。",
       "level": "light",
       "states": [
         "focus-ready",
@@ -1782,14 +1782,14 @@
       "tags": [
         "care"
       ],
-      "copyVersion": "prd-v3-r7",
+      "copyVersion": "companion-voice-v1",
       "collectible": true,
       "reviewStatus": "candidate"
     },
     {
       "id": "ASKG05",
       "pool": "ASKG",
-      "text": "慢慢来，也有慢慢来的力量。",
+      "text": "我学叠积木时，也常换个摆法。",
       "level": "light",
       "states": [
         "focus-ready",
@@ -1805,14 +1805,14 @@
       "tags": [
         "patience"
       ],
-      "copyVersion": "prd-v3-r7",
+      "copyVersion": "companion-voice-v1",
       "collectible": true,
       "reviewStatus": "candidate"
     },
     {
       "id": "ASKG06",
       "pool": "ASKG",
-      "text": "这一刻，可以先站在自己这边。",
+      "text": "我把窗边的位置留出来，看看今天的光。",
       "level": "light",
       "states": [
         "focus-ready",
@@ -1828,14 +1828,14 @@
       "tags": [
         "presence"
       ],
-      "copyVersion": "prd-v3-r7",
+      "copyVersion": "companion-voice-v1",
       "collectible": true,
       "reviewStatus": "candidate"
     },
     {
       "id": "ASKG07",
       "pool": "ASKG",
-      "text": "给今天的自己，留一点宽松。",
+      "text": "我喜欢从手边的一件小事开始。",
       "level": "light",
       "states": [
         "focus-ready",
@@ -1851,14 +1851,14 @@
       "tags": [
         "patience"
       ],
-      "copyVersion": "prd-v3-r7",
+      "copyVersion": "companion-voice-v1",
       "collectible": true,
       "reviewStatus": "candidate"
     },
     {
       "id": "ASKG08",
       "pool": "ASKG",
-      "text": "小小的一步，也有它的位置。",
+      "text": "我会把书签夹好，想回来时再翻开。",
       "level": "light",
       "states": [
         "focus-ready",
@@ -1874,14 +1874,14 @@
       "tags": [
         "return"
       ],
-      "copyVersion": "prd-v3-r7",
+      "copyVersion": "companion-voice-v1",
       "collectible": true,
       "reviewStatus": "candidate"
     },
     {
       "id": "ASKG09",
       "pool": "ASKG",
-      "text": "你身上值得珍惜的部分，远比一张待办清单能写下的多。",
+      "text": "我折过歪歪的纸船。我挺喜欢它那个翘起来的小角。",
       "level": "deep",
       "states": [
         "focus-ready",
@@ -1897,14 +1897,14 @@
       "tags": [
         "care"
       ],
-      "copyVersion": "prd-v3-r7",
+      "copyVersion": "companion-voice-v1",
       "collectible": true,
       "reviewStatus": "candidate"
     },
     {
       "id": "ASKG10",
       "pool": "ASKG",
-      "text": "你可以一边慢慢认识自己，一边就被好好对待。温柔不必等到一切都变好以后。",
+      "text": "我喜欢留点空白。这样翻开本子，还能画上新想到的东西。",
       "level": "deep",
       "states": [
         "focus-ready",
@@ -1920,14 +1920,14 @@
       "tags": [
         "care"
       ],
-      "copyVersion": "prd-v3-r7",
+      "copyVersion": "companion-voice-v1",
       "collectible": true,
       "reviewStatus": "candidate"
     },
     {
       "id": "ASKG11",
       "pool": "ASKG",
-      "text": "那些让你眼睛亮起来的小事，也值得占据生活的一角。愿你有时间，慢慢靠近自己喜欢的东西。",
+      "text": "我看云的时候，有时一朵就看很久。你也可以按自己的速度来。",
       "level": "deep",
       "states": [
         "focus-ready",
@@ -1943,14 +1943,14 @@
       "tags": [
         "patience"
       ],
-      "copyVersion": "prd-v3-r7",
+      "copyVersion": "companion-voice-v1",
       "collectible": true,
       "reviewStatus": "candidate"
     },
     {
       "id": "ASKG12",
       "pool": "ASKG",
-      "text": "也许有些优点，你自己还不常看见。愿你慢慢发现，也把那份欣赏留给自己。",
+      "text": "我试过把书倒过来看。同一幅画，原来还有另一种看法。",
       "level": "deep",
       "states": [
         "focus-ready",
@@ -1966,14 +1966,14 @@
       "tags": [
         "possibility"
       ],
-      "copyVersion": "prd-v3-r7",
+      "copyVersion": "companion-voice-v1",
       "collectible": true,
       "reviewStatus": "candidate"
     },
     {
       "id": "ASKG13",
       "pool": "ASKG",
-      "text": "把温柔分给别人时，也可以给自己留一份。你的需要，同样值得被认真听见。",
+      "text": "我用小手捧着杯子，喜欢它刚刚好的暖。愿你也有舒服的一刻。",
       "level": "deep",
       "states": [
         "focus-ready",
@@ -1989,14 +1989,14 @@
       "tags": [
         "care"
       ],
-      "copyVersion": "prd-v3-r7",
+      "copyVersion": "companion-voice-v1",
       "collectible": true,
       "reviewStatus": "candidate"
     },
     {
       "id": "ASKG14",
       "pool": "ASKG",
-      "text": "有些可能性，需要在适合你的节奏里，才慢慢显露出来。你可以给自己一点时间。",
+      "text": "我有时叠积木，有时推开窗。今天做哪件事，我喜欢自己选。",
       "level": "deep",
       "states": [
         "focus-ready",
@@ -2012,14 +2012,14 @@
       "tags": [
         "autonomy"
       ],
-      "copyVersion": "prd-v3-r7",
+      "copyVersion": "companion-voice-v1",
       "collectible": true,
       "reviewStatus": "candidate"
     },
     {
       "id": "ASKS01",
       "pool": "ASKS",
-      "text": "可以把第一步，缩到舒服的大小。",
+      "text": "碰到难开头的事，我喜欢先挑最小的一件。",
       "level": "light",
       "states": [
         "focus-ready",
@@ -2036,14 +2036,14 @@
       "tags": [
         "small-step"
       ],
-      "copyVersion": "prd-v3-r7",
+      "copyVersion": "companion-voice-v1",
       "collectible": true,
       "reviewStatus": "candidate"
     },
     {
       "id": "ASKS02",
       "pool": "ASKS",
-      "text": "先选一个容易上手的动作吧。",
+      "text": "我会先把书翻开，让眼睛找找第一行。",
       "level": "light",
       "states": [
         "focus-ready",
@@ -2060,14 +2060,14 @@
       "tags": [
         "presence"
       ],
-      "copyVersion": "prd-v3-r7",
+      "copyVersion": "companion-voice-v1",
       "collectible": true,
       "reviewStatus": "candidate"
     },
     {
       "id": "ASKS03",
       "pool": "ASKS",
-      "text": "准备好一点点，就从一点点开始。",
+      "text": "我折第一下也会想一想。不着急。",
       "level": "light",
       "states": [
         "focus-ready",
@@ -2084,14 +2084,14 @@
       "tags": [
         "small-step"
       ],
-      "copyVersion": "prd-v3-r7",
+      "copyVersion": "companion-voice-v1",
       "collectible": true,
       "reviewStatus": "candidate"
     },
     {
       "id": "ASKS04",
       "pool": "ASKS",
-      "text": "五分钟也可以是很好的起点。",
+      "text": "我搭积木时，先挑一块合眼缘的。",
       "level": "light",
       "states": [
         "focus-ready",
@@ -2108,14 +2108,14 @@
       "tags": [
         "small-step"
       ],
-      "copyVersion": "prd-v3-r7",
+      "copyVersion": "companion-voice-v1",
       "collectible": true,
       "reviewStatus": "candidate"
     },
     {
       "id": "ASKS05",
       "pool": "ASKS",
-      "text": "先动手试一下，之后再调整。",
+      "text": "我遇到大大的纸，会先摸摸一个小角。",
       "level": "light",
       "states": [
         "focus-ready",
@@ -2132,14 +2132,14 @@
       "tags": [
         "presence"
       ],
-      "copyVersion": "prd-v3-r7",
+      "copyVersion": "companion-voice-v1",
       "collectible": true,
       "reviewStatus": "candidate"
     },
     {
       "id": "ASKS06",
       "pool": "ASKS",
-      "text": "现在只看第一步，就够了。",
+      "text": "我有时只把笔拿在手里，想想要画哪一笔。",
       "level": "light",
       "states": [
         "focus-ready",
@@ -2156,14 +2156,14 @@
       "tags": [
         "small-step"
       ],
-      "copyVersion": "prd-v3-r7",
+      "copyVersion": "companion-voice-v1",
       "collectible": true,
       "reviewStatus": "candidate"
     },
     {
       "id": "ASKS07",
       "pool": "ASKS",
-      "text": "今天的开始，可以很小。",
+      "text": "我拼图时，喜欢先找一块有直边的。",
       "level": "light",
       "states": [
         "focus-ready",
@@ -2180,14 +2180,14 @@
       "tags": [
         "small-step"
       ],
-      "copyVersion": "prd-v3-r7",
+      "copyVersion": "companion-voice-v1",
       "collectible": true,
       "reviewStatus": "candidate"
     },
     {
       "id": "ASKS08",
       "pool": "ASKS",
-      "text": "先给自己一个轻轻起步的机会。",
+      "text": "我能先坐舒服一点，再看看面前的事。",
       "level": "light",
       "states": [
         "focus-ready",
@@ -2204,14 +2204,14 @@
       "tags": [
         "presence"
       ],
-      "copyVersion": "prd-v3-r7",
+      "copyVersion": "companion-voice-v1",
       "collectible": true,
       "reviewStatus": "candidate"
     },
     {
       "id": "ASKS09",
       "pool": "ASKS",
-      "text": "你说开始有点难，也为自己找来了一点支持。愿意这样照顾自己，很值得珍惜。",
+      "text": "我刚学折纸船时，第一下也折歪过。我把纸转个方向，接着折了下去。",
       "level": "deep",
       "states": [
         "focus-ready",
@@ -2228,14 +2228,14 @@
       "tags": [
         "care"
       ],
-      "copyVersion": "prd-v3-r7",
+      "copyVersion": "companion-voice-v1",
       "collectible": true,
       "reviewStatus": "candidate"
     },
     {
       "id": "ASKS10",
       "pool": "ASKS",
-      "text": "那件让你想试一试的事，值得有一个温柔的开头。开头可以小到，只给它五分钟。",
+      "text": "我碰到难读的一页，会先找一个眼熟的字。有了小小的落脚处，就好翻下去了。",
       "level": "deep",
       "states": [
         "focus-ready",
@@ -2252,14 +2252,14 @@
       "tags": [
         "care"
       ],
-      "copyVersion": "prd-v3-r7",
+      "copyVersion": "companion-voice-v1",
       "collectible": true,
       "reviewStatus": "candidate"
     },
     {
       "id": "ASKS11",
       "pool": "ASKS",
-      "text": "有些能力，要在适合自己的方式里，才慢慢舒展开来。你可以一边尝试，一边找到它。",
+      "text": "我想不到画什么时，会先轻轻点一个点。后面画成什么，还可以慢慢选。",
       "level": "deep",
       "states": [
         "focus-ready",
@@ -2276,14 +2276,14 @@
       "tags": [
         "possibility"
       ],
-      "copyVersion": "prd-v3-r7",
+      "copyVersion": "companion-voice-v1",
       "collectible": true,
       "reviewStatus": "candidate"
     },
     {
       "id": "ASKS12",
       "pool": "ASKS",
-      "text": "想把一件事做好，里面藏着一份在意。可以先带着这份在意，轻轻试一小步。",
+      "text": "我要收拾一桌积木时，先把手边的两块放在一起。远处那些可以稍后再看。",
       "level": "deep",
       "states": [
         "focus-ready",
@@ -2300,14 +2300,14 @@
       "tags": [
         "small-step"
       ],
-      "copyVersion": "prd-v3-r7",
+      "copyVersion": "companion-voice-v1",
       "collectible": true,
       "reviewStatus": "candidate"
     },
     {
       "id": "ASKS13",
       "pool": "ASKS",
-      "text": "你可以从还不熟悉的地方开始。留一点空间，给以后慢慢长出来的熟练和信心。",
+      "text": "我也会对着空白纸想很久。画第一笔的时间，可以由我自己来定。",
       "level": "deep",
       "states": [
         "focus-ready",
@@ -2324,14 +2324,14 @@
       "tags": [
         "possibility"
       ],
-      "copyVersion": "prd-v3-r7",
+      "copyVersion": "companion-voice-v1",
       "collectible": true,
       "reviewStatus": "candidate"
     },
     {
       "id": "ASKS14",
       "pool": "ASKS",
-      "text": "为自己找一个更容易的起点，是在认真对待自己的需要。这样的体贴，也是一种力量。",
+      "text": "我喜欢从会做的那个小动作开始。你也可以挑个顺手的起点。",
       "level": "deep",
       "states": [
         "focus-ready",
@@ -2348,14 +2348,14 @@
       "tags": [
         "care"
       ],
-      "copyVersion": "prd-v3-r7",
+      "copyVersion": "companion-voice-v1",
       "collectible": true,
       "reviewStatus": "candidate"
     },
     {
       "id": "ASKB01",
       "pool": "ASKB",
-      "text": "回来这一刻，可以先找找刚才的位置。",
+      "text": "我读到一半会夹张书签。回来时，从那儿接上就好。",
       "level": "light",
       "states": [
         "focus-ready",
@@ -2372,14 +2372,14 @@
       "tags": [
         "return"
       ],
-      "copyVersion": "prd-v3-r7",
+      "copyVersion": "companion-voice-v1",
       "collectible": true,
       "reviewStatus": "candidate"
     },
     {
       "id": "ASKB02",
       "pool": "ASKB",
-      "text": "先看看做到哪里，再选下一步。",
+      "text": "我会先看看纸上的折痕，再找下一折。",
       "level": "light",
       "states": [
         "focus-ready",
@@ -2396,14 +2396,14 @@
       "tags": [
         "presence"
       ],
-      "copyVersion": "prd-v3-r7",
+      "copyVersion": "companion-voice-v1",
       "collectible": true,
       "reviewStatus": "candidate"
     },
     {
       "id": "ASKB03",
       "pool": "ASKB",
-      "text": "接下来的一步，可以重新选择。",
+      "text": "我回来时，有时从刚才那行重读一遍。",
       "level": "light",
       "states": [
         "focus-ready",
@@ -2420,14 +2420,14 @@
       "tags": [
         "autonomy"
       ],
-      "copyVersion": "prd-v3-r7",
+      "copyVersion": "companion-voice-v1",
       "collectible": true,
       "reviewStatus": "candidate"
     },
     {
       "id": "ASKB04",
       "pool": "ASKB",
-      "text": "换个更容易接上的起点也可以。",
+      "text": "我找不到原来的位置，也可以重新挑一页。",
       "level": "light",
       "states": [
         "focus-ready",
@@ -2444,14 +2444,14 @@
       "tags": [
         "return"
       ],
-      "copyVersion": "prd-v3-r7",
+      "copyVersion": "companion-voice-v1",
       "collectible": true,
       "reviewStatus": "candidate"
     },
     {
       "id": "ASKB05",
       "pool": "ASKB",
-      "text": "给自己一点重新进入的时间。",
+      "text": "我也会停一停，再找回刚才那一行。",
       "level": "light",
       "states": [
         "focus-ready",
@@ -2468,14 +2468,14 @@
       "tags": [
         "patience"
       ],
-      "copyVersion": "prd-v3-r7",
+      "copyVersion": "companion-voice-v1",
       "collectible": true,
       "reviewStatus": "candidate"
     },
     {
       "id": "ASKB06",
       "pool": "ASKB",
-      "text": "接下来怎样安排，仍然由你决定。",
+      "text": "我把手放回桌边，再想想接下来想做什么。",
       "level": "light",
       "states": [
         "focus-ready",
@@ -2492,14 +2492,14 @@
       "tags": [
         "autonomy"
       ],
-      "copyVersion": "prd-v3-r7",
+      "copyVersion": "companion-voice-v1",
       "collectible": true,
       "reviewStatus": "candidate"
     },
     {
       "id": "ASKB07",
       "pool": "ASKB",
-      "text": "眼前这一点，可以慢慢重新捡起来。",
+      "text": "我会从还记得的那一点接着做。",
       "level": "light",
       "states": [
         "focus-ready",
@@ -2516,14 +2516,14 @@
       "tags": [
         "patience"
       ],
-      "copyVersion": "prd-v3-r7",
+      "copyVersion": "companion-voice-v1",
       "collectible": true,
       "reviewStatus": "candidate"
     },
     {
       "id": "ASKB08",
       "pool": "ASKB",
-      "text": "先安顿一下，再回到想做的事。",
+      "text": "我喜欢留张小纸条，回来时看一眼。",
       "level": "light",
       "states": [
         "focus-ready",
@@ -2540,14 +2540,14 @@
       "tags": [
         "return"
       ],
-      "copyVersion": "prd-v3-r7",
+      "copyVersion": "companion-voice-v1",
       "collectible": true,
       "reviewStatus": "candidate"
     },
     {
       "id": "ASKB09",
       "pool": "ASKB",
-      "text": "刚才的打断，只是这一小段经历中的一件事。你在意的事，和你身上的可能，都还在。",
+      "text": "我放下半折的纸船时，折痕还留在纸上。回来后，我慢慢认一认它。",
       "level": "deep",
       "states": [
         "focus-ready",
@@ -2564,14 +2564,14 @@
       "tags": [
         "possibility"
       ],
-      "copyVersion": "prd-v3-r7",
+      "copyVersion": "companion-voice-v1",
       "collectible": true,
       "reviewStatus": "candidate"
     },
     {
       "id": "ASKB10",
       "pool": "ASKB",
-      "text": "能不能一直专注，装不下对一个人的全部理解。你的好，值得被看得更完整。",
+      "text": "我读书被岔开时，偶尔要多翻两页才找得到。我可以给自己这点时间。",
       "level": "deep",
       "states": [
         "focus-ready",
@@ -2588,14 +2588,14 @@
       "tags": [
         "presence"
       ],
-      "copyVersion": "prd-v3-r7",
+      "copyVersion": "companion-voice-v1",
       "collectible": true,
       "reviewStatus": "candidate"
     },
     {
       "id": "ASKB11",
       "pool": "ASKB",
-      "text": "回到一件事的方式，可以是继续，也可以是重新安排。认真听听此刻的需要，同样可贵。",
+      "text": "我回到桌边，会先摸一摸那块没摆好的积木。也许接着摆，也许换个地方。",
       "level": "deep",
       "states": [
         "focus-ready",
@@ -2612,14 +2612,14 @@
       "tags": [
         "autonomy"
       ],
-      "copyVersion": "prd-v3-r7",
+      "copyVersion": "companion-voice-v1",
       "collectible": true,
       "reviewStatus": "candidate"
     },
     {
       "id": "ASKB12",
       "pool": "ASKB",
-      "text": "重新找到自己的节奏，也是一种可以慢慢学会的能力。这里有时间，留给你试一试。",
+      "text": "我接不上刚才的思路时，会先画一个记得的小角，再慢慢找回整幅画。",
       "level": "deep",
       "states": [
         "focus-ready",
@@ -2636,14 +2636,14 @@
       "tags": [
         "autonomy"
       ],
-      "copyVersion": "prd-v3-r7",
+      "copyVersion": "companion-voice-v1",
       "collectible": true,
       "reviewStatus": "candidate"
     },
     {
       "id": "ASKB13",
       "pool": "ASKB",
-      "text": "接下来，你仍然可以选择怎样对待自己。愿这一次，能多一点耐心和善意。",
+      "text": "我喜欢让书签露出一点点。回来的时候，手指一碰就知道从哪里翻。",
       "level": "deep",
       "states": [
         "focus-ready",
@@ -2660,14 +2660,14 @@
       "tags": [
         "care"
       ],
-      "copyVersion": "prd-v3-r7",
+      "copyVersion": "companion-voice-v1",
       "collectible": true,
       "reviewStatus": "candidate"
     },
     {
       "id": "ASKB14",
       "pool": "ASKB",
-      "text": "你值得拥有一种容易回来的方式：有地方安放念头，也有余地重新选择。",
+      "text": "我放下的那页还在。你可以接着刚才的一步，也可以从这里重新选。",
       "level": "deep",
       "states": [
         "focus-ready",
@@ -2684,14 +2684,14 @@
       "tags": [
         "autonomy"
       ],
-      "copyVersion": "prd-v3-r7",
+      "copyVersion": "companion-voice-v1",
       "collectible": true,
       "reviewStatus": "candidate"
     },
     {
       "id": "ASKT01",
       "pool": "ASKT",
-      "text": "累的时候，先歇一歇也很好。",
+      "text": "我喜欢把小手摊开，歇一会儿。你也可以。",
       "level": "light",
       "states": [
         "focus-ready",
@@ -2708,14 +2708,14 @@
       "tags": [
         "rest"
       ],
-      "copyVersion": "prd-v3-r7",
+      "copyVersion": "companion-voice-v1",
       "collectible": true,
       "reviewStatus": "candidate"
     },
     {
       "id": "ASKT02",
       "pool": "ASKT",
-      "text": "这一刻，照顾自己可以排在前面。",
+      "text": "我有时会把书合上，看看窗外。",
       "level": "light",
       "states": [
         "focus-ready",
@@ -2732,14 +2732,14 @@
       "tags": [
         "care"
       ],
-      "copyVersion": "prd-v3-r7",
+      "copyVersion": "companion-voice-v1",
       "collectible": true,
       "reviewStatus": "candidate"
     },
     {
       "id": "ASKT03",
       "pool": "ASKT",
-      "text": "把步子放小一点，给自己留些余地。",
+      "text": "我喜欢把肩膀放松，让小手在桌上歇一歇。",
       "level": "light",
       "states": [
         "focus-ready",
@@ -2756,14 +2756,14 @@
       "tags": [
         "patience"
       ],
-      "copyVersion": "prd-v3-r7",
+      "copyVersion": "companion-voice-v1",
       "collectible": true,
       "reviewStatus": "candidate"
     },
     {
       "id": "ASKT04",
       "pool": "ASKT",
-      "text": "今天可以按现在的精力来安排。",
+      "text": "我也会选一个轻松些的下午。",
       "level": "light",
       "states": [
         "focus-ready",
@@ -2780,14 +2780,14 @@
       "tags": [
         "autonomy"
       ],
-      "copyVersion": "prd-v3-r7",
+      "copyVersion": "companion-voice-v1",
       "collectible": true,
       "reviewStatus": "candidate"
     },
     {
       "id": "ASKT05",
       "pool": "ASKT",
-      "text": "想停下时，可以安心停在这里。",
+      "text": "我会先放下手里的积木，找个舒服的位置。",
       "level": "light",
       "states": [
         "focus-ready",
@@ -2804,14 +2804,14 @@
       "tags": [
         "rest"
       ],
-      "copyVersion": "prd-v3-r7",
+      "copyVersion": "companion-voice-v1",
       "collectible": true,
       "reviewStatus": "candidate"
     },
     {
       "id": "ASKT06",
       "pool": "ASKT",
-      "text": "休息本身，就是一种照顾。",
+      "text": "我给自己倒杯水，也给自己留一点空闲。",
       "level": "light",
       "states": [
         "focus-ready",
@@ -2828,14 +2828,14 @@
       "tags": [
         "rest"
       ],
-      "copyVersion": "prd-v3-r7",
+      "copyVersion": "companion-voice-v1",
       "collectible": true,
       "reviewStatus": "candidate"
     },
     {
       "id": "ASKT07",
       "pool": "ASKT",
-      "text": "给自己一个舒服的暂停吧。",
+      "text": "我喜欢靠在窗边，让风吹吹脸。",
       "level": "light",
       "states": [
         "focus-ready",
@@ -2852,14 +2852,14 @@
       "tags": [
         "rest"
       ],
-      "copyVersion": "prd-v3-r7",
+      "copyVersion": "companion-voice-v1",
       "collectible": true,
       "reviewStatus": "candidate"
     },
     {
       "id": "ASKT08",
       "pool": "ASKT",
-      "text": "先让这一刻轻松一点。",
+      "text": "我有时什么也不拿，就安静坐一会儿。",
       "level": "light",
       "states": [
         "focus-ready",
@@ -2876,14 +2876,14 @@
       "tags": [
         "rest"
       ],
-      "copyVersion": "prd-v3-r7",
+      "copyVersion": "companion-voice-v1",
       "collectible": true,
       "reviewStatus": "candidate"
     },
     {
       "id": "ASKT09",
       "pool": "ASKT",
-      "text": "你说有点累了。愿意把自己的感受也放进考虑里，是一份很珍贵的自我照顾。",
+      "text": "我想歇一歇时，就把小手从桌上收回来。等舒服了，再决定接下来做什么。",
       "level": "deep",
       "states": [
         "focus-ready",
@@ -2900,14 +2900,14 @@
       "tags": [
         "rest"
       ],
-      "copyVersion": "prd-v3-r7",
+      "copyVersion": "companion-voice-v1",
       "collectible": true,
       "reviewStatus": "candidate"
     },
     {
       "id": "ASKT10",
       "pool": "ASKT",
-      "text": "你值得的关心，也包括那些安静、没有产出的时刻。可以安心为自己留出这一段。",
+      "text": "我合上书的时候，那一页还在那里。休息这一会儿，也可以过得很自在。",
       "level": "deep",
       "states": [
         "focus-ready",
@@ -2924,14 +2924,14 @@
       "tags": [
         "care"
       ],
-      "copyVersion": "prd-v3-r7",
+      "copyVersion": "companion-voice-v1",
       "collectible": true,
       "reviewStatus": "candidate"
     },
     {
       "id": "ASKT11",
       "pool": "ASKT",
-      "text": "如果最近把很多力气给了别的事，也可以留一点给自己。你同样值得这份照顾。",
+      "text": "我有时喜欢看杯子里晃动的水慢慢平下来。想停一会儿，就停一会儿。",
       "level": "deep",
       "states": [
         "focus-ready",
@@ -2948,14 +2948,14 @@
       "tags": [
         "care"
       ],
-      "copyVersion": "prd-v3-r7",
+      "copyVersion": "companion-voice-v1",
       "collectible": true,
       "reviewStatus": "candidate"
     },
     {
       "id": "ASKT12",
       "pool": "ASKT",
-      "text": "你在意的事情很重要，承载这些在意的你，也同样重要。",
+      "text": "我把刚折到一半的纸放好，给手指松松劲。下次想折时再拿起来。",
       "level": "deep",
       "states": [
         "focus-ready",
@@ -2972,14 +2972,14 @@
       "tags": [
         "presence"
       ],
-      "copyVersion": "prd-v3-r7",
+      "copyVersion": "companion-voice-v1",
       "collectible": true,
       "reviewStatus": "candidate"
     },
     {
       "id": "ASKT13",
       "pool": "ASKT",
-      "text": "休息的时候，你身上那些珍贵的部分，也在和你一起休息。它们不需要时刻证明自己。",
+      "text": "我会把书签轻轻夹进去。后面的故事，可以留给另一个精神好些的下午。",
       "level": "deep",
       "states": [
         "focus-ready",
@@ -2996,14 +2996,14 @@
       "tags": [
         "rest"
       ],
-      "copyVersion": "prd-v3-r7",
+      "copyVersion": "companion-voice-v1",
       "collectible": true,
       "reviewStatus": "candidate"
     },
     {
       "id": "ASKT14",
       "pool": "ASKT",
-      "text": "今天可以先被好好照顾。那些还想探索的可能，留给往后的日子慢慢展开。",
+      "text": "我喜欢留一段不用安排的时间。窗外有什么，就随意看看。",
       "level": "deep",
       "states": [
         "focus-ready",
@@ -3020,7 +3020,7 @@
       "tags": [
         "possibility"
       ],
-      "copyVersion": "prd-v3-r7",
+      "copyVersion": "companion-voice-v1",
       "collectible": true,
       "reviewStatus": "candidate"
     }
@@ -3614,5 +3614,6 @@
     "copyVersion": "prd-v3-r7",
     "reviewStatus": "candidate"
   },
-  "interfaceCopyVersion": "prd-v35"
+  "interfaceCopyVersion": "prd-v35",
+  "requestedCopyVersion": "companion-voice-v1"
 }

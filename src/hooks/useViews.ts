@@ -17,8 +17,6 @@ export interface TimerView {
   focusMinutesRange: { min: number; max: number }
   shortBreakMinutes: number
   longBreakMinutes: number
-  /** One-off lengths offered on demand. */
-  quickChoicesMinutes: readonly number[]
   /** What a plain focus start captures: the last one-off choice, else the default. */
   nextFocusMinutes: number
   stepMaxLength: number
@@ -49,7 +47,6 @@ export function useTimerView(snapshot: AppSnapshot, now: number): TimerView {
     focusMinutesRange: spec.timer.durationsMinutes.focus,
     shortBreakMinutes: settings.durationsMinutes.shortBreak,
     longBreakMinutes: settings.durationsMinutes.longBreak,
-    quickChoicesMinutes: spec.timer.quickChoicesMinutes,
     nextFocusMinutes: next,
     stepMaxLength: spec.timer.stepMaxLength,
     step: timer.session?.step ?? null,

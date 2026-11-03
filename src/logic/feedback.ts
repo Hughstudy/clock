@@ -26,6 +26,7 @@ interface ErrorCopy extends FixedCopy { readonly suggestedAction: string }
 export interface FeedbackCatalog {
   readonly schemaVersion: 1
   readonly copyVersion: string
+  readonly requestedCopyVersion: string
   readonly reviewStatus: 'candidate'
   readonly entries: readonly Encouragement[]
   readonly interfaceCopyVersion: 'prd-v35'
@@ -49,6 +50,7 @@ export function parseFeedbackCatalog(value: unknown): FeedbackCatalog {
   const root = object(value, '$')
   if (root.schemaVersion !== 1 || root.reviewStatus !== 'candidate') fail('schemaVersion/reviewStatus')
   const version = text(root.copyVersion, 'copyVersion')
+  const requestedVersion = text(root.requestedCopyVersion, 'requestedCopyVersion')
   if (root.interfaceCopyVersion !== 'prd-v35') fail('interfaceCopyVersion')
   if (!Array.isArray(root.entries) || root.entries.length !== 136) fail('entries count')
   const seen = new Set<string>()
@@ -64,7 +66,7 @@ export function parseFeedbackCatalog(value: unknown): FeedbackCatalog {
     text(e.text, `${id}.text`)
     if (/[{}<>]/.test(e.text as string)) fail(`${id}.text template/markup`)
     if (e.level !== (pool.startsWith('ASK') && index >= 9 ? 'deep' : 'light')) fail(`${id}.level`)
-    if (e.copyVersion !== version || e.reviewStatus !== 'candidate' || typeof e.collectible !== 'boolean') fail(`${id}.metadata`)
+    if (e.copyVersion !== (pool.startsWith('ASK') ? requestedVersion : version) || e.reviewStatus !== 'candidate' || typeof e.collectible !== 'boolean') fail(`${id}.metadata`)
     list(e.states, COMPANION_STATES, `${id}.states`)
     list(e.requiredFacts, FACTS, `${id}.requiredFacts`)
     list(e.tags, TAGS, `${id}.tags`)

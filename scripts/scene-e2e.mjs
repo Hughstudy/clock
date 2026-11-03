@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict'
+import { prepareMinutes } from './focus-dial-actions.mjs'
 import { mkdtemp, mkdir, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
@@ -239,7 +240,7 @@ try {
   await page.getByRole('switch', { name: '伙伴动画', exact: true }).check()
   await page.getByRole('button', { name: '‹ 回到专注', exact: true }).click()
   await focusReady(page)
-  await page.getByRole('button', { name: '5 分钟', exact: true }).click()
+  await prepareMinutes(page, 5)
   check('Choosing the duration leaves the timer ready', !(await readSaved(page)).data.timer.session)
   await primary.click()
   await untilSaved(page, s => !!s.timer.session, 'duration chooser start')

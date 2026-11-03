@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
-import { entryId, pageContaining, queryRecords } from './records-query'
+import { entryId, indexRoomActivities, pageContaining, queryRecords } from './records-query'
 import type { HistoryEntry } from './stats'
-import type { Thought } from './types'
+import type { FocusRecord, SceneId, Thought } from './types'
 
 function note(id: number, text = `想法 ${id}`, dateKey = '2026-11-02'): HistoryEntry {
   const thought: Thought = { id: `n${id}`, createdAt: id, dateKey, sessionId: null, text, status: 'open', rev: 1, deletedAt: null }
@@ -9,6 +9,18 @@ function note(id: number, text = `想法 ${id}`, dateKey = '2026-11-02'): Histor
 }
 
 describe('records reading queries', () => {
+  it('groups only confirmed focus assignments, retaining every real source and unknown dates', () => {
+    type Saved = FocusRecord & { saved: boolean }
+    const entry = (id: string, scene: SceneId | null, saved = true): HistoryEntry<Saved> => ({
+      kind: 'record', record: { sessionId: id, dateKey: '', startedAt: null, endedAt: 1, elapsedMs: 0, targetMs: 60_000,
+        endReason: 'manual', source: 'native', step: null, saved, ...(scene && { scene: { sceneId: scene, selectionVersion: 2, ordinal: 1 } }) },
+    })
+    const first = entry('first', 'F6'), second = entry('second', 'F6')
+    const tags = indexRoomActivities([first, entry('pending', 'F3', false), entry('legacy', null), entry('rest', 'R1'), second])
+    expect([...tags.keys()]).toEqual(['F6'])
+    expect(tags.get('F6')).toEqual([first, second])
+    expect(queryRecords(tags.get('F6')!, { page: 1, month: null, search: '' }).days[0]?.dateKey).toBe('')
+  })
   it('pages a busy single day by logical entries, with no overlap or loss', () => {
     const entries = Array.from({ length: 53 }, (_, i) => note(i))
     const pages = [1, 2, 3].map(page => queryRecords(entries, { month: null, search: '', page }))

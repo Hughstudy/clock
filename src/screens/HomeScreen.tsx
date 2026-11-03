@@ -1,6 +1,7 @@
 import { focusCopy as copy } from '../data/focus-copy'
 import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react'
 import { EncouragementReader } from '../components/EncouragementReader'
+import { DurationDial } from '../components/DurationDial'
 import { ShortCompanionMessage } from '../components/ShortCompanionMessage'
 import { FocusPanel } from '../components/FocusPanel'
 import { formatClock, formatElapsedClock, formatMinutes, PHASE_LABELS, spokenClock } from '../components/format'
@@ -14,6 +15,7 @@ import type { QuoteFavoritesController } from '../contracts/favorites'
 import { uiText } from '../data/ui-copy'
 import type { useFeedback } from '../hooks/companion/useFeedback'
 import { useDurationChoice, validateDurationDraft } from '../hooks/useDurationChoice'
+import { useDialGesture } from '../hooks/useDialGesture'
 import { useFocusTaskBack } from '../hooks/useFocusTaskBack'
 import { useSceneFit } from '../hooks/useSceneFit'
 import type { SessionResult, UserAction } from '../hooks/useClockApp'
@@ -44,7 +46,7 @@ interface Props {
   onSettings: () => void
 }
 
-const titles = { duration: copy.otherTitle, end: copy.endQuestion, thought: copy.write,
+const titles = { duration: '调这一次的时长', end: copy.endQuestion, thought: copy.write,
   thoughts: copy.sessionThoughts, encouragement: copy.encouragementTitle, message: copy.encouragementTitle, status: copy.statusTitle }
 
 /**
@@ -80,6 +82,7 @@ export function HomeScreen({ active, view, result, linkedThoughts, defaultsInten
   const restMinutes = restPhase === 'longBreak' ? view.longBreakMinutes : view.shortBreakMinutes
   const focusMinutes = choice.picked ?? view.nextFocusMinutes
   const panel = active ? (thoughts.open ? 'thought' : task) : null
+  const reading = panel === 'encouragement'
   const stepTooLong = Array.from(step).length > view.stepMaxLength
   const scene = panel && companion.scene?.allowBeats ? { ...companion.scene, allowBeats: false } : companion.scene
   const confirmExpired = task === 'end' && confirming.current !== view.sessionId
@@ -178,7 +181,14 @@ export function HomeScreen({ active, view, result, linkedThoughts, defaultsInten
   const tone = focusResult ? 'done' : paused ? 'paused' : isRest ? 'rest' : 'focus'
 
   const duration = validateDurationDraft(draft, view.focusMinutesRange.min, view.focusMinutesRange.max)
-  const customPicked = !view.quickChoicesMinutes.includes(focusMinutes)
+  const dialAvailable = active && readyFocus && canEdit && !timerPending
+  const dialGesture = useDialGesture({
+    enabled: dialAvailable, identity: identity + '/' + focusMinutes, task: panel,
+    open: panel === 'duration', minutes: panel === 'duration' && duration.ok ? duration.minutes : focusMinutes,
+    ...view.focusMinutesRange, onOpen: target => show('duration', target), onPreview: value => setDraft(String(value)),
+    onCancel: () => setTask(current => current === 'duration' ? null : current),
+  })
+  useEffect(() => { if (!dialAvailable && task === 'duration') setTask(null) }, [task, dialAvailable])
 
   const frame = companion.feedback.frame
   const requested = frame.placement === 'requested' ? frame.encouragement : null
@@ -197,11 +207,11 @@ export function HomeScreen({ active, view, result, linkedThoughts, defaultsInten
     : `${PHASE_LABELS[view.phase]} · ${paused ? copy.paused : copy.running}${view.isBreak ? '' : ` · ${copy.target(Math.round(view.totalMs / 60000))}`}`
 
   return (
-    <section className="screen home" data-tone={tone} aria-label="专注计时">
+    <section className="screen home" data-tone={tone} data-panel={panel ?? ''} data-ready-focus={readyFocus} aria-label="专注计时">
       <div ref={sceneBox} className="fp-scene" data-setting={companion.sceneryEnabled ? sceneSettingFor(scene?.id) : 'plain'}>
         <div className="fp-top">
-          <button type="button" className="pill pill--glass" aria-expanded={!!requested}
-            onClick={event => panel === 'encouragement' ? close() : show('encouragement', event.currentTarget)}>{uiText('UI19')}</button>
+          <button type="button" className="pill pill--glass" aria-expanded={reading}
+            onClick={event => reading ? close() : show('encouragement', event.currentTarget)}>{reading ? copy.dismiss : uiText('UI19')}</button>
           <button type="button" className="pill pill--glass pill--icon" onClick={onSettings} aria-label="设置">
             <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><path d="M5 4v16M12 4v16M19 4v16"/><path d="M2 8h6M9 15h6M16 9h6" strokeWidth="3.4"/></svg>
           </button>
@@ -213,32 +223,8 @@ export function HomeScreen({ active, view, result, linkedThoughts, defaultsInten
               <BlueCompanion presentation={presentation} keyboardPat={keyboardPat} cueId={companion.cue?.id} scene={scene}
                 panelOpen={!!panel} sceneryEnabled={companion.sceneryEnabled} />} />
         </div>
-        {panel && <FocusPanel key={panel} title={titles[panel]} onClose={close} onBack={back} timerSummary={timerSummary}
-          closeLabel={panel === 'encouragement' ? copy.dismiss : panel === 'end' ? copy.cancelEnd : panel === 'duration' ? copy.cancel
-            : !ready && !view.isBreak ? uiText(view.step ? 'UI16' : 'UI17') : '返回'}>
-          {panel === 'duration' && <form className="fp-duration" onSubmit={e => {
-            e.preventDefault()
-            if (duration.ok) { pick(duration.minutes); close() }
-          }}>
-            <div className="fp-stepper">
-              <button type="button" className="pill pill--soft" aria-label="减少 1 分钟"
-                onClick={() => setDraft(String(Math.max(view.focusMinutesRange.min, (duration.ok ? duration.minutes : focusMinutes) - 1)))}>−</button>
-              <input id="custom-minutes" data-initial-focus inputMode="numeric" enterKeyHint="done" value={draft}
-                aria-describedby="custom-minutes-hint" aria-invalid={!duration.ok} aria-label="专注分钟数"
-                onFocus={e => e.currentTarget.select()} onChange={e => setDraft(e.target.value)} />
-              <button type="button" className="pill pill--soft" aria-label="增加 1 分钟"
-                onClick={() => setDraft(String(Math.min(view.focusMinutesRange.max, (duration.ok ? duration.minutes : focusMinutes) + 1)))}>+</button>
-              <span aria-hidden="true">分钟</span>
-            </div>
-            <p id="custom-minutes-hint" className={duration.ok ? 'fp-hint' : 'fp-hint fp-hint--error'}>
-              {duration.ok ? copy.durationRange(view.focusMinutesRange.min, view.focusMinutesRange.max)
-                : copy.durationError(view.focusMinutesRange.min, view.focusMinutesRange.max)}
-              {!duration.ok && <button type="button" className="text-action" onClick={() => setDraft(String(focusMinutes))}>{copy.restoreDuration}</button>}
-            </p>
-            <div className="fp-panel-actions">
-              <button type="submit" className="pill pill--solid" disabled={!duration.ok}>{copy.useDuration}</button>
-            </div>
-          </form>}
+        {panel && panel !== 'duration' && panel !== 'encouragement' && <FocusPanel key={panel} title={titles[panel]} onClose={close} onBack={back} timerSummary={timerSummary}
+          closeLabel={panel === 'end' ? copy.cancelEnd : !ready && !view.isBreak ? uiText(view.step ? 'UI16' : 'UI17') : '返回'}>
           {panel === 'end' && <div className="fp-end">
             <p data-initial-focus tabIndex={-1}>{confirmExpired ? copy.endExpired : copy.endExplanation}</p>
             {!confirmExpired && <div className="fp-panel-actions">
@@ -246,9 +232,6 @@ export function HomeScreen({ active, view, result, linkedThoughts, defaultsInten
                 onActivate={() => { if (confirming.current === view.sessionId) dispatch({ type: 'end' }); close() }}>{copy.confirmEnd}</TimerActionButton>
             </div>}
           </div>}
-          {panel === 'encouragement' && requested && <EncouragementReader quote={requested} choosing={askOpen} canEdit={canEdit}
-            {...(favorites ? { favorites } : {})} onNext={companion.next} onChooseMode={() => setAskOpen(true)} onReturn={() => setAskOpen(false)}
-            onChoose={pool => { if (pool !== requested.pool) companion.request(pool); setAskOpen(false) }} />}
           {panel === 'message' && <p className="fp-full-message" tabIndex={-1} data-initial-focus>{message}</p>}
           {panel === 'thoughts' && <ul className="fp-session-list">{linkedThoughts.map((note, index) => <li key={note.id} data-thought-id={note.id}>
             <p>{note.text || `标记 ${index + 1}`}{thoughts.pendingIds.has(note.id) && <span> · 更改待确认</span>}</p>
@@ -279,8 +262,20 @@ export function HomeScreen({ active, view, result, linkedThoughts, defaultsInten
       </div>
 
       <div className="fp-plate" data-panel={panel ?? ''}>
-        <p className="fp-digits" {...(ready ? { 'aria-hidden': true } : { role: 'timer', 'aria-label': `${PHASE_LABELS[view.phase]}还剩${spokenClock(view.remainingMs)}` })}>{digits}</p>
+        <p className="fp-digits" {...(ready ? {} : { role: 'timer', 'aria-label': `${PHASE_LABELS[view.phase]}还剩${spokenClock(view.remainingMs)}` })}>
+          {readyFocus ? <button type="button" className="fp-clock-trigger" aria-label={`调整专注时长，当前 ${focusMinutes} 分钟`}
+            disabled={!dialAvailable} tabIndex={panel === 'duration' ? -1 : undefined} aria-haspopup="dialog" aria-expanded={panel === 'duration'}
+            onClick={event => { if (panel !== 'duration') show('duration', event.currentTarget) }}>{panel === 'duration' && duration.ok ? formatClock(duration.minutes * 60000) : digits}</button> : digits}
+        </p>
+        {panel === 'duration' && dialAvailable && <FocusPanel title={titles.duration} placement="plate" timerSummary={timerSummary}
+          onClose={close} closeLabel={copy.cancel}>
+          <DurationDial draft={draft} minutes={focusMinutes} {...view.focusMinutesRange} face={dialGesture.face} onDrag={dialGesture.beginDrag}
+            onChange={setDraft} onApply={value => { pick(value); close() }} />
+          {pending && <p className="fp-hint fp-hint--error">{copy.pending}
+            <button type="button" className="text-action" onClick={() => dispatch({ type: 'retrySave' })}>{copy.retry}</button></p>}
+        </FocusPanel>}
         <div className="fp-status">
+          {readyFocus && !editingStep && <small className="fp-hold-hint">长按开始或点时间调时</small>}
           {readyFocus && !restEnded ? (editingStep
             ? <input className="fp-step-input" aria-label={uiText('UI10')} placeholder={uiText('UI11')} value={step} autoFocus
                 enterKeyHint="done" aria-invalid={stepTooLong} disabled={!canEdit}
@@ -289,27 +284,19 @@ export function HomeScreen({ active, view, result, linkedThoughts, defaultsInten
             : <button type="button" className="text-action" disabled={!canEdit} onClick={() => setEditingStep(true)}>
               {step.trim() ? `${copy.stepPrefix}${step.trim()}` : copy.stepAdd}</button>)
             : <span>{statusLine}{!ready && !view.isBreak && view.step && <span className="fp-current-step" title={view.step}> · {copy.stepPrefix}{view.step}</span>}</span>}
+          {(preparingRest || focusResult) && <select className="fp-rest-choice" aria-label="休息时长" value={restPhase}
+            disabled={!canEdit || timerPending} onChange={e => setRestChoice(e.target.value === 'longBreak' ? 'longBreak' : 'shortBreak')}>
+            {(['shortBreak', 'longBreak'] as const).map(phase => <option key={phase} value={phase}>
+              {PHASE_LABELS[phase]} {phase === 'shortBreak' ? view.shortBreakMinutes : view.longBreakMinutes} 分钟</option>)}
+          </select>}
           {stepTooLong && <span className="fp-hint--error"> · 请缩短到 {view.stepMaxLength} 字以内</span>}
         </div>
 
-        <div className="fp-row">
-          {ready && !preparingRest && !focusResult ? <div className="fp-chips" role="group" aria-label="专注时长">
-            {view.quickChoicesMinutes.map(value => <button key={value} type="button" className="chip"
-              aria-pressed={focusMinutes === value} disabled={!canEdit} onClick={() => pick(value)}>{copy.minutes(value)}</button>)}
-            <button type="button" className="chip" aria-pressed={customPicked} disabled={!canEdit}
-              onClick={e => show('duration', e.currentTarget)}>{customPicked ? copy.minutes(focusMinutes) : copy.otherDuration}</button>
-          </div>
-          : ready ? <div className="fp-chips" role="group" aria-label="休息时长">
-            {(['shortBreak', 'longBreak'] as const).map(phase => <button key={phase} type="button" className="chip"
-              aria-pressed={restPhase === phase} disabled={!canEdit} onClick={() => setRestChoice(phase)}>
-              {PHASE_LABELS[phase]} {phase === 'shortBreak' ? view.shortBreakMinutes : view.longBreakMinutes}</button>)}
-          </div>
-          : <div className="fp-progress" aria-hidden="true"><i style={{ width: `${Math.round(Math.min(1, Math.max(0, view.progress)) * 1000) / 10}%` }} /></div>}
-        </div>
-
         <div className="fp-controls" role="group" aria-label="计时控制">
+          {!ready && <div className="fp-progress" aria-hidden="true"><i style={{ width: `${Math.round(Math.min(1, Math.max(0, view.progress)) * 1000) / 10}%` }} /></div>}
           <div className="fp-primary" ref={primaryRef}>
-            <TimerActionButton identity={identity} primary disabled={!canEdit || (readyFocus && stepTooLong)} busy={timerPending} onActivate={primary.run}>
+            <TimerActionButton identity={readyFocus ? identity + '/' + focusMinutes : identity} primary disabled={!canEdit || (readyFocus && stepTooLong)} busy={timerPending} onActivate={primary.run}
+              {...(dialAvailable && panel !== 'duration' ? { onHoldStart: dialGesture.beginHold } : {})}>
               {timerPending ? '正在处理…' : primary.label}</TimerActionButton>
           </div>
           <div className="fp-control-secondary">
@@ -324,17 +311,26 @@ export function HomeScreen({ active, view, result, linkedThoughts, defaultsInten
           </div>
         </div>
 
-        <div className="fp-secondary fp-thought-tools" role="group" aria-label="想法工具">
-          <button type="button" className="text-action" disabled={!canEdit}
-            onClick={thoughts.mark} onKeyDown={e => { if (e.repeat && (e.key === 'Enter' || e.key === ' ')) e.preventDefault() }}>{copy.mark}</button>
-          <button type="button" className="text-action" disabled={!canEdit} onClick={e => show('thought', e.currentTarget)}>
-            {copy.write}</button>
-        </div>
-        <div className="fp-thought-context">
-          {thoughts.hasDraft && <button type="button" className="text-action" onClick={event => {
-            opener.current = event.currentTarget; companion.dismiss(); setTask(null); thoughts.openNew()
-          }}>{copy.resumeDraft}</button>}
-          {!!linkedThoughts.length && <button type="button" className="text-action" onClick={event => show('thoughts', event.currentTarget)}>{copy.sessionThoughts}（{linkedThoughts.length}）</button>}
+        <div className="fp-tools-slot">
+          {reading && requested ? <EncouragementReader quote={requested} choosing={askOpen} canEdit={canEdit}
+            sceneRef={sceneBox} onBack={back} onClose={close} timerSummary={timerSummary}
+            {...(favorites ? { favorites } : {})} onNext={companion.next} onChooseMode={() => setAskOpen(true)} onReturn={() => setAskOpen(false)}
+            onChoose={pool => { if (pool !== requested.pool) companion.request(pool); setAskOpen(false) }} /> : <>
+            <div className="fp-secondary fp-thought-tools" role="group" aria-label="想法工具">
+              <span className="fp-tools-label">随手记</span>
+              <button type="button" className="text-action" disabled={!canEdit}
+                onClick={thoughts.mark} onKeyDown={e => { if (e.repeat && (e.key === 'Enter' || e.key === ' ')) e.preventDefault() }}>
+                <svg width="16" height="16" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6"><path d="M6 4h12v16l-6-4-6 4zM9 9h6m-3-3v6"/></svg>{copy.mark}</button>
+              <button type="button" className="text-action" disabled={!canEdit} onClick={e => show('thought', e.currentTarget)}>
+                <svg width="16" height="16" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6"><path d="m5 15-1 5 5-1L20 8l-4-4zM14 6l4 4"/></svg>{copy.write}</button>
+            </div>
+            <div className="fp-thought-context">
+              {thoughts.hasDraft && <button type="button" className="text-action" onClick={event => {
+                opener.current = event.currentTarget; companion.dismiss(); setTask(null); thoughts.openNew()
+              }}>{copy.resumeDraft}</button>}
+              {!!linkedThoughts.length && <button type="button" className="text-action" onClick={event => show('thoughts', event.currentTarget)}>{copy.sessionThoughts}（{linkedThoughts.length}）</button>}
+            </div>
+          </>}
         </div>
 
         <div className="fp-note" aria-label="想法与保存状态">

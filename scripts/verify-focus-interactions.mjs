@@ -3,6 +3,8 @@ import path from 'node:path'
 import { mkdir, writeFile } from 'node:fs/promises'
 import { chromium } from 'playwright'
 import { build, preview } from 'vite'
+import { focusTime, prepareMinutes } from './focus-dial-actions.mjs'
+import { checkDialGestures } from './check-dial-gestures.mjs'
 
 const output = path.resolve(process.env.FOCUS_REVIEW_OUTPUT || '.preview/v35-interactions')
 const outDir = path.join(output, 'build')
@@ -63,18 +65,21 @@ try {
   await tap(dialog(page), '知道了')
   await tap(dialog(page), '返回')
   await page.screenshot({ path: path.join(output, 'console-375.png') })
-  await tap(page, '15 分钟')
+  check('Focus preparation has one time readout and no duration preset row',
+    await focusTime(page).count() === 1 && await page.getByRole('group', { name: '专注时长' }).count() === 0 &&
+    await page.getByRole('button', { name: /^(5 分钟|15 分钟|25 分钟|其他)$/ }).count() === 0)
+  await prepareMinutes(page, 15)
   check('Choosing a duration changes only the ready display',
     !(await snapshot(page))?.timer.session && await page.locator('.fp-digits').innerText() === '15:00')
-  await tap(page, '其他')
+  await focusTime(page).click()
   await page.locator('#custom-minutes').fill('0')
   await page.keyboard.press('Enter')
   check('An invalid custom length stays editable and never starts',
     !(await snapshot(page))?.timer.session && await button(dialog(page), '用这个时长').isDisabled() && await page.locator('#custom-minutes').inputValue() === '0')
   await page.keyboard.press('Escape')
   check('Escape returns focus to the chooser and keeps the displayed choice',
-    await button(page, '其他').evaluate(el => el === document.activeElement) && await page.locator('.fp-digits').innerText() === '15:00')
-  await tap(page, '5 分钟')
+    await focusTime(page).evaluate(el => el === document.activeElement) && await page.locator('.fp-digits').innerText() === '15:00')
+  await prepareMinutes(page, 5)
   await tap(page, '开始专注')
   await button(page, '暂停专注').waitFor()
   const first = await snapshot(page)
@@ -129,16 +134,17 @@ try {
     drafted.length === 1 && drafted[0].sessionId === owner && drafted[0].dateKey === '2026-10-31')
   if (await dialog(page).count()) await page.keyboard.press('Escape')
   await tap(page, '给我一句鼓励')
-  const reading = dialog(page).locator('.fp-reader-quote')
+  const reader = page.getByRole('region', { name: '一句鼓励' })
+  const reading = page.locator('.fp-reader-quote:visible')
   const phrase = await reading.innerText()
-  await tap(dialog(page), '换一种鼓励')
+  await tap(reader, '换一种鼓励')
   check('Encouragement categories replace the reading content', !await reading.count())
-  await tap(dialog(page), '日常鼓励')
+  await tap(reader, '日常鼓励')
   check('Selecting the current category returns the original quote', await reading.innerText() === phrase)
-  await tap(dialog(page), '换一种鼓励')
+  await tap(reader, '换一种鼓励')
   await page.keyboard.press('Escape')
   check('Escape returns from categories to the original reading', await reading.innerText() === phrase)
-  await tap(dialog(page), '换一种鼓励')
+  await tap(reader, '换一种鼓励')
   await page.goBack()
   await reading.waitFor()
   check('Browser Back returns one reader step without closing it', await reading.innerText() === phrase)
@@ -242,8 +248,8 @@ try {
   await tap(page, '继续草稿')
   check('Transferred editor keeps its recoverable draft', await editor.inputValue() === '回执 A')
   await tap(page, '给我一句鼓励')
-  check('Writing to reading switches one local panel and protects the draft', await dialog(page).count() === 1 && !await editor.count())
-  await tap(dialog(page), '收到鼓励了')
+  check('Writing to reading switches one local task and protects the draft', await reader.count() === 1 && !await editor.count())
+  await tap(page, '收到鼓励了')
   await tap(page, '继续草稿')
   check('Continuing restores the input after a reader visit', await editor.inputValue() === '回执 A')
   await page.evaluate(() => {
@@ -271,6 +277,7 @@ try {
   const retried = await snapshot(page)
   check('Retry updates the original thought to B once and retains draft C', retried.thoughts.filter(t => t.text === '回执 B').length === 1 && !retried.thoughts.some(t => t.text === '回执 A') &&
     await editor.inputValue() === '后续草稿 C')
+  await checkDialGestures(browser, url, check)
   check('No runtime or console errors', errors.length === 0)
   await writeFile(path.join(output, 'report.json'), JSON.stringify({ browser: browser.version(), checks, errors }, null, 2))
 } finally {

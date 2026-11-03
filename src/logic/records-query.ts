@@ -1,5 +1,6 @@
 import type { HistoryDay, HistoryEntry } from './stats'
-import type { FocusRecord } from './types'
+import type { FocusRecord, FocusSceneId } from './types'
+import { isFocusSceneId } from './scenes'
 import { isDateKey } from './calendar'
 
 export const RECORDS_PAGE_SIZE = 20
@@ -9,6 +10,20 @@ export interface RecordsQuery {
   month: MonthFilter
   search: string
   page: number
+}
+
+/** Picture tags index saved assignments, including zero-time and undated records. */
+export function indexRoomActivities<R extends FocusRecord & { saved: boolean }>(entries: readonly HistoryEntry<R>[]) {
+  const groups = new Map<FocusSceneId, HistoryEntry<R>[]>()
+  for (const entry of entries) {
+    if (entry.kind !== 'record' || !entry.record.saved) continue
+    const scene = entry.record.scene?.sceneId
+    if (!isFocusSceneId(scene)) continue
+    const existing = groups.get(scene)
+    if (existing) existing.push(entry)
+    else groups.set(scene, [entry])
+  }
+  return groups
 }
 
 export function entryId(entry: HistoryEntry): string {

@@ -206,7 +206,7 @@ try {
   const phraseB = await favoritePage.locator('.fp-reader-quote').innerText()
   check('Changing quotes remains available while A is pending', phraseA !== phraseB && await button(favoritePage, '收藏这句').isEnabled())
   await writes(favoritePage, false)
-  await button(favoritePage.getByRole('dialog'), '重试保存').last().click()
+  await button(favoritePage, '重试保存').last().click()
   await until(favoritePage, 'value?.quoteFavorites.some(q => q.deletedAt === null)')
   check('A late favorite receipt leaves B unselected and preserves A text',
     await button(favoritePage, '收藏这句').getAttribute('aria-pressed') === 'false' && (await snapshot(favoritePage)).quoteFavorites[0].text === phraseA)

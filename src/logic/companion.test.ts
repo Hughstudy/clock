@@ -33,7 +33,7 @@ describe('replaceable companion presentation', () => {
       renderCharacter: view => createElement('span', { 'data-test-stance': view.stance }, 'custom visual'),
     }))
     expect(html).toContain('data-test-stance="support"')
-    expect(html).toContain('你值得被温柔地对待。')
+    expect(html).toContain('我折纸船，也是一折一折来的。')
     expect(html).not.toContain('<svg')
   })
 
@@ -51,7 +51,7 @@ describe('replaceable companion presentation', () => {
   it('shows technical errors ahead of supportive text and exposes a single live region', () => {
     const feedback = ask({ persistence: 'pending', error: 'ERR01' })
     const html = renderToStaticMarkup(createElement(CompanionFeedback, { feedback, reducedMotion: true }))
-    expect(html.indexOf('这次记录还没保存成功')).toBeLessThan(html.indexOf('你值得被温柔地对待'))
+    expect(html.indexOf('这次记录还没保存成功')).toBeLessThan(html.indexOf('我折纸船，也是一折一折来的'))
     expect(html.match(/aria-live=/g)).toHaveLength(1)
     expect(html).toContain('aria-live="assertive"')
   })
@@ -60,7 +60,7 @@ describe('replaceable companion presentation', () => {
     const feedback = ask({ persistence: 'saving' })
     const html = renderToStaticMarkup(createElement(CompanionFeedback, { feedback, reducedMotion: true, announce: false }))
     expect(html).toContain('正在保存。')
-    expect(html).toContain('你值得被温柔地对待。')
+    expect(html).toContain('我折纸船，也是一折一折来的。')
     expect(html).not.toContain('aria-live=')
   })
 

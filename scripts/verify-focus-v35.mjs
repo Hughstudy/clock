@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict'
 import { chromium } from 'playwright'
+import { focusTime, prepareMinutes } from './focus-dial-actions.mjs'
 
 // Run against the local development or production preview server supplied by
 // the caller. Each context is isolated from the user's application storage.
@@ -21,22 +22,23 @@ try {
   const dismissNotice = button(page, '知道了')
   if (await dismissNotice.isVisible()) await dismissNotice.click()
 
-  await button(page, '15 分钟').click()
+  await prepareMinutes(page, 15)
   check('Choosing a length does not start a session', !(await snapshot(page))?.timer.session)
   await button(page, '给我一句鼓励').click()
-  const reader = page.getByRole('dialog')
-  const firstQuote = await reader.locator('.fp-reader-quote').innerText()
+  const reader = page.getByRole('region', { name: '一句鼓励' })
+  const quote = page.locator('.fp-reader-quote:visible')
+  const firstQuote = await quote.innerText()
   await button(reader, '换一种鼓励').click()
-  check('Category selection replaces quote reading', await reader.locator('.fp-reader-quote').count() === 0)
+  check('Category selection replaces quote reading', await quote.count() === 0)
   await button(reader, '日常鼓励').click()
-  check('Choosing current category keeps the same quote', await reader.locator('.fp-reader-quote').innerText() === firstQuote)
+  check('Choosing current category keeps the same quote', await quote.innerText() === firstQuote)
   await button(reader, '换一种鼓励').click()
   await page.keyboard.press('Escape')
-  check('Escape from categories returns to the same quote', await reader.locator('.fp-reader-quote').innerText() === firstQuote)
+  check('Escape from categories returns to the same quote', await quote.innerText() === firstQuote)
   await button(reader, '换一种鼓励').click()
   await page.goBack()
-  await reader.locator('.fp-reader-quote').waitFor()
-  check('Browser Back from categories preserves reader', await reader.count() === 1 && await reader.locator('.fp-reader-quote').innerText() === firstQuote)
+  await quote.waitFor()
+  check('Browser Back from categories preserves reader', await reader.count() === 1 && await quote.innerText() === firstQuote)
   await page.goBack()
   await reader.waitFor({ state: 'hidden' })
   check('A second browser Back closes the reader', await button(page, '给我一句鼓励').evaluate(element => document.activeElement === element))
@@ -44,8 +46,8 @@ try {
   await button(page, '记下想法').click()
   await page.locator('#thought-text').fill('稍后取快递')
   await button(page, '给我一句鼓励').click()
-  check('Switching from writing to encouragement keeps one task panel', await page.getByRole('dialog').count() === 1 && await page.locator('#thought-text').count() === 0)
-  await button(page.getByRole('dialog'), '收到鼓励了').click()
+  check('Switching from writing to encouragement keeps one active reader', await reader.count() === 1 && await page.locator('#thought-text').count() === 0)
+  await button(page, '收到鼓励了').click()
   await button(page, '继续草稿').click()
   check('Switching tasks preserves the original draft', await page.locator('#thought-text').inputValue() === '稍后取快递')
   await page.keyboard.press('Escape')
@@ -64,7 +66,7 @@ try {
   await button(page, '开始专注').waitFor()
   check('Preparing the next focus does not start it', !(await snapshot(page)).timer.session && (await snapshot(page)).records.length === endedCount)
 
-  await button(page, '其他').click()
+  await focusTime(page).click()
   await page.locator('#custom-minutes').fill('1')
   await button(page.getByRole('dialog'), '用这个时长').click()
   await button(page, '开始专注').click()

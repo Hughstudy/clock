@@ -33,14 +33,14 @@ references, preserved in their original language; no cloud register has been
 updated. Maintained local project documentation uses English. This documentation
 preference does not change the application's UI language.
 
-Touch the blue companion for a physical response or choose **给我一句鼓励** to read a phrase. The reader stays open while a session changes. Automatic feedback follows actual session and save events. Early and full endings receive the same consideration. Settings opens from Focus, and either the app or operating system can request reduced motion.
+Tap **开始专注** to start the displayed time. Hold it or tap the digits to adjust a one-off length on the dial. Applying the new value returns to preparation. Choose **给我一句鼓励** to hear from the companion in a speech bubble and optionally favorite its words. Reading stays open while the timer changes.
 
-Open **记录** for actual focus time, thoughts, saved activity history and encouragement favorites. The activity view uses each session’s saved assignment and links to its original record. It does not invent a historical discovery or implement the PRD’s persistent cottage. Reading the welcome note does not create a favorite.
+Open **记录 → 生活场景** to find a session by its activity. For example, the paper-boat picture opens the list of saved paper-boat records. The room's furniture is initial scenery. The shelf indexes saved activities and grows by one picture per distinct focus activity.
 
 A mobile-first Pomodoro-style focus timer built with React 18, TypeScript,
 Vite and rough.js. Early and full endings receive equal supportive feedback.
 Actual time excludes pauses, includes sub-minute sessions, and is saved locally.
-Selecting five minutes changes only the next session; it does not change the default 25-minute setting.
+The first-use default is 25 minutes. A one-off selection leaves the configured default intact.
 
 See [PLAN.md](PLAN.md) for scope, invariants and acceptance checks, and
 [AGENTS.md](AGENTS.md) for architecture rules.
@@ -113,7 +113,7 @@ One-time setup: in the repository's **Settings → Pages**, set **Source** to
 
 ## Current verification
 
-See [the v35 interaction report](docs/verification/interaction-v35.md) for current tests, production-browser evidence and delivery status. Earlier reports retain their historical scope and counts. Desktop emulation does not establish physical-phone or screen-reader acceptance. Supplied PRD/register snapshots are immutable references, not a live task board.
+See the [phone layout and room verification](docs/verification/companion-first.md) for the November 3 changes and the [v35 interaction report](docs/verification/interaction-v35.md) for the earlier increment. Physical-phone and screen-reader acceptance remain open.
 
 ## Credits
 

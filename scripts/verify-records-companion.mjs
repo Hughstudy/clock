@@ -86,6 +86,10 @@ try {
   observe(page)
   await page.clock.setFixedTime(t0)
   await page.goto(url)
+  await openRecords(page); await page.locator('.room-preview').click()
+  check('An empty dataset shows the furnished room and no picture tags or fabricated activity', await page.locator('.records-room .records-art').isVisible() && await page.locator('[data-room-spot]').count() === 0 && await page.locator('.records-activity').count() === 0)
+  await press(page, '全部记录')
+  await press(page, '专注')
   const zero = await start(page)
   await end(page)
   await page.waitForFunction(k => JSON.parse(localStorage.getItem(k)).records.length === 1, key)
@@ -109,8 +113,9 @@ try {
   const base = await snapshot(page)
   check('Retry records same identity once; zero seconds stays visible and two 20-second segments total40', base.records.length === 3 && base.records.filter(record => record.sessionId === latest).length === 1 &&
     (await row(page, zero).innerText()).includes('已开始过这一段') && (await page.locator('.records-summary').innerText()).includes('40 秒'))
-  check('All four modes are visible, hero is removed and statistics are collapsed initially',
-    await page.locator('.records-modes button').count() === 4 && await page.locator('.records-greeting').count() === 0 &&
+  check('All four modes and a compact cottage preview leave the first record visible with statistics collapsed',
+    await page.locator('.records-modes button').count() === 4 && (await page.locator('.room-preview').boundingBox()).height <= 72 &&
+    (await row(page, latest).boundingBox()).y < 800 &&
     await page.getByRole('button', { name: '查看统计', exact: true }).getAttribute('aria-expanded') === 'false' && await page.getByRole('button', { name: '近30天', exact: true }).count() === 0)
   const beforePanels = (await snapshot(page)).revision
   await press(page, '选择月份')
@@ -143,17 +148,63 @@ try {
   await page.evaluate(async () => { await document.fonts.ready; window.scrollTo(0, 0) })
   await page.screenshot({ path: path.join(output, 'records-375.png'), fullPage: true })
   const revisionBefore = (await snapshot(page)).revision
-  await press(page, '生活场景')
-  await page.locator('.records-activity .record-summary').first().click()
-  await press(page, '查看原记录')
-  check('Activity opens its original record without a new world or fabricated acquired objects', await page.getByRole('button', { name: '返回伙伴活动', exact: true }).isVisible() && await page.locator('.records-activity .record-story').isVisible())
+  await page.locator('.room-preview').click()
+  const activityId = base.records.find(record => record.sessionId === first).scene.sceneId
+  const spot = page.locator(`[data-room-spot="${activityId}"]`)
+  check('The panorama only shows tags for saved focus assignments with no month filter', await page.locator('[data-room-spot]').count() === new Set(base.records.map(record => record.scene.sceneId)).size &&
+    await spot.isVisible() && await page.locator('.records-filter-row').count() === 0 && await page.locator('.records-activity').count() === 0)
+  await spot.focus(); await page.keyboard.press('Enter')
+  const sourceButton = page.locator(`.records-activity[data-entry-id="record:${first}"] > button`)
+  await sourceButton.click()
+  check('A tag opens the correct saved record and activity illustration', await page.locator('[data-return-activity]').isVisible() && await page.locator(`.records-activity [data-record-id="${first}"] .record-story`).getAttribute('data-scene-id') === activityId)
   await press(page, '全部记录'); await press(page, '生活场景')
-  check('Changing mode retains original-record depth and its activity source', await page.getByRole('button', { name: '返回伙伴活动', exact: true }).isVisible())
-  await press(page, '返回伙伴活动')
-  check('Returning from original record restores source action focus', await page.getByRole('button', { name: '查看原记录', exact: true }).evaluate(el => el === document.activeElement))
+  check('Changing mode retains original-record depth and its activity source', await page.locator('[data-return-activity]').isVisible())
+  await page.locator('[data-return-activity]').click()
+  check('Returning from original record restores source action focus', await sourceButton.evaluate(el => el === document.activeElement))
+  await press(page, '返回小屋')
+  check('Returning to the room restores the invoked picture tag and hides its source list', await spot.evaluate(el => el === document.activeElement) && await page.locator('.records-activity').count() === 0)
   await press(page, '我的收藏'); await press(page, '欢迎笺'); await press(page, '关闭欢迎笺')
   check('Welcome is read-only and close returns focus; browsing never creates writes', await page.getByRole('button', { name: '欢迎笺', exact: true }).evaluate(el => el === document.activeElement) && (await snapshot(page)).revision === revisionBefore)
   await context.close()
+
+  const catalogSample = makeSample(base, 10)
+  catalogSample.settings.sceneVarietyEnabled = false
+  catalogSample.records.forEach((record, i) => {
+    if (i < 9) record.scene = { sceneId: i === 8 ? 'F6' : `F${i + 1}`, ordinal: i + 1, selectionVersion: 2 }
+  })
+  const { context: catalogContext, page: catalog } = await seedPage(browser, catalogSample)
+  await openRecords(catalog)
+  check('Hidden Focus art keeps a text-only cottage preview available', await catalog.locator('.room-preview').isVisible() && await catalog.locator('.room-thumbnail').count() === 0)
+  await catalog.locator('.room-preview').click()
+  check('The explicit panorama shows all eight activity sketches and equivalent text entries without changing the art preference',
+    await catalog.locator('[data-room-spot]').count() === 8 && await catalog.locator('[data-room-label]').count() === 8 && (await snapshot(catalog)).settings.sceneVarietyEnabled === false)
+  for (const width of widths) {
+    await catalog.setViewportSize({ width, height: 812 })
+    check(`${width}px room fits eight labeled, non-overlapping picture targets of at least44px`, await catalog.locator('[data-room-spot]').evaluateAll(nodes => {
+      const boxes = nodes.map(el => el.getBoundingClientRect())
+      return boxes.every((r,i) => r.height >= 44 && r.width >= 44 && boxes.every((b,j) => i === j || r.bottom <= b.top || b.bottom <= r.top || r.right <= b.left || b.right <= r.left)) &&
+        document.documentElement.scrollWidth <= innerWidth
+    }))
+    if (width === 375) {
+      await catalog.evaluate(async () => { await document.fonts.ready; window.scrollTo(0, 0) })
+      await catalog.screenshot({ path: path.join(output, 'picture-tags-375.png') })
+    }
+  }
+  await catalog.setViewportSize({ width: 320, height: 568 })
+  await catalog.addStyleTag({ content: 'html { font-size: 200% !important; }' })
+  await catalog.locator('[data-room-label="F6"]').click()
+  check('Large text on a short phone finds both paper-boat records through the text entry', await catalog.locator('.records-activity').count() === 2 && await catalog.evaluate(() => document.documentElement.scrollWidth <= innerWidth))
+  const paperRow = catalog.locator('.records-activity').first()
+  await paperRow.locator('[data-view-original]').click()
+  await catalog.waitForFunction(() => history.state?.clockFocusTask === true)
+  await catalog.evaluate(() => history.back())
+  await catalog.locator('[data-return-activity]').waitFor({ state: 'hidden' })
+  await catalog.waitForFunction(() => history.state?.clockFocusTask === true)
+  await catalog.evaluate(() => history.back())
+  await catalog.locator('.room-source-heading').waitFor({ state: 'hidden' })
+  check('Two Back actions return through the paper-boat sources to the exact text entry',
+    await catalog.locator('[data-room-label="F6"]').evaluate(el => el === document.activeElement))
+  await catalogContext.close()
 
   for (const count of [1000, 10000]) {
     const sample = makeSample(base, count)
@@ -176,6 +227,21 @@ try {
     await press(scale, '下一页')
     await scale.locator('.records-list .record-summary').first().click()
     const monthAnchor = await scale.locator('.records-list [data-entry-id]').first().getAttribute('data-entry-id')
+    await press(scale, '生活场景')
+    await scale.locator('[data-room-label="F3"]').click()
+    check(`${count} records group repeated readings into one picture tag with all cross-month sources`, await scale.locator('[data-room-spot]').count() === 1 &&
+      Number(await scale.locator('.records-list').getAttribute('data-result-count')) === count / 5 && await scale.locator('.records-activity').count() === 20)
+    await press(scale, '下一页')
+    const pickedSource = scale.locator('.records-activity').first()
+    const pickedId = await pickedSource.getAttribute('data-entry-id')
+    await pickedSource.locator('[data-view-original]').click()
+    check(`${count} records page two leads to the correct source and back to the same page`, (await pickedSource.locator('[data-record-id]').getAttribute('data-record-id')) === pickedId.slice(7))
+    await scale.locator('[data-return-activity]').click()
+    check(`${count} records preserve focus and page in the selected tag`, (await scale.locator('.records-pagination').innerText()).includes('第2页') &&
+      await pickedSource.locator('[data-view-original]').evaluate(el => el === document.activeElement))
+    const boundaryId = await scale.locator('.records-activity').last().getAttribute('data-entry-id')
+    if (count === 1000) await scale.locator('.records-activity').last().locator('[data-view-original]').click()
+    await press(scale, '全部记录')
     if (count === 1000) {
       const anchor = scale.locator(`[data-entry-id="${monthAnchor}"]`).first()
       const top = (await anchor.boundingBox()).y
@@ -194,6 +260,11 @@ try {
       await scale.waitForFunction(expected => Number(document.querySelector('.records-list').dataset.resultCount) === expected, beforeCount + 1)
       check('A committed second-tab insertion preserves the current month object and pixel anchor', Math.abs((await anchor.boundingBox()).y - top) <= 2)
       await peer.close()
+      await press(scale, '生活场景')
+      const movedSource = scale.locator(`.records-activity[data-entry-id="${boundaryId}"]`)
+      check('Returning to the cottage follows an open source across a page boundary after a peer insert',
+        (await scale.locator('.records-pagination').innerText()).includes('第3页') && await movedSource.locator('[data-return-activity]').isVisible())
+      await movedSource.locator('[data-return-activity]').click()
     }
     await press(scale, '只看想法')
     check(`${count} thought mode has its own all-date scope, no timer summary, and a draft entry`, (await scale.locator('.records-filter-row').innerText()).includes('全部日期') && await scale.locator('.records-summary').count() === 0 && await scale.getByRole('button', { name: '继续草稿', exact: true }).isVisible())

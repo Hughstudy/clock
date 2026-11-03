@@ -26,12 +26,6 @@
     "longBreakEvery": 4,
     "soundEnabledDefault": false,
     "completionSoundWindowSeconds": 60,
-    "quickFocusMinutes": 5,
-    "quickChoicesMinutes": [
-      5,
-      15,
-      25
-    ],
     "stepMaxLength": 80
   },
   "calendar": {

@@ -24,11 +24,11 @@ body { background: var(--paper); }
 .app[data-reduced-motion='true'] *, .app[data-reduced-motion='true'] *::before, .app[data-reduced-motion='true'] *::after { animation: none !important; transition: none !important; }
 
 /* Native hit areas are at least 44px; neighboring controls never share a pseudo hit area. */
-.pill, .chip, .text-action {
+.pill, .text-action {
   position: relative; border: 0; font: inherit; font-weight: 750; cursor: pointer; color: #5b6f8c;
   -webkit-tap-highlight-color: transparent;
 }
-.pill::after, .chip::after, .text-action::after { content: none; }
+.pill::after, .text-action::after { content: none; }
 .pill { min-height: 44px; min-width: 44px; padding: 0 13px; border-radius: 999px; font-size: .8125rem; }
 .pill--glass { background: #ffffffc4; backdrop-filter: blur(6px); }
 .pill--icon { inline-size: 44px; padding: 0; display: grid; place-items: center; }
@@ -37,7 +37,7 @@ body { background: var(--paper); }
 .pill--ghost { background: #f3f5f9; }
 .pill--solid { background: var(--whale); color: #fff; box-shadow: 0 2px 0 var(--whale-deep); }
 .pill--ink { background: #4a5f7d; color: #fff; }
-.pill:disabled, .chip:disabled, .text-action:disabled { opacity: .45; cursor: default; }
+.pill:disabled, .text-action:disabled { opacity: .45; cursor: default; }
 .text-action { min-height: 44px; min-width: 44px; padding: 0 4px; background: none; font-size: .8125rem; color: var(--muted); white-space: nowrap; }
 .text-action:hover:not(:disabled) { color: var(--whale-deep); }
 
@@ -60,12 +60,11 @@ body { background: var(--paper); }
 .app[data-screen='home'] .app-main > div:not([hidden]) { flex: 1; min-block-size: 0; display: flex; }
 .home { flex: 1; min-block-size: 0; min-inline-size: 0; gap: 0; display: flex; flex-direction: column; align-items: stretch; text-align: center; }
 
-/* The art's width covers the scene (its visible window spans viewBox x 24–216), grows with the
-   height up to the old 470px box, and never lifts the creature's head (137/240 of the width above
-   the support edge) into the reserve for the top controls and a two-line bubble. */
+/* Grow the drawing with the space above the console. Its width also bounds the
+   hands at the sides and keeps the head below the controls and speech reserve. */
 .fp-scene { --sky: #f4dfc5; position: relative; flex: 1; min-block-size: 0; overflow: hidden; overflow: clip; background: var(--sky);
   container-type: size; --art-reserve: calc(env(safe-area-inset-top) + 114px);
-  --art-w: min(max(125cqw, min(100cqh - 48px - env(safe-area-inset-top), 88cqw, 470px) * 1.633), (100cqh - var(--art-reserve)) * 1.752); }
+  --art-w: min(max(125cqw, min(100cqh - 48px - env(safe-area-inset-top), 96cqw, 510px) * 1.633), (100cqh - var(--art-reserve)) * 1.752); }
 .fp-scene[data-setting='garden'] { --sky: #c4dedc; }
 .fp-scene[data-setting='dusk'] { --sky: #858eaf; }
 .fp-scene[data-setting='plain'] { --sky: var(--paper); }
@@ -113,11 +112,6 @@ body { background: var(--paper); }
 .fp-status .text-action { font-size: .75rem; min-height: 22px; max-inline-size: 100%; overflow: hidden; text-overflow: ellipsis; }
 .fp-step-input { inline-size: min(260px, 100%); block-size: 26px; padding: 0 10px; border: 1.5px solid #c7d6f4; border-radius: 13px; background: #fff;
   color: var(--ink); font: inherit; font-size: .8125rem; text-align: center; }
-.fp-row { min-block-size: 34px; margin-top: 8px; display: flex; align-items: center; justify-content: center; }
-.fp-chips { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; }
-.chip { min-block-size: 44px; min-inline-size: 44px; padding: 0 12px; border-radius: 15px; background: #fff; box-shadow: 0 0 0 1px var(--cream-line); font-size: .8125rem; white-space: nowrap; }
-.chip[aria-pressed='true'] { background: var(--whale); color: #fff; box-shadow: 0 2px 0 var(--whale-deep); }
-.home[data-tone='done'] .chip[aria-pressed='true'], .home[data-tone='rest'] .chip[aria-pressed='true'] { background: var(--mint); box-shadow: 0 2px 0 var(--mint-deep); }
 .fp-progress { inline-size: min(220px, 70%); block-size: 6px; border-radius: 3px; background: var(--cream-line); overflow: hidden; }
 .fp-progress > i { display: block; block-size: 100%; border-radius: 3px; background: var(--whale); }
 .home[data-tone='paused'] .fp-progress > i { background: repeating-linear-gradient(90deg, #d0a960 0 6px, #ead3a4 6px 9px); }
@@ -174,7 +168,6 @@ body { background: var(--paper); }
 @media (max-height: 700px) {
   .fp-plate { padding-top: 8px; }
   .fp-digits { min-block-size: 38px; line-height: max(38px, 1.2em); font-size: 1.875rem; }
-  .fp-row { margin-top: 4px; }
   .fp-primary { margin-top: 8px; }
   .home .fp-primary .btn-primary { min-block-size: 44px; }
   .fp-secondary { margin-top: 6px; }

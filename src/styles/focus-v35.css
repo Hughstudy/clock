@@ -1,24 +1,29 @@
-/* PRD v35: stable task groups and one bounded reader/editor. Artwork is unchanged. */
-.home .fp-plate { padding-inline: max(14px, env(safe-area-inset-left)); }
+/* Focus keeps the scene above a single, compact timer console. */
+.home .fp-plate { padding-inline: max(14px, env(safe-area-inset-left)) max(14px, env(safe-area-inset-right)); }
 .home .fp-digits { block-size: max(44px, 2.55rem); min-block-size: 44px; line-height: max(44px, 2.55rem); }
 .home .fp-status { block-size: max(44px, 2.3rem); min-block-size: max(44px, 2.3rem); overflow: visible; font-size: .8125rem; }
 .home .fp-status > span:first-child { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; white-space: normal; line-height: 1.35; }
 .home .fp-status .text-action, .home .fp-step-input { min-block-size: 44px; }
 .home .fp-step-input { block-size: 44px; }
 .home .fp-current-step { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.home .fp-row { block-size: max(44px, 3.1rem); min-block-size: max(44px, 3.1rem); margin-top: 4px; }
-.home .fp-chips { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); inline-size: min(100%, 340px); gap: 4px; }
-.home .fp-chips:has(button:nth-child(2):last-child) { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-.home .chip { min-inline-size: 44px; min-block-size: 44px; padding-inline: 4px; white-space: normal; }
-.home .fp-controls { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(104px, 1fr); align-items: stretch; gap: 10px;
+.home .fp-status { gap: 8px; }
+.home .fp-hold-hint { font-size: .75rem; font-weight: 500; white-space: normal; }
+.home .fp-rest-choice { min-block-size: 44px; max-inline-size: 48%; padding: 0 6px; font: inherit; color: var(--ink); background: var(--cream);
+  border: 1px solid var(--cream-line); border-radius: 12px; }
+.home .fp-controls { position: relative; display: grid; grid-template-columns: minmax(0, 1fr) minmax(88px, max-content); align-items: stretch; gap: 10px;
   inline-size: min(100%, 400px); margin: 8px auto 0; min-block-size: max(44px, 2.75rem); }
+.home .fp-controls > .fp-progress { position: absolute; bottom: calc(100% + 2px); left: 50%; transform: translateX(-50%); block-size: 4px; }
 .home .fp-primary { display: flex; margin: 0; }
 .home .fp-primary .btn-primary, .home .fp-primary .btn-primary:hover { inline-size: 100%; min-block-size: 44px; padding-inline: 8px; }
 .home .fp-control-secondary { display: flex; min-inline-size: 0; }
-.home .fp-control-secondary > button { inline-size: 100%; min-block-size: 44px; border: 1px solid #9aadc7; background: #fffaf1; color: var(--ink); }
-.home .fp-thought-tools { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; min-block-size: 44px; margin-top: 12px;
-  padding-top: 8px; border-top: 1px solid var(--cream-line); }
-.home .fp-thought-tools .text-action { min-block-size: 44px; border-radius: 12px; background: #f0f2f5; color: var(--ink); }
+.home .fp-control-secondary > button { inline-size: 100%; min-block-size: 44px; padding-inline: 12px; border: 1px solid #a6b6c8; border-radius: 16px; background: #fffaf1; color: var(--ink); }
+.home .fp-tools-slot { display: flex; flex-direction: column; inline-size: min(100%, 400px); block-size: calc(max(44px, 2.75rem) * 2 + 9px);
+  margin: 12px auto 0; padding-top: 8px; border-top: 1px solid var(--cream-line); overflow: auto; overscroll-behavior: contain; }
+.home .fp-thought-tools { display: flex; flex: none; justify-content: flex-end; align-items: center; gap: 4px; margin: 0; padding: 0; }
+.home .fp-tools-label { flex: auto; text-align: start; color: var(--muted); font-size: .75rem; }
+.home .fp-thought-tools .text-action { display: inline-flex; align-items: center; justify-content: center; gap: 5px; padding-inline: 6px;
+  min-block-size: 44px; background: transparent; color: var(--ink); white-space: normal; }
+.home .fp-thought-tools .text-action svg { flex: none; width: 1rem; height: 1rem; }
 .home .fp-thought-tools .text-action::before { display: none; }
 .home .fp-thought-context { display: flex; justify-content: center; align-items: center; gap: 8px; block-size: max(44px, 2.75rem); min-block-size: max(44px, 2.75rem); }
 .home .fp-thought-context > button { min-block-size: 44px; }
@@ -51,16 +56,6 @@
 .home .fp-session-list { list-style: none; padding: 0; margin: 0; display: grid; gap: 12px; }
 .home .fp-session-list li { padding-bottom: 8px; border-bottom: 1px solid var(--line); }
 .home .fp-session-list p, .home .fp-full-message { white-space: pre-wrap; overflow-wrap: anywhere; }
-.home .fp-encouragement { min-block-size: min(260px, 45svh); display: grid; grid-template-rows: minmax(144px, 1fr) auto 44px; }
-.home .fp-reader-content { overflow-y: auto; min-block-size: 0; }
-.home .fp-reader-content h3 { font-size: 1rem; margin: 0 0 8px; }
-.home .fp-reader-category { font-size: .8125rem; color: var(--muted); }
-.home .focus-panel .fp-reader-quote { color: var(--ink); white-space: pre-wrap; font-size: 1rem; line-height: 1.7; margin-block: 12px; }
-.home .fp-reader-categories { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-.home .fp-reader-categories .pill { min-block-size: 48px; border: 1px solid transparent; white-space: normal; }
-.home .fp-reader-categories .pill[aria-pressed='true'] { border-color: var(--whale); background: #e6edff; color: var(--ink); }
-.home .fp-reader-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; align-items: center; }
-.home .fp-reader-feedback { min-block-size: 44px; align-self: center; }
 .home .fp-save-details { display: flex; flex-wrap: wrap; gap: 8px; }
 .home .fp-save-details > p { flex-basis: 100%; overflow-wrap: anywhere; }
 .home .fp-save-details > .notices { flex-basis: 100%; inline-size: 100%; }
@@ -72,11 +67,9 @@
    This also covers user-enlarged text without reducing their chosen font size. */
 @media (max-height: 650px) and (orientation: portrait) {
   .app[data-screen='home'] .home { overflow-y: auto; }
-  .home .fp-scene { flex-shrink: 0; min-block-size: 200px; }
+  .home .fp-scene { flex-shrink: 0; min-block-size: clamp(218px, 43svh, 248px); }
   .home .fp-plate { margin-top: 0; }
 }
 @media (max-width: 360px) {
-  .home .fp-controls { gap: 8px; grid-template-columns: minmax(0, 1.4fr) minmax(100px, 1fr); }
-  .home .fp-reader-actions { gap: 6px; }
-  .home .fp-reader-actions .pill { padding-inline: 9px; }
+  .home .fp-controls { gap: 8px; }
 }

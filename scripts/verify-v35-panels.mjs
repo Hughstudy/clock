@@ -24,7 +24,7 @@ async function tabTo(page, target) {
   for (let i = 0; i < 25; i++) {
     if (await target.evaluate(element => document.activeElement === element)) return true
     await page.keyboard.press('Tab')
-    if (await dialog(page).getAttribute('aria-modal') === 'true') {
+    if (await dialog(page).count() && await dialog(page).getAttribute('aria-modal') === 'true') {
       assert.ok(await dialog(page).evaluate(element => element.contains(document.activeElement)), 'Modal Tab must stay inside the current panel')
     }
   }
@@ -39,7 +39,7 @@ const url = `http://127.0.0.1:${server.httpServer.address().port}/clock/`
 let browser
 try {
   browser = await chromium.launch({ channel: process.env.SCENE_BROWSER_CHANNEL })
-  for (const [width, height, font] of [[320, 568, 16], [320, 568, 32], [320, 850, 32], [375, 812, 16], [568, 320, 32], [850, 320, 32], [430, 932, 32]]) {
+  for (const [width, height, font] of [[320, 568, 16], [320, 568, 32], [320, 850, 32], [375, 812, 16], [568, 320, 32], [850, 320, 32], [430, 932, 16], [430, 932, 32]]) {
     const name = `${width}x${height}-${font === 32 ? '200' : '100'}percent`
     const context = await browser.newContext({ viewport: { width, height }, reducedMotion: 'reduce' })
     const page = await context.newPage()
@@ -66,18 +66,34 @@ try {
     await page.keyboard.press('Enter')
     await dialog(page).waitFor({ state: 'detached' })
     check(`${name}: keyboard save persists the entered text`, await page.evaluate(text => JSON.parse(localStorage.getItem('whale-focus:snapshot')).thoughts.some(thought => thought.text === text), `可保存的测试想法 ${name}`))
+    const bounds = () => page.evaluate(() => ['.fp-scene', '.fp-art .blue-companion', '.fp-primary button', '.fp-digits', '.tab-bar'].map(selector => {
+      const r = document.querySelector(selector).getBoundingClientRect()
+      return [r.left, r.top, r.width, r.height]
+    }).flat())
+    await button(page, '给我一句鼓励').scrollIntoViewIfNeeded()
+    const before = await bounds()
     await button(page, '给我一句鼓励').click()
-    await button(dialog(page), '换一种鼓励').scrollIntoViewIfNeeded()
-    await button(dialog(page), '换一种鼓励').click()
-    const category = button(dialog(page), '有点累了')
+    const reader = page.getByRole('region', { name: '一句鼓励' })
+    if (font === 16 && width >= 375) {
+      const speech = page.locator('.fp-companion-speech[data-visible="true"]')
+      await speech.waitFor()
+      const after = await bounds()
+      const moved = after.map((v, i) => +(v - before[i]).toFixed(2))
+      check(`${name}: encouragement preserves the drawing area, digits, timer action and navigation`, moved.every(delta => Math.abs(delta) <= 1))
+      const bubble = await speech.boundingBox(), face = await page.locator('.blue-companion__face').boundingBox()
+      check(`${name}: the character's speech stays above its face`, face.height > 0 && bubble.y + bubble.height <= face.y)
+    }
+    await button(reader, '换一种鼓励').scrollIntoViewIfNeeded()
+    await button(reader, '换一种鼓励').click()
+    const category = button(reader, '有点累了')
     check(`${name}: keyboard reaches a visible category`, await tabTo(page, category) && await inViewAndHit(category))
     await page.keyboard.press('Enter')
-    check(`${name}: returning to reading keeps its focused action visible`, await inViewAndHit(button(dialog(page), '换一种鼓励')))
+    check(`${name}: returning to reading keeps its focused action visible`, await inViewAndHit(button(reader, '换一种鼓励')))
     await page.screenshot({ path: path.join(output, `${name}-reader.png`) })
-    const close = button(dialog(page), '收到鼓励了')
+    const close = button(await dialog(page).count() ? dialog(page) : page, '收到鼓励了')
     check(`${name}: reader close remains fully reachable`, await tabTo(page, close) && await inViewAndHit(close))
     await page.keyboard.press('Enter')
-    await dialog(page).waitFor({ state: 'detached' })
+    await reader.waitFor({ state: 'detached' })
     await context.close()
   }
 

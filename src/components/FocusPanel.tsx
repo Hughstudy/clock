@@ -9,6 +9,7 @@ interface Props {
   timerSummary?: string
   /** Visually hide the heading where the content already names the task. */
   quietTitle?: boolean
+  placement?: 'scene' | 'plate' | 'viewport'
 }
 
 /**
@@ -16,7 +17,7 @@ interface Props {
  * normally non-modal; insufficient local space uses a native modal viewport
  * layout, preserving the input/caret while making the covered background inert.
  */
-export function FocusPanel({ title, onClose, onBack = onClose, timerSummary, children, closeLabel = '返回', quietTitle = false }: Props) {
+export function FocusPanel({ title, onClose, onBack = onClose, timerSummary, children, closeLabel = '返回', quietTitle = false, placement = 'scene' }: Props) {
   const ref = useRef<HTMLDialogElement>(null)
   useLayoutEffect(() => {
     const panel = ref.current
@@ -38,14 +39,16 @@ export function FocusPanel({ title, onClose, onBack = onClose, timerSummary, chi
       panel.style.setProperty('--visible-top', `${top}px`)
       panel.style.setProperty('--visible-height', `${height}px`)
       const box = scene?.getBoundingClientRect()
-      const topControls = scene?.querySelector<HTMLElement>('.fp-top')?.getBoundingClientRect()
-      const localTop = Math.max((topControls?.bottom ?? (box?.top ?? 0) + 64) + 12, top + 8)
-      const localBottom = Math.min((box?.bottom ?? 0) - 18, top + height - 8)
+      const plate = placement === 'plate'
+      const topControls = scene?.querySelector<HTMLElement>(plate ? '.fp-digits' : '.fp-top')?.getBoundingClientRect()
+      const localTop = Math.max((topControls?.bottom ?? (box?.top ?? 0) + 64) + (plate ? 4 : 12), top + 8)
+      const localBottom = Math.min((box?.bottom ?? 0) - (plate ? 4 : 18), top + height - 8)
+      if (plate) panel.style.setProperty('--dial-space', `${Math.max(0, localBottom - localTop)}px`)
       // This budget is independent of the panel's own layout, so switching to
       // the wider viewport cannot trigger an endless local/modal resize loop.
       const font = Number.parseFloat(getComputedStyle(document.documentElement).fontSize) || 16
-      const required = Math.max(260, font * 11) + (modal ? 16 : 0)
-      const nextModal = covered > 80 || localBottom - localTop < required
+      const required = (plate ? Math.max(150, font * 7) : Math.max(260, font * 11)) + (modal ? 16 : 0)
+      const nextModal = placement === 'viewport' || covered > 80 || localBottom - localTop < required
       panel.dataset.layout = nextModal ? 'viewport' : 'local'
       panel.setAttribute('aria-modal', String(nextModal))
       if (nextModal !== modal) {
@@ -80,10 +83,10 @@ export function FocusPanel({ title, onClose, onBack = onClose, timerSummary, chi
       window.removeEventListener('resize', fit)
       panel.close()
     }
-  }, [])
+  }, [placement])
 
   return (
-    <dialog ref={ref} className="focus-panel" aria-modal="false" aria-labelledby="focus-panel-title"
+    <dialog ref={ref} className={placement === 'plate' ? 'focus-panel fp-duration-surface' : 'focus-panel'} aria-modal="false" aria-labelledby="focus-panel-title"
       onCancel={event => { event.preventDefault(); onBack() }}
       onFocus={event => {
         if (event.target instanceof HTMLElement && event.currentTarget.querySelector('.focus-panel__body')?.contains(event.target)) {
