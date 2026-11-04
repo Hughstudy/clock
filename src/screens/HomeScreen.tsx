@@ -294,7 +294,6 @@ export function HomeScreen({ active, view, result, linkedThoughts, defaultsInten
         </div>
 
         <div className="fp-controls" role="group" aria-label="计时控制">
-          {!ready && <div className="fp-progress" aria-hidden="true"><i style={{ width: `${Math.round(Math.min(1, Math.max(0, view.progress)) * 1000) / 10}%` }} /></div>}
           <div className="fp-primary" ref={primaryRef}>
             <TimerActionButton identity={readyFocus ? identity + '/' + focusMinutes : identity} primary disabled={!canEdit || (readyFocus && stepTooLong)} busy={timerPending} onActivate={primary.run}>
               {timerPending ? '正在处理…' : primary.label}</TimerActionButton>

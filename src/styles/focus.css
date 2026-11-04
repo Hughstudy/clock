@@ -140,10 +140,6 @@ body { background: var(--paper); }
 .fp-status .text-action { font-size: .875rem; min-height: 22px; max-inline-size: 100%; overflow: hidden; text-overflow: ellipsis; }
 .fp-step-input { inline-size: min(260px, 100%); block-size: 26px; padding: 0 10px; border: 1.5px solid #c7d6f4; border-radius: 13px; background: #fff;
   color: var(--ink); font: inherit; font-size: .875rem; text-align: center; }
-.fp-progress { inline-size: min(220px, 70%); block-size: 6px; border-radius: 3px; background: #e6dcc9; overflow: hidden; }
-.fp-progress > i { display: block; block-size: 100%; border-radius: 3px; background: var(--whale); }
-.home[data-tone='paused'] .fp-progress > i { background: repeating-linear-gradient(90deg, #d0a960 0 6px, #ead3a4 6px 9px); }
-.home[data-tone='rest'] .fp-progress > i { background: var(--mint); }
 .fp-primary { margin-top: 10px; display: flex; justify-content: center; }
 .home { --primary: var(--whale); --primary-deep: var(--whale-deep); --primary-glow: #2f74d040; }
 .home[data-tone='paused'] { --primary: var(--warm); --primary-deep: var(--warm-deep); --primary-glow: #dc8c4633; }

@@ -13,7 +13,6 @@
 /* The two timer choices are one set of equal size; style, not size, marks the main one. */
 .home .fp-controls { position: relative; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: stretch; gap: 10px;
   inline-size: min(100%, 400px); margin: 4px auto 0; min-block-size: max(44px, 2.75rem); }
-.home .fp-controls > .fp-progress { position: absolute; bottom: calc(100% + 1px); left: 50%; transform: translateX(-50%); block-size: 3px; }
 .home .fp-primary { display: flex; margin: 0; }
 .home .fp-primary .btn-primary, .home .fp-primary .btn-primary:hover { inline-size: 100%; min-block-size: 44px; padding-inline: 8px; }
 .home .fp-control-secondary { display: flex; min-inline-size: 0; }
