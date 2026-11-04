@@ -24,11 +24,15 @@ After the outline fix the owner still saw the arm stretched in the blocks scene,
 - The two blocks to move start as a small stack in front of the left hand. The top one is lifted to chest height by its near face, the hand sliding up to its top corner, carried across above the shoulder and set squarely on the base. The lower one slides along the table to stand against the base, and the flag goes on top of the stacked pair. The finished pair plus step cannot topple, and the right hand rests throughout instead of sliding a block across the body.
 - The flag's stand moved from the floor onto the table, and the scene's `usesTable` list now includes the blocks; those two values are the only change outside `scene-pose.ts`.
 
-Hand-drawn poses and their blends are unchanged. The tea scene's kettle hand still blends two drawn outlines whose points do not correspond, so its mid-reach frame remains the least tidy; that is a separate authoring question.
+### The tea scene
+
+The kettle hand was a drawn outline of fingers curled round the handle, blended point for point with the drawn rest arm, whose points go round a paddle. Between 55% and 80% the mid-blend frames read as a twisted flat strip, and the hand itself was thin. The reach now uses the generated arm with its elbow hanging below the reach and the shoulder seated with the shifted body. To make that blend safe, `bentReach` now orders its outline by which side of the reach it starts on, matching the drawn arms; without that, a reach whose bend lies on the far side folded the arm through itself mid-blend. The cup hands remain drawn outlines.
+
+Other drawn poses and their blends are unchanged. The tea scene's kettle hand still blends two drawn outlines whose points do not correspond, so its mid-reach frame remains the least tidy; that is a separate authoring question.
 
 ## Verification
 
-- Outline scan after the change: no self-intersections or collapsed outlines in any scene, action or position. Area ratios between the smallest and largest left-arm outline: blocks 1.97, boat 1.60, book 1.84 (the existing test bound is 2.1). The blocks test now checks the stacked pair, the step beside it and the flag's footprint.
+- Outline scan after the change: no self-intersections or collapsed outlines in any scene, action or position. Area ratios between the smallest and largest left-arm outline: blocks 1.97, boat 1.60, book 1.84, tea 2.28 (the existing test bound of 2.1 covers the boat and blocks carries). The blocks test now checks the stacked pair, the step beside it and the flag's footprint.
 - `vitest`: 34 files, 366 tests, including the existing pose, food, plant and renderer suites; the hand-jump, contact, face-clearance and area tests pass unchanged.
 - `tsc -b`, the `/clock/` production build and `scripts/scene-e2e.mjs` (60 app, 30 touch and 67 scene checks) in desktop Chrome 156.0.8078.80. `scripts/verify-scenery.mjs` was not usable: it still waits for an end-confirmation button named 「结束并记录」, which the v35 copy renamed, so it times out on the committed code as well; it is not part of `npm run test:e2e`.
 - Rendered frames from the animation preview were reviewed for the blocks, book, tea, boat, bubble and food scenes before and after.

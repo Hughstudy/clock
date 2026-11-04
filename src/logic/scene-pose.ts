@@ -111,9 +111,9 @@ function movePalm(a: SceneArm, x: number, y: number): SceneArm {
 const REACH_SHOULDER = 8, REACH_ELBOW = 7, REACH_PALM = 9
 /** A folding elbow and a round palm for carries across the body. The sixteen points are
  * cubic controls like the drawn arms, so the elbow is a smooth bend and the palm a cap. */
-function bentReach(side: 'left' | 'right', palm: ScenePoint, posedElbow?: ScenePoint): SceneArm {
+function bentReach(side: 'left' | 'right', palm: ScenePoint, posedElbow?: ScenePoint, origin: ScenePoint = point(0, 0)): SceneArm {
   const left = side === 'left'
-  const shoulder = point(left ? 111 : 213, 143)
+  const shoulder = point((left ? 111 : 213) + origin.x, 143 + origin.y)
   const dx = palm.x - shoulder.x, dy = palm.y - shoulder.y
   const distance = Math.max(.001, Math.hypot(dx, dy))
   const direction = point(dx / distance, dy / distance)
@@ -151,7 +151,13 @@ function bentReach(side: 'left' | 'right', palm: ScenePoint, posedElbow?: SceneP
     offset(palmIn, forearm, -forePull * .7), offset(elbowIn, bisector, forePull), elbowIn,
     offset(elbowIn, bisector, -upperPull), offset(shoulder, normal(upper), -shoulderWidth), shoulder,
   ]
-  return { points: points.flatMap(p => [p.x, p.y]), palm }
+  // The drawn arms run down one fixed side of the reach and back up the other, so a blend
+  // pairs each point with its counterpart. When this bend puts the first side on the other
+  // hand of the reach, the outline is traversed the other way round.
+  const firstSide = direction.x * (elbowOut.y - shoulder.y) - direction.y * (elbowOut.x - shoulder.x)
+  const ordered = (left ? firstSide < 0 : firstSide > 0)
+    ? [points[0]!, ...points.slice(1, 15).reverse(), points[0]!] : points
+  return { points: ordered.flatMap(p => [p.x, p.y]), palm }
 }
 function rotateArm(a: SceneArm, degrees:number):SceneArm {
   const x=a.points[0]??0,y=a.points[1]??0,r=degrees*Math.PI/180,c=Math.cos(r),s=Math.sin(r)
@@ -310,8 +316,11 @@ export function sampleScenePose(input: ScenePoseInput): ScenePoseFrame {
     kettle.spout = transformScenePoint(point(35,-26),kettle)
     kettle.pour = span(p,.67,.685) * (1-span(p,.705,.72))
     cup.liquid=span(p,.675,.71)
-    const kettleGrip = arm([159,150, 151,146,144,145,139,139, 134,132,126,130,125,136, 123,143,128,149,136,150, 145,157,153,161,160,157, 166,154,165,151,159,150],131,135)
-    const kettleHand = movePalm(kettleGrip,kettle.grip.x-131,kettle.grip.y-135)
+    // The hand takes the kettle's handle with the elbow hanging below the reach, as the same
+    // plump arm as at rest; the shoulder sits with the shifted body.
+    const seat = point(48,7), kettleShoulder = point(111+seat.x,143+seat.y)
+    const kettleMid = pointMix(kettleShoulder,kettle.grip,.5)
+    const kettleHand = bentReach('left',kettle.grip,point(kettleMid.x-4,kettleMid.y+12),seat)
     left = blendSceneArm(left,kettleHand,reach)
     if (reach>.999) contacts.push(contact('kettle-handle',left.palm,kettle.grip))
     const pickup = span(p,.8,.84), lift = span(p,.84,.98)
