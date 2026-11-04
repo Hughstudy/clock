@@ -316,11 +316,15 @@ export function sampleScenePose(input: ScenePoseInput): ScenePoseFrame {
     kettle.spout = transformScenePoint(point(35,-26),kettle)
     kettle.pour = span(p,.67,.685) * (1-span(p,.705,.72))
     cup.liquid=span(p,.675,.71)
-    // The hand takes the kettle's handle with the elbow hanging below the reach, as the same
-    // plump arm as at rest; the shoulder sits with the shifted body.
+    // The hand takes the kettle's handle from above: the elbow rises square to the reach, so
+    // the forearm comes down onto the handle instead of lying across the spout and lid. The
+    // shoulder sits with the shifted body.
     const seat = point(48,7), kettleShoulder = point(111+seat.x,143+seat.y)
     const kettleMid = pointMix(kettleShoulder,kettle.grip,.5)
-    const kettleHand = bentReach('left',kettle.grip,point(kettleMid.x-4,kettleMid.y+12),seat)
+    const kettleSpan = Math.max(.001,Math.hypot(kettle.grip.x-kettleShoulder.x,kettle.grip.y-kettleShoulder.y))
+    const kettleUp = point((kettle.grip.y-kettleShoulder.y)/kettleSpan,-(kettle.grip.x-kettleShoulder.x)/kettleSpan)
+    const kettleLift = (kettleUp.y<0?1:-1)*kettleSpan*.42
+    const kettleHand = bentReach('left',kettle.grip,point(kettleMid.x+kettleUp.x*kettleLift,kettleMid.y+kettleUp.y*kettleLift),seat)
     left = blendSceneArm(left,kettleHand,reach)
     if (reach>.999) contacts.push(contact('kettle-handle',left.palm,kettle.grip))
     const pickup = span(p,.8,.84), lift = span(p,.84,.98)
