@@ -105,7 +105,12 @@ function movePalm(a: SceneArm, x: number, y: number): SceneArm {
   return {points,palm:point(a.palm.x+x,a.palm.y+y)}
 }
 
-/** A folding elbow and a round, fixed-width palm for carries across the body. */
+/** Drawn-arm proportions the generated reach keeps: half-widths at the shoulder and the
+ * elbow, and the radius of the round palm, so a reach reads as the same plump limb as the
+ * rest pose rather than a thin tube. */
+const REACH_SHOULDER = 8, REACH_ELBOW = 7, REACH_PALM = 9
+/** A folding elbow and a round palm for carries across the body. The sixteen points are
+ * cubic controls like the drawn arms, so the elbow is a smooth bend and the palm a cap. */
 function bentReach(side: 'left' | 'right', palm: ScenePoint, posedElbow?: ScenePoint): SceneArm {
   const left = side === 'left'
   const shoulder = point(left ? 111 : 213, 143)
@@ -117,20 +122,34 @@ function bentReach(side: 'left' | 'right', palm: ScenePoint, posedElbow?: SceneP
   const offset = (p: ScenePoint, axis: ScenePoint, amount: number) => point(p.x + axis.x * amount, p.y + axis.y * amount)
   const elbow = posedElbow ?? offset(pointMix(shoulder, palm, .5), outside, bend)
   const unitFrom = (a: ScenePoint, b: ScenePoint) => {
-    const x = b.x - a.x, y = b.y - a.y, length = Math.hypot(x, y)
+    const x = b.x - a.x, y = b.y - a.y, length = Math.max(.001, Math.hypot(x, y))
     return point(x / length, y / length)
   }
   const upper = unitFrom(shoulder, elbow), forearm = unitFrom(elbow, palm)
-  const normal = (axis: ScenePoint) => left ? point(-axis.y, axis.x) : point(axis.y, -axis.x)
-  const elbowOut = offset(elbow, outside, 6), elbowIn = offset(elbow, outside, -6)
-  const palmOut = offset(palm, normal(forearm), 5.5), palmIn = offset(palm, normal(forearm), -5.5)
+  // A long reach slims a little, as a stretched arm does, so it stays comparable to the rest arm.
+  const slim = mix(1, .76, span(distance, 28, 70))
+  const shoulderWidth = REACH_SHOULDER * slim, elbowWidth = REACH_ELBOW * slim, palmRadius = REACH_PALM * slim
+  // The outline's tangent at the elbow bisects the two limbs, and the corner widens with the
+  // bend so the arm keeps its width through it. The outer side is the side the elbow bows to,
+  // whichever way the hand has swung, so the bend never flips between frames.
+  const sum = point(upper.x + forearm.x, upper.y + forearm.y), sumLength = Math.hypot(sum.x, sum.y)
+  const bisector = sumLength < .05 ? upper : point(sum.x / sumLength, sum.y / sumLength)
+  const bow = (elbow.x - shoulder.x) * direction.y - (elbow.y - shoulder.y) * direction.x
+  const handed = bow < -.01 ? -1 : bow > .01 ? 1 : left ? -1 : 1
+  const normal = (axis: ScenePoint) => point(axis.y * handed, -axis.x * handed)
+  const corner = elbowWidth / Math.max(.6, bisector.x * upper.x + bisector.y * upper.y)
+  const elbowOut = offset(elbow, normal(bisector), corner), elbowIn = offset(elbow, normal(bisector), -corner)
+  const palmOut = offset(palm, normal(forearm), palmRadius), palmIn = offset(palm, normal(forearm), -palmRadius)
+  const upperPull = Math.hypot(elbow.x - shoulder.x, elbow.y - shoulder.y) * .3
+  const forePull = Math.hypot(palm.x - elbow.x, palm.y - elbow.y) * .3
+  const cap = palmRadius * 4 / 3
   const points = [
     shoulder,
-    offset(shoulder, normal(upper), 8), offset(elbowOut, direction, -7), elbowOut,
-    offset(elbowOut, direction, 7), offset(palmOut, forearm, -6), palmOut,
-    offset(palmOut, forearm, 7), offset(palmIn, forearm, 7), palmIn,
-    offset(palmIn, forearm, -6), offset(elbowIn, direction, 6), elbowIn,
-    offset(elbowIn, direction, -6), offset(shoulder, normal(upper), -7), shoulder,
+    offset(shoulder, normal(upper), shoulderWidth), offset(elbowOut, bisector, -upperPull), elbowOut,
+    offset(elbowOut, bisector, forePull), offset(palmOut, forearm, -forePull * .7), palmOut,
+    offset(palmOut, forearm, cap), offset(palmIn, forearm, cap), palmIn,
+    offset(palmIn, forearm, -forePull * .7), offset(elbowIn, bisector, forePull), elbowIn,
+    offset(elbowIn, bisector, -upperPull), offset(shoulder, normal(upper), -shoulderWidth), shoulder,
   ]
   return { points: points.flatMap(p => [p.x, p.y]), palm }
 }
@@ -237,9 +256,14 @@ function foodUtensil(p: number, stops: readonly (readonly [number, number, numbe
  * The bow grows a little more than bentReach's as the hand comes in, so the folded arm
  * keeps its length. */
 function towerReach(palm: ScenePoint): SceneArm {
-  const shoulder = point(111,143), distance = Math.hypot(palm.x-shoulder.x, palm.y-shoulder.y)
-  const bend = mix(30, 6, span(distance, 8, 60)), middle = pointMix(shoulder, palm, .5)
-  return bentReach('left', palm, point(middle.x - .6*bend, middle.y + .8*bend))
+  const shoulder = point(111,143), distance = Math.max(.001, Math.hypot(palm.x-shoulder.x, palm.y-shoulder.y))
+  // Only the part of that outward-and-down bow that is square to the reach moves the elbow,
+  // so a reach in the same direction keeps a straight arm rather than an elbow at the palm.
+  const chord = point((palm.x-shoulder.x)/distance, (palm.y-shoulder.y)/distance)
+  const along = -.8*chord.x + .6*chord.y
+  const bowX = -.8 - chord.x*along, bowY = .6 - chord.y*along
+  const bend = mix(14, 6, span(distance, 8, 60)), middle = pointMix(shoulder, palm, .5)
+  return bentReach('left', palm, point(middle.x + bowX*bend, middle.y + bowY*bend))
 }
 
 /** A carried block eases between [time, x, bottom] stops. */
@@ -400,14 +424,20 @@ export function sampleScenePose(input: ScenePoseInput): ScenePoseFrame {
     // Each carry clears the solid tops beside it, but stays below the mouth while it
     // is in front of the face and only rises above the cheek once it is left of the eye.
     blocks[2] = carry(first,[[0,144,baseY],[.18,128,baseY],[.4,128,baseY-28],[.82,68,middleY-6],[1,68,middleY]])
-    const slide=span(second,0,.28),lift=span(second,.28,1)
+    const slide=span(second,0,.28),lift=span(second,.34,1)
     blocks[3] = lift===0 ? {x:mix(176,144,slide),y:baseY,angle:0}
       : carry(lift,[[0,144,baseY],[.12,128,baseY],[.32,128,baseY-28],[.5,111,baseY-36],[.64,98,topY-8],[.86,68,topY-10],[1,68,topY]])
     const grip1=point(blocks[2]!.x+16,blocks[2]!.y-24)
     const hold1=span(p,.08,.14)*(1-span(p,.34,.4))
-    const b=blocks[3]!, lp=point(b.x+8,b.y-24),rp=point(b.x+26,b.y-18)
+    // The left hand takes the second block by its top-left corner beside the right hand, slides
+    // under it for the lift so the hand stays below the shoulder while the block passes in
+    // front of it, and returns to the corner to set it down on the tower.
+    const b=blocks[3]!, underGrip=span(lift,0,.3)*(1-span(lift,.72,.92))
+    const lp=pointMix(point(b.x+8,b.y-24),point(b.x+15,b.y+1),underGrip),rp=point(b.x+26,b.y-18)
     const rightHold=span(p,.4,.45)*(1-span(second,.28,.42))
-    const leftHold=span(second,.15,.27)*(1-span(p,.7,.75))
+    // The left hand joins once the slide has brought the block in front of the body, so
+    // the arms meet at the block instead of crossing on the way out to it.
+    const leftHold=span(second,.16,.34)*(1-span(p,.7,.75))
     right=blendSceneArm(right,bentReach('right',rp),rightHold)
     if(rightHold>.999)contacts.push(contact('block-slide',right.palm,rp))
     const raise=span(p,.8,.94)
