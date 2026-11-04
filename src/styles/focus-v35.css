@@ -1,5 +1,6 @@
 /* Focus keeps the scene above a single, compact timer console. */
-.home .fp-plate { padding-inline: max(14px, env(safe-area-inset-left)) max(14px, env(safe-area-inset-right)); }
+.home .fp-plate { padding-inline: max(26px, env(safe-area-inset-left) + 12px) max(26px, env(safe-area-inset-right) + 12px); }
+.home .fp-plate::before { inset-inline: max(12px, env(safe-area-inset-left)) max(12px, env(safe-area-inset-right)); }
 .home .fp-digits { block-size: max(44px, 2.55rem); min-block-size: 44px; line-height: max(44px, 2.55rem); }
 .home .fp-status { block-size: max(44px, 2.3rem); min-block-size: max(44px, 2.3rem); overflow: visible; font-size: .8125rem; }
 .home .fp-status > span:first-child { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; white-space: normal; line-height: 1.35; }
@@ -9,27 +10,37 @@
 .home .fp-status { gap: 8px; }
 .home .fp-rest-choice { min-block-size: 44px; max-inline-size: 48%; padding: 0 6px; font: inherit; color: var(--ink); background: var(--cream);
   border: 1px solid var(--cream-line); border-radius: 12px; }
-.home .fp-controls { position: relative; display: grid; grid-template-columns: minmax(0, 1fr) minmax(88px, max-content); align-items: stretch; gap: 10px;
-  inline-size: min(100%, 400px); margin: 8px auto 0; min-block-size: max(44px, 2.75rem); }
-.home .fp-controls > .fp-progress { position: absolute; bottom: calc(100% + 2px); left: 50%; transform: translateX(-50%); block-size: 4px; }
+/* The two timer choices are one set of equal size; style, not size, marks the main one. */
+.home .fp-controls { position: relative; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: stretch; gap: 10px;
+  inline-size: min(100%, 400px); margin: 4px auto 0; min-block-size: max(44px, 2.75rem); }
+.home .fp-controls > .fp-progress { position: absolute; bottom: calc(100% + 1px); left: 50%; transform: translateX(-50%); block-size: 3px; }
 .home .fp-primary { display: flex; margin: 0; }
 .home .fp-primary .btn-primary, .home .fp-primary .btn-primary:hover { inline-size: 100%; min-block-size: 44px; padding-inline: 8px; }
 .home .fp-control-secondary { display: flex; min-inline-size: 0; }
-.home .fp-control-secondary > button { inline-size: 100%; min-block-size: 44px; padding-inline: 12px; border: 1px solid #a6b6c8; border-radius: 16px; background: #fffaf1; color: var(--ink); }
-.home .fp-tools-slot { display: flex; flex-direction: column; inline-size: min(100%, 400px); block-size: calc(max(44px, 2.75rem) + 9px);
-  margin: 8px auto 0; padding-top: 8px; border-top: 1px solid var(--cream-line); overflow: auto; overscroll-behavior: contain; }
-.home .fp-thought-tools { display: flex; flex: none; justify-content: flex-end; align-items: center; gap: 4px; margin: 0; padding: 0; }
-.home .fp-tools-label, .home .fp-thought-tools .fp-tools-label { flex: auto; text-align: start; color: var(--muted); font-size: .75rem; padding-inline: 0; }
+.home .fp-control-secondary > button { inline-size: 100%; min-block-size: 44px; padding-inline: 12px; border: 0; border-radius: 999px; background: #ede5d6;
+  color: var(--primary); font-weight: 600; font-size: .9375rem; transition: transform .12s ease; }
+.home .fp-control-secondary > button:active:not(:disabled) { transform: scale(.97); }
+/* Thought tools: one quiet row, grouped by space alone. */
+.home .fp-tools-slot { display: flex; flex-direction: column; inline-size: min(100%, 400px); block-size: max(44px, 2.75rem);
+  margin: 2px auto 0; padding: 0; border: 0; overflow: auto; overscroll-behavior: contain; }
+.home .fp-thought-tools { display: flex; flex: none; justify-content: center; align-items: center; gap: 12px; margin: 0; padding: 0; }
+.home span.fp-tools-label { display: none; }
+.home .fp-thought-tools .fp-tools-label { flex: none; color: var(--ink); padding-inline: 6px; }
 /* Reading borrows the quiet feedback row, so the plate keeps its height and the scene does not move. */
-.home .fp-plate[data-panel='encouragement'][data-attention='false'] .fp-tools-slot { block-size: calc(max(44px, 2.75rem) * 2 + 9px); }
+.home .fp-plate[data-panel='encouragement'][data-attention='false'] .fp-tools-slot { block-size: calc(max(44px, 2.75rem) * 2); }
 .home .fp-plate[data-panel='encouragement'][data-attention='false'] .fp-note { display: none; }
 .home .fp-thought-tools .text-action { display: inline-flex; align-items: center; justify-content: center; gap: 5px; padding-inline: 6px;
   min-block-size: 44px; background: transparent; color: var(--ink); white-space: normal; }
 .home .fp-thought-tools .text-action svg { flex: none; width: 1rem; height: 1rem; }
 .home .fp-thought-tools .text-action::before { display: none; }
-.home .fp-note { block-size: max(44px, 2.75rem); min-block-size: max(44px, 2.75rem); display: flex; flex-wrap: nowrap; overflow: visible; gap: 4px; }
+/* Feedback is a small chip above the card, over the floor, only while there is something to say. */
+.home .fp-note { position: absolute; inset: auto 26px calc(100% + 8px); z-index: 1; inline-size: fit-content; max-inline-size: calc(100% - 52px); margin-inline: auto;
+  min-block-size: 44px; padding: 0 12px; border-radius: 999px; display: flex; flex-wrap: nowrap; overflow: visible; gap: 4px;
+  background: color-mix(in srgb, var(--cream) 92%, transparent); box-shadow: 0 2px 8px #6a4a241f; }
 .home .fp-note__text { flex: 1; min-inline-size: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-align: start; }
-.home .fp-note > button { flex: none; min-inline-size: 44px; min-block-size: 44px; margin: 0; font-size: .75rem; padding-inline: 4px; }
+.home .fp-note__text:empty { display: none; }
+.home .fp-note[hidden] { display: none; }
+.home .fp-note > button { flex: none; min-inline-size: 44px; min-block-size: 44px; margin: 0; font-size: .8125rem; padding-inline: 6px; }
 .home .fp-note > button { max-inline-size: 48%; white-space: normal; }
 .home .fp-top { gap: 8px; }
 .home .fp-top .pill { min-block-size: 44px; }
@@ -38,7 +49,7 @@
 .home .fp-bubble .text-action { min-block-size: 44px; }
 
 .home .focus-panel { display: flex; flex-direction: column; overflow: hidden; padding: 12px; margin: 0; border: 0; color: var(--ink);
-  inline-size: auto; max-inline-size: none; max-block-size: calc(100% - 84px - env(safe-area-inset-top)); }
+  inline-size: auto; max-inline-size: none; max-block-size: calc(100% - var(--art-clear, 0px) - 84px - env(safe-area-inset-top)); }
 .home .focus-panel:not([open]) { display: none; }
 .home .focus-panel[data-layout='viewport'] { position: fixed; inset: calc(var(--visible-top, 0px) + 8px) 12px auto;
   inline-size: calc(100vw - 24px); max-inline-size: 640px; block-size: calc(var(--visible-height, 100dvh) - 16px);
@@ -61,12 +72,10 @@
 @media (orientation: landscape) and (min-aspect-ratio: 6/5) {
   .home .fp-plate { min-block-size: 0; overflow-y: auto; justify-content: flex-start; }
 }
-/* When the plate alone exceeds the viewport, its controls remain scrollable.
+/* When the card alone exceeds a short viewport, its controls remain scrollable.
    This also covers user-enlarged text without reducing their chosen font size. */
 @media (max-height: 650px) and (orientation: portrait) {
-  .app[data-screen='home'] .home { overflow-y: auto; }
-  .home .fp-scene { flex-shrink: 0; min-block-size: clamp(218px, 43svh, 248px); }
-  .home .fp-plate { margin-top: 0; }
+  .home .fp-plate { max-block-size: 100%; overflow-y: auto; overscroll-behavior: contain; }
 }
 @media (max-width: 360px) {
   .home .fp-controls { gap: 8px; }

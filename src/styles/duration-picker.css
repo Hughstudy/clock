@@ -1,8 +1,11 @@
 .home .fp-clock-trigger { color: inherit; background: none; padding: 0 30px; border: 0; font: inherit; letter-spacing: inherit;
   min-inline-size: 44px; min-block-size: 44px; border-radius: 8px; position: relative; }
 .home .fp-clock-edit { position: absolute; inset-inline-end: 6px; inset-block-start: 50%; transform: translateY(-50%); inline-size: 18px; block-size: 18px; color: var(--muted); }
-.home .fp-duration-surface[data-layout='local'] { inset-inline: 8px; inset-block: var(--picker-top) auto; max-block-size: var(--picker-space);
-  padding: 4px 12px; background: var(--cream); box-shadow: none; border-radius: 16px; }
+/* The ruler is a taller card in the console's place, growing upward over the floor;
+   the time keeps reading above the companion. */
+.home .fp-duration-surface[data-layout='local'] { inset: auto 12px var(--bar-clear); max-block-size: var(--picker-space);
+  padding: 8px 14px 10px; border-radius: 28px; background: color-mix(in srgb, var(--cream) 94%, transparent);
+  box-shadow: 0 10px 28px #6a4a2422, inset 0 0 0 1px #ffffff80; }
 .home .fp-duration-surface .focus-panel__header h2 { font-size: .94rem; }
 .home .fp-duration-surface .focus-panel__header { gap: 4px; }
 .home .fp-duration-surface[data-layout='local'] .focus-panel__timer { display: none; }
@@ -28,4 +31,9 @@
 .home .duration-ruler__footer input { inline-size: 4rem; min-block-size: 44px; font: inherit; font-size: max(1rem,16px);
   border: 1px solid var(--cream-line); border-radius: 12px; text-align: center; background: var(--paper); color: var(--ink); }
 .home .fp-plate[data-panel='duration'] > :not(.fp-digits):not(.fp-duration-surface) { visibility: hidden; }
+/* Beside the scene, the console card itself sizes to the ruler. */
+@media (orientation: landscape) and (min-aspect-ratio: 6/5) {
+  .home .fp-plate[data-panel='duration'] > :not(.fp-digits):not(.fp-duration-surface) { display: none; }
+  .home .fp-duration-surface[data-layout='local'] { position: relative; inset: auto; max-block-size: none; padding: 0; background: none; box-shadow: none; }
+}
 .home .fp-plate[data-panel='duration'] .fp-clock-trigger { pointer-events: none; }

@@ -1,5 +1,8 @@
 import { useLayoutEffect, useRef, type ReactNode } from 'react'
 
+/** How far a plate panel may rise above the card, over the floor band, before going modal. */
+const PLATE_GROWTH = 140
+
 interface Props {
   title: string
   onClose: () => void
@@ -40,14 +43,16 @@ export function FocusPanel({ title, onClose, onBack = onClose, timerSummary, chi
       panel.style.setProperty('--visible-height', `${height}px`)
       const box = scene?.getBoundingClientRect()
       const plate = placement === 'plate'
-      const topControls = scene?.querySelector<HTMLElement>(plate ? '.fp-digits' : '.fp-top')?.getBoundingClientRect()
-      const localTop = Math.max((topControls?.bottom ?? (box?.top ?? 0) + 64) + (plate ? 4 : 12), top + 8)
-      const localBottom = Math.min((box?.bottom ?? 0) - (plate ? 4 : 18), top + height - 8)
-      if (plate) {
-        panel.style.setProperty('--picker-space', `${Math.max(0, localBottom - localTop)}px`)
-        const digits = scene?.querySelector<HTMLElement>('.fp-digits')
-        if (digits) panel.style.setProperty('--picker-top', `${digits.offsetTop + digits.offsetHeight + 4}px`)
-      }
+      // On the plate the panel replaces the card and may grow upward over the floor band; the
+      // time reads above the companion. The plate's bottom padding is the tab bar's room.
+      const padding = plate && scene ? getComputedStyle(scene) : null
+      const topControls = plate ? null : scene?.querySelector<HTMLElement>('.fp-top')?.getBoundingClientRect()
+      // In the scene the panel rests above the card's band, which the art box already excludes.
+      const sceneFloor = plate ? null : scene?.querySelector<HTMLElement>('.fp-art')
+      const localTop = Math.max(plate ? (box?.top ?? 0) - PLATE_GROWTH : (topControls?.bottom ?? (box?.top ?? 0) + 64) + 12, top + 8)
+      const localBottom = Math.min(plate ? (box?.bottom ?? 0) - parseFloat(padding?.paddingBottom ?? '0')
+        : (box?.top ?? 0) + (sceneFloor?.offsetHeight || box?.height || 0) - 18, top + height - 8)
+      if (plate) panel.style.setProperty('--picker-space', `${Math.max(0, localBottom - localTop)}px`)
       // This budget is independent of the panel's own layout, so switching to
       // the wider viewport cannot trigger an endless local/modal resize loop.
       const font = Number.parseFloat(getComputedStyle(document.documentElement).fontSize) || 16

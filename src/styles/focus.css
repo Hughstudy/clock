@@ -5,12 +5,12 @@
   --paper-2: #f0f4ff;
   --cream: #fdf6ea;
   --cream-line: #efe3cf;
-  --ink: #34507a;
+  --ink: #2c4a78;
   --muted: #5b6b82;
   --line: #ece4d6;
-  --whale: #4c6fb8;
-  --whale-deep: #3d5c9c;
-  --whale-soft: #eaf0ff;
+  --whale: #2f74d0;
+  --whale-deep: #2459ab;
+  --whale-soft: #e9f1fb;
   --warm: #98612b;
   --warm-deep: #7c4e20;
   --mint: #327b64;
@@ -23,57 +23,75 @@ body { background: var(--paper); }
 @media (max-width: 360px) { .app { padding-inline: 16px; } }
 .app[data-reduced-motion='true'] *, .app[data-reduced-motion='true'] *::before, .app[data-reduced-motion='true'] *::after { animation: none !important; transition: none !important; }
 
-/* Native hit areas are at least 44px; neighboring controls never share a pseudo hit area. */
+/* Buttons: capsules for text, circles for icons, hit areas of at least 44px, and a press
+   state on every one. Only the view's main action carries the accent fill; the rest are
+   quieter styles of the same size, and neighboring controls never share a pseudo hit area. */
 .pill, .text-action {
-  position: relative; border: 0; font: inherit; font-weight: 750; cursor: pointer; color: #5b6f8c;
-  -webkit-tap-highlight-color: transparent;
+  position: relative; border: 0; font: inherit; font-weight: 600; cursor: pointer; color: var(--ink);
+  -webkit-tap-highlight-color: transparent; transition: transform .12s ease, background-color .12s ease;
 }
 .pill::after, .text-action::after { content: none; }
-.pill { min-height: 44px; min-width: 44px; padding: 0 13px; border-radius: 999px; font-size: .8125rem; }
-.pill--glass { background: #ffffffc4; backdrop-filter: blur(6px); }
+.pill:active:not(:disabled), .text-action:active:not(:disabled) { transform: scale(.96); }
+.pill { min-height: 44px; min-width: 44px; padding: 0 14px; border-radius: 999px; font-size: .875rem; }
+.pill--glass { background: color-mix(in srgb, var(--cream) 82%, transparent); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+  box-shadow: 0 2px 8px #6a4a2414; }
 .pill--icon { inline-size: 44px; padding: 0; display: grid; place-items: center; }
-.pill--icon svg { inline-size: 16px; block-size: 16px; }
-.pill--soft { background: #f1f4fa; }
-.pill--ghost { background: #f3f5f9; }
-.pill--solid { background: var(--whale); color: #fff; box-shadow: 0 2px 0 var(--whale-deep); }
-.pill--ink { background: #4a5f7d; color: #fff; }
+.pill--icon svg { inline-size: 18px; block-size: 18px; }
+.pill--soft { background: #ede5d6; }
+.pill--ghost { background: #ede5d6; }
+.pill--solid { background: var(--whale); color: #fff; }
+.pill--ink { background: var(--whale); color: #fff; }
 .pill:disabled, .text-action:disabled { opacity: .45; cursor: default; }
-.text-action { min-height: 44px; min-width: 44px; padding: 0 4px; background: none; font-size: .8125rem; color: var(--muted); white-space: nowrap; }
+.text-action { min-height: 44px; min-width: 44px; padding: 0 6px; background: none; font-size: .875rem; font-weight: 500; color: var(--whale); white-space: nowrap; }
 .text-action:hover:not(:disabled) { color: var(--whale-deep); }
 
-/* Tab bar: a quiet cream strip. */
-.tab-bar { position: fixed; inset: auto 0 0; display: flex; justify-content: center; gap: 0; padding: 0 12px env(safe-area-inset-bottom);
-  background: var(--cream); border-top: 1px solid var(--cream-line); backdrop-filter: none; transform: none; width: auto; border-radius: 0; box-shadow: none; }
-.tab { flex: 1 1 0; max-width: 200px; min-height: var(--tab-height); display: flex; gap: 6px; align-items: center; justify-content: center;
-  border-radius: 0; background: none; color: var(--muted); font-size: .8125rem; font-weight: 800; }
-.tab svg { inline-size: 18px; block-size: 18px; }
-.tab[aria-current='page'] { background: none; color: var(--whale); }
+/* Tab bar: a floating capsule of two destinations over the content, never over it in the way. */
+.tab-bar { position: fixed; z-index: 10; inset: auto 16px calc(env(safe-area-inset-bottom) + 10px); display: flex; justify-content: center; gap: 2px;
+  inline-size: auto; max-inline-size: 320px; margin-inline: auto; padding: 4px; border: 0; border-radius: 999px;
+  background: color-mix(in srgb, var(--cream) 80%, transparent); backdrop-filter: blur(16px) saturate(1.2); -webkit-backdrop-filter: blur(16px) saturate(1.2);
+  box-shadow: 0 6px 20px #3a2a1424, inset 0 0 0 1px #ffffff80; transform: none; }
+.tab { flex: 1 1 0; max-width: 200px; min-height: 44px; display: flex; flex-direction: column; gap: 2px; align-items: center; justify-content: center;
+  padding: 0 8px; border-radius: 999px; background: none; color: var(--muted); font-size: .75rem; font-weight: 600; line-height: 1.2;
+  transition: background-color .15s ease, color .15s ease; }
+.tab svg { inline-size: 20px; block-size: 20px; }
+.tab[aria-current='page'] { background: color-mix(in srgb, var(--whale) 14%, transparent); color: var(--whale); font-weight: 700; }
 .app[data-screen='settings'] .tab[data-tab='home'] { color: var(--whale); }
+.tab:active { transform: scale(.96); }
 
 /* Notices float above the page instead of pushing the layout down. */
 .notices { position: fixed; z-index: 20; inset: calc(env(safe-area-inset-top) + 8px) 12px auto; max-inline-size: 496px; margin-inline: auto; display: grid; gap: 6px; pointer-events: none; }
 .notices .notice { pointer-events: auto; margin: 0; border: 0; border-radius: 16px; background: #fffdf8f2; box-shadow: 0 6px 20px #3a4a6a1f; font-size: .8125rem; }
 
 /* ---------- Focus page ---------- */
+/* The scene runs the full height, under the floating tab bar. The console is one translucent
+   card near the bottom, and the time reads above the companion's head. */
 .app[data-screen='home'] { max-width: none; padding: 0; min-height: 0; block-size: 100svh; display: flex; flex-direction: column; }
-.app[data-screen='home'] .app-main { flex: 1; min-block-size: 0; display: flex; flex-direction: column; padding-block-end: calc(var(--tab-height) + env(safe-area-inset-bottom)); }
+.app[data-screen='home'] .app-main { flex: 1; min-block-size: 0; display: flex; flex-direction: column; padding-block-end: 0; }
 .app[data-screen='home'] .app-main > div:not([hidden]) { flex: 1; min-block-size: 0; display: flex; }
-.home { flex: 1; min-block-size: 0; min-inline-size: 0; gap: 0; display: flex; flex-direction: column; align-items: stretch; text-align: center; }
+/* The card floats over the scene's floor band, so growing for a reader or a ruler covers the
+   companion's feet instead of moving it. --art-clear is the band the art stays above. */
+.home { position: relative; flex: 1; min-block-size: 0; min-inline-size: 0; gap: 0; display: flex; flex-direction: column; align-items: stretch; text-align: center;
+  --bar-clear: calc(var(--tab-height) + env(safe-area-inset-bottom) + 22px);
+  --console: calc(max(44px, 2.3rem) + max(44px, 2.75rem) * 2 + 18px); --art-clear: calc(var(--console) + var(--bar-clear));
+  --sky: #f4dfc5; --floor: #e6cdaa; }
+.home[data-setting='garden'] { --sky: #c4dedc; --floor: #dfd3ae; }
+.home[data-setting='dusk'] { --sky: #858eaf; --floor: #6e7496; }
+.home[data-setting='plain'] { --sky: var(--paper); --floor: var(--paper); }
 
-/* Grow the drawing with the space above the console. Its width also bounds the
-   hands at the sides and keeps the head below the controls and speech reserve. */
-.fp-scene { --sky: #f4dfc5; position: relative; flex: 1; min-block-size: 0; overflow: hidden; overflow: clip; background: var(--sky);
-  container-type: size; --art-reserve: calc(env(safe-area-inset-top) + 114px);
+/* Grow the drawing with the space above the card. Its width also bounds the hands at
+   the sides and keeps the head below the top controls, the time and the speech reserve. */
+.fp-scene { position: relative; flex: 1; min-block-size: 0; overflow: hidden; overflow: clip;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--sky) 88%, #8a6a45) 0, var(--sky) 42%);
+  container-type: size; --art-reserve: calc(env(safe-area-inset-top) + 168px);
   --art-w: min(max(125cqw, min(100cqh - 48px - env(safe-area-inset-top), 96cqw, 510px) * 1.633), (100cqh - var(--art-reserve)) * 1.752); }
-.fp-scene[data-setting='garden'] { --sky: #c4dedc; }
-.fp-scene[data-setting='dusk'] { --sky: #858eaf; }
-.fp-scene[data-setting='plain'] { --sky: var(--paper); }
+.fp-scene[data-setting='plain'] { background: var(--sky); }
+.fp-scene::after { content: ''; position: absolute; z-index: 0; inset: auto 0 0; block-size: var(--art-clear); background: var(--floor); }
 .fp-top { position: absolute; z-index: 3; inset: calc(env(safe-area-inset-top) + 10px) 12px auto; display: flex; justify-content: flex-end; gap: 6px; }
 
 /* The framed art keeps one crop for every scene, so the creature keeps its size across timer
    states. viewBox 240×190; visible window x 24–216, y ≤ 171 (the support edge). Only when a
    requested bubble or a local panel needs the room does useSceneFit lift or scale it about that edge. */
-.fp-art { position: absolute; inset: 0; container-type: size; transform: translateY(var(--fit-shift, 0px)) scale(var(--fit-scale, 1));
+.fp-art { position: absolute; z-index: 1; inset: 0 0 var(--art-clear); container-type: size; transform: translateY(var(--fit-shift, 0px)) scale(var(--fit-scale, 1));
   transform-origin: 50% 100%; transition: transform .35s cubic-bezier(.2, .8, .2, 1), opacity .2s ease; }
 .fp-scene[data-fit='hidden'] .fp-art { opacity: 0; visibility: hidden; transition: transform .35s cubic-bezier(.2, .8, .2, 1), opacity .2s ease, visibility 0s .2s; }
 /* While the companion steps out for a panel, its line waits for it to return. */
@@ -87,45 +105,63 @@ body { background: var(--paper); }
 .fp-art .companion-feedback__greeting:focus-visible .companion-feedback__character { outline: 3px solid var(--focus); outline-offset: -6px; border-radius: 24px; }
 
 /* The companion's own line, just above its head. */
-.fp-bubble { position: absolute; z-index: 2; left: 50%; bottom: calc(var(--art-w) * .571 * var(--fit-scale, 1) - var(--fit-shift, 0px) + 10px);
+.fp-bubble { position: absolute; z-index: 2; left: 50%; bottom: calc(var(--art-clear) + var(--art-px, 0px) * .571 * var(--fit-scale, 1) - var(--fit-shift, 0px) + 10px);
   transform: translateX(-50%); transition: bottom .35s cubic-bezier(.2, .8, .2, 1);
   inline-size: max-content; max-inline-size: min(88%, 320px); padding: 7px 14px; border-radius: 18px; background: #fff;
-  color: #4a5f7d; font-size: .84rem; line-height: 1.45; box-shadow: 0 2px 10px #3c5a8214; text-wrap: pretty; }
+  color: var(--ink); font-size: .9375rem; font-weight: 500; line-height: 1.45; box-shadow: 0 2px 10px #3c5a8214; text-wrap: pretty; }
 .fp-bubble::after { content: ''; position: absolute; left: 50%; bottom: -5px; inline-size: 10px; block-size: 10px; background: #fff; transform: translateX(-50%) rotate(45deg); border-radius: 2px; }
 .fp-bubble p { margin: 0; }
-/* The plate: compact, fixed tracks so feedback never moves the primary action. */
-.fp-plate { position: relative; z-index: 4; flex: none; margin-top: -16px; padding: 12px 18px 6px; border-radius: 26px 26px 0 0;
-  background: var(--cream); box-shadow: 0 -4px 14px #78583214; }
-.fp-digits { margin: 2px 0 0; min-block-size: 44px; font-size: 2.125rem; line-height: max(44px, 1.2em); font-weight: 800; letter-spacing: .04em;
+/* The time reads above the head, and above the bubble when there is one. It follows the art
+   when a panel moves it, and steps out with it. The pen is the only pointer target here. */
+.fp-digits { position: absolute; z-index: 2; inset-inline: 0; margin: 0; pointer-events: none;
+  bottom: calc(var(--art-clear) + var(--art-px, 0px) * .571 * var(--fit-scale, 1) - var(--fit-shift, 0px) + 10px + var(--bubble-space, 0px));
+  transition: bottom .35s cubic-bezier(.2, .8, .2, 1);
+  min-block-size: 44px; font-size: 2.125rem; line-height: max(44px, 1.2em); font-weight: 800; letter-spacing: .02em;
   font-variant-numeric: tabular-nums; color: var(--ink); }
+.fp-digits .fp-clock-trigger { pointer-events: auto; }
+.fp-scene[data-fit='hidden'] .fp-digits { visibility: hidden; }
 .home[data-tone='paused'] .fp-digits { color: #8f5f24; }
 .home[data-tone='rest'] .fp-digits { color: var(--mint-deep); }
 .home[data-tone='done'] .fp-digits { color: var(--muted); font-size: 1.75rem; }
-.fp-status { min-block-size: 22px; display: flex; align-items: center; justify-content: center; gap: 2px; font-size: .75rem; font-weight: 700; color: var(--muted);
+.home[data-setting='dusk'] .fp-digits { color: #fff6e8; }
+.home[data-setting='dusk'][data-tone='paused'] .fp-digits { color: #f6d39a; }
+.home[data-setting='dusk'][data-tone='rest'] .fp-digits { color: #c6ead8; }
+.home[data-setting='dusk'][data-tone='done'] .fp-digits { color: #e4e6ef; }
+/* The plate: one translucent card floating at the bottom of the scene; its bottom padding is
+   the floating tab bar's room. The blur lives on a pseudo-element so a fixed panel inside is
+   not trapped by it. Tracks are fixed so feedback never moves the primary action. */
+.fp-plate { position: absolute; z-index: 4; inset: auto 0 0; margin: 0; padding: 6px 26px calc(var(--bar-clear) + 6px); background: transparent; }
+.fp-plate::before { content: ''; position: absolute; z-index: -1; inset: 0 12px var(--bar-clear); border-radius: 28px;
+  background: color-mix(in srgb, var(--cream) 84%, transparent); backdrop-filter: blur(14px) saturate(1.2); -webkit-backdrop-filter: blur(14px) saturate(1.2);
+  box-shadow: 0 10px 28px #6a4a2422, inset 0 0 0 1px #ffffff80; }
+.fp-status { min-block-size: 22px; display: flex; align-items: center; justify-content: center; gap: 2px; font-size: .875rem; font-weight: 500; color: var(--muted);
   overflow: hidden; white-space: nowrap; }
 .fp-status > span:first-child { overflow: hidden; text-overflow: ellipsis; }
-.fp-status .text-action { font-size: .75rem; min-height: 22px; max-inline-size: 100%; overflow: hidden; text-overflow: ellipsis; }
+.fp-status .text-action { font-size: .875rem; min-height: 22px; max-inline-size: 100%; overflow: hidden; text-overflow: ellipsis; }
 .fp-step-input { inline-size: min(260px, 100%); block-size: 26px; padding: 0 10px; border: 1.5px solid #c7d6f4; border-radius: 13px; background: #fff;
-  color: var(--ink); font: inherit; font-size: .8125rem; text-align: center; }
-.fp-progress { inline-size: min(220px, 70%); block-size: 6px; border-radius: 3px; background: var(--cream-line); overflow: hidden; }
+  color: var(--ink); font: inherit; font-size: .875rem; text-align: center; }
+.fp-progress { inline-size: min(220px, 70%); block-size: 6px; border-radius: 3px; background: #e6dcc9; overflow: hidden; }
 .fp-progress > i { display: block; block-size: 100%; border-radius: 3px; background: var(--whale); }
 .home[data-tone='paused'] .fp-progress > i { background: repeating-linear-gradient(90deg, #d0a960 0 6px, #ead3a4 6px 9px); }
 .home[data-tone='rest'] .fp-progress > i { background: var(--mint); }
 .fp-primary { margin-top: 10px; display: flex; justify-content: center; }
-.home { --primary: var(--whale); --primary-deep: var(--whale-deep); --primary-glow: #5078d22e; }
+.home { --primary: var(--whale); --primary-deep: var(--whale-deep); --primary-glow: #2f74d040; }
 .home[data-tone='paused'] { --primary: var(--warm); --primary-deep: var(--warm-deep); --primary-glow: #dc8c4633; }
 .home[data-tone='rest'], .home[data-tone='done'] { --primary: var(--mint); --primary-deep: var(--mint-deep); --primary-glow: #50aa8c33; }
+/* The one prominent button of the view: accent fill, capsule, a press state. */
 .home .fp-primary .btn-primary, .home .fp-primary .btn-primary:hover { inline-size: min(220px, 64%); min-inline-size: 0; min-block-size: 44px; padding: 0 16px;
-  border: 0; border-radius: 22px; background: var(--primary); color: #fff; font-size: 1rem; font-weight: 800; letter-spacing: .03em;
-  box-shadow: 0 3px 0 var(--primary-deep), 0 6px 12px var(--primary-glow); transform: none; }
-.home .fp-primary .btn-primary:active:not(:disabled) { background: var(--primary); box-shadow: 0 1px 0 var(--primary-deep), 0 3px 8px var(--primary-glow); }
+  border: 0; border-radius: 999px; background: var(--primary); color: #fff; font-size: 1rem; font-weight: 700; letter-spacing: .02em;
+  box-shadow: 0 6px 14px var(--primary-glow); transform: none; transition: transform .12s ease, box-shadow .12s ease; }
+.home .fp-primary .btn-primary:active:not(:disabled) { background: var(--primary); transform: scale(.97); box-shadow: 0 3px 8px var(--primary-glow); }
 .fp-secondary { min-block-size: 30px; margin-top: 10px; display: flex; flex-wrap: wrap; justify-content: center; align-items: center; column-gap: 12px; }
 .fp-secondary .text-action::before { content: ''; display: inline-block; inline-size: 5px; block-size: 5px; margin-inline-end: 5px; border-radius: 50%; background: #c9d5ea; vertical-align: 2px; }
-.fp-note { min-block-size: 24px; flex-wrap: wrap; display: flex; align-items: center; justify-content: center; gap: 2px; font-size: .75rem; color: var(--muted); overflow: hidden; }
-.fp-note .text-action { font-size: .75rem; color: var(--whale-deep); min-height: 24px; }
+/* Feedback floats above the card only while there is something to say. */
+.fp-note { min-block-size: 24px; flex-wrap: wrap; display: flex; align-items: center; justify-content: center; gap: 2px; font-size: .8125rem; color: var(--muted); overflow: hidden; }
+.fp-note[hidden] { display: none; }
+.fp-note .text-action { font-size: .8125rem; color: var(--whale); min-height: 24px; }
 
 /* One local panel resting on the plate; nothing below it is hidden or disabled. */
-.focus-panel { position: absolute; z-index: 5; inset: auto 10px 18px; max-block-size: calc(100% - 64px - env(safe-area-inset-top)); overflow-y: auto;
+.focus-panel { position: absolute; z-index: 5; inset: auto 10px calc(var(--art-clear, 0px) + 8px); max-block-size: calc(100% - var(--art-clear, 0px) - 64px - env(safe-area-inset-top)); overflow-y: auto;
   padding: 12px 16px 14px; border-radius: 22px; background: #fff; box-shadow: 0 6px 22px #3c5a8229; text-align: start; overscroll-behavior: contain; }
 .focus-panel[data-keyboard='true'] { position: fixed; inset: auto 10px calc(var(--keyboard) + 8px); max-block-size: calc(100svh - var(--keyboard) - 24px); }
 .focus-panel__header { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-block-size: 30px; }
@@ -134,7 +170,7 @@ body { background: var(--paper); }
 .focus-panel p { margin: 4px 0; font-size: .8125rem; color: var(--muted); }
 .focus-panel strong { color: var(--ink); font-size: .95rem; }
 .fp-panel-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 10px; }
-.fp-panel-actions .pill { min-height: 36px; padding: 0 18px; font-size: .875rem; }.fp-hint { text-align: center; font-size: .75rem !important; }
+.fp-panel-actions .pill { min-height: 44px; padding: 0 18px; font-size: .875rem; }.fp-hint { text-align: center; font-size: .75rem !important; }
 .fp-hint--error { color: #a1621f !important; }
 .fp-end { padding-inline-end: 84px; }
 .fp-end .fp-panel-actions { margin-inline-end: -84px; }
@@ -147,28 +183,32 @@ body { background: var(--paper); }
 .focus-panel .thought-title { font-size: .8125rem; color: var(--muted); }
 .focus-panel .thought-form textarea { min-block-size: 64px; max-block-size: 30svh; border: 1.5px solid #c7d6f4; border-radius: 14px; background: #fbfcff; font-size: .9375rem; }
 .focus-panel .thought-form-actions { justify-content: flex-end; }
-.focus-panel .thought-form .btn { min-block-size: 36px; padding: 0 16px; border-radius: 18px; font-size: .875rem; font-weight: 800; box-shadow: none; }
+.focus-panel .thought-form .btn { min-block-size: 44px; padding: 0 16px; border-radius: 999px; font-size: .875rem; font-weight: 700; box-shadow: none; }
 .focus-panel .thought-form .btn-primary { background: var(--whale); color: #fff; inline-size: auto; min-inline-size: 0; }
 .focus-panel .thought-form .btn-secondary { background: #f3f5f9; color: #5b6f8c; border: 0; }
 .focus-panel .field-hint, .focus-panel .field-error { margin: 0; font-size: .75rem; }
 
 /* Short screens: smaller numbers and gaps first; the companion keeps its share. */
 @media (max-height: 700px) {
-  .fp-plate { padding-top: 8px; }
-  .fp-digits { min-block-size: 38px; line-height: max(38px, 1.2em); font-size: 1.875rem; }
+  .fp-digits { font-size: 1.875rem; }
   .fp-primary { margin-top: 8px; }
   .home .fp-primary .btn-primary { min-block-size: 44px; }
   .fp-secondary { margin-top: 6px; }
-  .fp-note { block-size: 20px; }
-  .fp-bubble { font-size: .78rem; padding: 5px 11px; }
+  .fp-bubble { font-size: .875rem; padding: 5px 11px; }
 }
 /* Landscape (phones and iPads): scene beside the plate. On short screens the plate takes the width
    the scene cannot fill: the art (at most 1.752 × the height below the reserve) must stay 1.25 × as
-   wide as the scene, so the card's corners stay outside it. */
+   wide as the scene, so the card's corners stay outside it. The column shares the scene's sky. */
 @media (orientation: landscape) and (min-aspect-ratio: 6/5) {
-  .home { flex-direction: row; }
-  .fp-plate { margin-top: 0; inline-size: clamp(340px, 100vw - (100svh - var(--tab-height) - env(safe-area-inset-bottom) - 114px) * 1.4, 600px);
-    padding-inline-end: max(18px, env(safe-area-inset-right)); display: flex; flex-direction: column; justify-content: center; border-radius: 26px 0 0 0; }
+  .app[data-screen='home'] { --plate-w: clamp(340px, 100vw - (100svh - 168px) * 1.4, 600px); }
+  .home { --console: 0px; --art-clear: 0px; background: var(--sky); }
+  .fp-scene { margin-inline-end: var(--plate-w); }
+  .fp-plate { inset: 12px max(12px, env(safe-area-inset-right)) calc(var(--bar-clear) - 10px) auto; inline-size: var(--plate-w); block-size: fit-content;
+    max-block-size: calc(100% - var(--bar-clear) - 2px); margin-block: auto; padding: 14px; display: flex; flex-direction: column; justify-content: center;
+    overflow-y: auto; overscroll-behavior: contain; }
+  .fp-plate::before { inset: 0; }
+  /* The tab bar keeps to the console's column, so the scene stays clear. */
+  .app[data-screen='home'] .tab-bar { inset-inline: auto max(16px, env(safe-area-inset-right)); inline-size: calc(var(--plate-w) - 32px); margin: 0; }
 }
 
 /* ---------- Settings ---------- */

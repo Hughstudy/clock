@@ -196,6 +196,7 @@ export function HomeScreen({ active, view, result, linkedThoughts, defaultsInten
   const noteStatus = thoughts.status
   const pending = saveState === 'pending'
   const needsAttention = pending || noteStatus?.kind === 'error' || !!systemNoticeSummary || saveState === 'memory-only' || saveState === 'read-only'
+  const noteText = pending ? copy.pending : noteStatus?.text ?? (saveState === 'memory-only' ? copy.memoryOnly : saveState === 'read-only' ? '当前只读' : systemNoticeSummary ?? '')
   const timerSummary = ready ? focusResult ? `${copy.focusElapsed} ${formatMinutes(focusResult.elapsedMs)}` : preparingRest ? `准备休息 · ${restMinutes} 分钟` : `准备专注 · ${focusMinutes} 分钟`
     : `${PHASE_LABELS[view.phase]} · ${paused ? copy.paused : copy.running} · 剩余 ${formatClock(view.remainingMs)}`
   const statusLine = focusResult
@@ -205,9 +206,11 @@ export function HomeScreen({ active, view, result, linkedThoughts, defaultsInten
     : ready ? null
     : `${PHASE_LABELS[view.phase]} · ${paused ? copy.paused : copy.running}${view.isBreak ? '' : ` · ${copy.target(Math.round(view.totalMs / 60000))}`}`
 
+  const setting = companion.sceneryEnabled ? sceneSettingFor(scene?.id) : 'plain'
+
   return (
-    <section className="screen home" data-tone={tone} data-panel={panel ?? ''} data-ready-focus={readyFocus} aria-label="专注计时">
-      <div ref={sceneBox} className="fp-scene" data-setting={companion.sceneryEnabled ? sceneSettingFor(scene?.id) : 'plain'}>
+    <section className="screen home" data-tone={tone} data-setting={setting} data-panel={panel ?? ''} data-ready-focus={readyFocus} aria-label="专注计时">
+      <div ref={sceneBox} className="fp-scene" data-setting={setting}>
         <div className="fp-top">
           <button type="button" className="pill pill--glass" aria-expanded={reading}
             onClick={event => reading ? close() : show('encouragement', event.currentTarget)}>{reading ? copy.dismiss : uiText('UI19')}</button>
@@ -221,6 +224,12 @@ export function HomeScreen({ active, view, result, linkedThoughts, defaultsInten
               <BlueCompanion presentation={presentation} keyboardPat={keyboardPat} cueId={companion.cue?.id} scene={scene}
                 panelOpen={!!panel} sceneryEnabled={companion.sceneryEnabled} />} />
         </div>
+        <p className="fp-digits" {...(ready ? {} : { role: 'timer', 'aria-label': `${PHASE_LABELS[view.phase]}还剩${spokenClock(view.remainingMs)}` })}>
+          {readyFocus ? <button type="button" className="fp-clock-trigger" aria-label={`调整专注时长，当前 ${focusMinutes} 分钟`}
+            disabled={!pickerAvailable} tabIndex={panel === 'duration' ? -1 : undefined} aria-haspopup="dialog" aria-expanded={panel === 'duration'}
+            onClick={event => { if (panel !== 'duration') show('duration', event.currentTarget) }}>{panel === 'duration' && duration.ok ? formatClock(duration.minutes * 60000) : digits}
+              {panel !== 'duration' && <svg className="fp-clock-edit" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="m5 15-1 5 5-1L20 8l-4-4zM14 6l4 4"/></svg>}</button> : digits}
+        </p>
         {panel && panel !== 'duration' && panel !== 'encouragement' && <FocusPanel key={panel} title={titles[panel]} onClose={close} onBack={back} timerSummary={timerSummary}
           closeLabel={panel === 'end' ? copy.cancelEnd : !ready && !view.isBreak ? uiText(view.step ? 'UI16' : 'UI17') : '返回'}>
           {panel === 'end' && <div className="fp-end">
@@ -260,12 +269,6 @@ export function HomeScreen({ active, view, result, linkedThoughts, defaultsInten
       </div>
 
       <div className="fp-plate" data-panel={panel ?? ''} data-attention={needsAttention}>
-        <p className="fp-digits" {...(ready ? {} : { role: 'timer', 'aria-label': `${PHASE_LABELS[view.phase]}还剩${spokenClock(view.remainingMs)}` })}>
-          {readyFocus ? <button type="button" className="fp-clock-trigger" aria-label={`调整专注时长，当前 ${focusMinutes} 分钟`}
-            disabled={!pickerAvailable} tabIndex={panel === 'duration' ? -1 : undefined} aria-haspopup="dialog" aria-expanded={panel === 'duration'}
-            onClick={event => { if (panel !== 'duration') show('duration', event.currentTarget) }}>{panel === 'duration' && duration.ok ? formatClock(duration.minutes * 60000) : digits}
-              {panel !== 'duration' && <svg className="fp-clock-edit" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="m5 15-1 5 5-1L20 8l-4-4zM14 6l4 4"/></svg>}</button> : digits}
-        </p>
         {panel === 'duration' && pickerAvailable && <FocusPanel title={titles.duration} placement="plate" timerSummary={timerSummary}
           onClose={close} closeLabel={copy.cancel}>
           <DurationRuler draft={draft} minutes={focusMinutes} {...view.focusMinutesRange}
@@ -326,8 +329,9 @@ export function HomeScreen({ active, view, result, linkedThoughts, defaultsInten
           </>}
         </div>
 
-        <div className="fp-note" aria-label="想法与保存状态" data-status-actions>
-          <span className="fp-note__text">{pending ? copy.pending : noteStatus?.text ?? (saveState === 'memory-only' ? copy.memoryOnly : saveState === 'read-only' ? '当前只读' : systemNoticeSummary ?? '')}</span>
+        <div className="fp-note" aria-label="想法与保存状态" data-status-actions
+          hidden={!noteText && !thoughts.hasDraft && !thoughts.latestMarkerId && !thoughts.undo && !needsAttention}>
+          <span className="fp-note__text">{noteText}</span>
           {thoughts.hasDraft && <button type="button" className="text-action" onClick={event => {
             opener.current = event.currentTarget; companion.dismiss(); setTask(null); thoughts.openNew()
           }}>{copy.resumeDraft}</button>}

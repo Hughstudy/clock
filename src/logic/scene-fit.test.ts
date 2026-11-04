@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
-import { ART_CARD, ART_HEAD, fitSceneArt, PANEL_TUCK, type SceneFitInput } from './scene-fit'
+import { ART_CARD, ART_HEAD, BUBBLE_RESERVE, fitSceneArt, PANEL_TUCK, type SceneFitInput } from './scene-fit'
 
-const phone: SceneFitInput = { sceneWidth: 393, sceneHeight: 570, artWidth: 565, topLimit: 50, bubbleHeight: 0, panelTop: null, framed: true }
+const phone: SceneFitInput = { sceneWidth: 393, sceneHeight: 570, artWidth: 565, topLimit: 50, bubbleHeight: 0, timeHeight: 0, panelTop: null, framed: true }
 const headTop = (input: SceneFitInput, fit: ReturnType<typeof fitSceneArt>) =>
   input.sceneHeight + fit.shift - ART_HEAD * input.artWidth * fit.scale
 
@@ -17,6 +17,20 @@ describe('fitSceneArt', () => {
     expect(fit.scale).toBeLessThan(1)
     expect(fit.shift).toBe(0)
     expect(headTop(input, fit) - 10 - 90).toBeCloseTo(input.topLimit, 5)
+  })
+
+  it('keeps the time readout and the bubble stacked between the head and the top controls', () => {
+    const input = { ...phone, sceneWidth: 375, sceneHeight: 407, artWidth: 539, bubbleHeight: 60, timeHeight: 52 }
+    const fit = fitSceneArt(input)
+    expect(fit.scale).toBeLessThan(fitSceneArt({ ...input, timeHeight: 0 }).scale)
+    expect(headTop(input, fit) - 10 - 60 - 52).toBeCloseTo(input.topLimit, 5)
+  })
+
+  it('keeps a one-line bubble\'s room above the head while the time reads there', () => {
+    const input = { ...phone, sceneWidth: 375, sceneHeight: 407, artWidth: 539, bubbleHeight: 0, timeHeight: 52 }
+    const fit = fitSceneArt(input)
+    expect(headTop(input, fit) - BUBBLE_RESERVE - 52).toBeCloseTo(input.topLimit, 5)
+    expect(fitSceneArt({ ...input, bubbleHeight: 30 })).toEqual(fit)
   })
 
   it('lifts the support edge onto an open panel and keeps the head below the top controls', () => {

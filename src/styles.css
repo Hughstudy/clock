@@ -15,12 +15,12 @@
   --paper: #fffaf0;
   --paper-2: #eef3ff;
   --card: #ffffff;
-  --ink: #1f2a52;
-  --muted: #6b7591;
+  --ink: #2c4a78;
+  --muted: #5b6b82;
   --line: #dde3f0;
-  --whale: #3f6ee8;
-  --whale-deep: #2a4fb8;
-  --whale-soft: #e3eaff;
+  --whale: #2f74d0;
+  --whale-deep: #2459ab;
+  --whale-soft: #e9f1fb;
   --teal: #23867a;
   --warn: #fde9c8;
   --accent: var(--whale);

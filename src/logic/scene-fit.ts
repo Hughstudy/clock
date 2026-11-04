@@ -19,6 +19,11 @@ export const ART_CARD_CORNER = 21 / 240
 export const PANEL_TUCK = 12
 /** Space between the speech bubble and the creature's head. */
 export const BUBBLE_GAP = 10
+/** Space between the time readout and whatever sits below it (the bubble or the head). */
+export const TIME_GAP = 8
+/** Room kept above the head for a one-line bubble whenever the time reads there, so the
+ * time does not move as the companion's passing lines come and go. */
+export const BUBBLE_RESERVE = 45
 /** Below this, a shrunken companion would read as a glitch; it steps out instead. */
 export const MIN_ART_SCALE = 0.4
 /** Card edges this close to the scene's sides are not noticeable. */
@@ -33,6 +38,8 @@ export interface SceneFitInput {
   topLimit: number
   /** Height of the bubble anchored above the head, or 0 when none is shown. */
   bubbleHeight: number
+  /** Height of the time readout stacked above the bubble, its gap included, or 0. */
+  timeHeight: number
   /** Top of an open local panel, or null. */
   panelTop: number | null
   /** Whether the art paints a scenery card whose edges must not show. */
@@ -47,11 +54,12 @@ export interface SceneFit {
 }
 
 export function fitSceneArt(input: SceneFitInput): SceneFit {
-  const { sceneWidth, sceneHeight, artWidth, topLimit, bubbleHeight, panelTop, framed } = input
+  const { sceneWidth, sceneHeight, artWidth, topLimit, bubbleHeight, timeHeight, panelTop, framed } = input
   if (!(artWidth > 0) || !(sceneHeight > 0)) return { scale: 1, shift: 0, hidden: false }
   const support = panelTop === null ? sceneHeight : Math.min(sceneHeight, panelTop + PANEL_TUCK)
   const bubble = bubbleHeight > 0 ? bubbleHeight + BUBBLE_GAP : 0
-  let scale = Math.min(1, (support - topLimit - bubble) / (ART_HEAD * artWidth))
+  const above = timeHeight > 0 ? Math.max(bubble, BUBBLE_RESERVE) + timeHeight : bubble
+  let scale = Math.min(1, (support - topLimit - above) / (ART_HEAD * artWidth))
   // Once the card's own edges would show (its sides, or its rounded top corners when the
   // card's top is inside the scene), keep the whole card clear too.
   const cornersInside = support - (ART_CARD - ART_CARD_CORNER) * artWidth * scale > 0

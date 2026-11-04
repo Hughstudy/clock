@@ -115,7 +115,9 @@ export async function checkDurationRuler(browser, url, check) {
       const placed = await page.evaluate(() => {
         const panel = document.querySelector('.fp-duration-surface'), apply = panel.querySelector('button[type=submit]')
         const digits = document.querySelector('.fp-digits').getBoundingClientRect(), box = panel.getBoundingClientRect()
-        if (panel.dataset.layout === 'local' && box.top < digits.bottom - 1) return 'covers the time'
+        // The time reads above the companion; beside the scene, the ruler sits in its own column.
+        const overlapsTime = box.top < digits.bottom - 1 && box.bottom > digits.top + 1 && box.left < digits.right - 1 && box.right > digits.left + 1
+        if (panel.dataset.layout === 'local' && overlapsTime) return 'covers the time'
         apply.scrollIntoView({ block: 'nearest' })
         const button = apply.getBoundingClientRect(), hit = document.elementFromPoint(button.x + button.width / 2, button.y + button.height / 2)
         return hit === apply || apply.contains(hit) ? 'ok' : 'apply is covered'
