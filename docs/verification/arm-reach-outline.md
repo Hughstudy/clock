@@ -16,11 +16,19 @@ A scan of all eleven scenes sampled each arm's rendered outline at 240 positions
 - `towerReach` keeps only the part of its outward-and-down bow that is square to the reach, with a smaller bow, so an arm reaching in that direction stays straight instead of growing an elbow at the palm.
 - The blocks scene's second lift: the left hand joins once the slide has brought the block in front of the body, glides from the block's top-left corner to underneath it for the rise past the shoulder, and returns to the corner to set it down. The lift starts after the hand has settled.
 
+### The blocks scene
+
+After the outline fix the owner still saw the arm stretched in the blocks scene, and judged the stacked blocks as about to fall. Both came from the scene's layout: the blocks lay on the floor mat up to 66 units from the shoulder (the rest arm reaches 33), and the second and third blocks sat 12 units off the base block's edge. The scene was reworked:
+
+- The blocks are on the low table the reading, tea and food scenes already use, so every grip is 17–46 units from the shoulder; the reach arm no longer slims below 90% of the drawn width.
+- The two blocks to move start as a small stack in front of the left hand. The top one is lifted to chest height by its near face, the hand sliding up to its top corner, carried across above the shoulder and set squarely on the base. The lower one slides along the table to stand against the base, and the flag goes on top of the stacked pair. The finished pair plus step cannot topple, and the right hand rests throughout instead of sliding a block across the body.
+- The flag's stand moved from the floor onto the table, and the scene's `usesTable` list now includes the blocks; those two values are the only change outside `scene-pose.ts`.
+
 Hand-drawn poses and their blends are unchanged. The tea scene's kettle hand still blends two drawn outlines whose points do not correspond, so its mid-reach frame remains the least tidy; that is a separate authoring question.
 
 ## Verification
 
-- Outline scan after the change: no self-intersections or collapsed outlines in any scene, action or position. Area ratios between the smallest and largest left-arm outline: blocks 1.93, boat 1.60, book 1.84 (the existing test bound is 2.1).
+- Outline scan after the change: no self-intersections or collapsed outlines in any scene, action or position. Area ratios between the smallest and largest left-arm outline: blocks 1.97, boat 1.60, book 1.84 (the existing test bound is 2.1). The blocks test now checks the stacked pair, the step beside it and the flag's footprint.
 - `vitest`: 34 files, 366 tests, including the existing pose, food, plant and renderer suites; the hand-jump, contact, face-clearance and area tests pass unchanged.
 - `tsc -b`, the `/clock/` production build and `scripts/scene-e2e.mjs` (60 app, 30 touch and 67 scene checks) in desktop Chrome 156.0.8078.80. `scripts/verify-scenery.mjs` was not usable: it still waits for an end-confirmation button named 「结束并记录」, which the v35 copy renamed, so it times out on the committed code as well; it is not part of `npm run test:e2e`.
 - Rendered frames from the animation preview were reviewed for the blocks, book, tea, boat, bubble and food scenes before and after.

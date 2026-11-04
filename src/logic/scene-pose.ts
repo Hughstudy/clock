@@ -295,8 +295,8 @@ export function sampleScenePose(input: ScenePoseInput): ScenePoseFrame {
   const book = { turn: 0, close: 0, ribbon: span(p,.66,.74), corner: point(206,161), coverEdge: point(206,161), coverFront: point(214,175) }
   const boat = { fold: p, transfer: span(p,.78,1), x:150, y:0, scale:.71, left: point(135,173), right: point(189,174) }
   let wand: ScenePoseFrame['wand'] = { x: 240, y: 165, angle: 0, ring: point(240,193), breath: 0, bubbles: [] }
-  const blocks: SceneObject[] = [{x:56,y:211,angle:0},{x:97,y:211,angle:0},{x:144,y:211,angle:0},{x:176,y:211,angle:0}]
-  const flag = { x: 132, y: 214, angle: 0 }
+  const blocks: SceneObject[] = [{x:56,y:186,angle:0},{x:196,y:186,angle:0},{x:100,y:186,angle:0},{x:100,y:164,angle:0}]
+  const flag = { x: 136, y: 184, angle: 0 }
   const food = { greens: span(p,.16,.29), rice: span(p,.43,.58), soup: span(p,.76,.88), spoon: point(129,188), tip: point(104,195), soupSpoon: point(222,188), soupTip: point(248,193), leftHeld: 0, rightHeld: 0 }
   let stretch = 0
   let gaze = point(0,0)
@@ -419,43 +419,34 @@ export function sampleScenePose(input: ScenePoseInput): ScenePoseFrame {
     gaze = pose.gaze
     contacts.push(contact('wand-handle',right.palm,point(wand.x,wand.y),pose.held))
   } else if(input.id==='F7') {
+    // Blocks on the low table, within the left hand's easy reach. The two to move start as a
+    // small stack beside the hand; the base stands to the left, a spare one on the right.
     const first=span(p,.14,.34), second=span(p,.45,.7)
-    const baseY = blocks[0]!.y, middleY = baseY-BLOCK_HEIGHT, topY = middleY-BLOCK_HEIGHT
-    // Each carry clears the solid tops beside it, but stays below the mouth while it
-    // is in front of the face and only rises above the cheek once it is left of the eye.
-    blocks[2] = carry(first,[[0,144,baseY],[.18,128,baseY],[.4,128,baseY-28],[.82,68,middleY-6],[1,68,middleY]])
-    const slide=span(second,0,.28),lift=span(second,.34,1)
-    blocks[3] = lift===0 ? {x:mix(176,144,slide),y:baseY,angle:0}
-      : carry(lift,[[0,144,baseY],[.12,128,baseY],[.32,128,baseY-28],[.5,111,baseY-36],[.64,98,topY-8],[.86,68,topY-10],[1,68,topY]])
-    const grip1=point(blocks[2]!.x+16,blocks[2]!.y-24)
+    const base=blocks[0]!, tableY=base.y, onBaseY=tableY-BLOCK_HEIGHT
+    // The top of the starting stack goes onto the base: lifted to chest height, across above
+    // the shoulder rather than through it, then set down. The hand takes the block's near face
+    // and slides up to its top corner as it lifts.
+    blocks[3] = carry(first,[[0,100,onBaseY],[.22,100,onBaseY-24],[.72,58,onBaseY-24],[1,56,onBaseY]])
+    // The lower one slides along the table to stand beside the base, so the pair cannot topple.
+    blocks[2] = {x:mix(100,88,second),y:tableY,angle:0}
     const hold1=span(p,.08,.14)*(1-span(p,.34,.4))
-    // The left hand takes the second block by its top-left corner beside the right hand, slides
-    // under it for the lift so the hand stays below the shoulder while the block passes in
-    // front of it, and returns to the corner to set it down on the tower.
-    const b=blocks[3]!, underGrip=span(lift,0,.3)*(1-span(lift,.72,.92))
-    const lp=pointMix(point(b.x+8,b.y-24),point(b.x+15,b.y+1),underGrip),rp=point(b.x+26,b.y-18)
-    const rightHold=span(p,.4,.45)*(1-span(second,.28,.42))
-    // The left hand joins once the slide has brought the block in front of the body, so
-    // the arms meet at the block instead of crossing on the way out to it.
-    const leftHold=span(second,.16,.34)*(1-span(p,.7,.75))
-    right=blendSceneArm(right,bentReach('right',rp),rightHold)
-    if(rightHold>.999)contacts.push(contact('block-slide',right.palm,rp))
+    const hold2=span(second,.1,.3)*(1-span(p,.7,.75))
+    const grip1=point(blocks[3]!.x+28,blocks[3]!.y-11-11*span(first,0,.22)), grip2=point(blocks[2]!.x+28,blocks[2]!.y-8)
     const raise=span(p,.8,.94)
-    const flagSeat = topY-BLOCK_HEIGHT-3
-    flag.x = mix(132,80,span(raise,0,.5))
-    flag.y = mix(214,flagSeat-9,span(raise,.3,.8)) + 9*span(raise,.84,1)
-    const fg=transformScenePoint(point(0,-13),flag), flagHold=span(p,.76,.8)*(1-span(p,.94,1))
-    // The three left-hand holds never overlap. The palm travels between its resting
-    // place and the current grip; only the start of each reach blends with the rest arm.
-    // Grips out by the tower are reached around the shoulder, below it, never through it.
-    const [grip,hold] = flagHold>0 ? [fg,flagHold] as const : leftHold>0 ? [lp,leftHold] as const : [grip1,hold1] as const
+    const flagSeat = onBaseY-BLOCK_HEIGHT-3
+    flag.x = mix(136,68,span(raise,0,.6))
+    flag.y = mix(tableY-2,flagSeat,span(raise,.1,.85)) - 8*Math.sin(Math.PI*raise)
+    const fg=transformScenePoint(point(0,-8),flag), flagHold=span(p,.76,.8)*(1-span(p,.94,1))
+    // The three holds never overlap. The palm travels from its resting place to the grip
+    // through a low point, so each reach swings below the shoulder rather than across it.
+    const [grip,hold] = flagHold>0 ? [fg,flagHold] as const : hold2>0 ? [grip2,hold2] as const : [grip1,hold1] as const
     if(hold>0){
-      const rest=restLeft.palm, via=grip.x<111?point(Math.min(grip.x,100),176):pointMix(rest,grip,.5)
+      const rest=restLeft.palm, via=point(mix(rest.x,grip.x,.5),Math.max(mix(rest.y,grip.y,.5)+6,165))
       const palm=pointMix(pointMix(rest,via,hold),pointMix(via,grip,hold),hold)
       left=blendSceneArm(restLeft,towerReach(palm),span(hold,0,.3))
     }
     if(hold1>.999)contacts.push(contact('block-first',left.palm,grip1))
-    if(leftHold>.999)contacts.push(contact('block-second',left.palm,lp))
+    if(hold2>.999)contacts.push(contact('block-second',left.palm,grip2))
     if(flagHold>.999)contacts.push(contact('flag-stem',left.palm,fg))
   } else if(input.id==='F8'||input.id==='R2') {
     body.lean=-5;gaze.x=-2;gaze.y=-4

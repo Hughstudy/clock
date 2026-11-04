@@ -197,12 +197,13 @@ describe('sampled scene contact and silhouette',()=>{
       for(const samples of Object.values(areas))expect(Math.max(...samples)/Math.min(...samples)).toBeLessThan(2.1)
     }
   })
-  it('rests each block on the solid face below and sets the flag inside the top footprint',()=>{
+  it('stacks one block squarely on the base, stands the other beside it and sets the flag inside the top footprint',()=>{
     const frame=sampleScenePose({id:'F7',progress:1})
-    const [base,,middle,top]=frame.blocks
-    expect(middle!.y).toBe(base!.y-BLOCK_HEIGHT)
-    expect(top!.y).toBe(middle!.y-BLOCK_HEIGHT)
-    expect(top!.x).toBe(middle!.x)
+    const [base,,step,top]=frame.blocks
+    expect(top!.y).toBe(base!.y-BLOCK_HEIGHT)
+    expect(top!.x).toBe(base!.x)
+    expect(step!.y).toBe(base!.y)
+    expect(step!.x).toBeGreaterThanOrEqual(base!.x+31)
     expect(frame.flag.y).toBeGreaterThan(top!.y-BLOCK_HEIGHT-6)
     expect(frame.flag.y).toBeLessThan(top!.y-BLOCK_HEIGHT)
     expect(frame.flag.x).toBeGreaterThan(top!.x+6)

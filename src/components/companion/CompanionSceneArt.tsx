@@ -169,7 +169,7 @@ export function CompanionSceneArt({scene,frame:provided}:Props){
   const material = { '--scene-coat': `url(#${paint}-body)`, '--scene-belly': `url(#${paint}-belly)` } as CSSProperties
   const f=provided??sampleScenePose({id:scene.id,status:scene.status,progress:scene.completedProgress,staticOnly:true});const id=scene.id,p=f.progress;const lean=`rotate(${f.body.lean} ${f.body.x+120} ${f.body.y+160})`
   let back:ReactNode=null,objects:ReactNode=null,held:ReactNode=null
-  const usesTable=['F1','F2','F3','F6'].includes(id)
+  const usesTable=['F1','F2','F3','F6','F7'].includes(id)
   if(id==='F1')objects=<>
     <FoodDish x={100} y={177} kind="greens" detail={f.food.greens}/><FoodDish x={162} y={188} kind="rice" detail={f.food.rice}/><FoodDish x={225} y={177} kind="soup" detail={f.food.soup}/>
     <g data-scene-part="utensil-rests"><R x={103} y={190} w={29} h={5} c="edge" r={2}/><R x={220} y={190} w={31} h={5} c="edge" r={2}/></g>
@@ -181,7 +181,7 @@ export function CompanionSceneArt({scene,frame:provided}:Props){
   if(id==='F4'){objects=<><E x={131} y={183} rx={26} ry={4} c="edge"/><E x={169} y={183} rx={20} ry={4} c="paper"/><Kettle frame={f}/><Steam x={f.kettle.x} y={f.kettle.y-38} amount={.5+2.5*p}/><P d={`M${f.kettle.spout.x} ${f.kettle.spout.y} Q${f.cup.x-9} ${f.kettle.spout.y+12} ${169} ${165}`} c="pour" opacity={f.kettle.pour}/></>;held=<><Cup frame={f}/><Steam x={f.cup.x} y={f.cup.y-17} amount={f.cup.liquid*(.6+f.cup.held*.5)*(1-stage(f.cup.x,186,204))}/></>}
   if(id==='F5')objects=<Bubbles frame={f}/>
   if(id==='F6')objects=<Boat frame={f}/>
-  if(id==='F7')objects=<g data-scene-part="block-inventory">{f.blocks.map((b,i)=><g key={i} data-block={i}><Block {...b} c={['green','table','light','green'][i]??'green'}/></g>)}<E x={132} y={214} rx={5} ry={2} c="edge"/><g data-scene-part="flag" transform={`translate(${f.flag.x} ${f.flag.y}) rotate(${f.flag.angle})`}><P d="M0 0 L0 -24"/><path className="scene-draw-pink" d="M0 -24 L16 -18 L0 -12Z" stroke="var(--scene-line)" strokeWidth="1.4"/></g></g>
+  if(id==='F7')objects=<g data-scene-part="block-inventory">{f.blocks.map((b,i)=><g key={i} data-block={i}><Block {...b} c={['green','table','light','green'][i]??'green'}/></g>)}<E x={136} y={185} rx={5} ry={2} c="edge"/><g data-scene-part="flag" transform={`translate(${f.flag.x} ${f.flag.y}) rotate(${f.flag.angle})`}><P d="M0 0 L0 -24"/><path className="scene-draw-pink" d="M0 -24 L16 -18 L0 -12Z" stroke="var(--scene-line)" strokeWidth="1.4"/></g></g>
   if(id==='F8')back=<g data-scene-part="sky"><P d="M44 42 C19 49 28 75 49 70 C30 67 32 49 44 42Z" c="paper"/>{[[260,44],[75,31],[285,105],[224,23],[36,116],[252,85]].map(([x=0,y=0],i)=><g className="scene-rig-star" key={i}><Star x={x} y={y} opacity={i<2?1:stage(p,(i-2)*.17,.2+(i-2)*.17)}/></g>)}<P d="M260 44 L252 85 L285 105" c="softline" opacity={stage(p,.3,.6)}/><g opacity={stage(p,.92,1)}><P d="M211 32 L174 51 M214 37 L187 53" c="softline"/><Star x={216} y={31} r={7}/></g></g>
   if(id==='R2')back=<g data-scene-part="clouds"><Cloud x={63} y={58} scale={.67}/><Cloud x={252} y={91} scale={.5}/></g>
   if(id==='R3'){objects=<SideTable/>;held=<><Cup frame={f}/><Steam x={f.cup.x-13} y={f.cup.y-18} amount={1-f.cup.held}/></>}
