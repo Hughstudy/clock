@@ -63,7 +63,8 @@ describe('sampled scene contact and silhouette',()=>{
         expect(sceneArmPath(a)).not.toMatch(/NaN|Infinity/)
         expect(a.points.length).toBe(32)
         expect(outlineArea(a),`${id} ${side} area at ${progress}`).toBeGreaterThan(100)
-        expect(distance({x:a.points[0]!,y:a.points[1]!},{x:f.body.x+(side==='left'?69:171),y:f.body.y+105}),`${id} ${side} shoulder`).toBeLessThan(2)
+        const shoulderX = id==='F4' ? (side==='left'?74:161) : (side==='left'?69:171)
+        expect(distance({x:a.points[0]!,y:a.points[1]!},{x:f.body.x+shoulderX,y:f.body.y+105}),`${id} ${side} shoulder`).toBeLessThan(2)
         expect(distance({x:a.points[0]!,y:a.points[1]!},a.palm),`${id} ${side} reach at ${progress}`).toBeLessThan(90)
       }
     }
@@ -78,6 +79,25 @@ describe('sampled scene contact and silhouette',()=>{
         expect(distance(c.hand,actual),`${id} ${c.name} ${i}`).toBeLessThan(.001)
       }
     }
+  })
+  it('sets the kettle down before the same palm joins the right hand under the cup',()=>{
+    const at = (progress:number) => sampleScenePose({id:'F4',progress})
+    const parked = at(1).kettle, supportedCup = at(0).cup
+    let released = false
+    for(let i=0;i<=1000;i++){
+      const frame = at(i/1000)
+      const grips = new Set(frame.contacts.filter(c=>c.active).map(c=>c.name))
+      if(!grips.has('kettle-handle')) released = true
+      if(released) {
+        expect(grips.has('kettle-handle')).toBe(false)
+        expect(frame.kettle).toEqual(parked)
+      }
+      if(distance(frame.cup,supportedCup)>.0001) expect(grips.has('cup-handle')).toBe(true)
+    }
+    const final = at(1)
+    expect(final.contacts.map(c=>c.name).sort()).toEqual(['cup-base','cup-handle'])
+    expect(final.left.palm).toEqual(transformScenePoint({x:SCENE_CUP_BASE.x*final.cup.scale,y:SCENE_CUP_BASE.y*final.cup.scale},final.cup))
+    expect(final.right.palm).toEqual(transformScenePoint({x:SCENE_CUP_HANDLE.x*final.cup.scale,y:SCENE_CUP_HANDLE.y*final.cup.scale},final.cup))
   })
   it('keeps visible grip contacts attached throughout sampled actions',()=>{
     for(const id of ids)for(let i=0;i<=100;i++){
@@ -99,19 +119,23 @@ describe('sampled scene contact and silhouette',()=>{
       expect(blocks.blocks).toHaveLength(4);expect(boat.boat.scale).toBe(.71)
     }
     const end=sampleScenePose({id:'F6',progress:1})
-    expect(end.boat.x).toBe(242);expect(end.boat.y).toBeCloseTo(0)
+    expect(end.boat.x).toBe(221);expect(end.boat.y).toBeCloseTo(0)
   })
   it('supports the rotating cover edge throughout closure, including the handoff',()=>{
     for(let i=0;i<=1000;i++){
       const frame=sampleScenePose({id:'F3',progress:i/1000})
       if(frame.book.close===0||frame.book.close===1)continue
-      const { x,y }=frame.book.coverEdge
-      // The projected front corner is 8 units to the right and 14 down.
-      const rightGrip={x:x+8*.94,y:y+14*.94},leftGrip={x:x+8*.5,y:y+14*.5}
-      expect(Math.min(distance(frame.right.palm,rightGrip),distance(frame.left.palm,leftGrip))).toBeLessThan(.001)
+      const active = frame.contacts.filter(c => c.name.startsWith('cover-') && c.active)
+      expect(active.length).toBeGreaterThan(0)
+      for(const hold of active){
+        const a = frame.book.coverEdge, b = frame.book.coverFront
+        const dx = b.x-a.x, dy = b.y-a.y
+        const t = Math.max(0,Math.min(1,((hold.hand.x-a.x)*dx+(hold.hand.y-a.y)*dy)/(dx*dx+dy*dy)))
+        expect(distance(hold.hand,{x:a.x+t*dx,y:a.y+t*dy})).toBeLessThan(.001)
+      }
     }
     const closed=sampleScenePose({id:'F3',progress:1})
-    expect(closed.book.coverEdge).toEqual({x:114,y:161})
+    expect(closed.book.coverEdge).toEqual({x:111,y:162})
     expect(closed.contacts.some(c=>c.name.startsWith('cover'))).toBe(false)
   })
   it('rests the hand and wand between bubble actions even as the host timer advances', () => {
@@ -276,7 +300,7 @@ describe('sampled scene contact and silhouette',()=>{
     expect(begin.cup).toEqual(initial.cup)
     const final=sampleScenePose({id:'R3',status:'ended',progress:0,actionKind:'ending',actionProgress:1})
     expect(final).toEqual(sampleScenePose({id:'R3',status:'ended',progress:0}))
-    expect(final.cup).toMatchObject({x:244,y:182,held:0})
+    expect(final.cup).toMatchObject({x:226,y:176,held:0})
     for(let i=0;i<=85;i++){const f=sampleScenePose({id:'R3',status:'ended',progress:0,actionKind:'ending',actionProgress:i/100});expect(f.contacts.find(c=>c.name==='cup-handle')?.active).toBe(true)}
   })
 })

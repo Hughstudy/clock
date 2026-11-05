@@ -120,11 +120,11 @@ try {
   observe(real)
   await real.goto(`http://127.0.0.1:${app.httpServer.address().port}/clock/`)
   await captureWidths(real, samples[0])
-  const primary = real.locator('.home .btn-primary')
+  const primary = real.locator('.home .fp-primary .btn-primary')
   const running = real.locator('.home .blue-companion[data-scene-status="running"]')
   // The saved focus bag makes all three activities reachable in eight normal starts.
   for (let attempt = 0; attempt < 8 && captured.size < samples.length; attempt++) {
-    if (attempt) await real.getByRole('button', { name: '换个时长', exact: true }).click()
+    if (attempt) await real.getByRole('button', { name: '准备专注', exact: true }).click()
     await primary.click()
     await running.waitFor()
     const id = await running.getAttribute('data-scene')
@@ -141,7 +141,7 @@ try {
     const sample = samples.find(entry => entry.id === id)
     if (sample && !captured.has(id)) await captureWidths(real, sample)
     await real.getByRole('button', { name: '结束专注', exact: true }).click()
-    await real.getByRole('dialog').getByRole('button', { name: '结束并记录', exact: true }).click()
+    await real.getByRole('dialog').getByRole('button', { name: '确认结束', exact: true }).click()
     await real.locator('.home .blue-companion[data-scene-status="ended"]').waitFor()
   }
   check('Captured ready, workroom, garden and dusk from the actual timer', captured.size === samples.length)

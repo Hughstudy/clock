@@ -28,8 +28,8 @@ for(const scene of scenes) {
 }
 await writeFile(path.join(out,'scene-storyboards.json'),JSON.stringify({version:2,viewBox:'0 0 320 240',styles,scenes},null,2)+'\n')
 const definitions = [
- ['tea-pour','F4','Tea · grasp, pour and return',[.4,.58,.68,.75],['Supported kettle','Grasp the top handle','Pour into the same cup','Return to the trivet']],
- ['tea-cup','F4','Tea · supported cup lift',[.8,.86,.93,1],['Reach the cup handle','Support the base','Lift the same cup','Settle close to the body']],
+ ['tea-pour','F4','Tea · hold, pour and return',[.4,.63,.68,.75],['Supported kettle','Lift by the handle','Pour into the same cup','Return to the trivet']],
+ ['tea-cup','F4','Tea · supported cup lift',[.8,.88,.93,1],['Reach the cup handle','Support the base','Lift the same cup','Settle close to the body']],
  ['food-serving','F1','Food · prepare three dishes',[0,.2,.5,.8,1],['Ingredients on the table','Prepare the vegetables','Plate the rice','Finish the soup','Three dishes ready']],
  ['book-page','F3','Book · turn, mark and close',[.1,.2,.32,.58,.82,.885,.945,1],['Reach the page corner','Guide a single page','Let the page settle','Place the ribbon','Lift the cover edge','Guide the cover together','Lower onto the page stack','Release the closed book']],
  ['boat-fold','F6','Boat · fold and lower',[0,.3,.6,.82,.9,1],['Dry paper beside the tray','Press the crease','Open the hull','Lift with support','Lower into water','Release the boat']],

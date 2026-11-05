@@ -11,6 +11,16 @@ const errors = []
 const check = (name, condition) => { assert.ok(condition, name); checks.push(name); console.log(`PASS ${name}`) }
 const button = (page, name) => page.getByRole('button', { name, exact: true })
 const dialog = page => page.getByRole('dialog')
+async function speechAtHead(page, speech) {
+  const bubble = await speech.boundingBox(), head = await page.locator('.fp-art [data-part="tuft"]').boundingBox()
+  const tail = await speech.evaluate(element => {
+    const style = getComputedStyle(element, '::after'), left = parseFloat(style.left)
+    return { left, right: left + parseFloat(style.width), height: parseFloat(style.height) }
+  })
+  const gap = head.y - (bubble.y + bubble.height), headX = head.x + head.width / 2
+  return gap - tail.height >= -1 && gap - tail.height <= 12 && tail.height > 0 &&
+    headX >= bubble.x + tail.left - 3 && headX <= bubble.x + tail.right + 3
+}
 async function inViewAndHit(target) {
   return target.evaluate(element => {
     const rect = element.getBoundingClientRect(), viewport = window.visualViewport
@@ -39,7 +49,7 @@ const url = `http://127.0.0.1:${server.httpServer.address().port}/clock/`
 let browser
 try {
   browser = await chromium.launch({ channel: process.env.SCENE_BROWSER_CHANNEL })
-  for (const [width, height, font] of [[320, 568, 16], [320, 568, 32], [320, 850, 32], [375, 812, 16], [568, 320, 32], [850, 320, 32], [430, 932, 16], [430, 932, 32]]) {
+  for (const [width, height, font] of [[320, 568, 16], [320, 812, 16], [320, 568, 32], [320, 850, 32], [375, 812, 16], [375, 812, 32], [568, 320, 32], [850, 320, 32], [430, 932, 16], [430, 932, 32]]) {
     const name = `${width}x${height}-${font === 32 ? '200' : '100'}percent`
     const context = await browser.newContext({ viewport: { width, height }, reducedMotion: 'reduce' })
     const page = await context.newPage()
@@ -66,22 +76,33 @@ try {
     await page.keyboard.press('Enter')
     await dialog(page).waitFor({ state: 'detached' })
     check(`${name}: keyboard save persists the entered text`, await page.evaluate(text => JSON.parse(localStorage.getItem('whale-focus:snapshot')).thoughts.some(thought => thought.text === text), `可保存的测试想法 ${name}`))
-    const bounds = () => page.evaluate(() => ['.fp-scene', '.fp-art .blue-companion', '.fp-primary button', '.fp-digits', '.tab-bar'].map(selector => {
+    const bounds = () => page.evaluate(() => ['.fp-scene', '.fp-art .blue-companion', '.fp-primary button', '.fp-digits', '.fp-thought-tools', '.tab-bar'].map(selector => {
       const r = document.querySelector(selector).getBoundingClientRect()
       return [r.left, r.top, r.width, r.height]
     }).flat())
-    await button(page, '给我一句鼓励').scrollIntoViewIfNeeded()
+    const ask = button(page, '给我一句鼓励')
+    const voice = page.locator('.fp-plate .fp-voice-slot')
+    check(`${name}: the single encouragement opener is on the plate`, await button(voice, '给我一句鼓励').count() === 1 && await ask.count() === 1)
+    await ask.scrollIntoViewIfNeeded()
     const before = await bounds()
-    await button(page, '给我一句鼓励').click()
+    await ask.click()
     const reader = page.getByRole('region', { name: '一句鼓励' })
-    if (font === 16 && width >= 375) {
-      const speech = page.locator('.fp-companion-speech[data-visible="true"]')
-      await speech.waitFor()
+    const speech = page.locator('.fp-companion-speech[data-visible="true"]')
+    if (font === 16 && height >= 800) await speech.waitFor()
+    if (await speech.isVisible()) {
       const after = await bounds()
       const moved = after.map((v, i) => +(v - before[i]).toFixed(2))
       check(`${name}: encouragement preserves the drawing area, digits, timer action and navigation`, moved.every(delta => Math.abs(delta) <= 1))
-      const bubble = await speech.boundingBox(), face = await page.locator('.blue-companion__face').boundingBox()
-      check(`${name}: the character's speech stays above its face`, face.height > 0 && bubble.y + bubble.height <= face.y)
+      check(`${name}: the speech bubble sits immediately above the drawn head`, await speechAtHead(page, speech))
+      check(`${name}: timer and thought actions stay reachable during reading`,
+        await inViewAndHit(button(page, '开始专注')) && await inViewAndHit(button(page, '记下想法')) && await inViewAndHit(button(page, '留个标记')))
+      const phraseTools = ['换一句', '收藏这句', '换一种鼓励', '收到鼓励了']
+      const visibleTools = await Promise.all(phraseTools.map(label => inViewAndHit(button(voice, label))))
+      check(`${name}: all phrase actions share the opener’s plate region and can be tapped`, visibleTools.every(Boolean))
+    } else {
+      check(`${name}: a crowded scene offers one complete reader`,
+        await dialog(page).count() === 1 && await reader.locator('.fp-reader-quote').evaluate(el =>
+          el.textContent.trim().length > 0 && el.scrollWidth <= el.clientWidth + 1 && el.scrollHeight <= el.clientHeight + 1))
     }
     await button(reader, '换一种鼓励').scrollIntoViewIfNeeded()
     await button(reader, '换一种鼓励').click()
@@ -94,6 +115,7 @@ try {
     check(`${name}: reader close remains fully reachable`, await tabTo(page, close) && await inViewAndHit(close))
     await page.keyboard.press('Enter')
     await reader.waitFor({ state: 'detached' })
+    check(`${name}: closing returns keyboard focus to the encouragement opener`, await ask.evaluate(element => element === document.activeElement))
     await context.close()
   }
 
@@ -126,6 +148,55 @@ try {
   await page.setViewportSize({ width: 375, height: 812 })
   await page.waitForFunction(() => document.querySelector('.focus-panel')?.getAttribute('aria-modal') === 'false')
   check('Returning to roomy viewport keeps the same editor text', await page.locator('#thought-text').evaluate(element => element === window.originalEditor && element.value === '缩放和键盘变化期间保留的文字'))
+  await page.keyboard.press('Escape')
+  await button(page, '给我一句鼓励').click()
+  const reader = page.getByRole('region', { name: '一句鼓励' })
+  const next = button(reader, '换一句'), phrase = await page.locator('.fp-reader-quote:visible').innerText()
+  await next.focus()
+  await page.setViewportSize({ width: 320, height: 568 })
+  await page.evaluate(() => { document.documentElement.style.fontSize = '32px' })
+  await page.getByRole('dialog', { name: '一句鼓励' }).waitFor()
+  check('Changing to a crowded reading layout preserves the quote and keyboard action',
+    await reader.locator('.fp-reader-quote').innerText() === phrase && await next.evaluate(element => element === document.activeElement))
+  await page.setViewportSize({ width: 375, height: 812 })
+  await page.evaluate(() => { document.documentElement.style.fontSize = '16px' })
+  await page.locator('.fp-companion-speech[data-visible="true"]').waitFor()
+  check('Returning to head-anchored reading preserves the quote and keyboard action',
+    await page.locator('.fp-reader-quote:visible').innerText() === phrase && await next.evaluate(element => element === document.activeElement))
+  // Set up the next draw in this isolated profile's saved bag, then start through the normal UI.
+  await page.evaluate(() => {
+    const key = 'whale-focus:snapshot', saved = JSON.parse(localStorage.getItem(key))
+    saved.scenes.focus.remaining = ['F4']
+    localStorage.setItem(key, JSON.stringify(saved))
+  })
+  await page.reload()
+  await button(page, '开始专注').click()
+  await page.locator('.blue-companion[data-scene="F4"]').waitFor()
+  const automatic = page.locator('.fp-bubble:visible')
+  await automatic.waitFor()
+  check('The automatic tea-scene line points at its off-center head', await speechAtHead(page, automatic))
+  const digitsBefore = await page.locator('.fp-digits').boundingBox()
+  await button(page, '给我一句鼓励').click()
+  const requested = page.locator('.fp-companion-speech[data-visible="true"]')
+  await requested.waitFor()
+  const digitsAfter = await page.locator('.fp-digits').boundingBox()
+  check('Requesting a phrase in the tea scene keeps the tail on the same head and the clock still',
+    await speechAtHead(page, requested) && Math.abs(digitsBefore.y - digitsAfter.y) <= 1 && !await automatic.count())
+  await page.screenshot({ path: path.join(output, '375x812-tea-reader.png') })
+  await button(page, '收到鼓励了').click()
+  await page.setViewportSize({ width: 320, height: 568 })
+  await page.evaluate(() => { document.documentElement.style.fontSize = '32px' })
+  await button(page, '暂停专注').click()
+  const fullLine = page.locator('.fp-bubble p')
+  const source = page.locator('.fp-voice-slot').getByRole('button', { name: /查看全文/ })
+  await source.waitFor()
+  const pausedLine = await fullLine.textContent()
+  check('A passing line that cannot fit at 200% leaves the reading choice to the user', !await dialog(page).count())
+  await source.click()
+  check('The plate’s full-text action opens the same complete passing line',
+    pausedLine.trim().length > 0 && await dialog(page).locator('.fp-full-message').innerText() === pausedLine)
+  await page.keyboard.press('Escape')
+  await button(page, '继续专注').waitFor()
   check('No browser page errors', errors.length === 0)
   await writeFile(path.join(output, 'report.json'), JSON.stringify({ browser: browser.version(), checks, errors, keyboard: 'simulated visualViewport; not a physical keyboard/device test' }, null, 2))
 } finally {

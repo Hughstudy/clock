@@ -72,7 +72,8 @@ body { background: var(--paper); }
    companion's feet instead of moving it. --art-clear is the band the art stays above. */
 .home { position: relative; flex: 1; min-block-size: 0; min-inline-size: 0; gap: 0; display: flex; flex-direction: column; align-items: stretch; text-align: center;
   --bar-clear: calc(var(--tab-height) + env(safe-area-inset-bottom) + 22px);
-  --console: calc(max(44px, 2.3rem) + max(44px, 2.75rem) * 2 + 18px); --art-clear: calc(var(--console) + var(--bar-clear));
+  --voice-row: max(44px, 1.425rem);
+  --console: calc(max(44px, 2.3rem) + max(44px, 2.75rem) * 2 + var(--voice-row) * 2 + 18px); --art-clear: calc(var(--console) + var(--bar-clear));
   --sky: #f4dfc5; --floor: #e6cdaa; }
 .home[data-setting='garden'] { --sky: #c4dedc; --floor: #dfd3ae; }
 .home[data-setting='dusk'] { --sky: #858eaf; --floor: #6e7496; }
@@ -104,22 +105,19 @@ body { background: var(--paper); }
 .fp-art .companion-feedback__greeting:focus-visible { outline: none; }
 .fp-art .companion-feedback__greeting:focus-visible .companion-feedback__character { outline: 3px solid var(--focus); outline-offset: -6px; border-radius: 24px; }
 
-/* The companion's own line, just above its head. */
-.fp-bubble { position: absolute; z-index: 2; left: 50%; bottom: calc(var(--art-clear) + var(--art-px, 0px) * .571 * var(--fit-scale, 1) - var(--fit-shift, 0px) + 10px);
-  transform: translateX(-50%); transition: bottom .35s cubic-bezier(.2, .8, .2, 1);
-  inline-size: max-content; max-inline-size: min(88%, 320px); padding: 7px 14px; border-radius: 18px; background: #fff;
-  color: var(--ink); font-size: .9375rem; font-weight: 500; line-height: 1.45; box-shadow: 0 2px 10px #3c5a8214; text-wrap: pretty; }
-.fp-bubble::after { content: ''; position: absolute; left: 50%; bottom: -5px; inline-size: 10px; block-size: 10px; background: #fff; transform: translateX(-50%) rotate(45deg); border-radius: 2px; }
-.fp-bubble p { margin: 0; }
-/* The time reads above the head, and above the bubble when there is one. It follows the art
-   when a panel moves it, and steps out with it. The pen is the only pointer target here. */
+/* The clock keeps a stable position above the speech area as the scene or phrase changes. */
+.fp-top h1 { flex: 1; margin: 0; padding-inline-start: 4px; align-self: center; text-align: start; font-size: 1.125rem; color: var(--ink); }
+.fp-clock-phase { position: absolute; z-index: 2; inset: calc(env(safe-area-inset-top) + 55px) 0 auto;
+  color: var(--muted); font-size: .8125rem; line-height: 1.25rem; font-weight: 550; }
+.fp-clock-phase::before { content: ''; display: inline-block; width: .4rem; height: .4rem; margin-inline-end: .375rem; border-radius: 50%; background: currentColor; }
+.home[data-setting='dusk'] :is(.fp-top h1,.fp-clock-phase) { color: #fff6e8; }
 .fp-digits { position: absolute; z-index: 2; inset-inline: 0; margin: 0; pointer-events: none;
-  bottom: calc(var(--art-clear) + var(--art-px, 0px) * .571 * var(--fit-scale, 1) - var(--fit-shift, 0px) + 10px + var(--bubble-space, 0px));
-  transition: bottom .35s cubic-bezier(.2, .8, .2, 1);
+  inset-block-start: calc(env(safe-area-inset-top) + 55px + 1.25rem);
   min-block-size: 44px; font-size: 2.125rem; line-height: max(44px, 1.2em); font-weight: 800; letter-spacing: .02em;
   font-variant-numeric: tabular-nums; color: var(--ink); }
 .fp-digits .fp-clock-trigger { pointer-events: auto; }
-.fp-scene[data-fit='hidden'] .fp-digits { visibility: hidden; }
+.fp-scene[data-fit='hidden'] .fp-clock-phase { visibility: hidden; }
+.fp-scene[data-fit='hidden'] .fp-digits { inset-block-start: calc(env(safe-area-inset-top) + 55px); }
 .home[data-tone='paused'] .fp-digits { color: #8f5f24; }
 .home[data-tone='rest'] .fp-digits { color: var(--mint-deep); }
 .home[data-tone='done'] .fp-digits { color: var(--muted); font-size: 1.75rem; }
@@ -190,7 +188,6 @@ body { background: var(--paper); }
   .fp-primary { margin-top: 8px; }
   .home .fp-primary .btn-primary { min-block-size: 44px; }
   .fp-secondary { margin-top: 6px; }
-  .fp-bubble { font-size: .875rem; padding: 5px 11px; }
 }
 /* Landscape (phones and iPads): scene beside the plate. On short screens the plate takes the width
    the scene cannot fill: the art (at most 1.752 × the height below the reserve) must stay 1.25 × as

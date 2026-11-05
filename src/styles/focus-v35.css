@@ -23,11 +23,8 @@
 .home .fp-tools-slot { display: flex; flex-direction: column; inline-size: min(100%, 400px); block-size: max(44px, 2.75rem);
   margin: 2px auto 0; padding: 0; border: 0; overflow: auto; overscroll-behavior: contain; }
 .home .fp-thought-tools { display: flex; flex: none; justify-content: center; align-items: center; gap: 12px; margin: 0; padding: 0; }
-.home span.fp-tools-label { display: none; }
+.home span.fp-tools-label { color: var(--muted); font-size: .8125rem; }
 .home .fp-thought-tools .fp-tools-label { flex: none; color: var(--ink); padding-inline: 6px; }
-/* Reading borrows the quiet feedback row, so the plate keeps its height and the scene does not move. */
-.home .fp-plate[data-panel='encouragement'][data-attention='false'] .fp-tools-slot { block-size: calc(max(44px, 2.75rem) * 2); }
-.home .fp-plate[data-panel='encouragement'][data-attention='false'] .fp-note { display: none; }
 .home .fp-thought-tools .text-action { display: inline-flex; align-items: center; justify-content: center; gap: 5px; padding-inline: 6px;
   min-block-size: 44px; background: transparent; color: var(--ink); white-space: normal; }
 .home .fp-thought-tools .text-action svg { flex: none; width: 1rem; height: 1rem; }
@@ -70,6 +67,8 @@
 
 @media (orientation: landscape) and (min-aspect-ratio: 6/5) {
   .home .fp-plate { min-block-size: 0; overflow-y: auto; justify-content: flex-start; }
+  /* Short landscapes scroll the card. Each row keeps its full hit area. */
+  .home .fp-plate > :is(.fp-voice-slot, .fp-status, .fp-controls, .fp-tools-slot) { flex-shrink: 0; }
 }
 /* When the card alone exceeds a short viewport, its controls remain scrollable.
    This also covers user-enlarged text without reducing their chosen font size. */

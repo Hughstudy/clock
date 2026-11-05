@@ -65,6 +65,8 @@ export function HomeScreen({ active, view, result, linkedThoughts, defaultsInten
   const [message, setMessage] = useState('')
   const confirming = useRef<string | null>(null)
   const submittedStep = useRef<string | null>(null)
+  const sceneBox = useRef<HTMLDivElement>(null)
+  const voiceBox = useRef<HTMLDivElement>(null)
   const primaryRef = useRef<HTMLDivElement>(null)
   const markButton = useRef<HTMLButtonElement>(null)
   const opener = useRef<HTMLElement | null>(null)
@@ -106,19 +108,21 @@ export function HomeScreen({ active, view, result, linkedThoughts, defaultsInten
   useLayoutEffect(() => {
     if (active && previousPanel.current && !panel) {
       const prior = opener.current
+      const speechTask = previousPanel.current === 'message' || previousPanel.current === 'encouragement'
+      const fallback = speechTask ? voiceBox.current?.querySelector<HTMLButtonElement>('.fp-voice-open') : null
       const target = prior?.isConnected && !prior.matches(':disabled') && prior.getClientRects().length
-        ? prior : primaryRef.current?.querySelector<HTMLButtonElement>('button')
+        ? prior : fallback ?? primaryRef.current?.querySelector<HTMLButtonElement>('button')
       target?.focus({ preventScroll: true })
     }
     previousPanel.current = panel
   }, [active, panel])
 
   const show = (next: Exclude<Panel, null>, target: HTMLElement) => {
-    opener.current = target
     if (next !== 'thought' && thoughts.open) {
       if (thoughts.conflict) return
       thoughts.setOpen(false)
     }
+    opener.current = target
     if (next !== 'encouragement') { companion.dismiss(); setAskOpen(false) }
     if (next === 'thought') {
       setTask(null)
@@ -142,7 +146,6 @@ export function HomeScreen({ active, view, result, linkedThoughts, defaultsInten
     else close()
   }
   useFocusTaskBack(!!panel, back, panel === 'encouragement' && askOpen ? 'categories' : panel ?? '')
-  const sceneBox = useRef<HTMLDivElement>(null)
   useSceneFit(sceneBox, companion.sceneryEnabled)
   useLayoutEffect(() => {
     if (panel !== 'end' || !confirmExpired) return
@@ -212,18 +215,18 @@ export function HomeScreen({ active, view, result, linkedThoughts, defaultsInten
     <section className="screen home" data-tone={tone} data-setting={setting} data-panel={panel ?? ''} data-ready-focus={readyFocus} aria-label="专注计时">
       <div ref={sceneBox} className="fp-scene" data-setting={setting}>
         <div className="fp-top">
-          <button type="button" className="pill pill--glass" aria-expanded={reading}
-            onClick={event => reading ? close() : show('encouragement', event.currentTarget)}>{reading ? copy.dismiss : uiText('UI19')}</button>
+          <h1>专注</h1>
           <button type="button" className="pill pill--glass pill--icon" onClick={onSettings} aria-label="设置">
             <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><path d="M5 4v16M12 4v16M19 4v16"/><path d="M2 8h6M9 15h6M16 9h6" strokeWidth="3.4"/></svg>
           </button>
         </div>
-        {spoken && <ShortCompanionMessage text={spoken.text} onRead={target => { setMessage(spoken.text); show('message', target) }} />}
+        {spoken && <ShortCompanionMessage voiceRef={voiceBox} text={spoken.text} onRead={target => { setMessage(spoken.text); show('message', target) }} />}
         <div className="fp-art">
           <CompanionFeedback feedback={companion.feedback} reducedMotion={reducedMotion} renderCharacter={(presentation, keyboardPat) =>
               <BlueCompanion presentation={presentation} keyboardPat={keyboardPat} cueId={companion.cue?.id} scene={scene}
                 panelOpen={!!panel} sceneryEnabled={companion.sceneryEnabled} />} />
         </div>
+        <span aria-hidden="true" className="fp-clock-phase">{focusResult ? copy.focusEndedTitle : restEnded ? copy.restEndedTitle : ready ? (isRest ? '准备休息' : copy.prepareFocus) : paused ? copy.paused : isRest ? '休息中' : '专注中'}</span>
         <p className="fp-digits" {...(ready ? {} : { role: 'timer', 'aria-label': `${PHASE_LABELS[view.phase]}还剩${spokenClock(view.remainingMs)}` })}>
           {readyFocus ? <button type="button" className="fp-clock-trigger" aria-label={`调整专注时长，当前 ${focusMinutes} 分钟`}
             disabled={!pickerAvailable} tabIndex={panel === 'duration' ? -1 : undefined} aria-haspopup="dialog" aria-expanded={panel === 'duration'}
@@ -276,6 +279,17 @@ export function HomeScreen({ active, view, result, linkedThoughts, defaultsInten
           {pending && <p className="fp-hint fp-hint--error">{copy.pending}
             <button type="button" className="text-action" onClick={() => dispatch({ type: 'retrySave' })}>{copy.retry}</button></p>}
         </FocusPanel>}
+        <div ref={voiceBox} className="fp-voice-slot">
+          <button type="button" className="pill fp-voice-open" hidden={reading && !!requested} aria-expanded={reading}
+            onClick={event => show('encouragement', event.currentTarget)}>
+            <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="1.7"><path d="M20 11a8 8 0 0 1-8 8c-1.4 0-2.7-.3-3.8-.9L4 20l1.3-4A8 8 0 1 1 20 11Z"/></svg>
+            {uiText('UI19')}
+          </button>
+          {reading && requested && <EncouragementReader quote={requested} choosing={askOpen} canEdit={canEdit}
+            sceneRef={sceneBox} onBack={back} onClose={close} timerSummary={timerSummary}
+            {...(favorites ? { favorites } : {})} onNext={companion.next} onChooseMode={() => setAskOpen(true)} onReturn={() => setAskOpen(false)}
+            onChoose={pool => { if (pool !== requested.pool) companion.request(pool); setAskOpen(false) }} />}
+        </div>
         <div className="fp-status">
           {readyFocus && !restEnded ? (editingStep
             ? <input className="fp-step-input" aria-label={uiText('UI10')} placeholder={uiText('UI11')} value={step} autoFocus
@@ -311,21 +325,16 @@ export function HomeScreen({ active, view, result, linkedThoughts, defaultsInten
         </div>
 
         <div className="fp-tools-slot">
-          {reading && requested ? <EncouragementReader quote={requested} choosing={askOpen} canEdit={canEdit}
-            sceneRef={sceneBox} onBack={back} onClose={close} timerSummary={timerSummary}
-            {...(favorites ? { favorites } : {})} onNext={companion.next} onChooseMode={() => setAskOpen(true)} onReturn={() => setAskOpen(false)}
-            onChoose={pool => { if (pool !== requested.pool) companion.request(pool); setAskOpen(false) }} /> : <>
-            <div className="fp-secondary fp-thought-tools" role="group" aria-label="想法工具">
-              {linkedThoughts.length
-                ? <button type="button" className="text-action fp-tools-label" onClick={event => show('thoughts', event.currentTarget)}>{copy.sessionThoughts}（{linkedThoughts.length}）</button>
-                : <span className="fp-tools-label">随手记</span>}
-              <button ref={markButton} type="button" className="text-action" disabled={!canEdit}
-                onClick={thoughts.mark} onKeyDown={e => { if (e.repeat && (e.key === 'Enter' || e.key === ' ')) e.preventDefault() }}>
-                <svg width="16" height="16" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6"><path d="M6 4h12v16l-6-4-6 4zM9 9h6m-3-3v6"/></svg>{copy.mark}</button>
-              <button type="button" className="text-action" disabled={!canEdit} onClick={e => show('thought', e.currentTarget)}>
-                <svg width="16" height="16" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6"><path d="m5 15-1 5 5-1L20 8l-4-4zM14 6l4 4"/></svg>{copy.write}</button>
-            </div>
-          </>}
+          <div className="fp-secondary fp-thought-tools" role="group" aria-label="想法工具">
+            {linkedThoughts.length
+              ? <button type="button" className="text-action fp-tools-label" onClick={event => show('thoughts', event.currentTarget)}>{copy.sessionThoughts}（{linkedThoughts.length}）</button>
+              : <span className="fp-tools-label">随手记</span>}
+            <button ref={markButton} type="button" className="text-action" disabled={!canEdit}
+              onClick={thoughts.mark} onKeyDown={e => { if (e.repeat && (e.key === 'Enter' || e.key === ' ')) e.preventDefault() }}>
+              <svg width="16" height="16" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6"><path d="M6 4h12v16l-6-4-6 4zM9 9h6m-3-3v6"/></svg>{copy.mark}</button>
+            <button type="button" className="text-action" disabled={!canEdit} onClick={e => show('thought', e.currentTarget)}>
+              <svg width="16" height="16" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6"><path d="m5 15-1 5 5-1L20 8l-4-4zM14 6l4 4"/></svg>{copy.write}</button>
+          </div>
         </div>
 
         <div className="fp-note" aria-label="想法与保存状态" data-status-actions

@@ -12,6 +12,8 @@ The room's furnishings are initial scenery. Story objects with authored acquisit
 
 **Plant scene follow-up, 2026-11-05.** Both arms keep their resting shapes throughout the planting gesture. The near palm steadies the outside wall and the eyes glance at the seedling. The [plant scene verification](docs/verification/plant-rim.md) records the cartoon references, measured stretch in the earlier version and the production checks.
 
+**Companion speech and catalogue review, 2026-11-05.** The selected plate-edge conversation is now the Focus interaction: request, change, save and dismiss a phrase in a single location. The bubble points at the drawn head, and the timer and thought tools keep their positions. [Focus speech verification](docs/verification/focus-speech.md) covers the complete page and its reading fallback. The [eleven-scene arm review](docs/verification/all-scene-arms.md) covers hands at rest, through reaches and releases, and during interrupted actions. The character keeps distinct gestures by turning or folding a short arm and by bringing the work within reach.
+
 Earlier approved work remains documented in the [v26 plan](docs/plans/INTERACTION_OVERHAUL_PLAN.md), [v26 verification](docs/verification/interaction-v26.md), [layout/arms verification](docs/verification/layout-and-arms.md), and [animation refinement verification](docs/verification/animation-refinement.md). Those are historical evidence, not v35 acceptance. The later v35 decisions above supersede older proposals below where they conflict.
 
 ## 1. Sources and current baseline

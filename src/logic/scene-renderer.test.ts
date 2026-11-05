@@ -49,6 +49,18 @@ describe('scene artwork rendering', () => {
     }
   })
 
+  it('draws the hand on the far handle, with the near kettle wall and spout in front',()=>{
+    for(const progress of [.66,.81,.9]){
+      const html=render('F4','running','meal',progress)
+      const handle=html.indexOf('data-scene-part="kettle-handle"')
+      const arm=html.indexOf('data-scene-hand="left"')
+      const vessel=html.indexOf('data-scene-part="kettle"')
+      expect(handle).toBeGreaterThan(-1)
+      expect(arm).toBeGreaterThan(handle)
+      expect(vessel).toBeGreaterThan(arm)
+    }
+  })
+
   it('keeps all focus ending tiers and rest endings representable without motion', () => {
     for (const id of ids.filter(id => id.startsWith('F'))) for (const tier of ['hello', 'snack', 'meal', 'feast'] as const) {
       const html = render(id, 'ended', tier)

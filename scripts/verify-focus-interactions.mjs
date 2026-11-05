@@ -134,10 +134,20 @@ try {
   check('Draft saved after midnight and a second-tab start stays with the original session and creation day',
     drafted.length === 1 && drafted[0].sessionId === owner && drafted[0].dateKey === '2026-10-31')
   if (await dialog(page).count()) await page.keyboard.press('Escape')
+  const beforeReading = await geometry(page)
   await tap(page, '给我一句鼓励')
   const reader = page.getByRole('region', { name: '一句鼓励' })
   const reading = page.locator('.fp-reader-quote:visible')
   const phrase = await reading.innerText()
+  check('Opening a requested quote leaves the running timer and navigation in place', stable(beforeReading, await geometry(page)))
+  const whileReading = await snapshot(page)
+  await tap(page, '留个标记')
+  await page.waitForFunction(({ key, count }) => JSON.parse(localStorage.getItem(key)).thoughts.length === count + 1,
+    { key, count: whileReading.thoughts.length })
+  const markedWhileReading = await snapshot(page)
+  check('Marking while reading keeps the quote and the same running session',
+    await reading.innerText() === phrase && markedWhileReading.timer.session.id === whileReading.timer.session.id &&
+    markedWhileReading.timer.session.status === 'running' && markedWhileReading.thoughts.at(-1).sessionId === whileReading.timer.session.id)
   await tap(reader, '换一种鼓励')
   check('Encouragement categories replace the reading content', !await reading.count())
   await tap(reader, '日常鼓励')
@@ -154,6 +164,12 @@ try {
   check('A remote pause keeps the requested phrase readable', Boolean(phrase) && await reading.innerText() === phrase)
   await tap(page, '收到鼓励了')
   check('Closing encouragement restores its source focus', await button(page, '给我一句鼓励').evaluate(el => el === document.activeElement))
+  await tap(page, '给我一句鼓励')
+  await tap(reader, '换一种鼓励')
+  await button(reader, '返回鼓励').waitFor()
+  await tap(page, '收到鼓励了')
+  check('Closing from the category chooser exits to the original plate button', !await reader.count() &&
+    await button(page, '给我一句鼓励').evaluate(el => el === document.activeElement))
   await second.close()
   await page.bringToFront()
   const failingSession = (await snapshot(page)).timer.session.id

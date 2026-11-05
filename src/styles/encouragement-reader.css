@@ -1,25 +1,47 @@
-/* Requested speech is separate from automatic status bubbles and never changes the scene fit. */
-.home .fp-companion-speech {
-  position: absolute; inset-inline-start: 12px; z-index: 2; padding: 8px 12px;
-  border: 1px solid var(--cream-line); border-radius: 17px 17px 15px 12px; background: var(--paper);
-  color: var(--ink); font-size: 1rem; line-height: 1.45; text-align: start; overflow-wrap: anywhere;
-  pointer-events: none; box-shadow: 0 2px 6px #54442c12;
+/* The upper edge of the plate owns the request, follow-up actions and dismissal.
+   Both rows stay reserved while the timer and the separate thought tools remain usable. */
+.home .fp-voice-slot { position: relative; inline-size: min(100%, 400px); block-size: calc(2 * var(--voice-row));
+  margin-inline: auto; display: grid; grid-template-rows: repeat(2, minmax(0,1fr)); place-items: center; border-bottom: 1px solid var(--cream-line); }
+/* Reveal the scene behind the unused row while keeping the button beneath it in place. */
+.home .fp-plate:not([data-panel='encouragement']):not([data-panel='duration']):not(:has(.fp-node-text, .fp-note:not([hidden])))::before {
+  inset-block-start: var(--voice-row);
 }
-.home .fp-companion-speech[data-visible='false'] { visibility: hidden; }
-/* A self-contained reading view owns its close control. Preserve the scene button's geometry. */
-.home:has(.fp-encouragement[data-location='viewport']) .fp-top > button:first-child { visibility: hidden; }
-.home .fp-companion-speech::after { content: ''; position: absolute; right: 24%; bottom: -6px; inline-size: 11px;
-  block-size: 11px; border: solid var(--cream-line); border-width: 0 1px 1px 0; background: var(--paper); transform: rotate(45deg); }
-.home .fp-companion-speech p, .home .fp-encouragement p { margin: 0; }
+.home .fp-voice-slot > .fp-encouragement { grid-row: 1 / -1; }
+.home .fp-node-text { grid-row: 1; min-height: 44px; color: var(--muted); font-size: .8125rem; }
+.home .fp-voice-open { grid-row: 2; display: inline-flex; align-items: center; justify-content: center; gap: .4rem;
+  background: var(--whale-soft); color: var(--ink); }
+.home .fp-voice-open[hidden] { display: none; }
+.home .fp-voice-open svg, .home .fp-reader-actions svg { flex: none; inline-size: 1rem; block-size: 1rem; }
+
+.home .fp-head-speech { position: absolute; z-index: 2; inline-size: max-content;
+  padding: 8px 14px; border-radius: 21px 20px 21px 19px; background: var(--paper);
+  color: var(--ink); font-size: 1rem; font-weight: 550; line-height: 1.45; text-align: start;
+  overflow-wrap: anywhere; text-wrap: pretty; pointer-events: none; filter: drop-shadow(0 2px 3px #41483418); }
+.home .fp-bubble .text-action { pointer-events: auto; }
+.home .fp-head-speech[data-visible='false'] { visibility: hidden; }
+.home .fp-head-speech[data-visible='true'] { animation: fp-speak .16s ease-out both; transform-origin: calc(var(--tail-left) + 17px) bottom; }
+.home .fp-head-speech::after { content: ''; position: absolute; inset-block-start: calc(100% - 1px);
+  inset-inline-start: var(--tail-left); inline-size: 18px; block-size: 13px; background: var(--paper);
+  clip-path: path('M0 0H13Q10 6 17 13Q4 11 0 0Z'); }
+@keyframes fp-speak { from { opacity: 0; transform: translateY(3px) scale(.985); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .home .fp-head-speech[data-visible='true'] { animation: none; } }
+.home .fp-head-speech p, .home .fp-encouragement p { margin: 0; }
 .home .fp-encouragement { inline-size: 100%; min-inline-size: 0; text-align: start; color: var(--ink); }
-.home .fp-reader-actions { display: flex; flex-wrap: wrap; gap: 2px 8px; align-items: center; }
+.home .fp-encouragement[data-location='scene'] { max-block-size: 100%; overflow-y: auto; overscroll-behavior: contain; }
+.home .fp-reader-heading { display: flex; align-items: center; justify-content: space-between; min-block-size: var(--voice-row); gap: .4rem; }
+.home .fp-reader-actions { display: flex; align-items: stretch; gap: 2px; border-top: 1px solid var(--cream-line); }
+.home .fp-reader-actions button { flex: 1 1 auto; display: inline-flex; align-items: center; justify-content: center; gap: .2rem; }
 .home .fp-encouragement button { min-block-size: 44px; min-inline-size: 44px; max-inline-size: 100%; white-space: normal; }
-.home .fp-reader-actions button, .home .fp-encouragement > .text-action { color: var(--ink); font-size: .875rem; }
+.home .fp-reader-actions button, .home .fp-reader-heading .text-action { color: var(--ink); padding-inline: 3px; font-size: .8125rem; }
+.home .fp-reader-actions button[data-speech-control='next'], .home .fp-reader-actions button[aria-pressed='true'] {
+  color: var(--whale-deep); background: var(--whale-soft); border-radius: 12px; }
+.home .fp-voice-slot button:focus-visible { outline-offset: -3px; border-radius: 12px; }
 .home .fp-reader-category, .home .fp-reader-feedback { font-size: .8125rem; line-height: 1.4; color: var(--muted); }
 .home .fp-reader-feedback { overflow-wrap: anywhere; }
 .home .fp-reader-categories { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: 4px; }
-.home .fp-reader-categories button { padding-inline: 4px; line-height: 1.3; }
-.home .fp-reader-categories [aria-pressed='true'] { background: #e2eaff; color: var(--ink); box-shadow: inset 0 0 0 1px var(--whale); }
-.home .fp-encouragement .fp-docked-speech { margin: 0 0 4px; padding: 5px 10px; border-radius: 4px 14px 14px 14px;
-  background: var(--paper); border: 1px solid var(--cream-line); font-size: 1rem; line-height: 1.45; overflow-wrap: anywhere; }
+.home .fp-reader-categories button { padding-inline: 3px; line-height: 1.25; font-size: .8125rem; }
+.home .fp-reader-categories [aria-pressed='true'] { background: var(--whale-soft); color: var(--ink); box-shadow: inset 0 0 0 1px var(--whale); }
+.home .fp-encouragement .fp-full-speech { margin: 0 0 .6rem; padding: .65rem .8rem; border-radius: 16px; background: var(--paper);
+  font-size: 1rem; line-height: 1.5; color: var(--ink); overflow-wrap: anywhere; }
 .home .fp-encouragement[data-location='viewport'] .fp-reader-categories { grid-template-columns: repeat(2,minmax(0,1fr)); }
+.home .fp-encouragement[data-location='viewport'] .fp-reader-actions { flex-wrap: wrap; }

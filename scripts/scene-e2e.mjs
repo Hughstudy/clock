@@ -50,6 +50,52 @@ async function focusReady(page) {
   const back = page.getByRole('button', { name: /^(准备专注|返回专注)$/ })
   if (await back.isVisible()) await back.click()
 }
+
+// A reading layout that fits the centered creature can still miss the off-center
+// tea scene or cover a raised hand. Check each actual assignment at phone scale.
+async function inspectSpeech(page, id) {
+  const session = (await readSaved(page)).data.timer.session
+  const ask = page.getByRole('button', { name: '给我一句鼓励', exact: true })
+  await ask.click()
+  const reader = page.getByRole('region', { name: '一句鼓励' })
+  await reader.waitFor()
+  // Long quotes have their own reading view. Find a short one for the tail check.
+  for (let n = 0; n < 14 && await reader.getAttribute('data-location') !== 'scene'; n++) {
+    await reader.getByRole('button', { name: '换一句', exact: true }).click()
+  }
+  await page.clock.runFor(220)
+  const geometry = await page.evaluate(() => {
+    const speech = document.querySelector('.fp-companion-speech[data-visible="true"]')
+    if (!speech) return null
+    const b = speech.getBoundingClientRect()
+    const h = document.querySelector('[data-scene-part="creature"] [data-part="tuft"]').getBoundingClientRect()
+    const art = [...document.querySelectorAll('.home [data-scene-hand]')].map(node => node.getBoundingClientRect())
+    const time = document.querySelector('.fp-digits').getBoundingClientRect()
+    const tail = getComputedStyle(speech, '::after')
+    return { tailX: b.left + parseFloat(tail.left) + 17, headX: h.left + h.width / 2,
+      gap: h.top - (b.bottom + 12), belowClock: b.top >= time.bottom - 1,
+      clear: art.length === 2 && art.every(r => r.top >= b.bottom || r.right <= b.left || r.left >= b.right) }
+  })
+  check(`${id}: the speech tail points at this companion and the quote clears its hands and clock`,
+    geometry && Math.abs(geometry.tailX - geometry.headX) < 3 && geometry.gap >= 0 && geometry.gap < 11 && geometry.belowClock && geometry.clear)
+  await page.screenshot({ path: path.join(output, `reading-${id}.png`), animations: 'disabled' })
+  await page.getByRole('button', { name: '收到鼓励了', exact: true }).click()
+  const after = (await readSaved(page)).data.timer.session
+  check(`${id}: reading leaves the same running session and returns to the plate`,
+    session.id === after?.id && after.status === 'running' && await ask.evaluate(el => el === document.activeElement))
+  for (const viewport of [{width:320,height:568},{width:430,height:932},{width:375,height:850}]) {
+    await page.setViewportSize(viewport)
+    await page.clock.runFor(400)
+    const cut = await page.evaluate(() => {
+      const parts = document.querySelectorAll('.home [data-scene-hand], .home [data-scene-part="kettle"], .home [data-scene-part="plant-pot"], .home [data-scene-part="cup"]')
+      return [...parts].filter(el => {
+        const r = el.getBoundingClientRect()
+        return r.left < -1 || r.right > innerWidth + 1 || r.width === 0
+      }).map(el => el.dataset.sceneHand ?? el.dataset.scenePart)
+    })
+    check(`${id} at ${viewport.width}px: hands and handled pottery fit the scene (${cut.join(', ') || 'clear'})`, !cut.length)
+  }
+}
 try {
   const fixtures = await browser.newPage({ viewport: { width: 1300, height: 1000 } })
   observe(fixtures)
@@ -87,6 +133,7 @@ try {
   check('Start and Pause keep the same target', ['x', 'y', 'width', 'height'].every(key => Math.abs(beforeStart[key] - afterStart[key]) < 1))
   await page.clock.fastForward(2100)
   await page.screenshot({ path: path.join(output, 'focus-375.png') })
+  await inspectSpeech(page, firstScene)
 
   const svg = page.locator('.home .blue-companion')
   const bounds = await svg.boundingBox()
@@ -133,6 +180,7 @@ try {
   const stepStart = (await readSaved(page)).data
   focusScenes.push(stepStart.timer.session.scene.sceneId)
   check('Consecutive focus starts differ', focusScenes[1] !== firstScene)
+  await inspectSpeech(page, focusScenes[1])
   await endEarly(page)
 
   // Cover the entire focus bag before a single deadline completion: access
@@ -143,6 +191,7 @@ try {
     const started = await untilSaved(page, s => !!s.timer.session, `immediate-access focus ${i + 1}`)
     focusScenes.push(started.timer.session.scene.sceneId)
     check(`Focus ${i + 1} selects a new bag entry`, focusPool.includes(focusScenes[i]) && focusScenes[i] !== focusScenes[i - 1])
+    await inspectSpeech(page, focusScenes[i])
     await endEarly(page)
   }
   const beforeDeadline = (await readSaved(page)).data
@@ -229,6 +278,7 @@ try {
     await page.getByRole('button', { name: /^(开始休息|休息 \d+ 分钟)$/ }).click()
     const rest = await untilSaved(page, s => s.timer.phase !== 'focus' && !!s.timer.session, 'rest start')
     restScenes.push(rest.timer.session.scene.sceneId)
+    await inspectSpeech(page, rest.timer.session.scene.sceneId)
     await page.getByRole('button', { name: '结束休息', exact: true }).click()
     await untilSaved(page, s => s.timer.phase === 'focus' && !s.timer.session, 'rest ending')
     check(`Rest ${i + 1} ends without a focus tier`, await sceneAttribute(page, 'tier') === '')

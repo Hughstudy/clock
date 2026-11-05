@@ -128,9 +128,10 @@ try {
     await fixture.clock.runFor(32)
     const resting=await character.evaluate(cupSupport)
     // The next sparse quiet beat begins a genuine live sip. fastForward fires
-    // its timer once, then runFor samples the middle of its finite gesture.
+    // its timer once. Sample the lifted pose at the end of the 640 ms action
+    // following its 160 ms anticipation, before the cup settles back.
     await fixture.clock.fastForward(90_000)
-    await fixture.clock.runFor(560)
+    await fixture.clock.runFor(800)
     const sipping=await character.evaluate(cupSupport)
     check(`${label}: fixture reaches a lifted sip`,await character.getAttribute('data-scene-phase')==='beat'&&cupPosition(sipping.cup)[1]<cupPosition(resting.cup)[1]-8)
     if(paused){
@@ -149,7 +150,11 @@ try {
       const cup=el.querySelector('[data-scene-part="cup"]')
       const position=cup.getAttribute('transform').match(/translate\(([-\d.e]+) ([-\d.e]+)\)/).slice(1).map(Number)
       const saucer=el.querySelector('[data-scene-part="side-table"] ellipse.scene-draw-paper')
-      return cup.dataset.held==='false'&&Math.abs(position[0]-Number(saucer.getAttribute('cx')))<.01&&Math.abs(position[1]-Number(saucer.getAttribute('cy')))<.01
+      const ceramic=cup.querySelectorAll('path.scene-draw-paper')[1].getBoundingClientRect()
+      const surface=saucer.getBoundingClientRect()
+      // The painted cup has a rounded base beneath its local transform origin.
+      return cup.dataset.held==='false'&&Math.abs(position[0]-Number(saucer.getAttribute('cx')))<.01
+        &&ceramic.bottom>=surface.top&&ceramic.bottom<=surface.bottom
     }))
   })
   await frozenPreview(async(fixture,character)=>{

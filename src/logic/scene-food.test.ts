@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { sampleScenePose, type SceneArm, type ScenePoint } from './scene-pose'
+import { SPOON_RESTS } from './scene-food-rig'
 
 const pose = (progress: number) => sampleScenePose({ id: 'F1', progress, activityProgress: progress })
 const distance = (a: ScenePoint, b: ScenePoint) => Math.hypot(a.x-b.x,a.y-b.y)
@@ -45,18 +46,51 @@ describe('food preparation contact sequence', () => {
     expect(pose(1).food.soupSpoon).toEqual(parked.soupSpoon)
   })
 
-  it('keeps rounded arms, fixed shoulders and continuous utensil motion at every sampled stage', () => {
+  it('turns the same short arms from their shoulders while the spoons travel', () => {
     let previous=pose(0)
+    const restArea = {left: area(previous.left), right: area(previous.right)}
     for(let i=0;i<=1000;i++){
       const frame=pose(i/1000)
       expect(frame.left.points.slice(0,2)).toEqual([111,143])
       expect(frame.right.points.slice(0,2)).toEqual([213,143])
-      expect(area(frame.left)).toBeGreaterThan(100)
-      expect(area(frame.right)).toBeGreaterThan(100)
+      for(const side of ['left','right'] as const) {
+        expect(area(frame[side])).toBeCloseTo(restArea[side], 7)
+        const shoulder = {x:frame[side].points[0]!, y:frame[side].points[1]!}
+        expect(distance(frame[side].palm, shoulder)).toBeCloseTo(Math.hypot(22,25), 7)
+      }
       for(const key of ['spoon','tip','soupSpoon','soupTip'] as const)expect(distance(frame.food[key],previous.food[key])).toBeLessThan(2)
       expect(distance(frame.left.palm,previous.left.palm)).toBeLessThan(2)
       expect(distance(frame.right.palm,previous.right.palm)).toBeLessThan(2)
       previous=frame
+    }
+  })
+
+  it('reaches each dish with the spoon bowl rather than a hand', () => {
+    const vegetables = pose(.2).food, rice = pose(.5).food, soup = pose(.8).food
+    expect(distance(vegetables.tip, {x:101,y:163})).toBeLessThan(9)
+    expect(distance(rice.tip, {x:158,y:180})).toBeLessThan(6)
+    expect(distance(soup.soupTip, {x:221,y:163})).toBeLessThan(8)
+    expect(vegetables.spoon.x).toBeGreaterThan(125)
+    expect(rice.spoon.x).toBeLessThan(140)
+    expect(soup.soupSpoon.x).toBeLessThan(198)
+  })
+
+  it('parks the handles on the rests with the entire spoon bowl over the tabletop', () => {
+    const {spoon, tip, soupSpoon, soupTip} = pose(0).food
+    for (const [i, [grip, bowl]] of ([[spoon, tip], [soupSpoon, soupTip]] as const).entries()) {
+      const rest = SPOON_RESTS[i]!
+      const t = (rest.y - grip.y) / (bowl.y - grip.y)
+      const x = grip.x + t * (bowl.x - grip.x)
+      expect(t).toBeGreaterThan(0); expect(t).toBeLessThan(1)
+      expect(x).toBeGreaterThan(rest.x); expect(x).toBeLessThan(rest.x + rest.w)
+      const tilt = Math.atan2(bowl.y - grip.y, bowl.x - grip.x)
+      for (let j = 0; j < 64; j++) {
+        const angle = j * 2 * Math.PI / 64
+        const dx = 6 * Math.cos(angle), dy = 3 * Math.sin(angle)
+        const x = bowl.x + dx * Math.cos(tilt) - dy * Math.sin(tilt)
+        const y = bowl.y + dx * Math.sin(tilt) + dy * Math.cos(tilt)
+        expect(((x-160)/125)**2 + ((y-180)/17)**2).toBeLessThan(1)
+      }
     }
   })
 })
