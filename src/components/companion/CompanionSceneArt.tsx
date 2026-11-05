@@ -31,12 +31,12 @@ function Cup({frame}:{frame:ScenePoseFrame}){const c=frame.cup;return <g data-sc
 function Plant({progress:p}:{progress:number}) {
   const {x,rimY,rimWidth,rimDepth,bodyWidth,baseWidth,baseY,floorY}=PLANT_POT,h=13+42*p
   return <g data-scene-part="plant">
-    <E x={x} y={floorY} rx={30} ry={4}/>
+    <E x={x} y={floorY-2} rx={baseWidth+2} ry={2}/>
     <g data-scene-part="plant-pot">
       <P d={`M${x-bodyWidth} ${rimY} H${x+bodyWidth} L${x+baseWidth} ${baseY} Q${x} ${baseY+6} ${x-baseWidth} ${baseY} Z`} c="table"/>
       <E x={x} y={rimY} rx={rimWidth} ry={rimDepth} c="edge"/>
     </g>
-    <g data-scene-part="plant-growth" transform={`translate(${x-92} ${rimY-144})`}>
+    <g data-scene-part="plant-growth" transform={`translate(${x} ${rimY-144}) scale(${rimWidth/26} 1) translate(-92 0)`}>
       <P d={`M92 143 Q95 ${141-h/2} 91 ${143-h}`}/>
       <P d={`M92 ${139-h*.3} Q67 ${134-h*.7} 70 ${128-h*.7} Q91 ${125-h*.5} 92 ${139-h*.3} Z M92 ${135-h*.6} Q113 ${127-h} 118 ${132-h} Q116 ${147-h*.5} 92 ${135-h*.6} Z`} c="green"/>
       <g transform={`translate(91 ${143-h}) scale(${.3+.7*stage(p,.7,1)})`}>

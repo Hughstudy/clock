@@ -173,13 +173,23 @@ export function transformScenePoint(p: ScenePoint, object: SceneObject): ScenePo
 
 export const BUBBLE_WAND = { length: 23, ringWidth: 8.5, ringDepth: 5.5, jarX: 196, rimY: 191, rimWidth: 20, rimDepth: 5 } as const
 /** The plant's physical rim and table support, shared by the pose and drawing. */
-export const PLANT_POT = { x:110, rimY:158, rimWidth:26, rimDepth:6, bodyWidth:24, baseWidth:18, baseY:188, floorY:191 } as const
+export const PLANT_POT = { x:86, rimY:158, rimWidth:20, rimDepth:5, bodyWidth:18, baseWidth:14, baseY:188, floorY:191 } as const
 export function plantRimPoint(angle:number):ScenePoint {
   return point(PLANT_POT.x+PLANT_POT.rimWidth*Math.cos(angle),PLANT_POT.rimY+PLANT_POT.rimDepth*Math.sin(angle))
 }
-// Bend inward from the shoulder before laying the round palm over the near rim.
-// A dedicated outline avoids compressing a long reach into the old tiny hook.
-const plantLeft = arm([111,143, 120,139,139,143,140,153, 141,160,138,165,132,165, 126,166,125,161,129,158, 135,155,132,151,126,152, 120,153,111,150,111,143],131,161)
+// The palm touches the outside of the rim. The elbow flexes while the round
+// pad stays tangent to the pot and the forearm stays clear of the seedling.
+function steadyPlant(rim: ScenePoint, flex: number): SceneArm {
+  const { x, y } = rim
+  return arm([
+    111,143,
+    117,138 - 3*flex, 129 + 2*flex,139 - 2*flex, 130 + 2*flex,148,
+    132 + flex,155, x + 15,164 + flex, x + 9,165,
+    x + 3,167, x,164, x,y,
+    x,y - 5, x + 9,153, x + 11,150,
+    116,148 - flex, 108,150, 111,143,
+  ], x, y)
+}
 const plantRight = arm([213,143, 222,143,223,161,218,173, 214,184,205,188,198,184, 192,181,194,175,199,174, 207,173,211,162,208,155, 206,148,206,142,213,143],199,180)
 const bubbleFlights = [
   { from: 0, to: .4, x: 258, y: 88, radius: 17 },
@@ -419,10 +429,8 @@ export function sampleScenePose(input: ScenePoseInput): ScenePoseFrame {
     contacts.push(contact('food-spoon-left',left.palm,food.spoon,food.leftHeld===1),contact('food-spoon-right',right.palm,food.soupSpoon,food.rightHeld===1))
     gaze.x=-2+2*span(p,.30,.41)+2*span(p,.65,.73)
   } else if(input.id==='F2') {
-    // Resting, paused and ended scenes keep a real hold. The small gesture
-    // slides along the supported front rim instead of retracting into a hover.
-    const grip=plantRimPoint((35+12*pulse)*Math.PI/180)
-    left=movePalm(plantLeft,grip.x-plantLeft.palm.x,grip.y-plantLeft.palm.y)
+    const grip=plantRimPoint(0)
+    left=steadyPlant(grip,pulse)
     right=plantRight
     contacts.push(contact('pot-rim',left.palm,grip))
   } else if(input.id==='F5') {

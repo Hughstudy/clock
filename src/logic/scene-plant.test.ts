@@ -22,14 +22,6 @@ function drawnArm(html:string,side:'left'|'right') {
   }
   return outline
 }
-function contains(poly:ScenePoint[],p:ScenePoint) {
-  let inside=false
-  for(let i=0,j=poly.length-1;i<poly.length;j=i++){
-    const a=poly[i]!,b=poly[j]!
-    if((a.y>p.y)!==(b.y>p.y)&&p.x<(b.x-a.x)*(p.y-a.y)/(b.y-a.y)+a.x)inside=!inside
-  }
-  return inside
-}
 function render(input:Omit<ScenePoseInput,'id'>) {
   const scene:CompanionScene={id:'F2',key:'plant',sessionId:'plant',phase:'focus',status:input.status??'running',completedProgress:input.progress,allowBeats:true,cue:null,ending:null}
   return renderToStaticMarkup(createElement(CompanionSceneArt,{scene,frame:sampleScenePose({...input,id:'F2'})}))
@@ -46,28 +38,48 @@ function checkSupport(html:string) {
   // If that layering changes, this assertion requires the test to account for it.
   expect(html).toContain('transform="rotate(0 162 198)" data-scene-part="arms"')
   expect(html).toContain('data-scene-part="plant-pot"><path')
-  const root=left[0]!
-  const lip=Array.from({length:91},(_,i)=>({x:rim.x+rim.rx*Math.cos(i*Math.PI/180),y:rim.y+rim.ry*Math.sin(i*Math.PI/180)}))
-  // The visible distal hand, not its shoulder, must cover part of the near lip.
-  const overlap=lip.filter(p=>Math.hypot(p.x-root.x,p.y-root.y)>15&&contains(left,p))
-  expect(overlap.length).toBeGreaterThan(12)
+  // The right side of the drawn lip is also the outermost edge of the pot.
+  // A palm centre at the rim can still leave half a hand inside the soil.
+  const east=rim.x+rim.rx
+  expect(Math.min(...left.map(p=>p.x),...right.map(p=>p.x))).toBeGreaterThanOrEqual(east-.001)
+  expect(Math.min(...left.map(p=>Math.hypot(p.x-east,p.y-rim.y)))).toBeLessThan(.01)
   expect(html.indexOf('data-scene-part="arms"')).toBeGreaterThan(html.indexOf('data-scene-part="plant-pot"'))
+  // The moved pot's footprint still fits within the drawn tabletop.
+  const floor=ellipse(html,'plant')
+  const footprint=Array.from({length:36},(_,i)=>{
+    const a=i*2*Math.PI/36
+    const x=floor.x+floor.rx*Math.cos(a),y=floor.y+floor.ry*Math.sin(a)
+    return ((x-table.x)/table.rx)**2+((y-table.y)/table.ry)**2
+  })
+  expect(Math.max(...footprint)).toBeLessThan(1)
   // The lowered right palm lies within the solid tabletop, not beside/under it.
   const bottom=right.reduce((a,b)=>a.y>b.y?a:b)
   expect(((bottom.x-table.x)/table.rx)**2+((bottom.y-table.y)/table.ry)**2).toBeLessThan(1)
   expect(bottom.y).toBeGreaterThan(table.y+3)
   expect(right[0]).toEqual({x:213,y:143})
-  expect(root).toEqual({x:111,y:143})
+  expect(left[0]).toEqual({x:111,y:143})
 }
 
 describe('plant rendered hand and support geometry',()=>{
-  it('keeps the actual palm on the drawn rim in running, paused, early and full endings, including static mode',()=>{
+  it('keeps both hands outside the pot with the left palm touching the lip in running, paused, early and full endings, including static mode',()=>{
     for(const status of ['running','paused','ended'] as const)for(const progress of [0,.07,.4,.75,1])for(const staticOnly of [false,true])checkSupport(render({status,progress,staticOnly}))
   })
   it('preserves drawn support throughout the gesture and every interrupted ending sample',()=>{
     for(let i=0;i<=100;i++){
-      checkSupport(render({progress:.75,actionKind:'beat',actionProgress:i/100}))
+      for(const actionKind of ['open','beat'] as const)checkSupport(render({progress:.75,actionKind,actionProgress:i/100}))
       for(const interrupted of [.2,.5,.75])checkSupport(render({status:'ended',progress:.75,actionKind:'ending',endingFromActionProgress:interrupted,actionProgress:i/100}))
     }
+  })
+  it('keeps the planting grip during touch, while its elbow can flex during a beat',()=>{
+    const idle=render({progress:.4})
+    for(const touchKind of ['pat','squish','high-five'] as const){
+      const touched=render({progress:.4,touchKind})
+      checkSupport(touched)
+      expect(drawnArm(touched,'left')).toEqual(drawnArm(idle,'left'))
+    }
+    const peak=render({progress:.4, actionKind:'beat', actionProgress:800/1120})
+    const restingOutline=drawnArm(idle,'left')
+    const displacement=drawnArm(peak,'left').map((p,i)=>Math.hypot(p.x-restingOutline[i]!.x,p.y-restingOutline[i]!.y))
+    expect(Math.max(...displacement)).toBeGreaterThan(2)
   })
 })
