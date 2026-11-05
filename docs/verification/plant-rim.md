@@ -20,3 +20,13 @@ The running, paused and ended captures preserved the same edge contact at 375 ×
 ## Regression checks
 
 `src/logic/scene-plant.test.ts` samples the actual drawn arm paths against the pot and table, including static poses, the moving elbow and interrupted endings. The production scene suite passed 60 application checks, 30 touch checks and 67 scene checks. Local captures and browser measurements from this review are under `.preview/f2-review/final/`.
+
+## Follow-up on arm posture
+
+Later on November 5 the owner found the rim grip awkward. At phone scale the arm in `dceff3a` folded back close to the cheek, and the palm and elbow read as a single pinched shape. Both revised arms descend in one curve from the side of the body to a rounded end. The planting hand touches the tapered outer wall below the rim, slides 3.6 drawing units down the wall during the gesture and settles again. The far hand rests on the bench.
+
+Chrome 156.0.8078.80 rendered 18 poses covering four stages of growth, six points in a gesture, three touch expressions, entrance, pause, early end, an interrupted gesture and reduced motion. The comparison used the same production renderer, crop, scale and gesture progress for both revisions. Each arm attached to the body in every pose. The browser sampled the actual hand outlines and both ceramic shapes. The nearest outline samples were within 0.13 SVG units in every pose, consistent with contact at the sloping sidewall. The matched images showed a rounded pad against the exterior with a clear soil opening throughout.
+
+Six production captures repeated the ordinary Focus start, pause and early ending. They included 320 × 568, 375 × 812 and 430 × 932 CSS pixels and 200% text at 375 × 812. The left rim insets measured 69.4, 14.8, 17.0 and 80.0 CSS pixels, respectively. All six screens fit horizontally. Chrome reported zero runtime and console errors. Local evidence includes the same-scale `hand-before-after.png`, the 18-pose sheet, the phone screenshots and measurements under `.preview/f2-review/posture/final/`. These checks used desktop emulation.
+
+The scene regression suite passed on the revised production build with 60 application checks, 30 touch checks and 67 scene checks.

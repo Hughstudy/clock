@@ -174,23 +174,31 @@ export function transformScenePoint(p: ScenePoint, object: SceneObject): ScenePo
 export const BUBBLE_WAND = { length: 23, ringWidth: 8.5, ringDepth: 5.5, jarX: 196, rimY: 191, rimWidth: 20, rimDepth: 5 } as const
 /** The plant's physical rim and table support, shared by the pose and drawing. */
 export const PLANT_POT = { x:86, rimY:158, rimWidth:20, rimDepth:5, bodyWidth:18, baseWidth:14, baseY:188, floorY:191 } as const
-export function plantRimPoint(angle:number):ScenePoint {
-  return point(PLANT_POT.x+PLANT_POT.rimWidth*Math.cos(angle),PLANT_POT.rimY+PLANT_POT.rimDepth*Math.sin(angle))
+const plantWallSlope = (PLANT_POT.baseWidth - PLANT_POT.bodyWidth) / (PLANT_POT.baseY - PLANT_POT.rimY)
+function plantWallPoint(fraction: number): ScenePoint {
+  return point(PLANT_POT.x + mix(PLANT_POT.bodyWidth, PLANT_POT.baseWidth, fraction),
+    mix(PLANT_POT.rimY, PLANT_POT.baseY, fraction))
 }
-// The palm touches the outside of the rim. The elbow flexes while the round
-// pad stays tangent to the pot and the forearm stays clear of the seedling.
-function steadyPlant(rim: ScenePoint, flex: number): SceneArm {
-  const { x, y } = rim
+// A hanging arm, with a rounded pad that follows the taper of the pot.
+function steadyPlant({ x, y }: ScenePoint): SceneArm {
+  const tangentX = 6 * plantWallSlope
   return arm([
     111,143,
-    117,138 - 3*flex, 129 + 2*flex,139 - 2*flex, 130 + 2*flex,148,
-    132 + flex,155, x + 15,164 + flex, x + 9,165,
-    x + 3,167, x,164, x,y,
-    x,y - 5, x + 9,153, x + 11,150,
-    116,148 - flex, 108,150, 111,143,
+    119,140, 123,146, 122,155,
+    121,165, 116,y + 3, 110,y + 7,
+    x + 4,y + 10, x + tangentX,y + 6, x,y,
+    x - tangentX,y - 6, 108,164, 108.5,157,
+    109,150, 106,145.5, 111,143,
   ], x, y)
 }
-const plantRight = arm([213,143, 222,143,223,161,218,173, 214,184,205,188,198,184, 192,181,194,175,199,174, 207,173,211,162,208,155, 206,148,206,142,213,143],199,180)
+const plantRight = arm([
+  213,143,
+  221,141.5, 225,151, 223,160,
+  221,169, 216,179, 209,184,
+  205,187, 200,187, 197.5,184,
+  194,180, 200,176, 202.5,171,
+  206.5,163, 205,143, 213,143,
+], 202,181)
 const bubbleFlights = [
   { from: 0, to: .4, x: 258, y: 88, radius: 17 },
   { from: .4, to: .75, x: 228, y: 54, radius: 12 },
@@ -429,10 +437,10 @@ export function sampleScenePose(input: ScenePoseInput): ScenePoseFrame {
     contacts.push(contact('food-spoon-left',left.palm,food.spoon,food.leftHeld===1),contact('food-spoon-right',right.palm,food.soupSpoon,food.rightHeld===1))
     gaze.x=-2+2*span(p,.30,.41)+2*span(p,.65,.73)
   } else if(input.id==='F2') {
-    const grip=plantRimPoint(0)
-    left=steadyPlant(grip,pulse)
+    const grip=plantWallPoint(.58 + .12 * pulse)
+    left=steadyPlant(grip)
     right=plantRight
-    contacts.push(contact('pot-rim',left.palm,grip))
+    contacts.push(contact('pot-wall',left.palm,grip))
   } else if(input.id==='F5') {
     const pose = bubblePose(p)
     right = pose.arm
