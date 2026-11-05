@@ -209,16 +209,34 @@ describe('sampled scene contact and silhouette',()=>{
     expect(frame.flag.x).toBeGreaterThan(top!.x+6)
     expect(frame.flag.x).toBeLessThan(top!.x+25)
   })
+  it('glances down toward the plant, then returns to a centered gaze',()=>{
+    const at = (actionProgress:number, staticOnly=false) => sampleScenePose({
+      id:'F2', progress:.4, actionKind:'beat', actionProgress, staticOnly,
+    }).gaze
+    const centered = {x:0,y:0}
+    const peak = at(800/1120)
+    expect(at(0)).toEqual(centered)
+    expect(peak.x).toBeLessThan(0)
+    expect(peak.x).toBeGreaterThanOrEqual(-2)
+    expect(peak.y).toBeGreaterThan(0)
+    expect(peak.y).toBeLessThanOrEqual(2)
+    expect(at(.5).x).toBeGreaterThan(peak.x)
+    expect(at(.5).x).toBeLessThan(0)
+    expect(at(1)).toEqual(centered)
+    expect(at(800/1120,true)).toEqual(centered)
+  })
   it('relaxes interrupted plant, wand and stretch actions from their current pose',()=>{
     for(const id of ['F2','F5','R1'] as const)for(const status of ['running','paused'] as const)for(const actionProgress of [.2,.5,.75]){
       const previous=sampleScenePose({id,status,progress:.75,activityProgress:.75,actionKind:'beat',actionProgress})
       const ending=sampleScenePose({id,status:'ended',progress:.75,activityProgress:.75,actionKind:'ending',actionProgress:0,endingFromActionProgress:actionProgress})
       expect(ending.left).toEqual(previous.left);expect(ending.right).toEqual(previous.right)
       expect(ending.body).toEqual(previous.body);expect(ending.wand).toEqual(previous.wand)
+      expect(ending.gaze).toEqual(previous.gaze)
       const final=sampleScenePose({id,status:'ended',progress:.75,activityProgress:.75,actionKind:'ending',actionProgress:1,endingFromActionProgress:actionProgress})
       const idle=sampleScenePose({id,status:'ended',progress:.75,activityProgress:.75})
       expect(final.left).toEqual(idle.left);expect(final.right).toEqual(idle.right)
       expect(final.body).toEqual(idle.body);expect(final.wand).toEqual(idle.wand)
+      expect(final.gaze).toEqual(idle.gaze)
       for(let i=0;i<=100;i++){
         const f=sampleScenePose({id,status:'ended',progress:.75,activityProgress:.75,actionKind:'ending',actionProgress:i/100,endingFromActionProgress:actionProgress})
         expect(outlineArea(f.left)).toBeGreaterThan(100);expect(outlineArea(f.right)).toBeGreaterThan(100)

@@ -5,11 +5,14 @@ import { CompanionSceneArt } from '../components/companion/CompanionSceneArt'
 import type { CompanionScene } from '../contracts/presentation'
 import { sampleScenePose, type ScenePoint, type ScenePoseInput } from './scene-pose'
 
-/** Read the actual cubic path emitted by the production renderer, not contacts. */
-function drawnArm(html:string,side:'left'|'right') {
+function drawnArmPath(html:string,side:'left'|'right') {
   const d=html.match(new RegExp(`data-scene-hand="${side}" d="([^"]+)"`))?.[1]
   if(!d)throw new Error(`Missing ${side} hand path`)
-  const n=(d.match(/-?\d+(?:\.\d+)?/g)??[]).map(Number)
+  return d
+}
+/** Read the actual cubic path emitted by the production renderer, not contacts. */
+function drawnArm(html:string,side:'left'|'right') {
+  const n=(drawnArmPath(html,side).match(/-?\d+(?:\.\d+)?/g)??[]).map(Number)
   const outline:ScenePoint[]=[{x:n[0]!,y:n[1]!}]
   let start=outline[0]!
   for(let i=2;i<n.length;i+=6){
@@ -68,7 +71,6 @@ function checkSupport(html:string) {
   expect(bottom.y).toBeGreaterThan(table.y+3)
   expect(right[0]).toEqual({x:213,y:143})
   expect(left[0]).toEqual({x:111,y:143})
-  return contact
 }
 
 describe('plant rendered hand and support geometry',()=>{
@@ -81,15 +83,15 @@ describe('plant rendered hand and support geometry',()=>{
       for(const interrupted of [.2,.5,.75])checkSupport(render({status:'ended',progress:.75,actionKind:'ending',endingFromActionProgress:interrupted,actionProgress:i/100}))
     }
   })
-  it('keeps the planting pose during touch and slides the pad along the wall during a beat',()=>{
+  it('holds both drawn arm contours fixed through the planting action and touch',()=>{
     const idle=render({progress:.4})
-    for(const touchKind of ['pat','squish','high-five'] as const){
-      const touched=render({progress:.4,touchKind})
-      checkSupport(touched)
-      expect(drawnArm(touched,'left')).toEqual(drawnArm(idle,'left'))
+    for(const t of [0,.15,.4,800/1120,1]){
+      for(const touchKind of [null,'pat','squish','high-five'] as const){
+        const pose=render({progress:.4,actionKind:'beat',actionProgress:t,touchKind})
+        checkSupport(pose)
+        for(const side of ['left','right'] as const)expect(drawnArmPath(pose,side)).toBe(drawnArmPath(idle,side))
+      }
     }
-    const peak=render({progress:.4, actionKind:'beat', actionProgress:800/1120})
-    expect(checkSupport(peak).y-checkSupport(idle).y).toBeCloseTo(3.6,1)
   })
   it('draws one long rounded limb from either shoulder to its resting pad across the gesture',()=>{
     for(const t of [0,.15,.4,800/1120,1])for(const side of ['left','right'] as const){

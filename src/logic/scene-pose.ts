@@ -191,6 +191,8 @@ function steadyPlant({ x, y }: ScenePoint): SceneArm {
     109,150, 106,145.5, 111,143,
   ], x, y)
 }
+const plantGrip = plantWallPoint(.58)
+const plantLeft = steadyPlant(plantGrip)
 const plantRight = arm([
   213,143,
   221,141.5, 225,151, 223,160,
@@ -437,10 +439,14 @@ export function sampleScenePose(input: ScenePoseInput): ScenePoseFrame {
     contacts.push(contact('food-spoon-left',left.palm,food.spoon,food.leftHeld===1),contact('food-spoon-right',right.palm,food.soupSpoon,food.rightHeld===1))
     gaze.x=-2+2*span(p,.30,.41)+2*span(p,.65,.73)
   } else if(input.id==='F2') {
-    const grip=plantWallPoint(.58 + .12 * pulse)
-    left=steadyPlant(grip)
+    // The hand steadies the pot. Only the eyes turn toward the plant.
+    left=plantLeft
     right=plantRight
-    contacts.push(contact('pot-wall',left.palm,grip))
+    contacts.push(contact('pot-wall',left.palm,plantGrip))
+    if (!input.staticOnly) {
+      gaze.x -= 1.5 * pulse
+      gaze.y = pulse
+    }
   } else if(input.id==='F5') {
     const pose = bubblePose(p)
     right = pose.arm
