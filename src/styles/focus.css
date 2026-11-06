@@ -17,6 +17,18 @@
   --mint-deep: #28634f;
   --focus: #c27b21;
   --tab-height: 52px;
+  /* One motion language. Springs use Apple's duration/bounce model, sampled into linear();
+     each spring's duration is how long that curve takes to settle. */
+  --ease-out: cubic-bezier(.22, 1, .36, 1);
+  --ease-in: cubic-bezier(.4, 0, 1, 1);
+  --dur-quick: 120ms;
+  --dur-panel: 240ms;
+  /* duration 0.4 s, bounce 0.12: controls, stance changes, panels */
+  --spring-gentle: linear(0, 0.032, 0.109, 0.21, 0.316, 0.424, 0.525, 0.613, 0.692, 0.759, 0.813, 0.858, 0.895, 0.923, 0.945, 0.962, 0.975, 0.984, 0.991, 0.995, 0.998, 1.001, 1.002, 1.002, 1.003, 1.003, 1.003, 1.002, 1);
+  --spring-gentle-duration: 486ms;
+  /* duration 0.5 s, bounce 0.3: the creature's own small gestures */
+  --spring-soft: linear(0, 0.037, 0.13, 0.254, 0.388, 0.521, 0.642, 0.748, 0.836, 0.905, 0.958, 0.996, 1.021, 1.036, 1.044, 1.045, 1.043, 1.039, 1.033, 1.027, 1.021, 1.016, 1.011, 1.007, 1.004, 1.002, 1, 0.999, 1);
+  --spring-soft-duration: 657ms;
 }
 body { background: var(--paper); }
 .app { max-width: 520px; padding-top: calc(env(safe-area-inset-top) + 16px); padding-inline: 20px; }

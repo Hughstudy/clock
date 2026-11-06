@@ -3,6 +3,7 @@ import type { CompanionScene } from '../../contracts/presentation'
 import { sceneMotionSpec } from '../../data/scene-motion'
 import { emptySceneMotion, finishSceneMotion, nextSceneMotion, sceneBeatDelay, sceneCanMove, sceneHandlingDuration, sceneMotionDuration, startSceneBeat } from '../../logic/scene-motion'
 import { advanceScenePlayback, emptyScenePlayback, scenePlaybackNeedsFrame, type ScenePlaybackInput } from '../../logic/scene-playback'
+import { scenePace } from '../../logic/scene-pacing'
 
 interface Options { staticOnly: boolean; touching: boolean; panelOpen: boolean }
 
@@ -80,14 +81,17 @@ export function useCompanionScene(scene: CompanionScene | null | undefined, { st
   const ambientAllowed = moving && !recovering && status === 'running'
   const durationMs = active && scene ? sceneMotionDuration(active.kind, scene, sceneMotionSpec) : 0
   const handlingMs = sceneHandlingDuration(scene?.id, sceneMotionSpec)
+  const pace = useMemo(() => scenePace(scene?.id), [scene?.id])
+  // During focus nothing new starts moving between the start and the end; rest keeps its beats.
+  const beatsAllowed = ambientAllowed && scene?.phase !== 'focus'
   const mode: ScenePlaybackInput['mode'] = !scene || staticOnly || !visible || recovering || (!allowBeats && !panelOpen) ? 'settle'
     : status === 'paused' || touching || panelOpen ? 'hold' : 'run'
   const input = useMemo<ScenePlaybackInput>(() => ({
-    key, progress: scene?.completedProgress ?? 0, mode, handlingMs,
+    key, progress: scene?.completedProgress ?? 0, mode, handlingMs, pace,
     // Hiding already consumed old cues. A new main-permitted cue arriving on
     // return starts after placement recovery instead of being consumed by it.
     action: active && !recovering ? { id: active.id, kind: active.kind, durationMs } : null,
-  }), [key, scene?.completedProgress, mode, handlingMs, active?.id, active?.kind, durationMs, recovering])
+  }), [key, scene?.completedProgress, mode, handlingMs, pace, active?.id, active?.kind, durationMs, recovering])
 
   // A new session or an interruption starts a fresh local frame interval.
   // Ordinary host progress readings keep the last painted frame's timestamp.
@@ -117,10 +121,10 @@ export function useCompanionScene(scene: CompanionScene | null | undefined, { st
   }, [active?.id, active?.kind, key, tier, finish, recovering])
 
   useEffect(() => {
-    if (!ambientAllowed || active || !key || playback.actionKind !== 'idle') return
+    if (!beatsAllowed || active || !key || playback.actionKind !== 'idle') return
     const timer = window.setTimeout(() => setMotion(previous => startSceneBeat(previous, key)), sceneBeatDelay(key, motion.beatIndex, sceneMotionSpec))
     return () => window.clearTimeout(timer)
-  }, [ambientAllowed, active?.id, key, motion.beatIndex, playback.actionKind])
+  }, [beatsAllowed, active?.id, key, motion.beatIndex, playback.actionKind])
 
   const presented = advanceScenePlayback(playback, input, 0)
   return {

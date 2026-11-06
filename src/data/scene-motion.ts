@@ -5,8 +5,9 @@ export const sceneMotionSpec = validateSceneMotionSpec({
   openMs: 1120,
   beatMs: 1120,
   stretchMs: 3200,
-  handlingMs: 2600,
-  bubbleHandlingMs: 4000,
+  // Long enough, with pacing by hand travel, to keep handling under about 180 px/s on a phone.
+  handlingMs: 4200,
+  bubbleHandlingMs: 5500,
   beatMinMs: 60_000,
   beatMaxMs: 90_000,
   endingMs: { hello: 1400, snack: 1800, meal: 2100, feast: 2400, rest: 1600 },

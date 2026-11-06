@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { blueTouchKind, blueTouchOffset, blueTouchPoint } from './blue-touch'
+import { blueTouchKind, blueTouchOffset, blueTouchPoint, blueTouchPressPose, blueTouchTransform, springOf, springSettled, stepSpring, type SpringState } from './blue-touch'
 
 const canvas = { width: 240, height: 190 }
 const bounds = { left: 10, top: 20, ...canvas }
@@ -86,3 +86,38 @@ describe('blue companion touch geometry', () => {
 })
 
 function canvasToPoint(size: { width: number; height: number }) { return { x: size.width, y: size.height } }
+
+describe('blue companion touch spring', () => {
+  const run = (state: SpringState, target: number, ms: number, spring = springOf(0.5, 0.65)) => {
+    for (let t = 0; t < ms; t += 16) state = stepSpring(state, target, spring, 16)
+    return state
+  }
+
+  it('presses smoothly, then bounces back through a stretch and settles', () => {
+    const pressed = run({ value: 0, velocity: 0 }, 1, 400, springOf(0.12, 0))
+    expect(pressed.value).toBeCloseTo(1, 2)
+    let state = pressed, lowest = 1
+    for (let t = 0; t < 2000; t += 16) { state = stepSpring(state, 0, springOf(0.5, 0.65), 16); lowest = Math.min(lowest, state.value) }
+    expect(lowest).toBeLessThan(-0.2)
+    expect(lowest).toBeGreaterThan(-0.5)
+    expect(springSettled(state, 0)).toBe(true)
+  })
+
+  it('keeps position and velocity when a second tap arrives mid-bounce', () => {
+    const release = springOf(0.5, 0.65), press = springOf(0.12, 0)
+    const mid = run(run({ value: 0, velocity: 0 }, 1, 300, press), 0, 120, release)
+    const next = stepSpring(mid, 1, press, 16)
+    // One frame moves a little, never straight to the pressed pose.
+    expect(Math.abs(next.value - mid.value)).toBeLessThan(0.35)
+    expect(next.value).not.toBeCloseTo(1, 1)
+  })
+
+  it('clamps a long frame gap and keeps squash close to area-preserving', () => {
+    const state = stepSpring({ value: 1, velocity: 0 }, 0, springOf(0.5, 0.65), 5000)
+    expect(Math.abs(state.value)).toBeLessThan(1.5)
+    const squish = blueTouchPressPose('squish', 1)
+    expect(squish.sx * squish.sy).toBeGreaterThan(0.98)
+    expect(blueTouchTransform(squish, 0)).toBe('translateY(0px) rotate(0deg) scale(1, 1)')
+    expect(blueTouchTransform(blueTouchPressPose('high-five', -1), 1)).toContain('rotate(-3deg)')
+  })
+})

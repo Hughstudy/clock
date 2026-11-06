@@ -19,7 +19,12 @@ export interface ScenePlaybackInput {
   mode: 'run' | 'hold' | 'settle'
   handlingMs: number
   action: { id: string; kind: SceneMotionKind; durationMs: number } | null
+  /** Re-times handling by the hands' travel; without it the eased cursor is used directly. */
+  pace?: ((from: number, to: number, eased: number) => number) | undefined
 }
+/** Host progress gaps below this are painted at once rather than chased frame by frame: a
+ * 25-minute session advances about 0.00017 per countdown refresh, far below one pixel. */
+const PROGRESS_SNAP = 0.002
 export const emptyScenePlayback = (): ScenePlayback => ({ key: null, progress: 0, activityProgress: 0, activityFrom: 0, activityTarget: 0, activityElapsedMs: 0, actionId: null, actionKind: 'idle', actionProgress: 1, endingFromActionProgress: 0, actionDurationMs: 0 })
 const unit = (value: number) => Number.isFinite(value) ? Math.min(1, Math.max(0, value)) : 0
 export const achievedSceneLandmark = (progress: number): number => progress >= 1 ? 1 : progress >= 0.75 ? 0.75 : progress >= 0.4 ? 0.4 : 0
@@ -38,7 +43,7 @@ export function advanceScenePlayback(previous: ScenePlayback, input: ScenePlayba
   if (input.mode === 'hold') return next
   const delta = Number.isFinite(deltaMs) ? Math.max(0, Math.min(deltaMs, 64)) : 0
   let progress = Math.min(target, next.progress + (target - next.progress) * (1 - Math.exp(-delta / 90)))
-  if (Math.abs(target - progress) < 0.000001) progress = target
+  if (Math.abs(target - progress) < PROGRESS_SNAP) progress = target
   // Growth uses precise progress, but handling takes seconds rather than
   // stretching a cup lift across minutes of a real focus session.
   if (activityTarget < next.activityProgress) next = { ...next, activityProgress: activityTarget, activityFrom: activityTarget, activityTarget, activityElapsedMs: 0 }
@@ -46,7 +51,9 @@ export function advanceScenePlayback(previous: ScenePlayback, input: ScenePlayba
   const handlingMs = Number.isFinite(input.handlingMs) ? Math.max(500, Math.min(6000, input.handlingMs)) : 2600
   const activityElapsedMs = Math.min(handlingMs, next.activityElapsedMs + delta)
   const u = activityElapsedMs / handlingMs
-  const activityProgress = next.activityFrom + (activityTarget - next.activityFrom) * u * u * (3 - 2 * u)
+  const eased = u * u * (3 - 2 * u)
+  const activityProgress = input.pace && activityTarget > next.activityFrom
+    ? input.pace(next.activityFrom, activityTarget, eased) : next.activityFrom + (activityTarget - next.activityFrom) * eased
   const fresh = input.action && input.action.id !== next.actionId
   if (fresh) next = {
     ...next, actionId: input.action!.id, actionKind: input.action!.kind, actionProgress: 0,

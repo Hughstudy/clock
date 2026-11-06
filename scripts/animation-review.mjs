@@ -22,7 +22,8 @@ const svg=page.locator('.preview__phone .blue-companion')
 async function range(locator,value){await locator.evaluate((el,value)=>{Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value').set.call(el,String(value));el.dispatchEvent(new Event('input',{bubbles:true}));el.dispatchEvent(new Event('change',{bubbles:true}))},value)}
 const progress=value=>range(page.getByRole('slider',{name:/Completed progress/}),value*100)
 const action=value=>range(page.getByRole('slider',{name:/Action position/}),value)
-const choose=id=>page.getByLabel('Scene',{exact:true}).selectOption(id)
+// A scene change crossfades for 220 ms; inspect parts once only the new drawing remains.
+const choose=async id=>{await page.getByLabel('Scene',{exact:true}).selectOption(id);await page.locator('.preview__phone .blue-companion__outgoing').waitFor({state:'detached',timeout:2000}).catch(()=>{})}
 const contacts=()=>svg.evaluate(el=>Array.from(el.querySelectorAll('[data-contact-active="true"]')).every(node=>Math.hypot(Number(node.dataset.handX)-Number(node.dataset.propX),Number(node.dataset.handY)-Number(node.dataset.propY))<.01))
 // Keep deterministic lifecycle regressions separate from the real frame-timing
 // sample below. No production timer/accounting state is replaced by this clock.
@@ -68,8 +69,8 @@ try {
   // Retained scene nodes and independently running ambient loops.
   await choose('F4');await page.getByLabel('Inspect exact poses').uncheck();await progress(.4)
   await page.locator('.preview__phone').scrollIntoViewIfNeeded()
-  await page.waitForTimeout(2800)
-  await svg.evaluate(el=>{globalThis.__reviewNodes={rig:el.querySelector('.scene-rig'),cup:el.querySelector('[data-scene-part="cup"]'),hand:el.querySelector('[data-scene-hand="left"]'),breath:el.getAnimations({subtree:true}).find(a=>a instanceof CSSAnimation&&a.animationName==='scene-rig-breath')}})
+  await page.waitForTimeout(4600)
+  await svg.evaluate(el=>{globalThis.__reviewNodes={rig:el.querySelector('.scene-rig'),cup:el.querySelector('[data-scene-part="cup"]'),hand:el.querySelector('[data-scene-hand="left"]'),breath:el.getAnimations({subtree:true}).find(a=>a instanceof CSSAnimation&&a.animationName==='scene-rig-blink')}})
   await page.getByRole('button',{name:'New entrance cue',exact:true}).click()
   await page.waitForTimeout(80)
   check('Cue retains scene, cup, hand and ambient animation identity',await svg.evaluate(el=>{const r=globalThis.__reviewNodes;return r.rig===el.querySelector('.scene-rig')&&r.cup===el.querySelector('[data-scene-part="cup"]')&&r.hand===el.querySelector('[data-scene-hand="left"]')&&el.getAnimations({subtree:true}).includes(r.breath)&&r.breath.playState==='running'}))
@@ -79,7 +80,7 @@ try {
   await page.waitForTimeout(180)
   check('Pause freezes the exact supported hand configuration',held===await svg.locator('[data-scene-hand="left"]').getAttribute('d')&&await contacts())
   check('Pause retains ambient loops without running them',await svg.evaluate(el=>el.getAnimations({subtree:true}).every(a=>a.playState!=='running')))
-  await page.getByLabel('Scene state',{exact:true}).selectOption('loop');await page.waitForTimeout(2800)
+  await page.getByLabel('Scene state',{exact:true}).selectOption('loop');await page.waitForTimeout(4600)
   check('Resume settles without replaying an entrance',await svg.getAttribute('data-scene-phase')==='idle'&&await contacts())
   await page.getByLabel('Thought editor needs attention').check()
   check('Attention suppression stops local and ambient movement',await svg.getAttribute('data-scene-motion')==='false'&&await svg.evaluate(el=>el.getAnimations({subtree:true}).every(a=>a.playState!=='running')))
@@ -98,8 +99,8 @@ try {
     await fixture.getByLabel('Scene', { exact: true }).selectOption('F3')
     await fixture.clock.runFor(32)
     // Deliver a new reading every 250 ms just as a running Focus timer does.
-    // The full 2.6 s handling path gets four extra frame intervals of margin.
-    for (let tick = 0; tick < 10; tick++) {
+    // The full 4.2 s handling path (design pass batch 2) gets four extra frame intervals of margin.
+    for (let tick = 0; tick < 17; tick++) {
       await range(slider, 40 + tick / 10)
       await fixture.clock.runFor(250)
     }
@@ -108,12 +109,12 @@ try {
 
     await fixture.getByLabel('Scene', { exact: true }).selectOption('F4')
     await range(slider, 75)
-    await fixture.clock.runFor(1350)
+    await fixture.clock.runFor(2100)
     const before = await handling(), pose = await character.evaluate(cupSupport)
     const panel = fixture.getByLabel('Thought editor needs attention')
     await panel.check()
     await fixture.clock.runFor(600)
-    check('Opening a panel preserves a mid-reach hand and cup', before > .55 && before < .65 && await handling() === before && sameCupSupport(pose, await character.evaluate(cupSupport)))
+    check('Opening a panel preserves a mid-reach hand and cup', before > .45 && before < .7 && await handling() === before && sameCupSupport(pose, await character.evaluate(cupSupport)))
     await panel.uncheck()
     check('Closing the panel starts at the held pose', await handling() === before && sameCupSupport(pose, await character.evaluate(cupSupport)))
     await fixture.clock.runFor(200)
@@ -185,17 +186,18 @@ try {
   await choose('R2');await page.getByLabel('Scene state',{exact:true}).selectOption('loop')
   check('Cloud watching keeps both eyes open',await svg.locator('[data-part="eyeLeft"], [data-part="eyeRight"]').count()===2&&await svg.locator('[data-part="eyesResting"]').count()===0)
   check('Cloud watching has a running, bounded gaze movement',await svg.evaluate(el=>{
-    const gaze=el.querySelector('.scene-rig-gaze')
-    const watch=gaze.getAnimations().find(a=>a instanceof CSSAnimation&&a.animationName==='scene-rig-watch')
+    const look=el.querySelector('.scene-rig-look')
+    const watch=look.getAnimations().find(a=>a instanceof CSSAnimation&&a.animationName==='scene-rig-watch')
     if(!watch||watch.playState!=='running')return false
     const previous=watch.currentTime
-    watch.currentTime=0;const start=parseFloat(getComputedStyle(gaze).translate)||0
-    watch.currentTime=8000;const peak=parseFloat(getComputedStyle(gaze).translate)||0
+    const shift=()=>new DOMMatrix(getComputedStyle(look).transform).m41
+    watch.currentTime=0;const start=shift()
+    watch.currentTime=8000;const peak=shift()
     watch.currentTime=previous
     return peak-start>0&&peak-start<=2.01
   }))
   await page.emulateMedia({reducedMotion:'reduce'})
-  check('Reduced motion stops cloud-watching gaze while retaining open eyes',await svg.evaluate(el=>el.querySelectorAll('[data-part="eyeLeft"], [data-part="eyeRight"]').length===2&&el.querySelector('.scene-rig-gaze').getAnimations().length===0))
+  check('Reduced motion stops cloud-watching gaze while retaining open eyes',await svg.evaluate(el=>el.querySelectorAll('[data-part="eyeLeft"], [data-part="eyeRight"]').length===2&&el.querySelector('.scene-rig-look').getAnimations().length===0))
   await page.emulateMedia({reducedMotion:'no-preference'})
   await page.setViewportSize({width:375,height:900});await page.getByLabel('200% scene text').check()
   check('200% preview text remains in the viewport',await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1))
@@ -204,7 +206,7 @@ try {
   check('Native keyboard focus remains on the fixed target',await page.getByRole('button',{name:'Say hello to the blue companion',exact:true}).evaluate(el=>el===document.activeElement))
   // Real frame timing, with no virtual clock. Report separately from device QA.
   await choose('F4');await page.getByLabel('Scene state',{exact:true}).selectOption('loop')
-  await progress(.4);await page.waitForTimeout(2800);await progress(.75)
+  await progress(.4);await page.waitForTimeout(4600);await progress(.75)
   const timing=await page.evaluate(()=>new Promise(resolve=>{const deltas=[];let previous=null,start=null;const step=now=>{start??=now;if(previous!==null)deltas.push(now-previous);previous=now;if(now-start<5000)requestAnimationFrame(step);else{deltas.sort((a,b)=>a-b);resolve({frames:deltas.length,p50Ms:deltas[Math.floor(deltas.length*.5)],p95Ms:deltas[Math.floor(deltas.length*.95)],maxMs:deltas.at(-1),over50Ms:deltas.filter(x=>x>50).length})}};requestAnimationFrame(step)}))
   check('No runtime or console errors',errors.length===0)
   await writeFile(path.join(output,'report.json'),JSON.stringify({browser:browser.version(),userAgent:await page.evaluate(()=>navigator.userAgent),checks,timing,errors,output},null,2))

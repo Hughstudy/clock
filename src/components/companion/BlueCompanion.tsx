@@ -1,9 +1,11 @@
-import { useId, type CSSProperties } from 'react'
+import { useId, useRef, type CSSProperties } from 'react'
 import type { CompanionPresentation } from '../../logic/companion'
 import type { CompanionScene } from '../../contracts/presentation'
 import { useBlueCompanion } from '../../hooks/companion/useBlueCompanion'
 import { useBlueCompanionTouch } from '../../hooks/companion/useBlueCompanionTouch'
 import { useCompanionScene } from '../../hooks/companion/useCompanionScene'
+import { useLayerCrossfade } from '../../hooks/companion/useLayerCrossfade'
+import { useTouchSpring } from '../../hooks/companion/useTouchSpring'
 import { sampleScenePose } from '../../logic/scene-pose'
 import type { SceneMotionKind } from '../../logic/scene-motion'
 import { CompanionSceneArt } from './CompanionSceneArt'
@@ -24,6 +26,8 @@ export function BlueCompanion({ presentation, cueId, scene, inspection, panelOpe
   const { spec, sketch, active, finish } = useBlueCompanion(legacyPresentation, cueId)
   const play = useBlueCompanionTouch(presentation, spec, active?.id, finish, scene?.key, keyboardPat)
   const { touch } = play
+  const touchGroup = useRef<SVGGElement>(null)
+  useTouchSpring(touchGroup, touch ? { id: touch.id, kind: touch.kind, phase: touch.phase, side: touch.point.x < spec.width / 2 ? -1 : 1 } : null, presentation.staticOnly)
   const sceneMotion = useCompanionScene(scene, { staticOnly: presentation.staticOnly || presentation.stance === 'neutral', touching: !!touch || !!active, panelOpen })
   const gradientId = useId().replace(/:/g, '')
   const scenePose = spec.poses[presentation.stance]
@@ -57,19 +61,9 @@ export function BlueCompanion({ presentation, cueId, scene, inspection, panelOpe
     '--blue-touch-duration': `${play.duration}ms`,
     '--blue-gaze-x': `${play.gaze.x}px`, '--blue-gaze-y': `${play.gaze.y}px`,
     '--blue-touch-side': touch && touch.point.x < spec.width / 2 ? -1 : 1,
-    '--scene-duration': `${sceneMotion.durationMs}ms`,
   } as CSSProperties
-  return (
-    <svg ref={play.ref} className="blue-companion" viewBox={`0 0 ${sketch.width} ${sketch.height}`} style={style} {...play.handlers}
-      role="img" aria-label={spec.labels[presentation.stance]} focusable="false"
-      data-stance={presentation.stance} data-static={presentation.staticOnly} data-cue={touch ? '' : active?.cue ?? ''}
-      data-touch={touch?.kind ?? ''} data-touch-phase={touch?.phase ?? ''}
-      data-scene={scene?.id ?? ''} data-scene-phase={sceneMotion.phase} data-scene-beat={sceneMotion.beatIndex % 3}
-      data-scene-motion={sceneMotion.ambientAllowed} data-scene-status={scene?.status ?? ''} data-scene-tier={scene?.ending?.tier ?? ''}
-      data-scene-progress={inspection ? scene?.completedProgress : sceneMotion.presentedProgress}
-      data-scene-activity-progress={inspection ? scene?.completedProgress : sceneMotion.activityProgress}
-      data-scene-action={inspection?.actionKind ?? sceneMotion.sampleKind} data-scene-action-progress={inspection?.actionProgress ?? sceneMotion.actionProgress}>
-      {scene && sceneFrame ? <CompanionSceneArt key={scene.key} scene={scene} frame={sceneFrame} /> : <>
+  const layerKey = scene && sceneFrame ? scene.key : 'preparation'
+  const layer = scene && sceneFrame ? <CompanionSceneArt key={scene.key} scene={scene} frame={sceneFrame} /> : <>
       <CompanionPaint id={gradientId}/>
       {sceneryEnabled && <g transform="scale(.75)"><CompanionScenery/></g>}
       {/* Same rig scale and anchor as every scene, so starting never resizes the creature. */}
@@ -77,7 +71,8 @@ export function BlueCompanion({ presentation, cueId, scene, inspection, panelOpe
       {!sceneryEnabled && <>{part('ground')}{part('groundEdge')}</>}
       <g className="blue-companion__shadow">{part('shadow')}</g>
       <g key={active?.id ?? 'at-rest'} className="blue-companion__gesture" onAnimationEnd={event => { if (event.target === event.currentTarget && active) finish(active.id) }}>
-        <g key={touch?.id ?? 'no-touch'} className="blue-companion__touch" onAnimationEnd={event => { if (event.target === event.currentTarget && touch) play.finish(touch.id) }}>
+        {/* One stable element: a spring moves it, so a new tap never restarts the body from a pose. */}
+        <g ref={touchGroup} className="blue-companion__touch">
           <g className="blue-companion__stance">
             <g className="blue-companion__body">
               {part('footLeft')}{part('footRight')}
@@ -96,7 +91,25 @@ export function BlueCompanion({ presentation, cueId, scene, inspection, panelOpe
       </g>
       <g className="blue-companion__sparkles" aria-hidden="true">{part('sparkLeft')}{part('sparkRight')}</g>
       </g>
-      </>}
+  </>
+  // Starting or changing an activity crossfades the drawing instead of cutting to it.
+  // Only a fresh start of an activity (a permitted begin or rest cue) fades; returning to
+  // preparation, navigation and recovery cut as before. Like every scene motion it yields
+  // to attention: no fade while a panel or input needs the screen.
+  const starting = !!scene?.cue && scene.cue.sessionId === scene.sessionId && (scene.cue.kind === 'begin' || scene.cue.kind === 'rest')
+  const { outgoing, outgoingKey } = useLayerCrossfade(layerKey, layer, 220, presentation.staticOnly || panelOpen || !scene?.allowBeats || !starting)
+  return (
+    <svg ref={play.ref} className="blue-companion" viewBox={`0 0 ${sketch.width} ${sketch.height}`} style={style} {...play.handlers}
+      role="img" aria-label={spec.labels[presentation.stance]} focusable="false"
+      data-stance={presentation.stance} data-static={presentation.staticOnly} data-cue={touch ? '' : active?.cue ?? ''}
+      data-touch={touch?.kind ?? ''} data-touch-phase={touch?.phase ?? ''}
+      data-scene={scene?.id ?? ''} data-scene-phase={sceneMotion.phase}
+      data-scene-motion={sceneMotion.ambientAllowed} data-scene-status={scene?.status ?? ''} data-scene-tier={scene?.ending?.tier ?? ''}
+      data-scene-progress={inspection ? scene?.completedProgress : sceneMotion.presentedProgress}
+      data-scene-activity-progress={inspection ? scene?.completedProgress : sceneMotion.activityProgress}
+      data-scene-action={inspection?.actionKind ?? sceneMotion.sampleKind} data-scene-action-progress={inspection?.actionProgress ?? sceneMotion.actionProgress}>
+      {layer}
+      {outgoing && <g key={`outgoing:${outgoingKey}`} className="blue-companion__outgoing" aria-hidden="true">{outgoing}</g>}
       {touch && <g key={touch.id} className="blue-companion__contact" transform={`translate(${touch.point.x} ${touch.point.y})`} aria-hidden="true">
         <circle className="blue-companion__contact-ring" r={spec.touch.contactRadius} />
         <g className="blue-companion__affection"><path d="M0 -6 C-9 -16 -17 -2 0 7 C17 -2 9 -16 0 -6Z" fill={spec.palette.blush} stroke={spec.palette.outline} strokeWidth="1" /></g>

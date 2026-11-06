@@ -24,9 +24,10 @@ function Cushion(){return <g data-scene-part="cushion"><P d="M103 191 Q86 182 91
 function SideTable(){return <g data-scene-part="side-table"><P d="M205 178 L205 217 M249 178 L249 215"/><E x={226} y={178} rx={30} ry={10} c="table"/><E x={226} y={177} rx={20} ry={4} c="paper"/></g>}
 function Steam({x, y, amount = 1}: {x: number; y: number; amount?: number}) {
   const curls = ['M0 0 C12 -9 -9 -17 1 -28', 'M13 0 C27 -13 3 -22 15 -37', 'M-12 1 C0 -12 -22 -23 -9 -43']
-  return <g data-scene-part="steam" transform={`translate(${x} ${y})`} className="scene-rig-steam">
+  // The loop moves an inner group by transform; the placement stays on the outer one.
+  return <g data-scene-part="steam" transform={`translate(${x} ${y})`}><g className="scene-rig-steam">
     {curls.map((d,i) => <P key={d} d={d} c="steam" opacity={clamp(amount-i)*.7}/>)}
-  </g>
+  </g></g>
 }
 function Cup({frame}:{frame:ScenePoseFrame}){const c=frame.cup;return <g data-scene-part="cup" data-held={c.held>.99} transform={`translate(${c.x} ${c.y}) rotate(${c.angle}) scale(${c.scale})`}><P d="M20 -18 C37 -21 38 -3 21 -4 L21 -9 C31 -7 31 -17 21 -14" c="paper"/><P d="M-18 -21 L23 -21 L20 -3 Q1 7 -14 -3 Z" c="paper"/><E x={2} y={-21} rx={20} ry={4} c="paper"/><E x={2} y={-21} rx={18} ry={3} c="edge" opacity={c.liquid}/></g>}
 function Plant({progress:p}:{progress:number}) {
@@ -146,7 +147,7 @@ function Bubbles({frame}:{frame:ScenePoseFrame}){
   </g>
 }
 function Star({x,y,r=5,opacity=1}:{x:number;y:number;r?:number;opacity?:number}){return <P d={`M${x} ${y-r} L${x+1.8} ${y-1.5} L${x+r} ${y} L${x+1.8} ${y+1.5} L${x} ${y+r} L${x-1.8} ${y+1.5} L${x-r} ${y} L${x-1.8} ${y-1.5}Z`} c="edge" opacity={opacity}/>}
-function Cloud({x,y,scale=1}:{x:number;y:number;scale?:number}){return <g transform={`translate(${x} ${y}) scale(${scale})`} className="scene-rig-cloud"><P d="M-31 8 C-48 7 -44 -10 -31 -9 C-29 -31 -8 -30 -1 -15 C13 -24 29 -15 27 -2 C48 -5 47 13 31 13 L-29 13Z" c="paper"/></g>}
+function Cloud({x,y,scale=1}:{x:number;y:number;scale?:number}){return <g transform={`translate(${x} ${y}) scale(${scale})`}><g className="scene-rig-cloud"><P d="M-31 8 C-48 7 -44 -10 -31 -9 C-29 -31 -8 -30 -1 -15 C13 -24 29 -15 27 -2 C48 -5 47 13 31 13 L-29 13Z" c="paper"/></g></g>}
 function Body({frame, happy}: {frame: ScenePoseFrame; happy: boolean}) {
   const part = (name: string, color: string) => {
     const art = blueCompanionSpec.parts[name]
@@ -159,13 +160,13 @@ function Body({frame, happy}: {frame: ScenePoseFrame; happy: boolean}) {
     <g className="scene-rig-breath">
       {part('tuft','body')}{part('body','body')}{part('shine','highlight')}{part('belly','belly')}
       {part('cheekLeft','pink')}{part('cheekRight','pink')}
-      <g className="scene-rig-gaze" transform={`translate(${frame.gaze.x} ${frame.gaze.y})`}>
+      <g className="scene-rig-gaze" transform={`translate(${frame.gaze.x} ${frame.gaze.y})`}><g className="scene-rig-look">
         <g className="scene-rig-eyes">
           {happy || frame.touched ? part('eyesHappy','face') : restingEyes ? part('eyesResting','face') : <>
             {part('eyeLeft','ink')}{part('eyeRight','ink')}{part('eyeShineLeft','glint')}{part('eyeShineRight','glint')}
           </>}
         </g>
-      </g>
+      </g></g>
       {frame.id === 'F5' ? <>
         <g opacity={1-frame.wand.breath}>{part('mouth','face')}</g>
         <ellipse cx="122" cy="110" rx="3" ry="2.2" className="scene-draw-ink" opacity={frame.wand.breath}/>

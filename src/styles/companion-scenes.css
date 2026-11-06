@@ -23,24 +23,24 @@
 .scene-draw-pour { fill:none;stroke:#d29e54;stroke-width:2.4; }
 .scene-rig [data-scene-part='ground'] .scene-draw-softline { stroke:#ac9985; stroke-opacity:.32; }
 .scene-rig-steam { animation:scene-rig-steam 4s ease-in-out infinite; transform-box:fill-box;transform-origin:center bottom; }
-.scene-rig[data-scene-part="scene-R2"] .scene-rig-gaze { animation:scene-rig-watch 16s ease-in-out infinite; }
+.scene-rig[data-scene-part="scene-R2"] .scene-rig-look { animation:scene-rig-watch 16s ease-in-out infinite; }
 .scene-rig-cloud { animation:scene-rig-cloud 16s ease-in-out infinite; }
 .scene-rig-bubble { animation:scene-rig-bubble 8s ease-in-out infinite; }
 .scene-rig-star { animation:scene-rig-star 7s ease-in-out infinite; }
-/* Keep supports and arm roots fixed: breathing is limited to the face/body
-   artwork, below one pixel, and is not applied to hands, tables or held props. */
-.scene-rig-breath { animation:scene-rig-breath 5s ease-in-out infinite; transform-origin:120px 164px; }
+/* The body keeps its supports and arm roots fixed. Its former sub-pixel breathing
+   loop is gone: invisible on a phone, it only kept the page painting all session. */
+.scene-rig-breath { transform-origin:120px 164px; }
 .scene-rig-eyes { animation:scene-rig-blink 6.8s linear infinite; transform-origin:120px 95px; }
 .blue-companion[data-scene-motion='false'] .scene-rig * { animation-play-state:paused; }
 /* Closed and happy eyes don't blink, and a pause never freezes open eyes half shut. */
 .scene-rig-eyes:has(> [data-part='eyesHappy'], > [data-part='eyesResting']), .blue-companion[data-scene-motion='false'] .scene-rig-eyes { animation:none; }
 .blue-companion[data-static='true'] .scene-rig *, .blue-companion[data-stance='neutral'] .scene-rig * { animation:none!important;transition:none!important; }
-@keyframes scene-rig-steam { 0%,100%{translate:0 0;opacity:.65}50%{translate:1px -2px;opacity:.9} }
-@keyframes scene-rig-cloud { 0%,100%{translate:0 0}50%{translate:5px 0} }
-@keyframes scene-rig-bubble { 0%,100%{translate:0 0}50%{translate:1px -3px} }
+/* Loops animate `transform` on groups without a transform attribute of their own. */
+@keyframes scene-rig-steam { 0%,100%{transform:translate(0,0);opacity:.65}50%{transform:translate(1px,-2px);opacity:.9} }
+@keyframes scene-rig-cloud { 0%,100%{transform:translate(0,0)}50%{transform:translate(5px,0)} }
+@keyframes scene-rig-bubble { 0%,100%{transform:translate(0,0)}50%{transform:translate(1px,-3px)} }
 @keyframes scene-rig-star { 0%,100%{opacity:.75}50%{opacity:1} }
-@keyframes scene-rig-breath { 0%,100%{scale:1 1}50%{scale:1.003 1.004} }
-@keyframes scene-rig-blink { 0%,44%,48%,100%{scale:1 1}46%{scale:1 .12} }
+@keyframes scene-rig-blink { 0%,44%,48%,100%{transform:scale(1,1)}46%{transform:scale(1,.12)} }
 @media(prefers-reduced-motion:reduce){.scene-rig *{animation:none!important;transition:none!important}}
 
-@keyframes scene-rig-watch { 0%,100%{translate:0 0}50%{translate:2px 0} }
+@keyframes scene-rig-watch { 0%,100%{transform:translate(0,0)}50%{transform:translate(2px,0)} }

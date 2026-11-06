@@ -167,7 +167,8 @@ function Preview() {
       const previousGesture = svg().querySelector('.blue-companion__touch')
       pointer('pointerdown', 'squish')
       await wait()
-      check('A repeated tap replaces the previous local gesture', touch() === 'squish' && phase() === 'press' && svg().querySelector('.blue-companion__touch') !== previousGesture)
+      // One stable element: a spring carries the body from wherever it is into the new press.
+      check('A repeated tap continues the same body without remounting it', touch() === 'squish' && phase() === 'press' && svg().querySelector('.blue-companion__touch') === previousGesture)
       flushSync(() => { setStance('focused'); setCue(null) })
       await wait()
       check('A host stance change cancels direct play', touch() === '')
@@ -183,7 +184,9 @@ function Preview() {
       }
       pointer('pointerdown', 'squish')
       await wait()
-      check('Direct touch suspends ambient breathing and blinking', ambient().length === 0)
+      check('Direct touch keeps breathing but pauses blinking and the quiet hands', systemReducedMotion
+        ? ambient().length === 0
+        : ambient().length === 1 && (ambient()[0] as CSSAnimation).animationName === 'blue-focus-breathe')
       window.dispatchEvent(new Event('blur'))
       await wait()
       check('Window blur clears local play', touch() === '')

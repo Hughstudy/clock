@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { advanceScenePlayback, emptyScenePlayback, scenePlaybackNeedsFrame, type ScenePlaybackInput } from './scene-playback'
+import { scenePace } from './scene-pacing'
+import { sampleScenePose } from './scene-pose'
 
 const input = (patch: Partial<ScenePlaybackInput> = {}): ScenePlaybackInput => ({ key: 'session-a', progress: 0, mode: 'run', handlingMs: 2600, action: null, ...patch })
 describe('scene presentation playback', () => {
@@ -79,5 +81,32 @@ describe('scene presentation playback', () => {
     const restored = advanceScenePlayback(emptyScenePlayback(), input({ progress: 0.8 }), 0)
     expect(restored.activityProgress).toBe(0.75)
     expect(restored.actionKind).toBe('idle')
+  })
+  it('paints a running session\'s small progress steps at once, so the scene can rest between them', () => {
+    let cursor = advanceScenePlayback(emptyScenePlayback(), input({ progress: 0.2 }), 0)
+    // A 25-minute session advances about 0.00017 per 250 ms countdown refresh.
+    cursor = advanceScenePlayback(cursor, input({ progress: 0.20017 }), 0)
+    expect(cursor.progress).toBe(0.20017)
+    expect(scenePlaybackNeedsFrame(cursor, input({ progress: 0.20017 }))).toBe(false)
+  })
+  it('paces handling by the hands\' travel without changing where it starts or ends', () => {
+    const pace = scenePace('F3')
+    expect(pace(0.75, 1, 0)).toBe(0.75)
+    expect(pace(0.75, 1, 1)).toBeCloseTo(1, 6)
+    let previous = 0.75, peakPaced = 0, peakPlain = 0
+    const palms = (a: number) => { const f = sampleScenePose({ id: 'F3', status: 'running', progress: 1, activityProgress: a, actionKind: 'idle', actionProgress: 1 }); return [f.left.palm.x, f.left.palm.y] }
+    for (let i = 1; i <= 240; i++) {
+      const u = i / 240, eased = u * u * (3 - 2 * u), prevU = (i - 1) / 240, prevEased = prevU * prevU * (3 - 2 * prevU)
+      const paced = pace(0.75, 1, eased)
+      expect(paced).toBeGreaterThanOrEqual(previous - 1e-9)
+      const [ax, ay] = palms(paced), [bx, by] = palms(previous)
+      peakPaced = Math.max(peakPaced, Math.hypot(ax! - bx!, ay! - by!))
+      const [cx, cy] = palms(0.75 + 0.25 * eased), [dx, dy] = palms(0.75 + 0.25 * prevEased)
+      peakPlain = Math.max(peakPlain, Math.hypot(cx! - dx!, cy! - dy!))
+      previous = paced
+    }
+    expect(peakPaced).toBeLessThan(peakPlain / 3)
+    // A span without hand travel keeps the plain eased cursor.
+    expect(scenePace('F2')(0, 0.4, 0.5)).toBeCloseTo(0.2, 6)
   })
 })
