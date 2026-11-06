@@ -4,7 +4,7 @@ import { EncouragementReader } from '../components/EncouragementReader'
 import { DurationRuler } from '../components/DurationRuler'
 import { ShortCompanionMessage } from '../components/ShortCompanionMessage'
 import { FocusPanel } from '../components/FocusPanel'
-import { formatClock, formatElapsedClock, formatMinutes, PHASE_LABELS, spokenClock } from '../components/format'
+import { formatClock, formatElapsedParts, formatMinutes, PHASE_LABELS, spokenClock } from '../components/format'
 import { ThoughtPanel } from '../components/ThoughtPanel'
 import { TimerActionButton } from '../components/TimerActionButton'
 import { BlueCompanion } from '../components/companion/BlueCompanion'
@@ -183,7 +183,10 @@ export function HomeScreen({ active, view, result, linkedThoughts, defaultsInten
     : preparingRest ? { label: copy.startRest, run: startRest }
     : { label: copy.startFocus, run: () => startFocus(focusMinutes) }
 
-  const digits = focusResult ? formatElapsedClock(focusResult.elapsedMs)
+  // A finished session reads as what was done (25 分钟), never as a timer waiting to start (25:00).
+  const digits: ReactNode = focusResult
+    ? <span key={focusResult.sessionId} className="fp-result">{formatElapsedParts(focusResult.elapsedMs).map(part =>
+        <span key={part.unit}>{part.value}<span className="fp-unit">{part.unit}</span></span>)}</span>
     : ready ? formatClock((preparingRest ? restMinutes : focusMinutes) * 60000) : formatClock(view.remainingMs)
   const tone = focusResult ? 'done' : paused ? 'paused' : isRest ? 'rest' : 'focus'
 
@@ -279,6 +282,24 @@ export function HomeScreen({ active, view, result, linkedThoughts, defaultsInten
           {pending && <p className="fp-hint fp-hint--error">{copy.pending}
             <button type="button" className="text-action" onClick={() => dispatch({ type: 'retrySave' })}>{copy.retry}</button></p>}
         </FocusPanel>}
+        {/* Notes take a row at the top of the card while they have something to say, never a floating chip over the companion. */}
+        <div className="fp-note" aria-label="想法与保存状态" data-status-actions
+          hidden={!noteText && !thoughts.hasDraft && !thoughts.latestMarkerId && !thoughts.undo && !needsAttention}>
+          <span className="fp-note__text">{noteText}</span>
+          {thoughts.hasDraft && <button type="button" className="text-action" onClick={event => {
+            opener.current = event.currentTarget; companion.dismiss(); setTask(null); thoughts.openNew()
+          }}>{copy.resumeDraft}</button>}
+          {thoughts.latestMarkerId && <button type="button" className="text-action" disabled={!canEdit}
+            onClick={event => edit(thoughts.latestMarkerId!, event.currentTarget)}>{copy.supplement}</button>}
+          {thoughts.undo && <button type="button" className="text-action" disabled={!canEdit} onClick={event => {
+            const undo = thoughts.undo!
+            undo.run()
+            // The restore button goes once it works; keep keyboard focus on the tool it came from.
+            if (undo.removesItself && event.detail === 0) markButton.current?.focus()
+          }}>{thoughts.undo.label}</button>}
+          {needsAttention && <button type="button" className="text-action"
+            aria-label={copy.statusDetails} onClick={event => show('status', event.currentTarget)}>详情</button>}
+        </div>
         <div ref={voiceBox} className="fp-voice-slot">
           <button type="button" className="pill fp-voice-open" hidden={reading && !!requested} aria-expanded={reading}
             onClick={event => show('encouragement', event.currentTarget)}>
@@ -326,34 +347,20 @@ export function HomeScreen({ active, view, result, linkedThoughts, defaultsInten
 
         <div className="fp-tools-slot">
           <div className="fp-secondary fp-thought-tools" role="group" aria-label="想法工具">
-            {linkedThoughts.length
-              ? <button type="button" className="text-action fp-tools-label" onClick={event => show('thoughts', event.currentTarget)}>{copy.sessionThoughts}（{linkedThoughts.length}）</button>
-              : <span className="fp-tools-label">随手记</span>}
             <button ref={markButton} type="button" className="text-action" disabled={!canEdit}
               onClick={thoughts.mark} onKeyDown={e => { if (e.repeat && (e.key === 'Enter' || e.key === ' ')) e.preventDefault() }}>
               <svg width="16" height="16" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6"><path d="M6 4h12v16l-6-4-6 4zM9 9h6m-3-3v6"/></svg>{copy.mark}</button>
             <button type="button" className="text-action" disabled={!canEdit} onClick={e => show('thought', e.currentTarget)}>
               <svg width="16" height="16" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6"><path d="m5 15-1 5 5-1L20 8l-4-4zM14 6l4 4"/></svg>{copy.write}</button>
+            {/* A compact 44px entry at the end: the two tools move at most a third of their width when it
+                appears, so a quick second tap still lands on 留个标记, and the row fits at 320px. */}
+            {!!linkedThoughts.length && <button type="button" className="text-action fp-tools-label" aria-label={`${copy.sessionThoughts}（${linkedThoughts.length}）`}
+              title={`${copy.sessionThoughts}（${linkedThoughts.length}）`} onClick={event => show('thoughts', event.currentTarget)}>
+              <svg width="16" height="16" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"><path d="M7 4h10a2 2 0 0 1 2 2v14l-3-2-4 2-4-2-3 2V6a2 2 0 0 1 2-2zM9 9h6M9 13h4"/></svg>
+              <span className="fp-tools-count">{linkedThoughts.length}</span></button>}
           </div>
         </div>
 
-        <div className="fp-note" aria-label="想法与保存状态" data-status-actions
-          hidden={!noteText && !thoughts.hasDraft && !thoughts.latestMarkerId && !thoughts.undo && !needsAttention}>
-          <span className="fp-note__text">{noteText}</span>
-          {thoughts.hasDraft && <button type="button" className="text-action" onClick={event => {
-            opener.current = event.currentTarget; companion.dismiss(); setTask(null); thoughts.openNew()
-          }}>{copy.resumeDraft}</button>}
-          {thoughts.latestMarkerId && <button type="button" className="text-action" disabled={!canEdit}
-            onClick={event => edit(thoughts.latestMarkerId!, event.currentTarget)}>{copy.supplement}</button>}
-          {thoughts.undo && <button type="button" className="text-action" disabled={!canEdit} onClick={event => {
-            const undo = thoughts.undo!
-            undo.run()
-            // The restore button goes once it works; keep keyboard focus on the tool it came from.
-            if (undo.removesItself && event.detail === 0) markButton.current?.focus()
-          }}>{thoughts.undo.label}</button>}
-          {needsAttention && <button type="button" className="text-action"
-            aria-label={copy.statusDetails} onClick={event => show('status', event.currentTarget)}>详情</button>}
-        </div>
       </div>
     </section>
   )

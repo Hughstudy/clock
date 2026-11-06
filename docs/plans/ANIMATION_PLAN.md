@@ -1,5 +1,7 @@
 # Animation and Presentation Plan (Review Draft)
 
+**Contract C2-P4, 2026-11-06:** an `ended` scene may now arrive without a settle cue (or with the cue that already played) while main keeps a saved result on screen. Renderers already hold such a scene still; ending motion still starts only for a fresh matching settle cue. Two companion-scene CSS rules stop closed or happy eyes blinking and stop a pause freezing open eyes mid-blink. See the [batch 1 verification](../verification/design-pass-batch1.md).
+
 **Implemented refinement, 2026-10-31:** the user authorized the complete [Animation Refinement Plan](ANIMATION_REFINEMENT_PLAN.md). The shared pose renderer, production keyframes, finite handling, independent ambient loops and C2-P3 integration are implemented. [Verification evidence](../verification/animation-refinement.md) records desktop checks and remaining device limits. Earlier baseline sections below remain historical.
 
 Updated: 2026-10-29. This is the animation workstream of the [overall plan](../../PLAN.md). It defines future work; this documentation change does not refactor code or approve open visual decisions. Read the overall plan for product scope, the shared interface, integration order and release status.

@@ -32,6 +32,8 @@
 .scene-rig-breath { animation:scene-rig-breath 5s ease-in-out infinite; transform-origin:120px 164px; }
 .scene-rig-eyes { animation:scene-rig-blink 6.8s linear infinite; transform-origin:120px 95px; }
 .blue-companion[data-scene-motion='false'] .scene-rig * { animation-play-state:paused; }
+/* Closed and happy eyes don't blink, and a pause never freezes open eyes half shut. */
+.scene-rig-eyes:has(> [data-part='eyesHappy'], > [data-part='eyesResting']), .blue-companion[data-scene-motion='false'] .scene-rig-eyes { animation:none; }
 .blue-companion[data-static='true'] .scene-rig *, .blue-companion[data-stance='neutral'] .scene-rig * { animation:none!important;transition:none!important; }
 @keyframes scene-rig-steam { 0%,100%{translate:0 0;opacity:.65}50%{translate:1px -2px;opacity:.9} }
 @keyframes scene-rig-cloud { 0%,100%{translate:0 0}50%{translate:5px 0} }

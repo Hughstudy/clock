@@ -17,7 +17,8 @@ export type ThoughtAction =
   | { type: 'putAwayThought' | 'reopenThought' | 'deleteThought' | 'restoreThought'; thoughtId: string; expectedRev?: number }
 
 export type AppAction = (
-  | { type: 'reconcile' }
+  /** `opening` marks the first settle of a page load, the one place a stale break suggestion is retired. */
+  | { type: 'reconcile'; opening?: boolean }
   /** An explicit `durationMinutes` is a one-off choice: remembered for focus, never a new default. */
   | { type: 'start' | 'startFocus'; sessionId: string; timeZone: string; durationMinutes?: number; expectedPhase?: Phase; step?: string }
   | { type: 'startBreak'; sessionId: string; timeZone: string; durationMinutes?: number; expectedPhase?: Phase; phase?: 'shortBreak' | 'longBreak' }
@@ -82,6 +83,36 @@ export function expiredSessionResult(previous: Session | null, current: AppSnaps
   const rest = current.lastRestEnd
   return rest?.sessionId === previous.id && rest.elapsedMs >= previous.durationMs
     ? { sessionId: previous.id, phase: 'rest', elapsedMs: rest.elapsedMs, saved: false } : null
+}
+
+/**
+ * The deadline-ended focus record a waiting break is still answering: the break
+ * that deadline suggested, with no session and no rest taken since.
+ */
+function answeredEnding(snapshot: AppSnapshot): FocusRecord | null {
+  if (snapshot.timer.session || snapshot.timer.phase === 'focus') return null
+  let latest: FocusRecord | null = null
+  for (const record of snapshot.records) if (!latest || record.endedAt > latest.endedAt) latest = record
+  if (!latest || latest.endReason !== 'deadline') return null
+  if (snapshot.lastRestEnd && snapshot.lastRestEnd.endedAt >= latest.endedAt) return null
+  return latest
+}
+
+/** A break suggested by a deadline longer ago than the configured limit. A fresh open prepares focus instead. */
+export function staleBreakSuggestion(snapshot: AppSnapshot, now: number, spec: Spec): boolean {
+  const ending = answeredEnding(snapshot)
+  return !!ending && now - ending.endedAt > spec.timer.restSuggestionStaleMs
+}
+
+/**
+ * On a fresh open, the result of a focus session that already ended while the
+ * page was hidden and is still answered by the suggested break. `saved` is
+ * supplied by the caller from durable storage; this never claims a save.
+ */
+export function standingFocusResult(snapshot: AppSnapshot, now: number, spec: Spec, savedIds: ReadonlySet<string>): SessionResult | null {
+  const ending = answeredEnding(snapshot)
+  if (!ending || now - ending.endedAt > spec.timer.restSuggestionStaleMs) return null
+  return { sessionId: ending.sessionId, phase: 'focus', elapsedMs: ending.elapsedMs, saved: savedIds.has(ending.sessionId) }
 }
 
 const unchanged = (snapshot: AppSnapshot): Transition => ({ snapshot, completion: null, ended: null, thought: null, changed: false })
@@ -156,7 +187,9 @@ function act(snapshot: AppSnapshot, action: AppAction, ctx: ActionContext, spec:
       return { ...unchanged(snapshot), changed: true, snapshot: { ...snapshot,
         quoteFavorites: existing ? snapshot.quoteFavorites.map(q => quoteKey(q) === key ? next : q) : [...snapshot.quoteFavorites, next] } }
     }
-    case 'reconcile': return unchanged(snapshot)
+    // Only the opening settle retires an old suggestion; a person's own commands never race it.
+    case 'reconcile': return action.opening && staleBreakSuggestion(snapshot, now, spec)
+      ? withTimer({ ...snapshot.timer, phase: 'focus' }) : unchanged(snapshot)
     case 'prepare': return snapshot.timer.session || snapshot.timer.phase !== action.expectedPhase || snapshot.timer.phase === action.phase
       ? unchanged(snapshot) : withTimer({ ...snapshot.timer, phase: action.phase })
     case 'start':

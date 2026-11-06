@@ -20,7 +20,7 @@ export function SettingsScreen({ form, canEdit, onBack, systemNoticeSummary, sys
     <section className="screen settings" aria-labelledby="settings-title">
       <header className="settings-header">
         <button type="button" className="pill pill--ghost" onClick={onBack}>‹ 回到专注</button>
-        <h2 id="settings-title" className="screen-title">设置</h2>
+        <h1 id="settings-title" className="screen-title" tabIndex={-1}>设置</h1>
       </header>
       <form className="card settings-form" aria-label="常用偏好" onSubmit={(e) => e.preventDefault()}>
         <h3 className="card-title">常用偏好</h3>

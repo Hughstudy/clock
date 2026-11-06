@@ -23,10 +23,9 @@ export async function checkTimerNotices(browser, url, check) {
 
     await button('开始专注').waitFor()
     await page.evaluate(() => navigator.serviceWorker.ready)
-    await button('查看状态').waitFor()
+    await page.clock.runFor(500)
+    check('Offline readiness adds no note to Focus', await button('查看状态').count() === 0)
     await page.clock.runFor(10_100)
-    await button('查看状态').waitFor({ state: 'detached' })
-    check('The offline-ready note leaves on its own', true)
     check('The time shows an edit mark', await page.locator('.fp-clock-trigger .fp-clock-edit').count() === 1)
     await page.locator('.fp-clock-edit').click()
     await page.getByRole('dialog', { name: '调专注时长' }).waitFor()
@@ -60,7 +59,7 @@ export async function checkTimerNotices(browser, url, check) {
     await tab('记录').click()
     check('An ending already seen on Focus is not announced again', !await banner.count())
     await page.clock.runFor(300)
-    check('The title stops naming a seen ending away from Focus', await page.title() === 'Whale Focus')
+    check('The title stops naming a seen ending away from Focus and names Records', await page.title() === '记录 — Whale Focus')
     await tab('专注').click()
 
     await button('开始休息').click()

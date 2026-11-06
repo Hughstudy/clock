@@ -4,7 +4,7 @@ import { newId } from '../../adapters/ids'
 import { feedbackCatalog } from '../../data/encouragement'
 import { createFeedbackHost, feedbackSignature, interactWithFeedback, updateFeedbackHost, type FeedbackHostInput } from '../../logic/feedback-host'
 import type { AskPool } from '../../logic/feedback'
-import { companionSceneOf, companionViewOf } from '../../logic/presentation'
+import { companionSceneOf, companionViewOf, type PresentationCue } from '../../logic/presentation'
 import type { ClockApp } from '../useClockApp'
 
 /**
@@ -43,11 +43,19 @@ export function useFeedback(app: ClockApp, options: { active?: boolean; nodeEnco
     setStored(previous => interactWithFeedback(previous, input, event, feedbackCatalog))
   }, [input.snapshot, input.persistence, input.event, input.active, input.nodeEncouragement])
 
+  // Remember the settle cue that played, so the finished activity stays while its result shows.
+  const [settle, setSettle] = useState<PresentationCue | null>(null)
+  if (state.cue?.kind === 'settle' && state.cue.id !== settle?.id) setSettle(state.cue)
+  const result = app.result
+  const shownEnding = useMemo(() => result
+    ? { sessionId: result.sessionId, saved: result.saved, cue: settle?.sessionId === result.sessionId ? settle : null } : null,
+  [result?.sessionId, result?.saved, settle])
+
   const view = companionViewOf(state.feedback.frame, { motionEnabled: app.snapshot.settings.motionEnabled, encouragementEnabled: app.snapshot.settings.encouragementEnabled })
   const scene = useMemo(() => companionSceneOf(app.snapshot, state.cue, {
     completedProgress: options.completedProgress ?? 0, visible: input.active,
-    persistence: app.saveState, hasError: view.hasError,
-  }), [app.snapshot, state.cue, options.completedProgress, input.active, app.saveState, view.hasError])
+    persistence: app.saveState, hasError: view.hasError, shownEnding,
+  }), [app.snapshot, state.cue, options.completedProgress, input.active, app.saveState, view.hasError, shownEnding])
   // `cue` has its own identity; it is not derived from the screen-reader announcement.
   return { feedback: state.feedback, view, scene, sceneryEnabled: app.snapshot.settings.sceneVarietyEnabled, cue: state.cue, request, next, dismiss }
 }

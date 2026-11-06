@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { spec } from '../data/spec'
-import { applyAction, expiredSessionResult, reconcile, resolveSessionResult, shouldChime, type ActionContext, type AppAction, type SessionResult } from './app'
+import { applyAction, expiredSessionResult, reconcile, resolveSessionResult, shouldChime, staleBreakSuggestion, standingFocusResult, type ActionContext, type AppAction, type SessionResult } from './app'
 import { createSnapshot } from './snapshot'
 import { remainingMs } from './timer'
 import type { AppSnapshot } from './types'
@@ -41,6 +41,40 @@ describe('timer actions', () => {
     const expired = reconcile(started, ctx(T0 + session.durationMs + 1), spec).snapshot
     expect(expiredSessionResult(session, expired)).toEqual({ sessionId: 'a', phase: 'focus', elapsedMs: session.durationMs, saved: false })
     expect(expiredSessionResult(session, run(started, [[T0 + 10_000, { type: 'end', sessionId: 'a' }]]))).toBeNull()
+  })
+
+  it('retires an old break suggestion only on an opening settle, keeping the long-break count', () => {
+    const done = completeFocus(createSnapshot(spec), T0, 'a')
+    const deadline = done.records[0]!.endedAt
+    const stale = spec.timer.restSuggestionStaleMs
+    expect(done.timer.phase).toBe('shortBreak')
+    expect(staleBreakSuggestion(done, deadline + stale, spec)).toBe(false)
+    expect(staleBreakSuggestion(done, deadline + stale + 1, spec)).toBe(true)
+    // An ordinary command never flips the phase under the person's hand.
+    expect(run(done, [[deadline + stale + 1, { type: 'reconcile' }]]).timer.phase).toBe('shortBreak')
+    const opened = run(done, [[deadline + stale + 1, { type: 'reconcile', opening: true }]])
+    expect(opened.timer).toMatchObject({ phase: 'focus', session: null, completedFocusCount: done.timer.completedFocusCount })
+    expect(run(done, [[deadline + MIN, { type: 'reconcile', opening: true }]]).timer.phase).toBe('shortBreak')
+    // A session still stored as running when the page opens settles first, then retires its old break.
+    const started = run(createSnapshot(spec), [[T0, { type: 'start', sessionId: 'b', timeZone: 'UTC' }]])
+    const running = started.timer.session
+    if (running?.status !== 'running') throw new Error('expected running session')
+    const late = run(started, [[running.deadline + stale + 1, { type: 'reconcile', opening: true }]])
+    expect(late.records.map(r => [r.sessionId, r.endReason])).toEqual([['b', 'deadline']])
+    expect(late.timer).toMatchObject({ phase: 'focus', session: null, completedFocusCount: 1 })
+  })
+
+  it('offers a standing result only for the deadline ending a waiting break still answers', () => {
+    const done = completeFocus(createSnapshot(spec), T0, 'a')
+    const deadline = done.records[0]!.endedAt
+    const saved = new Set(['a'])
+    expect(standingFocusResult(done, deadline + MIN, spec, saved)).toEqual({ sessionId: 'a', phase: 'focus', elapsedMs: done.records[0]!.elapsedMs, saved: true })
+    expect(standingFocusResult(done, deadline + MIN, spec, new Set())).toMatchObject({ saved: false })
+    expect(standingFocusResult(done, deadline + spec.timer.restSuggestionStaleMs + 1, spec, saved)).toBeNull()
+    expect(standingFocusResult(run(done, [[deadline + MIN, { type: 'prepare', phase: 'focus', expectedPhase: 'shortBreak' }]]), deadline + 2 * MIN, spec, saved)).toBeNull()
+    expect(standingFocusResult(run(done, [[deadline + MIN, { type: 'startBreak', sessionId: 'r', timeZone: 'UTC' }]]), deadline + 2 * MIN, spec, saved)).toBeNull()
+    const manual = run(createSnapshot(spec), [[T0, { type: 'start', sessionId: 'm', timeZone: 'UTC' }], [T0 + MIN, { type: 'end', sessionId: 'm' }]])
+    expect(standingFocusResult(manual, T0 + 2 * MIN, spec, new Set(['m']))).toBeNull()
   })
 
   it('reports a rest that expired elsewhere, but not one ended early', () => {

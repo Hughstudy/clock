@@ -10,7 +10,7 @@ const act = (snapshot: AppSnapshot, action: AppAction, now = 0) => applyAction(s
 const start = () => act(createSnapshot(spec), { type: 'start', sessionId: 'focus-one', timeZone: 'UTC', durationMinutes: 60 })
 const cue = (kind: PresentationCue['kind'], sessionId = 'focus-one'): PresentationCue => ({ id: `cue:${sessionId}:${kind}`, kind, sessionId, thoughtId: null })
 
-describe('C2-P3 readonly scene projection', () => {
+describe('C2-P4 readonly scene projection', () => {
   it('keeps assignment identity stable while clamping without quantizing completed progress', () => {
     const snapshot = start()
     const first = companionSceneOf(snapshot, cue('begin'), options)!
@@ -40,6 +40,24 @@ describe('C2-P3 readonly scene projection', () => {
     expect(companionSceneOf(input, cue('settle'), { ...options, persistence: 'pending' })).toBeNull()
     expect(companionSceneOf(input, null, options)).toBeNull()
     expect(companionSceneOf({ ...input, records: [] }, cue('settle'), options)).toBeNull()
+  })
+
+  it('keeps a shown saved ending after later cues, without replaying or claiming an unsaved one', () => {
+    const ended = act(start(), { type: 'end', sessionId: 'focus-one' }, 61_000)
+    const settle = cue('settle')
+    const shown = { sessionId: 'focus-one', saved: true, cue: settle }
+    const played = companionSceneOf(ended, settle, options)!
+    // A mark or encouragement replaces the cue; the finished activity keeps its identity.
+    const afterMark = companionSceneOf(ended, cue('thought-saved'), { ...options, shownEnding: shown })!
+    expect(afterMark).toMatchObject({ key: played.key, status: 'ended', cue: settle, ending: played.ending })
+    // While that tap is still saving, the shown result does not flicker away.
+    expect(companionSceneOf(ended, settle, { ...options, persistence: 'saving', shownEnding: shown })).toMatchObject({ status: 'ended', cue: settle })
+    // A result shown after a reload has no cue to play: the final frame stays still.
+    expect(companionSceneOf(ended, null, { ...options, shownEnding: { ...shown, cue: null } }))
+      .toMatchObject({ status: 'ended', cue: null, ending: { cueId: 'ending:focus-one', tier: 'snack' } })
+    expect(companionSceneOf(ended, null, { ...options, shownEnding: { ...shown, saved: false } })).toBeNull()
+    expect(companionSceneOf(ended, null, { ...options, shownEnding: { ...shown, sessionId: 'other' } })).toBeNull()
+    expect(companionSceneOf(ended, null, { ...options, visible: false, shownEnding: shown })).toBeNull()
   })
 
   it('lets a new session replace an old ending even if the old cue arrives late', () => {

@@ -24,6 +24,10 @@ export const TIME_GAP = 8
 /** Room kept above the head for a one-line bubble whenever the time reads there, so the
  * time does not move as the companion's passing lines come and go. */
 export const BUBBLE_RESERVE = 45
+/** Widest art relative to the scene. The farthest any hand or handled prop reaches is 34% of the
+ * art's width from its centre (F4's kettle, sampled through every scene's actions), so art wider
+ * than about 1.47 × the scene cuts it off at a narrow screen's edge. 1.44 keeps a few pixels' margin. */
+export const ART_MAX_SCENE_RATIO = 1.44
 /** Below this, a shrunken companion would read as a glitch; it steps out instead. */
 export const MIN_ART_SCALE = 0.4
 /** Card edges this close to the scene's sides are not noticeable. */
@@ -59,7 +63,7 @@ export function fitSceneArt(input: SceneFitInput): SceneFit {
   const support = panelTop === null ? sceneHeight : Math.min(sceneHeight, panelTop + PANEL_TUCK)
   const bubble = bubbleHeight > 0 ? bubbleHeight + BUBBLE_GAP : 0
   const above = timeHeight > 0 ? Math.max(bubble, BUBBLE_RESERVE) + timeHeight : bubble
-  let scale = Math.min(1, (support - topLimit - above) / (ART_HEAD * artWidth))
+  let scale = Math.min(1, (support - topLimit - above) / (ART_HEAD * artWidth), sceneWidth * ART_MAX_SCENE_RATIO / artWidth)
   // Once the card's own edges would show (its sides, or its rounded top corners when the
   // card's top is inside the scene), keep the whole card clear too.
   const cornersInside = support - (ART_CARD - ART_CARD_CORNER) * artWidth * scale > 0

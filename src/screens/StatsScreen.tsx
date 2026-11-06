@@ -338,7 +338,7 @@ export function StatsScreen({ view, thoughts, canEdit, onEditThought, onContinue
 
   return <section ref={screen} className="screen stats records-v35" aria-labelledby="stats-title">
     <div className="records-header">
-      <h2 id="stats-title" className="screen-title">记录</h2>
+      <h1 id="stats-title" className="screen-title">记录</h1>
       <button type="button" className="link-button records-status-button" aria-label={`查看状态${statusLabel === '查看状态' ? '' : `：${statusLabel}`}${secondaryStatusLabel ? `，${secondaryStatusLabel}` : ''}`}
         aria-describedby={statusDescription ? statusDescriptionId : undefined} aria-haspopup="dialog" aria-expanded={statusPanel}
         onClick={() => { setMonthPanel(false); setStatusPanel(true) }}><span>{statusLabel}</span>{secondaryStatusLabel && <span>{secondaryStatusLabel}</span>}</button>

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { ART_CARD, ART_HEAD, BUBBLE_RESERVE, fitSceneArt, PANEL_TUCK, type SceneFitInput } from './scene-fit'
+import { ART_CARD, ART_HEAD, ART_MAX_SCENE_RATIO, BUBBLE_RESERVE, fitSceneArt, PANEL_TUCK, type SceneFitInput } from './scene-fit'
 
 const phone: SceneFitInput = { sceneWidth: 393, sceneHeight: 570, artWidth: 565, topLimit: 50, bubbleHeight: 0, timeHeight: 0, panelTop: null, framed: true }
 const headTop = (input: SceneFitInput, fit: ReturnType<typeof fitSceneArt>) =>
@@ -9,6 +9,13 @@ describe('fitSceneArt', () => {
   it('leaves the art untouched when nothing competes for the space', () => {
     expect(fitSceneArt(phone)).toEqual({ scale: 1, shift: 0, hidden: false })
     expect(fitSceneArt({ ...phone, bubbleHeight: 33 })).toEqual({ scale: 1, shift: 0, hidden: false })
+  })
+
+  it('never grows the art so wide that a side prop leaves a narrow screen', () => {
+    const tall = { ...phone, sceneWidth: 375, sceneHeight: 760, artWidth: 640 }
+    const fit = fitSceneArt(tall)
+    expect(fit.scale * tall.artWidth).toBeCloseTo(375 * ART_MAX_SCENE_RATIO, 5)
+    expect(fit.hidden).toBe(false)
   })
 
   it('shrinks just enough for a tall bubble to sit between the head and the top controls', () => {

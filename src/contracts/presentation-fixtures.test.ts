@@ -25,7 +25,7 @@ const EXPECTED: Record<FixtureName, { cue: CueKind | null; announced: boolean; s
   'motion-disabled': { cue: 'begin', announced: true, status: 'UI27' },
 }
 
-describe('C2-P3 presentation fixtures', () => {
+describe('C2-P4 presentation fixtures', () => {
   const fixtures = presentationFixtures()
 
   it('covers every published scenario once', () => {

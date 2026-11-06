@@ -26,6 +26,7 @@
     "longBreakEvery": 4,
     "soundEnabledDefault": false,
     "completionSoundWindowSeconds": 60,
+    "restSuggestionStaleMinutes": 60,
     "stepMaxLength": 80
   },
   "thoughts": {

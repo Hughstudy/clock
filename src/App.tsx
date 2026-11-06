@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { FocusTaskDialog } from './components/FocusTaskDialog'
 import { ThoughtPanel } from './components/ThoughtPanel'
 import { formatClock, PHASE_LABELS } from './components/format'
@@ -130,10 +130,25 @@ export function App() {
       ? `${formatClock(timerView.remainingMs)} · ${PHASE_LABELS[timerView.phase]} — Whale Focus`
       : ended && (screen === 'home' || unseenEnding)
         ? `${ended.phase === 'focus' ? focusCopy.focusEndedTitle : focusCopy.restEndedTitle} — Whale Focus`
-        : 'Whale Focus',
+        : screen === 'settings' ? '设置 — Whale Focus' : screen === 'stats' ? '记录 — Whale Focus' : 'Whale Focus',
   )
 
-  const systemNoticeSummary = app.notice ? '数据状态需要查看' : app.saveError ? '有更改尚未保存' : pwa.updateReady ? '新版本已准备好' : pwa.offlineReady ? '已准备好离线使用。' : null
+  // Moving between screens without the tab bar moves keyboard and screen-reader focus with it:
+  // into Settings' heading, back to the button that opened Settings, or to the result's next action.
+  const focusOnHome = useRef<string | null>(null)
+  const previousScreen = useRef(screen)
+  useLayoutEffect(() => {
+    const from = previousScreen.current
+    previousScreen.current = screen
+    if (from === screen) return
+    const target = screen === 'settings' ? '#settings-title' : screen === 'home' ? focusOnHome.current : null
+    focusOnHome.current = null
+    if (target) document.querySelector<HTMLElement>(target)?.focus({ preventScroll: true })
+  }, [screen])
+  const openScreen = (next: Screen, focusTarget: string | null = null) => { focusOnHome.current = focusTarget; setScreen(next) }
+
+  // A new install opens quietly: offline readiness is listed in Settings › 应用状态, not on Focus.
+  const systemNoticeSummary = app.notice ? '数据状态需要查看' : app.saveError ? '有更改尚未保存' : pwa.updateReady ? '新版本已准备好' : null
   const notices = (
     <Notices
         inline={app.notice?.kind !== 'newer'}
@@ -165,7 +180,7 @@ export function App() {
                 active={screen === 'home'} result={app.result} linkedThoughts={linkedThoughts} defaultsIntent={defaultsIntent}
                 favorites={favorites} timerPending={app.timerPending} onTaskChange={setFocusTaskOpen}
                 systemNoticeSummary={systemNoticeSummary} systemNotices={notices}
-                saveState={app.saveState} canEdit={canEdit} dispatch={app.dispatch} onSettings={() => setScreen('settings')} />
+                saveState={app.saveState} canEdit={canEdit} dispatch={app.dispatch} onSettings={() => openScreen('settings')} />
             </div>
             {screen === 'stats' && <StatsScreen key={app.snapshot.datasetGeneration} view={statsView} thoughts={thoughts} canEdit={canEdit} visit={recordsVisit}
               onEditThought={thoughts.edit}
@@ -179,12 +194,12 @@ export function App() {
               {app.saveState === 'pending' && <p className="panel-save-error">有更改尚未保存。
                 <button type="button" className="link-button" onClick={() => app.dispatch({ type: 'retrySave' })}>重试保存</button></p>}
             </FocusTaskDialog>}
-            {screen === 'settings' && <SettingsScreen form={form} canEdit={canEdit} onBack={() => setScreen('home')}
+            {screen === 'settings' && <SettingsScreen form={form} canEdit={canEdit} onBack={() => openScreen('home', '.home .fp-top .pill--icon')}
               systemNoticeSummary={systemNoticeSummary} systemNotices={notices} />}
           </>
         )}
       </main>
-      {unseenEnding && <TimerEndedBanner result={unseenEnding} onView={() => setScreen('home')} onDismiss={() => setSeenEnding(unseenEnding.sessionId)} />}
+      {unseenEnding && <TimerEndedBanner result={unseenEnding} onView={() => openScreen('home', '.home .fp-primary button')} onDismiss={() => setSeenEnding(unseenEnding.sessionId)} />}
       <TabBar active={screen} onSelect={next => {
         if (next === 'stats' && next !== screen) refresh()
         setScreen(next)

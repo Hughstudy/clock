@@ -8,7 +8,8 @@
 .home .fp-step-input { block-size: 44px; }
 .home .fp-current-step { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .home .fp-status { gap: 8px; }
-.home .fp-rest-choice { min-block-size: 44px; max-inline-size: 48%; padding: 0 6px; font: inherit; color: var(--ink); background: var(--cream);
+.home .fp-status .text-action { color: var(--whale-deep); }
+.home .fp-rest-choice { min-block-size: 44px; max-inline-size: 48%; padding: 0 6px; font: inherit; font-size: max(1rem, 16px); color: var(--ink); background: var(--cream);
   border: 1px solid var(--cream-line); border-radius: 12px; }
 /* The two timer choices are one set of equal size; style, not size, marks the main one. */
 .home .fp-controls { position: relative; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: stretch; gap: 10px;
@@ -16,24 +17,24 @@
 .home .fp-primary { display: flex; margin: 0; }
 .home .fp-primary .btn-primary, .home .fp-primary .btn-primary:hover { inline-size: 100%; min-block-size: 44px; padding-inline: 8px; }
 .home .fp-control-secondary { display: flex; min-inline-size: 0; }
-.home .fp-control-secondary > button { inline-size: 100%; min-block-size: 44px; padding-inline: 12px; border: 0; border-radius: 999px; background: #ede5d6;
-  color: var(--primary); font-weight: 600; font-size: .9375rem; transition: transform .12s ease; }
+.home .fp-control-secondary > button { inline-size: 100%; min-block-size: 44px; padding-inline: 12px; border: 2px solid transparent; background-clip: padding-box;
+  border-radius: 999px; background-color: #ede5d6; color: var(--primary-deep); font-weight: 600; font-size: .9375rem; transition: transform .12s ease; }
 .home .fp-control-secondary > button:active:not(:disabled) { transform: scale(.97); }
 /* Thought tools: one quiet row, grouped by space alone. */
 .home .fp-tools-slot { display: flex; flex-direction: column; inline-size: min(100%, 400px); block-size: max(44px, 2.75rem);
   margin: 2px auto 0; padding: 0; border: 0; overflow: auto; overscroll-behavior: contain; }
-.home .fp-thought-tools { display: flex; flex: none; justify-content: center; align-items: center; gap: 12px; margin: 0; padding: 0; }
-.home span.fp-tools-label { color: var(--muted); font-size: .8125rem; }
-.home .fp-thought-tools .fp-tools-label { flex: none; color: var(--ink); padding-inline: 6px; }
+.home .fp-thought-tools { display: flex; flex: none; justify-content: center; align-items: center; gap: 8px; margin: 0; padding: 0; }
+.home .fp-thought-tools .fp-tools-label { flex: none; min-inline-size: 44px; color: var(--ink); padding-inline: 6px; gap: 3px; }
+.home .fp-tools-count { font-variant-numeric: tabular-nums; font-weight: 700; }
 .home .fp-thought-tools .text-action { display: inline-flex; align-items: center; justify-content: center; gap: 5px; padding-inline: 6px;
   min-block-size: 44px; background: transparent; color: var(--ink); white-space: normal; }
 .home .fp-thought-tools .text-action svg { flex: none; width: 1rem; height: 1rem; }
 .home .fp-thought-tools .text-action::before { display: none; }
-/* Feedback is a small chip above the card, over the floor, only while there is something to say. */
-.home .fp-note { position: absolute; inset: auto 26px calc(100% + 8px); z-index: 1; inline-size: fit-content; max-inline-size: calc(100% - 52px); margin-inline: auto;
-  min-block-size: 44px; padding: 0 12px; border-radius: 999px; display: flex; flex-wrap: nowrap; overflow: visible; gap: 4px;
-  background: color-mix(in srgb, var(--cream) 92%, transparent); box-shadow: 0 2px 8px #6a4a241f; }
-.home .fp-note__text { flex: 1; min-inline-size: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-align: start; }
+/* Feedback takes a row at the top of the card only while there is something to say. The card
+   grows upward for it; nothing floats over the companion and no empty band is left behind. */
+.home .fp-note { position: static; inline-size: min(100%, 400px); max-inline-size: none; margin-inline: auto;
+  min-block-size: var(--voice-row); padding: 0; display: flex; flex-wrap: nowrap; justify-content: center; overflow: visible; gap: 4px; }
+.home .fp-note__text { flex: 0 1 auto; min-inline-size: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-align: start; }
 .home .fp-note__text:empty { display: none; }
 .home .fp-note[hidden] { display: none; }
 .home .fp-note > button { flex: none; min-inline-size: 44px; min-block-size: 44px; margin: 0; font-size: .8125rem; padding-inline: 6px; }

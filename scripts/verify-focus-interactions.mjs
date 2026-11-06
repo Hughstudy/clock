@@ -60,11 +60,9 @@ try {
   await page.clock.install({ time: new Date('2026-10-31T23:58:00+08:00') })
   await page.goto(url)
   await button(page, '开始专注').waitFor()
-  await button(page, '查看状态').waitFor()
-  await tap(page, '查看状态')
-  await dialog(page).getByText('已准备好离线使用。', { exact: true }).waitFor()
-  await tap(dialog(page), '知道了')
-  await tap(dialog(page), '返回')
+  await page.evaluate(() => navigator.serviceWorker.ready)
+  check('A new install opens quietly: no status note on Focus once offline use is ready', await button(page, '查看状态').count() === 0 &&
+    await page.locator('.fp-note').isHidden())
   await page.screenshot({ path: path.join(output, 'console-375.png') })
   check('Focus preparation has one time readout and no duration preset row',
     await focusTime(page).count() === 1 && await page.getByRole('group', { name: '专注时长' }).count() === 0 &&
@@ -122,7 +120,9 @@ try {
   const second = await context.newPage()
   await second.clock.install({ time: new Date(await page.evaluate(() => Date.now())) })
   await second.goto(url)
-  await tap(second, '返回专注')
+  // A tab opened within the hour shows the finished session's saved result, then prepares focus.
+  await second.getByText('专注结束', { exact: true }).waitFor()
+  await tap(second, '准备专注')
   await tap(second, '开始专注')
   await page.waitForFunction(({ key, owner }) => {
     const active = JSON.parse(localStorage.getItem(key)).timer.session

@@ -54,7 +54,7 @@ body { background: var(--paper); }
   padding: 0 8px; border-radius: 999px; background: none; color: var(--muted); font-size: .75rem; font-weight: 600; line-height: 1.2;
   transition: background-color .15s ease, color .15s ease; }
 .tab svg { inline-size: 20px; block-size: 20px; }
-.tab[aria-current='page'] { background: color-mix(in srgb, var(--whale) 14%, transparent); color: var(--whale); font-weight: 700; }
+.tab[aria-current='page'] { background: color-mix(in srgb, var(--whale) 14%, transparent); color: var(--whale-deep); font-weight: 700; }
 .app[data-screen='settings'] .tab[data-tab='home'] { color: var(--whale); }
 .tab:active { transform: scale(.96); }
 
@@ -73,16 +73,18 @@ body { background: var(--paper); }
 .home { position: relative; flex: 1; min-block-size: 0; min-inline-size: 0; gap: 0; display: flex; flex-direction: column; align-items: stretch; text-align: center;
   --bar-clear: calc(var(--tab-height) + env(safe-area-inset-bottom) + 22px);
   --voice-row: max(44px, 1.425rem);
-  --console: calc(max(44px, 2.3rem) + max(44px, 2.75rem) * 2 + var(--voice-row) * 2 + 18px); --art-clear: calc(var(--console) + var(--bar-clear));
-  --sky: #f4dfc5; --floor: #e6cdaa; }
+  /* One voice row only: the card grows upward over the feet while a note, a passing line or the reader needs a second. */
+  --console: calc(max(44px, 2.3rem) + max(44px, 2.75rem) * 2 + var(--voice-row) + 18px); --art-clear: calc(var(--console) + var(--bar-clear));
+  /* Sky and floor match the drawn wall and floor, so neither edge of the art shows a seam. */
+  --sky: #f4dfc5; --floor: #edcfaf; }
 .home[data-setting='garden'] { --sky: #c4dedc; --floor: #dfd3ae; }
-.home[data-setting='dusk'] { --sky: #858eaf; --floor: #6e7496; }
+.home[data-setting='dusk'] { --sky: #858eaf; --floor: #c2b5b6; }
 .home[data-setting='plain'] { --sky: var(--paper); --floor: var(--paper); }
 
 /* Grow the drawing with the space above the card. Its width also bounds the hands at
    the sides and keeps the head below the top controls, the time and the speech reserve. */
 .fp-scene { position: relative; flex: 1; min-block-size: 0; overflow: hidden; overflow: clip;
-  background: linear-gradient(180deg, color-mix(in srgb, var(--sky) 88%, #8a6a45) 0, var(--sky) 42%);
+  background: var(--sky);
   container-type: size; --art-reserve: calc(env(safe-area-inset-top) + 168px);
   --art-w: min(max(125cqw, min(100cqh - 48px - env(safe-area-inset-top), 96cqw, 510px) * 1.633), (100cqh - var(--art-reserve)) * 1.752); }
 .fp-scene[data-setting='plain'] { background: var(--sky); }
@@ -103,12 +105,15 @@ body { background: var(--paper); }
 .fp-art .blue-companion { position: absolute; left: 50%; bottom: 0; inline-size: var(--art-w); max-inline-size: none; block-size: auto; margin: 0;
   transform: translate(-50%, 10%); }
 .fp-art .companion-feedback__greeting:focus-visible { outline: none; }
-.fp-art .companion-feedback__greeting:focus-visible .companion-feedback__character { outline: 3px solid var(--focus); outline-offset: -6px; border-radius: 24px; }
+/* Drawn above the transformed drawing, and two-toned so it shows on every sky. */
+.fp-art .companion-feedback__greeting:focus-visible::after { content: ''; position: absolute; inset: 6px; z-index: 1; border-radius: 24px; pointer-events: none;
+  box-shadow: inset 0 0 0 3px #1b3158, inset 0 0 0 5px #fff; }
+.home .fp-scene :is(.pill, .fp-clock-trigger, .text-action):focus-visible { outline: 3px solid #1b3158; outline-offset: 2px; box-shadow: 0 0 0 7px #fff; }
 
 /* The clock keeps a stable position above the speech area as the scene or phrase changes. */
 .fp-top h1 { flex: 1; margin: 0; padding-inline-start: 4px; align-self: center; text-align: start; font-size: 1.125rem; color: var(--ink); }
 .fp-clock-phase { position: absolute; z-index: 2; inset: calc(env(safe-area-inset-top) + 55px) 0 auto;
-  color: var(--muted); font-size: .8125rem; line-height: 1.25rem; font-weight: 550; }
+  color: #46546a; font-size: .8125rem; line-height: 1.25rem; font-weight: 550; }
 .fp-clock-phase::before { content: ''; display: inline-block; width: .4rem; height: .4rem; margin-inline-end: .375rem; border-radius: 50%; background: currentColor; }
 .home[data-setting='dusk'] :is(.fp-top h1,.fp-clock-phase) { color: #fff6e8; }
 .fp-digits { position: absolute; z-index: 2; inset-inline: 0; margin: 0; pointer-events: none;
@@ -120,7 +125,12 @@ body { background: var(--paper); }
 .fp-scene[data-fit='hidden'] .fp-digits { inset-block-start: calc(env(safe-area-inset-top) + 55px); }
 .home[data-tone='paused'] .fp-digits { color: #8f5f24; }
 .home[data-tone='rest'] .fp-digits { color: var(--mint-deep); }
-.home[data-tone='done'] .fp-digits { color: var(--muted); font-size: 1.75rem; }
+.home[data-tone='done'] .fp-digits { color: var(--ink); }
+/* The result reads as what was done: big numbers, small units, a short fade and nothing more. */
+.fp-result { display: inline-flex; align-items: baseline; gap: .3em; animation: fp-result-in .24s ease-out both; }
+.fp-unit { margin-inline-start: .12em; font-size: .5em; font-weight: 700; letter-spacing: 0; }
+@keyframes fp-result-in { from { opacity: 0; } to { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .fp-result { animation: none; } }
 .home[data-setting='dusk'] .fp-digits { color: #fff6e8; }
 .home[data-setting='dusk'][data-tone='paused'] .fp-digits { color: #f6d39a; }
 .home[data-setting='dusk'][data-tone='rest'] .fp-digits { color: #c6ead8; }
@@ -137,16 +147,17 @@ body { background: var(--paper); }
 .fp-status > span:first-child { overflow: hidden; text-overflow: ellipsis; }
 .fp-status .text-action { font-size: .875rem; min-height: 22px; max-inline-size: 100%; overflow: hidden; text-overflow: ellipsis; }
 .fp-step-input { inline-size: min(260px, 100%); block-size: 26px; padding: 0 10px; border: 1.5px solid #c7d6f4; border-radius: 13px; background: #fff;
-  color: var(--ink); font: inherit; font-size: .875rem; text-align: center; }
+  color: var(--ink); font: inherit; font-size: max(1rem, 16px); text-align: center; }
 .fp-primary { margin-top: 10px; display: flex; justify-content: center; }
 .home { --primary: var(--whale); --primary-deep: var(--whale-deep); --primary-glow: #2f74d040; }
 .home[data-tone='paused'] { --primary: var(--warm); --primary-deep: var(--warm-deep); --primary-glow: #dc8c4633; }
 .home[data-tone='rest'], .home[data-tone='done'] { --primary: var(--mint); --primary-deep: var(--mint-deep); --primary-glow: #50aa8c33; }
 /* The one prominent button of the view: accent fill, capsule, a press state. */
 .home .fp-primary .btn-primary, .home .fp-primary .btn-primary:hover { inline-size: min(220px, 64%); min-inline-size: 0; min-block-size: 44px; padding: 0 16px;
-  border: 0; border-radius: 999px; background: var(--primary); color: #fff; font-size: 1rem; font-weight: 700; letter-spacing: .02em;
-  box-shadow: 0 6px 14px var(--primary-glow); transform: none; transition: transform .12s ease, box-shadow .12s ease; }
-.home .fp-primary .btn-primary:active:not(:disabled) { background: var(--primary); transform: scale(.97); box-shadow: 0 3px 8px var(--primary-glow); }
+  /* Drawn 40px tall inside the 44px target, so rows breathe without moving. */
+  border: 2px solid transparent; background-clip: padding-box; border-radius: 999px; background-color: var(--primary); color: #fff; font-size: 1rem; font-weight: 700; letter-spacing: .02em;
+  box-shadow: 0 4px 10px var(--primary-glow); transform: none; transition: transform .12s ease, box-shadow .12s ease; }
+.home .fp-primary .btn-primary:active:not(:disabled) { background-color: var(--primary); transform: scale(.97); box-shadow: 0 2px 6px var(--primary-glow); }
 .fp-secondary { min-block-size: 30px; margin-top: 10px; display: flex; flex-wrap: wrap; justify-content: center; align-items: center; column-gap: 12px; }
 .fp-secondary .text-action::before { content: ''; display: inline-block; inline-size: 5px; block-size: 5px; margin-inline-end: 5px; border-radius: 50%; background: #c9d5ea; vertical-align: 2px; }
 /* Feedback floats above the card only while there is something to say. */
@@ -175,7 +186,9 @@ body { background: var(--paper); }
 .fp-linked span { white-space: pre-wrap; overflow-wrap: anywhere; }
 .focus-panel .thought-form { padding: 6px 0 0; border: 0; gap: 6px; background: none; }
 .focus-panel .thought-title { font-size: .8125rem; color: var(--muted); }
-.focus-panel .thought-form textarea { min-block-size: 64px; max-block-size: 30svh; border: 1.5px solid #c7d6f4; border-radius: 14px; background: #fbfcff; font-size: .9375rem; }
+.focus-panel .thought-form textarea { min-block-size: 64px; max-block-size: 30svh; border: 1.5px solid #c7d6f4; border-radius: 14px; background: #fbfcff; font-size: max(1rem, 16px); }
+/* Fields inside a panel keep their ring within their own edge, so the panel's scroller never clips it. */
+.focus-panel :is(textarea, input, select):focus-visible { outline: 2px solid var(--whale); outline-offset: -2px; }
 .focus-panel .thought-form-actions { justify-content: flex-end; }
 .focus-panel .thought-form .btn { min-block-size: 44px; padding: 0 16px; border-radius: 999px; font-size: .875rem; font-weight: 700; box-shadow: none; }
 .focus-panel .thought-form .btn-primary { background: var(--whale); color: #fff; inline-size: auto; min-inline-size: 0; }
@@ -290,3 +303,4 @@ body { background: var(--paper); }
 .notices--inline .notice { padding: 12px; box-shadow: none; background: var(--cream); }
 .notices--inline .notice-action { min-block-size: 44px; }
 @media (max-width: 360px) { .sound-preview { grid-template-columns: 1fr; } }
+.screen-title:focus-visible { outline: none; }

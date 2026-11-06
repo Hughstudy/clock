@@ -54,6 +54,8 @@ export interface Spec {
     longBreakEvery: number
     soundEnabledDefault: boolean
     completionSoundWindowMs: number
+    /** A break suggested by a deadline more than this long ago is not offered on a fresh open. */
+    restSuggestionStaleMs: number
   }
   thoughts: {
     maxLength: number
@@ -240,6 +242,7 @@ export function parseSpec(raw: unknown): Spec {
       soundEnabledDefault: bool(timer.soundEnabledDefault, 'timer.soundEnabledDefault'),
       completionSoundWindowMs:
         int(timer.completionSoundWindowSeconds, 'timer.completionSoundWindowSeconds', 0) * 1000,
+      restSuggestionStaleMs: int(timer.restSuggestionStaleMinutes, 'timer.restSuggestionStaleMinutes', 1, 1440) * 60_000,
     },
     thoughts: {
       maxLength: int(thoughts.maxLength, 'thoughts.maxLength', 1, 5000),

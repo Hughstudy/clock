@@ -2,6 +2,8 @@
 
 The first PRD v5 interaction slice now includes separate duration selection, explicit thought targets, snapshot v7 draft ownership, and day-grouped 7/30-day history. See the [state table and checks](../verification/focus-interactions-v5.md) for current scope. Durable bookmarks and backup/replacement restore remain later milestones.
 
+**Presentation contract C2-P4, 2026-11-06:** while the host shows a saved session result, `companionSceneOf` keeps that ending as a still `ended` scene after later cues (marks, encouragement), reusing the settle cue that played or a stable `ending:` id after a reload. Opening a page retires a break suggestion older than `timer.restSuggestionStaleMinutes`. See the [batch 1 verification](../verification/design-pass-batch1.md).
+
 **Implemented animation integration, 2026-10-31:** full focus/rest pools, retired unlock grants/notices, snapshot v6 compatibility and C2-P3 precise progress are implemented under the approved [Animation Refinement Plan](ANIMATION_REFINEMENT_PLAN.md). Selection remains atomic and independent of break cadence. See [verification evidence](../verification/animation-refinement.md). Other L3–L5 product proposals retain their existing status.
 
 L0–L2 were first implemented on branch `claude/main-logic-l0-l2`. L3 now includes inline entry details, confirmed-save status and stable stories. The wider history, reward and data-management work remains open. [L0–L2 verification](../verification/main-logic-l0-l2.md) · [Records implementation](RECORDS_COMPANION_PLAN.md) · [Overall plan](../../PLAN.md) · [Animation Plan](ANIMATION_PLAN.md)

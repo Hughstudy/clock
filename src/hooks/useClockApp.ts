@@ -7,7 +7,7 @@ import { createChime } from '../adapters/sound'
 import type { Persistence, StoreNotice } from '../adapters/storage'
 import type { SaveState } from '../contracts/focus'
 import { spec } from '../data/spec'
-import { applyAction, expiredSessionResult, resolveSessionResult, shouldChime, type AppAction, type FavoriteAction, type SessionResult, type ThoughtAction, type ThoughtChange } from '../logic/app'
+import { applyAction, expiredSessionResult, resolveSessionResult, shouldChime, standingFocusResult, type AppAction, type FavoriteAction, type SessionResult, type ThoughtAction, type ThoughtChange } from '../logic/app'
 import { feedbackFromTransition, type AppFeedbackEvent } from '../logic/feedback-host'
 import type { FeedbackEvent } from '../logic/feedback'
 import type { SettingsPatch } from '../logic/settings'
@@ -73,6 +73,11 @@ interface PendingThought extends Thought {
   retirement?: { previous: string | null; next: string }
 }
 const EMPTY_THOUGHTS: readonly Thought[] = []
+/** A deadline ending that left focus prepared was retired as stale on opening (or moved past elsewhere). */
+function retiredByOpening(result: SessionResult | null, snapshot: AppSnapshot): SessionResult | null {
+  if (!result || result.phase !== 'focus' || snapshot.timer.session || snapshot.timer.phase !== 'focus') return result
+  return snapshot.records.find(r => r.sessionId === result.sessionId)?.endReason === 'deadline' ? null : result
+}
 const EMPTY_FAVORITES: readonly SavedQuote[] = []
 const TIMER_COMMANDS = new Set(['start', 'startFocus', 'startBreak', 'pause', 'resume', 'end', 'skipBreak', 'prepare'])
 
@@ -89,7 +94,8 @@ export function useClockApp(): ClockApp {
   const receipts = useRef(new Map<string, ThoughtResult>())
   const unconfirmed = useRef(new Map<string, PendingThought>())
   const pending = useRef(new Map<string, Pending>())
-  const [result, setResult] = useState<SessionResult | null>(null)
+  // A focus session that ended while this page was hidden, then reloaded, still shows its saved result.
+  const [result, setResult] = useState<SessionResult | null>(() => standingFocusResult(store.snapshot, nowMs(), spec, store.savedRecordIds))
   const shownSession = useRef(store.snapshot.timer.session)
   const lastMark = useRef<{ at: number; key: string; id: string; inFlight: boolean } | null>(null)
   const generation = useRef(store.snapshot.datasetGeneration)
@@ -145,7 +151,7 @@ export function useClockApp(): ClockApp {
       }
     }
     const ids = store.savedRecordIds
-    const expired = expiredSessionResult(shownSession.current, snapshot)
+    const expired = retiredByOpening(expiredSessionResult(shownSession.current, snapshot), snapshot)
     shownSession.current = snapshot.timer.session
     setResult(prev => resolveSessionResult(expired ?? prev, snapshot, stored))
     const saveError = [...pending.current.values()].at(-1)?.error ?? null
@@ -214,7 +220,7 @@ export function useClockApp(): ClockApp {
         const ended = transition.ended
         const previous = before.timer.session
         if (!write.snapshot.timer.session && ended) {
-          setResult({ sessionId: ended.sessionId, phase: 'focus', elapsedMs: ended.elapsedMs, saved: write.saved })
+          setResult(retiredByOpening({ sessionId: ended.sessionId, phase: 'focus', elapsedMs: ended.elapsedMs, saved: write.saved }, write.snapshot))
         } else if (!write.snapshot.timer.session && previous && before.timer.phase !== 'focus' &&
             (transition.completion || action.type === 'end' || action.type === 'skipBreak')) {
           const ending = write.snapshot.lastRestEnd
@@ -245,14 +251,14 @@ export function useClockApp(): ClockApp {
     return done
   }, [store, chime, refresh, remember])
 
-  const recover = useCallback((origin: FeedbackEvent['origin'] = 'restore') => {
+  const recover = useCallback((origin: FeedbackEvent['origin'] = 'restore', opening = false) => {
     const jobs = [...pending.current]
-    if (!jobs.length) { void commit({ type: 'reconcile' }, { origin }); return }
+    if (!jobs.length) { void commit(opening ? { type: 'reconcile', opening } : { type: 'reconcile' }, { origin }); return }
     for (const [id, job] of jobs) {
       void commit(job.applied ? { type: 'reconcile', generation: job.generation } : job.action, { origin, operationId: id, onlyPending: true })
     }
   }, [commit])
-  useEffect(() => { recover(); return onAppResume(() => recover()) }, [recover])
+  useEffect(() => { recover('restore', true); return onAppResume(() => recover()) }, [recover])
 
   useEffect(() => onExternalWrite(newValue => {
     const received = store.receive(newValue)

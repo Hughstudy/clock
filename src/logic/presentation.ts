@@ -3,7 +3,7 @@ import { endingTierForElapsed } from './scenes'
 import type { AppSnapshot, SceneId } from './types'
 
 /** Contract version for the main → animation boundary. Bump when a field's meaning changes. */
-export const PRESENTATION_CONTRACT = 'C2-P3'
+export const PRESENTATION_CONTRACT = 'C2-P4'
 
 /** Semantic results a renderer may react to. No species, asset, reward or ranking identity. */
 export const CUE_KINDS = ['begin', 'pause', 'resume', 'settle', 'rest', 'thought-saved', 'support'] as const
@@ -35,7 +35,11 @@ export interface CompanionScene {
   allowBeats: boolean
   /** Main permits a transient cue independently of the read-only activity. */
   cue: PresentationCue | null
-  /** Present only for the saved ending identified by this scene and settle cue. */
+  /**
+   * Present only for a saved ending of this scene: with its settle cue while that cue is
+   * current, and without one (a stable `ending:` id) while the host keeps that saved result
+   * on screen. A renderer plays ending motion only for a matching settle cue (C2-P4).
+   */
   ending: { cueId: string; tier: 'hello' | 'snack' | 'meal' | 'feast' | null } | null
 }
 
@@ -88,12 +92,19 @@ export function companionViewOf(frame: FeedbackFrame, preferences: CompanionView
   }
 }
 
+/**
+ * A saved ending the host is still showing on screen, with the settle cue it played
+ * (if any). It keeps the finished activity in place after later taps replace the cue.
+ */
+export interface ShownEnding { sessionId: string; saved: boolean; cue: PresentationCue | null }
+
 /** Main resolves identity and saved results. Animation receives no mutable snapshot. */
 export function companionSceneOf(snapshot: AppSnapshot, cue: PresentationCue | null, options: {
   completedProgress: number
   visible: boolean
   persistence: Persistence
   hasError: boolean
+  shownEnding?: ShownEnding | null
 }): CompanionScene | null {
   if (!snapshot.settings.sceneVarietyEnabled) return null
   const session = snapshot.timer.session
@@ -111,16 +122,23 @@ export function companionSceneOf(snapshot: AppSnapshot, cue: PresentationCue | n
     }
   }
   // Never attach an old ending to a new session, including a legacy session without scene data.
-  if (session || !allowed || options.persistence !== 'saved' || cue?.kind !== 'settle') return null
+  if (session || !allowed) return null
   const ended = snapshot.scenes.lastEnded
-  if (!ended || ended.sessionId !== cue.sessionId) return null
+  if (!ended) return null
+  // A fresh settle cue needs a confirmed save. Once the saved result is on screen, the
+  // ending stays until the host stops showing it, whatever cue a later tap brings.
+  const settle = cue?.kind === 'settle' && cue.sessionId === ended.sessionId && options.persistence === 'saved' ? cue : null
+  const shown = options.shownEnding?.sessionId === ended.sessionId && options.shownEnding.saved ? options.shownEnding : null
+  if (!settle && !shown) return null
   const record = ended.phase === 'focus' ? snapshot.records.find(item => item.sessionId === ended.sessionId) : null
   if (ended.phase === 'focus' && !record) return null
+  // Keeping the cue that already played keeps its identity, so nothing replays or restarts.
+  const kept = settle ?? (shown?.cue?.kind === 'settle' && shown.cue.sessionId === ended.sessionId ? shown.cue : null)
   return {
     key: keyFor(ended.sessionId, ended.scene.selectionVersion), id: ended.scene.sceneId,
     sessionId: ended.sessionId, phase: ended.phase === 'focus' ? 'focus' : 'break', status: 'ended',
     completedProgress: record && record.targetMs > 0 ? Math.min(1, record.elapsedMs / record.targetMs) : 0,
-    allowBeats: true, cue,
-    ending: { cueId: cue.id, tier: record ? endingTierForElapsed(record.elapsedMs) : null },
+    allowBeats: true, cue: kept,
+    ending: { cueId: kept?.id ?? `ending:${ended.sessionId}`, tier: record ? endingTierForElapsed(record.elapsedMs) : null },
   }
 }
