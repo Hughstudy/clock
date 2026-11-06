@@ -4,11 +4,14 @@
 
 当前为 **v37，2026-11-06**。从v36完整主稿拆分，保留原有A—F章节号、RULE／ACT／T编号与锚点；新增48句日常台词候选。此次更新是文档组织与内容创作，不代表这些内容已经上线。
 
+**本轮人物讨论：** 新增[人物弧光讨论稿](15-character-arc-proposal.md)与[研究复盘](16-character-research.md)。保留已经确认的主性格，提出小矛盾、长期相处方式与六张试写卡；新建议尚待讨论，不替换正式规则或现有章稿。
+
 ## 先看什么
 
 | 你要做的事 | 建议阅读顺序 | 看完应能回答 |
 | --- | --- | --- |
 | 讨论这个产品是否成立 | [产品全貌](01-product.md) → [伙伴性格](10-character.md) → 产品全貌的[待决事项](01-product.md#mechanism-decisions) | 产品是什么、为什么值得用、哪些已定、哪些仍待验证 |
+| 打磨人物与弧光 | [已确认的性格](10-character.md) → [弧光讨论稿](15-character-arc-proposal.md) → [研究与反例](16-character-research.md) | 推荐哪种人物矛盾、怎样适应碎片使用、哪些要用样稿验证 |
 | 写角色台词 | [性格与说话方式](10-character.md#character-basis) → [语气和触发](08-voice.md) → [物件与日常台词](11-dialogue.md) | 这是谁说的、为什么此刻说、简单画面能否承接 |
 | 设计一个故事 | [故事规则](02-features.md#story-rewards) → [角色](10-character.md) → [章稿模板](12-stories.md#chapter-brief) → [故事验收](07-acceptance.md#causal-longterm-tests) | 起因、尝试、结果、各个结束落点与收集条件是否完整 |
 | 改页面和按钮 | [功能规格](02-features.md) → [UI规范与固定文案](03-ui.md) → [动作索引](13-actions.md) → [验收](07-acceptance.md) | 一次点击改变什么、控件怎么协作、布局是否稳定 |
@@ -33,6 +36,8 @@
 | [12-stories.md](12-stories.md) | 单章模板、首批内容、成本、暂停与结束样例 | E.12—E.15；章稿与制作交接 |
 | [13-actions.md](13-actions.md) | 用户动作与系统事件的ACT索引 | F；供定位，不另定义一套规则 |
 | [14-code-bridge.md](14-code-bridge.md) | 理念到代码的对应、差异、建议与证据边界 | 桥接文档；代码状态须看核对提交 |
+| [15-character-arc-proposal.md](15-character-arc-proposal.md) | 人物矛盾、三个尺度的弧光、六张试写卡与产品适配 | 讨论提案；不作为已经批准的剧情或开发任务 |
+| [16-character-research.md](16-character-research.md) | 六轮研究与文稿自检、一手来源、否决方向及证据边界 | 研究记录；未做用户试验，不宣称已验证吸引力 |
 
 ## 不要混淆的几件事
 
