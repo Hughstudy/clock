@@ -78,11 +78,14 @@ export function SettingsScreen({ form, canEdit, onBack, systemNoticeSummary, sys
           })}
         </fieldset>
 
-        <p className="hint">更改从下一段开始生效。专注页调过的时长会沿用到下次；改这里的专注时长或恢复默认后，专注页回到这里的时长。</p>
+        <p className="hint">更改从下一段开始生效。专注页调过的时长会沿用到下次。</p>
         <button type="button" className="btn btn-secondary" disabled={!canEdit} onClick={form.restoreDefaults}>
           恢复默认时长
         </button>
+        {/* The rule sits next to the action it describes. */}
+        <p className="hint settings-restore-note">改这里的专注时长或恢复默认后，专注页回到这里的时长。</p>
 
+        <h4 className="settings-subhead">声音</h4>
         <label className="switch-row">
           <span>到时提示音</span>
           <input
@@ -99,6 +102,7 @@ export function SettingsScreen({ form, canEdit, onBack, systemNoticeSummary, sys
           <p className="hint" role="status">{sound.message || '试听不改变声音开关，也不影响计时。'}</p>
         </div>
 
+        <h4 className="settings-subhead">伙伴</h4>
         <label className="switch-row">
           <span>伙伴动画</span>
           <input

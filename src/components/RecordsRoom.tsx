@@ -44,7 +44,7 @@ interface PictureProps extends RoomInfo {
 function RoomPicture({ band, activities, selected, onSelect }: PictureProps) {
   const ids = tagIds.filter(id => activities.has(id))
   return <span className="room-picture" data-band={band}>
-    <RecordsGreetingArt band={band} animate={false}/>
+    <RecordsGreetingArt band={band}/>
     {ids.length > 0 && <span className="room-shelf">{[ids.slice(0, 4), ids.slice(4)].filter(row => row.length > 0).map(row =>
       <span className="room-shelf-row" key={row[0]}>{row.map(id => onSelect
       ? <button key={id} type="button" data-room-spot={id} aria-label={`${sceneNames[id]}，查看 ${activities.get(id)!.length} 段专注`}

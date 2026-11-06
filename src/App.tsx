@@ -145,7 +145,20 @@ export function App() {
     focusOnHome.current = null
     if (target) document.querySelector<HTMLElement>(target)?.focus({ preventScroll: true })
   }, [screen])
-  const openScreen = (next: Screen, focusTarget: string | null = null) => { focusOnHome.current = focusTarget; setScreen(next) }
+  // Settings is a separate surface with a way back, so entering and leaving it has a direction:
+  // it slides in from the trailing edge, and Focus fades back in on return. Tabs stay instant.
+  // The screen changes synchronously in the same tap; only its first frames ease in.
+  const navTimer = useRef(0)
+  const openScreen = (next: Screen, focusTarget: string | null = null) => {
+    const root = document.documentElement
+    window.clearTimeout(navTimer.current)
+    if ((next === 'settings' || screen === 'settings') && !motion.reducedMotion) {
+      root.dataset.nav = next === 'settings' ? 'forward' : 'back'
+      navTimer.current = window.setTimeout(() => { delete root.dataset.nav }, 400)
+    } else delete root.dataset.nav
+    focusOnHome.current = focusTarget
+    setScreen(next)
+  }
 
   // A new install opens quietly: offline readiness is listed in Settings › 应用状态, not on Focus.
   const systemNoticeSummary = app.notice ? '数据状态需要查看' : app.saveError ? '有更改尚未保存' : pwa.updateReady ? '新版本已准备好' : null

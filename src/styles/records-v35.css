@@ -1,18 +1,22 @@
 .records-v35 { gap: .6rem; padding-bottom: 1.5rem; }
 .records-v35 .records-header { display: flex; align-items: center; justify-content: space-between; gap: .6rem; }
 .records-v35 .screen-title { margin: 0; }
-.records-v35 .records-status-button { flex: 0 0 auto; display: grid; align-content: center; inline-size: 6.2em; block-size: max(44px, calc(3.2em + 2px)); padding: .4em .5em; font-size: .8125rem; line-height: 1.1; white-space: nowrap; border: 1px solid var(--line); border-radius: 14px; background: var(--card); }
+.records-v35 .records-status-button { flex: 0 0 auto; display: grid; align-content: center; inline-size: 6.2em; block-size: max(44px, calc(3.2em + 2px)); padding: .4em .5em; font-size: .8125rem; line-height: 1.1; white-space: nowrap; border: 1px solid var(--line); border-radius: var(--radius-field); background: var(--card); }
 .records-v35 .records-modes { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .45rem; z-index: 2; }
 .records-v35 .records-modes button { padding-inline: .5rem; white-space: normal; overflow-wrap: anywhere; }
-.records-v35 .records-summary { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .25rem .6rem; padding: .4rem .7rem; border: 1px solid var(--line); border-radius: 16px; background: var(--card); }
+/* The sentence wraps on its own line; 查看统计 stays at the end instead of dropping below. */
+.records-v35 .records-summary { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: .25rem .6rem; padding: .4rem .7rem; border: 1px solid var(--line); border-radius: var(--radius-field); background: var(--card); }
 .records-v35 .records-summary > p { margin: 0; font-size: .9rem; }
-.records-v35 .records-summary-detail { flex-basis: 100%; padding-block: .45rem; }
+.records-v35 .records-summary-detail { grid-column: 1 / -1; padding-block: .45rem; }
 .records-v35 .records-tools { display: grid; gap: .3rem; }
 .records-v35 .records-filter-row { display: flex; align-items: center; flex-wrap: wrap; gap: .2rem .65rem; font-size: .875rem; }
 .records-v35 .records-search { display: grid; gap: .3rem; }
 .records-v35 .records-search > div { display: flex; gap: .4rem; }
-.records-v35 .records-search input { width: 100%; min-width: 0; min-height: 44px; font: inherit; border: 1px solid var(--line); border-radius: 12px; padding: .5rem .7rem; background: var(--card); color: var(--ink); }
-.records-v35 .records-search label { font-size: .875rem; }
+.records-v35 .records-search input { flex: 1; width: auto; min-width: 0; min-height: 44px; font: inherit; font-size: max(1rem, 16px); border: 1px solid var(--line); border-radius: var(--radius-field); padding: .5rem .7rem; background: var(--card); color: var(--ink); }
+/* One row: the field and a button that never breaks into stacked characters. The label
+   stays for screen readers; the placeholder carries it visually. */
+.records-v35 .records-search > div > button { flex: none; white-space: nowrap; padding-inline: 16px; }
+.records-v35 .records-search label { position: absolute; inline-size: 1px; block-size: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 .records-v35 .records-list { min-width: 0; }
 .records-v35 .record-day h3 { font-size: .9rem; margin: .7rem 0 .2rem; font-weight: 700; }
 .records-v35 .record-day h3 small { color: var(--muted); font-weight: 400; }
@@ -29,7 +33,7 @@
 .records-v35 .records-scene-preview { display: block; width: min(100%, 240px); height: auto; margin-inline: auto; }
 .records-v35 .records-activity .record-detail .focus-records { border: 1px solid var(--line); border-radius: 12px; padding: .3rem; }
 .records-v35 { container-type: inline-size; }
-.records-v35 .room-preview { display: flex; align-items: center; justify-content: space-between; gap: .6rem; min-height: 44px; min-width: 0; overflow: hidden; padding: 0 0 0 .8rem; border: 1px solid var(--line); border-radius: 15px; background: #f7ead4; font: inherit; font-weight: 700; color: var(--ink); text-align: start; }
+.records-v35 .room-preview { display: flex; align-items: center; justify-content: space-between; gap: .6rem; min-height: 44px; min-width: 0; overflow: hidden; padding: 0 0 0 .8rem; border: 1px solid var(--line); border-radius: var(--radius-field); transition: transform var(--dur-quick) ease; background: #f7ead4; font: inherit; font-weight: 700; color: var(--ink); text-align: start; }
 .room-preview .room-thumbnail { display: block; width: 7.5rem; height: 66px; flex: 0 0 auto; }
 .room-thumbnail .room-picture { height: 100%; width: 100%; border-radius: 0; }
 .room-thumbnail .records-art { height: 100%; max-width: 100%; }

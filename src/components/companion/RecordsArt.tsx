@@ -105,11 +105,11 @@ function ReadingLamp({ id }: { id: string }) {
   </g>
 }
 
-/** An entrance is a one-shot decoration. Removing animate immediately reveals the settled frame. */
-export const RecordsGreetingArt = memo(function RecordsGreetingArt({ band, animate }: { band: RecordsBand; animate: boolean }) {
+/** The room preview is still: Records opens often, so it shows the settled frame. */
+export const RecordsGreetingArt = memo(function RecordsGreetingArt({ band }: { band: RecordsBand }) {
   const id = `records-room-${useId().replace(/:/g, '')}`
   const colors = roomColors[band]
-  return <svg className="records-art records-art--greeting" data-band={band} data-animate={animate} viewBox="0 0 250 128" aria-hidden="true" focusable="false">
+  return <svg className="records-art records-art--greeting" data-band={band} viewBox="0 0 250 128" aria-hidden="true" focusable="false">
     <CompanionPaint id={id}/>
     <rect width="250" height="128" rx="15" fill={colors.wall}/>
     <path d="M0 105Q109 101 250 103V113Q250 128 235 128H15Q0 128 0 113Z" fill={colors.wood}/>

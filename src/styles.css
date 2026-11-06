@@ -118,11 +118,6 @@ button {
   align-items: center;
   text-align: center;
 }
-/* Whale-chan and her speech bubble */@keyframes breathe {
-  50% {
-    transform: translateY(1.5px) scale(1.01, 0.985);
-  }
-}
 
 .btn {
   min-height: 48px;
@@ -250,7 +245,14 @@ fieldset {
   font-size: 1.3rem;
   font-weight: 800;
   line-height: 1;
+  transition: transform 0.12s ease;
 }
+
+/* Every pressable thing answers the press. */
+.step:active:not(:disabled), .notice-action:active:not(:disabled),
+.stats .records-switch button:active, .records-v35 .room-preview:active { transform: scale(0.96); }
+.record-summary:active { background: var(--paper); }
+.link-button:active:not(:disabled) { opacity: 0.7; }
 
 .step:disabled {
   opacity: 0.4;
@@ -392,11 +394,13 @@ fieldset {
     animation: none !important;
   }
 
-  .btn:active,
-  .btn-primary:active {
-    transform: none;
-  }
 }
+/* Reduced motion keeps press feedback to colour; nothing scales. Scoped to controls, since
+   :active also matches their containers. */
+@media (prefers-reduced-motion: reduce) {
+  :is(button, .pill, .tab, .step, summary):active { transform: none !important; }
+}
+.app[data-reduced-motion='true'] :is(button, .pill, .tab, .step, summary):active { transform: none !important; }
 
 .home .save-state { color: var(--muted); font-size: .875rem; text-align: center; }.home .hint { max-width: 26rem; text-align: center; }
 .stats .focus-records { list-style: none; margin: 0; padding: 0; }
