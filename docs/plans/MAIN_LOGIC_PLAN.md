@@ -28,9 +28,9 @@ These are existing integration points, not instructions to move files immediatel
 | Domain behavior | `src/logic/app.ts`, `timer.ts`, `settings.ts`, `stats.ts`, `calendar.ts`, `snapshot.ts` and relevant tests |
 | Persistence and effects | `src/adapters/` storage, locks, time/calendar, identifiers, sound and lifecycle; the OS motion adapter is reserved for animation |
 | App coordination | `src/hooks/useClockApp.ts`, `useViews.ts`, `useSettingsForm.ts`, time/title/PWA hooks and future thought/record hooks |
-| Semantic feedback | `src/logic/feedback.ts`, `feedback-host.ts`, `feedback.md`, their tests, `src/hooks/companion/useFeedback.ts`, `src/data/encouragement.ts`, `encouragement.zh-CN.json` |
+| Semantic feedback | `src/logic/feedback.ts`, `feedback-host.ts`, `feedback.md`, their tests, `src/hooks/useFeedback.ts`, `src/data/encouragement.ts`, `encouragement.zh-CN.json` |
 | Functional screens and accessibility | `src/App.tsx`, `src/screens/`, navigation, timer controls, notices and `src/components/companion/CompanionFeedback.tsx`; one live-region owner |
-| Shared configuration and composition | `src/data/pet-spec.json`, shared validators, root styles, `src/styles/focus.css`, dependencies and PWA/deployment configuration |
+| Shared configuration and composition | `src/data/app-spec.json`, shared validators, root styles, `src/styles/focus.css`, dependencies and PWA/deployment configuration |
 
 The Animation Plan identifies its specific exceptions inside `src/logic/`, `src/adapters/` and `src/hooks/companion/`. Folder names do not establish workstream ownership: `useFeedback.ts` belongs here because it controls event policy, while deterministic character geometry remains in DOM-free `src/logic/` under animation ownership. Main integrates visual shells without independently editing animation-owned rendering files. Shared changes go through the contract and the owning workstream.
 

@@ -2,7 +2,7 @@ import assert from 'node:assert/strict'
 import { mkdir, mkdtemp, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
-import { chromium } from 'playwright'
+import { launchChromium } from './lib/browser.mjs'
 import { createServer } from 'vite'
 import react from '@vitejs/plugin-react'
 
@@ -11,7 +11,7 @@ await mkdir(output, { recursive: true })
 const server = await createServer({ configFile:false, root:path.resolve('preview/animation'), plugins:[react()], server:{host:'127.0.0.1',port:0} })
 await server.listen()
 const url = `http://127.0.0.1:${server.httpServer.address().port}`
-const browser = await chromium.launch({headless:true,channel:process.env.SCENE_BROWSER_CHANNEL || 'chrome'})
+const browser = await launchChromium()
 const checks=[],errors=[]
 const check=(label,condition)=>{assert.ok(condition,label);checks.push(label)}
 const ids=['F1','F2','F3','F4','F5','F6','F7','F8','R1','R2','R3']

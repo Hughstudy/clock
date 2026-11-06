@@ -1,0 +1,28 @@
+{
+  "browser": "153.0.8010.0",
+  "checks": [
+    "A failed ended-record write stays visible but contributes zero saved sessions",
+    "Retry contributes the one confirmed record exactly once",
+    "Failed deletion retains the saved note text and a local retry action",
+    "Both ten-minute deletion undos survive a later marker operation",
+    "Undo restores the original ID and text without duplicating the item",
+    "A new mark after quick undo creates a new ID within the coalescing window",
+    "Delayed Save A retains exact whitespace and rebounds B onto the original item",
+    "Saving continued text updates one note rather than creating A and B records",
+    "Retry confirms C on the same item while preserving later input D as its draft",
+    "Failed unchanged marker save keeps its editor and durable draft instead of reporting success",
+    "Retry confirms draft retirement without duplicating or revising the unchanged marker",
+    "A settings save failure is announced without opening the status details",
+    "A failed favorite never reports a saved star",
+    "Changing quotes remains available while A is pending",
+    "A late favorite receipt leaves B unselected and preserves A text",
+    "Failed cancellation retains the original saved favorite for reading",
+    "Confirmed cancellation clears its text snapshot and keeps a versioned tombstone",
+    "Peer cancellation synchronizes and cannot resurrect after reload",
+    "Unapplied lock failure for A remains explained after a successful B favorite",
+    "Retry replays the unaccepted A command once without duplicating B",
+    "Production persistence flows have no runtime or console errors"
+  ],
+  "errors": [],
+  "physicalDevice": false
+}

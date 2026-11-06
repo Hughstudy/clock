@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict'
 import path from 'node:path'
 import { mkdir, writeFile } from 'node:fs/promises'
-import { chromium } from 'playwright'
+import { launchChromium } from './lib/browser.mjs'
 import { build, preview } from 'vite'
 
 const output = path.resolve(process.env.PANEL_REVIEW_OUTPUT || '.preview/v35-panels')
@@ -48,7 +48,7 @@ const server = await preview({ build: { outDir }, preview: { host: '127.0.0.1', 
 const url = `http://127.0.0.1:${server.httpServer.address().port}/clock/`
 let browser
 try {
-  browser = await chromium.launch({ channel: process.env.SCENE_BROWSER_CHANNEL })
+  browser = await launchChromium()
   for (const [width, height, font] of [[320, 568, 16], [320, 812, 16], [320, 568, 32], [320, 850, 32], [375, 812, 16], [375, 812, 32], [568, 320, 32], [850, 320, 32], [430, 932, 16], [430, 932, 32]]) {
     const name = `${width}x${height}-${font === 32 ? '200' : '100'}percent`
     const context = await browser.newContext({ viewport: { width, height }, reducedMotion: 'reduce' })

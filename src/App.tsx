@@ -6,7 +6,7 @@ import { Notices } from './components/Notices'
 import { TabBar, type Screen } from './components/TabBar'
 import { TimerEndedBanner, timerEndedText } from './components/TimerEndedBanner'
 import { focusCopy } from './data/focus-copy'
-import { useFeedback } from './hooks/companion/useFeedback'
+import { useFeedback } from './hooks/useFeedback'
 import { useMotionPreference } from './hooks/companion/useMotionPreference'
 import { useClockApp, type UserAction } from './hooks/useClockApp'
 import { useDocumentTitle } from './hooks/useDocumentTitle'
@@ -20,7 +20,8 @@ import { useQuoteFavorites } from './hooks/useQuoteFavorites'
 import { useStatsView, useTimerView } from './hooks/useViews'
 import { HomeScreen } from './screens/HomeScreen'
 import { SettingsScreen } from './screens/SettingsScreen'
-import { StatsScreen, type RecordsVisit } from './screens/StatsScreen'
+import { RecordsScreen } from './screens/RecordsScreen'
+import type { RecordsVisit } from './hooks/records/visit'
 
 // Fast refresh only while a countdown is visible; otherwise often enough to roll over at midnight.
 const RUNNING_REFRESH_MS = 250
@@ -195,13 +196,13 @@ export function App() {
                 systemNoticeSummary={systemNoticeSummary} systemNotices={notices}
                 saveState={app.saveState} canEdit={canEdit} dispatch={app.dispatch} onSettings={() => openScreen('settings')} />
             </div>
-            {screen === 'stats' && <StatsScreen key={app.snapshot.datasetGeneration} view={statsView} thoughts={thoughts} canEdit={canEdit} visit={recordsVisit}
+            {screen === 'stats' && <RecordsScreen key={app.snapshot.datasetGeneration} view={statsView} thoughts={thoughts} canEdit={canEdit} visit={recordsVisit}
               onEditThought={thoughts.edit}
               favorites={favorites} hasDraft={thoughts.hasDraft} onContinueDraft={() => thoughts.setOpen(true)}
               onAnnounce={announce}
               systemNoticeSummary={systemNoticeSummary} systemNotices={notices}
               persistence={app.persistence} notice={app.notice} hasSaveError={!!app.saveError}
-              showArt={app.snapshot.settings.sceneVarietyEnabled} reducedMotion={motion.reducedMotion} />}
+              showArt={app.snapshot.settings.sceneVarietyEnabled} />}
             {screen === 'stats' && thoughts.open && <FocusTaskDialog title="编辑想法" onClose={() => thoughts.setOpen(false)}>
               <ThoughtPanel thoughts={thoughts} canEdit={canEdit} />
               {app.saveState === 'pending' && <p className="panel-save-error">有更改尚未保存。

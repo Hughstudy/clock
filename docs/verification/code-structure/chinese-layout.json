@@ -1,0 +1,31 @@
+{
+  "browser": "153.0.8010.0",
+  "font": "Noto Sans CJK SC (test-only webfont)",
+  "checks": [
+    "320/100%: 全部记录 remains usable with Chinese glyphs",
+    "320/100%: 只看想法 remains usable with Chinese glyphs",
+    "320/100%: 生活场景 remains usable with Chinese glyphs",
+    "320/100%: 我的收藏 remains usable with Chinese glyphs",
+    "320/200%: 全部记录 remains usable with Chinese glyphs",
+    "320/200%: 只看想法 remains usable with Chinese glyphs",
+    "320/200%: 生活场景 remains usable with Chinese glyphs",
+    "320/200%: 我的收藏 remains usable with Chinese glyphs",
+    "375/100%: 全部记录 remains usable with Chinese glyphs",
+    "375/100%: 只看想法 remains usable with Chinese glyphs",
+    "375/100%: 生活场景 remains usable with Chinese glyphs",
+    "375/100%: 我的收藏 remains usable with Chinese glyphs",
+    "375/200%: 全部记录 remains usable with Chinese glyphs",
+    "375/200%: 只看想法 remains usable with Chinese glyphs",
+    "375/200%: 生活场景 remains usable with Chinese glyphs",
+    "375/200%: 我的收藏 remains usable with Chinese glyphs",
+    "430/100%: 全部记录 remains usable with Chinese glyphs",
+    "430/100%: 只看想法 remains usable with Chinese glyphs",
+    "430/100%: 生活场景 remains usable with Chinese glyphs",
+    "430/100%: 我的收藏 remains usable with Chinese glyphs",
+    "430/200%: 全部记录 remains usable with Chinese glyphs",
+    "430/200%: 只看想法 remains usable with Chinese glyphs",
+    "430/200%: 生活场景 remains usable with Chinese glyphs",
+    "430/200%: 我的收藏 remains usable with Chinese glyphs"
+  ],
+  "errors": []
+}

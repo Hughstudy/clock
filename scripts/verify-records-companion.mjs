@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict'
 import { mkdir, writeFile } from 'node:fs/promises'
 import path from 'node:path'
-import { chromium } from 'playwright'
+import { launchChromium } from './lib/browser.mjs'
 import { build, preview } from 'vite'
 
 const output = path.resolve(process.env.RECORDS_REVIEW_OUTPUT || '.preview/records-v35')
@@ -80,7 +80,7 @@ await build({ build: { outDir } })
 const app = await preview({ build: { outDir }, preview: { host: '127.0.0.1', port: 4387, strictPort: true } })
 let browser
 try {
-  browser = await chromium.launch({ executablePath: process.env.SCENE_BROWSER_EXECUTABLE, channel: process.env.SCENE_BROWSER_CHANNEL })
+  browser = await launchChromium()
   const context = await browser.newContext({ viewport: { width: 375, height: 900 }, timezoneId: 'Asia/Singapore' })
   const page = await context.newPage()
   observe(page)
@@ -143,6 +143,16 @@ try {
   await page.setViewportSize({ width: 320, height: 900 })
   const larger = await page.addStyleTag({ content: 'html { font-size: 200% !important; }' })
   check('Records remains accessible at320px and200% text', await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth) && await page.locator('.records-modes button').count() === 4)
+  await press(page, '只看想法')
+  for (const width of widths) {
+    await page.setViewportSize({ width, height: 900 })
+    check(`Thought search fits at ${width}px and 200% text without losing its button`, await page.evaluate(() => {
+      const field = document.querySelector('#thought-search').getBoundingClientRect()
+      const submit = document.querySelector('.records-search button').getBoundingClientRect()
+      return document.documentElement.scrollWidth <= innerWidth && field.width > 0 && field.right <= submit.left && submit.right <= innerWidth
+    }))
+  }
+  await press(page, '全部记录')
   await larger.evaluate(node => node.remove())
   await page.setViewportSize({ width: 375, height: 900 })
   await page.evaluate(async () => { await document.fonts.ready; window.scrollTo(0, 0) })

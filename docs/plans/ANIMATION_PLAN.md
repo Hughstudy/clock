@@ -139,7 +139,7 @@ These are module responsibilities, not live worker claims. Establish actual owne
 | Proposed scene components/hooks and their scoped styles | Shared contact anchors, surface deformation and cancellation. Agree names through the interface review; these modules do not exist yet |
 | Proposed isolated preview fixtures | Feed approved mock views and cues into the renderer without a second timer or storage implementation |
 
-Do not independently edit `src/logic/feedback.ts`, `src/logic/feedback-host.ts`, `src/hooks/companion/useFeedback.ts`, encouragement catalogs, `src/components/companion/CompanionFeedback.tsx`, `src/styles/companion.css`, screen/root composition, `src/styles/focus.css`, app state, snapshot/storage code or shared contract files. Those remain main-logic/integration owned. Deliver visual requirements or reusable slots to the owner instead of creating overlapping edits.
+Do not independently edit `src/logic/feedback.ts`, `src/logic/feedback-host.ts`, `src/hooks/useFeedback.ts`, encouragement catalogs, `src/components/companion/CompanionFeedback.tsx`, `src/styles/companion.css`, screen/root composition, `src/styles/focus.css`, app state, snapshot/storage code or shared contract files. Those remain main-logic/integration owned. Deliver visual requirements or reusable slots to the owner instead of creating overlapping edits.
 
 Pure drawing modules may remain under `src/logic/`: the workstream split does not authorize moving browser effects into pure logic or reorganizing the repository into new folders. No code movement is part of this plan update.
 

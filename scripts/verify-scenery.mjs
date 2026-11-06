@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict'
 import { mkdir, writeFile } from 'node:fs/promises'
 import path from 'node:path'
-import { chromium } from 'playwright'
+import { launchChromium } from './lib/browser.mjs'
 import { build, createServer, preview } from 'vite'
 import react from '@vitejs/plugin-react'
 
@@ -80,7 +80,7 @@ let browser
 try {
   fixture = await createServer({ configFile: false, root: path.resolve('preview/animation'), plugins: [react()], server: { host: '127.0.0.1', port: 0 } })
   await fixture.listen()
-  browser = await chromium.launch({ headless: true, channel: process.env.SCENE_BROWSER_CHANNEL, executablePath: process.env.SCENE_BROWSER_EXECUTABLE })
+  browser = await launchChromium()
   const page = await browser.newPage({ viewport: { width: 1200, height: 900 }, colorScheme: 'light' })
   observe(page)
   await page.goto(`http://127.0.0.1:${fixture.httpServer.address().port}/`)

@@ -1,10 +1,10 @@
 import { useMemo } from 'react'
-import { entryDate, entryId, indexRoomActivities, knownDate, pageContaining, queryRecords, type RecordsQuery } from '../logic/records-query'
-import type { FocusSceneId } from '../logic/types'
-import type { StatsView } from './useViews'
+import { entryDate, entryId, indexRoomActivities, knownDate, pageContaining, queryRecords, type RecordsQuery } from '../../logic/records-query'
+import type { FocusSceneId } from '../../logic/types'
+import type { StatsView } from '../useViews'
 
 export type RecordsMode = 'all' | 'thoughts' | 'scenes' | 'favorites'
-export type { MonthFilter } from '../logic/records-query'
+export type { MonthFilter } from '../../logic/records-query'
 
 /** Read-only lookup model shared by history, thought search and saved activities. */
 export function useRecordsQuery(view: StatsView, mode: RecordsMode, query: RecordsQuery, roomTag: FocusSceneId | null) {

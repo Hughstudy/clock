@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict'
 import path from 'node:path'
 import { mkdir, writeFile } from 'node:fs/promises'
-import { chromium } from 'playwright'
+import { launchChromium } from './lib/browser.mjs'
 import { build, preview } from 'vite'
 import { focusTime, prepareMinutes } from './focus-duration-actions.mjs'
 import { checkDurationRuler } from './check-duration-ruler.mjs'
@@ -48,7 +48,7 @@ await build({ build: { outDir, rolldownOptions: { input: [path.resolve('index.ht
 const server = await preview({ build: { outDir }, preview: { host: '127.0.0.1', port: 0 } })
 let browser
 try {
-  browser = await chromium.launch({ channel: process.env.SCENE_BROWSER_CHANNEL })
+  browser = await launchChromium()
   const context = await browser.newContext({ viewport: { width: 375, height: 850 }, timezoneId: 'Asia/Singapore', reducedMotion: 'reduce' })
   context.on('page', page => {
     page.on('pageerror', error => errors.push(error.message))

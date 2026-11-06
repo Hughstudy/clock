@@ -2,7 +2,7 @@ import assert from 'node:assert/strict'
 import { mkdir, readFile, writeFile } from 'node:fs/promises'
 import path from 'node:path'
 import { pathToFileURL } from 'node:url'
-import { chromium } from 'playwright'
+import { launchChromium } from './lib/browser.mjs'
 import { build } from 'vite'
 import react from '@vitejs/plugin-react'
 
@@ -57,7 +57,7 @@ const style = `<style>${drawingStyles}
   </style>`
 let browser
 try {
-  browser=await chromium.launch({ headless:true, channel:process.env.SCENE_BROWSER_CHANNEL || 'chrome' })
+  browser=await launchChromium()
   const page=await browser.newPage({viewport:{width:1150,height:1600},deviceScaleFactor:1})
   for(const [id, positions] of Object.entries(phases)){
     const cells=positions.map((fraction,index)=>draw(id,fraction,index))

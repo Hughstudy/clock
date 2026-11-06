@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { sceneRules } from '../data/scene-rules'
+import { sceneRules } from './scene-rules'
 import { spec } from '../data/spec'
 import { applyAction, type AppAction } from './app'
 import { endingTierForElapsed, initialScenes, mergeSceneStates, selectScene } from './scenes'

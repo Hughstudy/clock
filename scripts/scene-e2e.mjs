@@ -3,7 +3,7 @@ import { prepareMinutes } from './focus-duration-actions.mjs'
 import { mkdtemp, mkdir, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
-import { chromium } from 'playwright'
+import { launchChromium } from './lib/browser.mjs'
 import { build, preview } from 'vite'
 import react from '@vitejs/plugin-react'
 
@@ -20,7 +20,7 @@ const appServer = await preview({ base: '/clock/', preview: { host: '127.0.0.1',
 const fixtureServer = await preview({ configFile: false, root: fixtureRoot, base: '/', build: { outDir: fixtureDist }, preview: { host: '127.0.0.1', port: 0, strictPort: false } })
 const appUrl = `http://127.0.0.1:${appServer.httpServer.address().port}/clock/`
 const fixtureUrl = `http://127.0.0.1:${fixtureServer.httpServer.address().port}/`
-const browser = await chromium.launch({ headless: true, ...(process.env.SCENE_BROWSER_CHANNEL ? { channel: process.env.SCENE_BROWSER_CHANNEL } : {}) })
+const browser = await launchChromium()
 const focusPool = ['F1', 'F2', 'F3', 'F4', 'F5', 'F6', 'F7', 'F8']
 const checks = []
 const errors = []

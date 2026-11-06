@@ -25,7 +25,7 @@ rewards, persistence and functional screens). Main logic provides read-only
 results and permitted cues; animation never changes time, saved data or rewards.
 Both can be developed independently against the agreed interface. The approved
 2026-10-31 refinement is implemented: eleven immediately available scenes, shared
-rounded-hand contact poses, progress-based activity development, C2-P3 and snapshot v6.
+rounded-hand contact poses, progress-based activity development, C2-P4 and snapshot v8.
 See [animation verification](docs/verification/animation-refinement.md).
 See [AGENTS.md](AGENTS.md) for
 engineering and collaboration rules. The [supplied handoff](docs/handoff-20261029/README.md),
@@ -70,16 +70,22 @@ BASE_PATH=/clock/ npm run build && BASE_PATH=/clock/ npm run preview
 regenerates the PNG install icons from it. A test fails if the SVG drifts from
 the drawing data.
 
-## Layout
+## Code structure
 
-| Path | Contents |
+Use the [code map](docs/CODE_MAP.md) to find the right module before editing. It explains dependency direction, the snapshot modules, Records browsing and checks to run.
+
+| Path | Responsibility |
 | --- | --- |
-| `src/logic/` | Pure domain functions: timer transitions, accounting, calendar, snapshot validation and merging, seeded rough.js sketches. No React, DOM, storage or clock access. |
-| `src/data/pet-spec.json` | Tunable timer defaults and bounds, cadence, calendar week start, sketch seeds, palette, and Whale-chan's parts, poses, captions and reaction timings. Validated by `src/logic/spec.ts`. |
-| `src/data/companion-spec.json` | Original blue companion shapes, palette, semantic poses and animation timings. |
-| `src/adapters/` | Browser effects: `localStorage` snapshot store, Web Locks, local calendar dates, sound, page lifecycle. |
-| `src/hooks/` | React coordination between adapters and logic. |
-| `src/components/`, `src/screens/` | Presentation only. |
+| `src/logic/` | Pure transitions, queries, snapshot validation/migration/merge, and deterministic drawing geometry |
+| `src/adapters/` | Browser storage, Web Locks, time/calendar, sound and lifecycle |
+| `src/hooks/` | App coordination, input recovery, semantic feedback and saved views |
+| `src/hooks/records/` | Records queries, per-mode state and scroll/focus restoration |
+| `src/screens/`, `src/components/` | Screen composition and reusable presentation; Records subviews live in `components/records/` |
+| `src/contracts/` | Focus, favorites and read-only main-to-animation contracts |
+| `src/data/app-spec.json` | Validated runtime defaults, bounds and chart configuration |
+| `src/data/companion-spec.json`, `src/data/scene-*.ts` | Current blue companion artwork, motion and scene copy |
+| `src/test/fixtures/legacy-icon.json` | Build-only source for the retained install icon; not loaded by the app |
+| `scripts/lib/browser.mjs` | Shared browser selection for all production checks and review tools |
 
 ## Deploy
 
@@ -95,7 +101,7 @@ One-time setup: in the repository's **Settings → Pages**, set **Source** to
   key. Unreadable or partially invalid data is copied to a
   `whale-focus:snapshot:backup:<timestamp>` key before anything is replaced;
   if no copy can be made, the original is left untouched.
-- Schema v3 migrates v1/v2 completions to ended focus records and participation,
+- The current schema is v8. The migration chain upgrades v1/v2 completions to ended focus records and participation,
   preserving IDs, totals and dates. Unknown legacy start times remain null.
 - Start, pause, resume and end write immediately under a short lock. A running
   session continues while the page is hidden or closed, capped at its saved
@@ -114,14 +120,14 @@ One-time setup: in the repository's **Settings → Pages**, set **Source** to
 
 ## Current verification
 
-See the [phone layout and room verification](docs/verification/companion-first.md) for the November 3 changes and the [v35 interaction report](docs/verification/interaction-v35.md) for the earlier increment. Physical-phone and screen-reader acceptance remain open.
+See the [code-structure verification](docs/verification/code-structure.md) for the latest refactor and the [phone layout and room verification](docs/verification/companion-first.md) for the November 3 changes and the [v35 interaction report](docs/verification/interaction-v35.md) for the earlier increment. Physical-phone and screen-reader acceptance remain open.
 
 ## Credits
 
 Whale-chan is a fan-made, non-commercial character inspired by the Chinese
 community's DeepSeek Whale-chan (character designs by Bilibili artists
 ZipZipPipe and 上善无形). She is drawn in code from the shapes in
-`src/data/pet-spec.json`; no fan artwork is included in this repository.
+`src/test/fixtures/legacy-icon.json`; no fan artwork is included in this repository.
 This project is not affiliated with or endorsed by DeepSeek.
 
 The blue creature in `src/data/companion-spec.json` is new original procedural artwork, separate from the retained legacy character and install icons. Its named parts, palette, poses and animation timings are validated and cached; animations cannot change time or saved records.

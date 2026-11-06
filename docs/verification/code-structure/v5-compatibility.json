@@ -1,0 +1,12 @@
+{
+  "archivedCommit": "5119d1a863d89cf1201358d2e4a8addfc6b8e841",
+  "checks": [
+    "v5 active timer and assignment preserved",
+    "current migration committed",
+    "real v5 decoder rejects current schema",
+    "received update blocks old writer",
+    "missed storage event still blocks old writer under transaction",
+    "cold v5 load read-only"
+  ],
+  "result": "pass"
+}

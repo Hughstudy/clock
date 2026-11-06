@@ -1,0 +1,67 @@
+{
+  "specVersion": 1,
+  "presentation": {
+    "motionEnabledDefault": true,
+    "encouragementEnabledDefault": true,
+    "sceneVarietyEnabledDefault": true
+  },
+  "timer": {
+    "durationsMinutes": {
+      "focus": {
+        "default": 25,
+        "min": 1,
+        "max": 120
+      },
+      "shortBreak": {
+        "default": 5,
+        "min": 1,
+        "max": 60
+      },
+      "longBreak": {
+        "default": 15,
+        "min": 1,
+        "max": 90
+      }
+    },
+    "longBreakEvery": 4,
+    "soundEnabledDefault": false,
+    "completionSoundWindowSeconds": 60,
+    "restSuggestionStaleMinutes": 60,
+    "stepMaxLength": 80
+  },
+  "thoughts": {
+    "maxLength": 500,
+    "undoPeriodSeconds": 600,
+    "markCoalesceMs": 800,
+    "draftSaveDelayMs": 600,
+    "statusVisibleSeconds": 10
+  },
+  "decor": {
+    "roughness": 1.3,
+    "bowing": 1.1,
+    "seeds": {
+      "chart": 23
+    }
+  },
+  "palette": {
+    "ink": "#1f2a52",
+    "muted": "#7c849c",
+    "line": "#dde3f0",
+    "accent": "#3f6ee8",
+    "accentSoft": "#c6d6ff",
+    "teal": "#2a9d8f",
+    "hair": "#3552b5",
+    "hairDeep": "#24357a",
+    "hairLight": "#8fc3f7",
+    "navy": "#22306b",
+    "skin": "#fff0e6",
+    "blush": "#f8a9b8",
+    "white": "#ffffff",
+    "eye": "#2d4ea6",
+    "mouth": "#e2707f",
+    "tear": "#9fd3ff",
+    "wood": "#c99358",
+    "rice": "#fffdf7",
+    "sky": "#7fb6f2"
+  }
+}

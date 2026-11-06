@@ -1,6 +1,6 @@
 # Feedback and copy module
 
-The pure reducer in `feedback.ts` turns committed app events into one status line, at most one encouragement phrase and at most one announcement. `feedback-host.ts` feeds it from the real timer model, and `src/hooks/companion/useFeedback.ts` connects that host to the app. Animation never supplies facts.
+The pure reducer in `feedback.ts` turns committed app events into one status line, at most one encouragement phrase and at most one announcement. `feedback-host.ts` feeds it from the real timer model, and `src/hooks/useFeedback.ts` connects that host to the app. Animation never supplies facts.
 
 ## Content
 

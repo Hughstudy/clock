@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict'
 import path from 'node:path'
 import { mkdir, readFile, writeFile } from 'node:fs/promises'
-import { chromium } from 'playwright'
+import { launchChromium } from './lib/browser.mjs'
 import { build, preview } from 'vite'
 
 const output = path.resolve(process.env.UPDATE_REVIEW_OUTPUT || '.preview/v35-update')
@@ -33,7 +33,7 @@ const server = await preview({ build: { outDir }, preview: { host: '127.0.0.1', 
 const url = `http://127.0.0.1:${server.httpServer.address().port}/clock/`
 let browser
 try {
-  browser = await chromium.launch({ channel: process.env.SCENE_BROWSER_CHANNEL })
+  browser = await launchChromium()
   const context = await browser.newContext({ viewport: { width: 375, height: 812 }, reducedMotion: 'reduce', timezoneId: 'Asia/Singapore' })
   context.on('page', page => page.on('pageerror', error => errors.push(error.message)))
   const page = await context.newPage()

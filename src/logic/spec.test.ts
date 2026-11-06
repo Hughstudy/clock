@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import raw from '../data/pet-spec.json'
+import raw from '../data/app-spec.json'
 import { parseSpec, SpecError } from './spec'
 
 describe('parseSpec', () => {
@@ -15,21 +15,6 @@ describe('parseSpec', () => {
     bad.timer.durationsMinutes.focus.default = 500
     expect(() => parseSpec(bad)).toThrow(SpecError)
     expect(() => parseSpec(bad)).toThrow(/timer\.durationsMinutes\.focus\.default/)
-  })
-
-  it('rejects a pose that names a missing part', () => {
-    const bad = structuredClone(raw)
-    bad.character.poses.rice.push('tail2')
-    expect(() => parseSpec(bad)).toThrow(/character\.poses\.rice: unknown part tail2/)
-  })
-
-  it('rejects unknown tones and non-path data', () => {
-    const badTone = structuredClone(raw)
-    badTone.character.parts.face.fill = 'tomato'
-    expect(() => parseSpec(badTone)).toThrow(/character\.parts\.face\.fill/)
-    const badPath = structuredClone(raw)
-    badPath.character.parts.face.d = '<script>'
-    expect(() => parseSpec(badPath)).toThrow(/character\.parts\.face\.d/)
   })
 
   it('rejects a zero seed, which rough.js would treat as random', () => {
