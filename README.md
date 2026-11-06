@@ -1,5 +1,7 @@
 # Whale Focus
 
+**Current product documentation:** [番茄是个番茄 — PRD map](docs/prd/README.md) (v37, November 6, 2026). Start with the product overview, then follow the map to behavior, UI, data, acceptance, character, dialogue and the code bridge. This is the maintained product source; earlier handoffs remain historical snapshots. The split and new dialogue candidates do not change the application or establish full product acceptance.
+
 The current prototype implements the authorized interaction increment from the November 2 PRD v35. Focus keeps timing and thought controls in stable groups, results require explicit preparation before another start, and encouragement has a category reader with saved favorites. Records offers four views, full-history thought search, month selection and 20-item pages. Snapshot v8 preserves earlier data and adds quote favorites. See the [v35 scope](docs/plans/INTERACTION_V35_PLAN.md) and [verification](docs/verification/interaction-v35.md).
 
 The implementation baseline `e6daa66` contains the supplied 2026-10-29 PRD v3 handoff and
@@ -13,7 +15,7 @@ features below are not yet complete.
 The user selected a soft, round blue creature with expressive arms for the
 working prototype. Home uses original rough.js artwork, short event-driven
 gestures, quiet focus and reduced-motion poses. Final artwork, product name and
-brand assets remain open. Thought capture and draft recovery are implemented. Full persistent cottage/world interactions, authored chapter continuation, backup/restore/clear UI and final branding remain pending.
+brand assets remain open. Thought capture and draft recovery are implemented. Full persistent cottage/world interactions, independent authored chapters and completion-qualified story collection, backup/restore/clear UI and final branding remain pending.
 
 The English [PLAN.md](PLAN.md) is the current review draft: it records the PRD
 gaps, proposed choices, shared interface and integration order. Work is split into
@@ -30,8 +32,7 @@ engineering and collaboration rules. The [supplied handoff](docs/handoff-2026102
 [PRD v3](docs/handoff-20261029/番茄钟_产品PRD_v3.md) and
 [register snapshot](docs/handoff-20261029/番茄钟_开发协作.md) are historical source
 references, preserved in their original language; no cloud register has been
-updated. Maintained local project documentation uses English. This documentation
-preference does not change the application's UI language.
+updated. Engineering plans and reports use English. The user-requested product documentation in `docs/prd/` retains Chinese, including the original product language and copy. This does not change the application's UI language.
 
 Tap **开始专注** to start the displayed time. Tap the digits or the pencil to adjust the length on the ruler. Applying the new value returns to preparation. Choose **给我一句鼓励** to hear from the companion in a speech bubble and optionally favorite its words. Reading stays open while the timer changes.
 

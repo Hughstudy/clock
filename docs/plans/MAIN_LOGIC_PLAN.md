@@ -1,5 +1,7 @@
 # Main Logic Plan
 
+**Current product source (2026-11-06):** use the [v37 PRD map](../prd/README.md) for behavior, data, command mappings and acceptance. Earlier product proposals below are historical where they conflict. Ended sessions create no continuation tasks; new collection requires natural expiry, a complete story and successful save. Dialogue candidates reuse simple existing scenes and do not add animation or trigger requirements.
+
 The first PRD v5 interaction slice now includes separate duration selection, explicit thought targets, snapshot v7 draft ownership, and day-grouped 7/30-day history. See the [state table and checks](../verification/focus-interactions-v5.md) for current scope. Durable bookmarks and backup/replacement restore remain later milestones.
 
 **Presentation contract C2-P4, 2026-11-06:** while the host shows a saved session result, `companionSceneOf` keeps that ending as a still `ended` scene after later cues (marks, encouragement), reusing the settle cue that played or a stable `ending:` id after a reload. Opening a page retires a break suggestion older than `timer.restSuggestionStaleMinutes`. See the [batch 1 verification](../verification/design-pass-batch1.md).
