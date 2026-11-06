@@ -259,12 +259,18 @@ export function useRecordsBrowser({ view, favorites, visit, incomplete, thoughts
     }
   }
   const closeWelcome = () => { localFocus.current = 'welcome'; toggle('welcome') }
-  const openMonth = () => {
+  const openMonth = (event: MouseEvent<HTMLButtonElement>) => {
+    // Safari leaves clicked buttons unfocused; native dialog Back still needs a stable opener.
+    event.currentTarget.focus({ preventScroll: true })
     setYear(current.month && current.month !== 'unknown' ? current.month.slice(0, 4) : view.todayKey.slice(0, 4))
     setStatusPanel(false)
     setMonthPanel(true)
   }
-  const openStatus = () => { setMonthPanel(false); setStatusPanel(true) }
+  const openStatus = (event: MouseEvent<HTMLButtonElement>) => {
+    event.currentTarget.focus({ preventScroll: true })
+    setMonthPanel(false)
+    setStatusPanel(true)
+  }
 
   return {
     reading, current, result, screen, list, activeSeen, sourceRecord, selectedOriginal, missingSource, detachedThought,

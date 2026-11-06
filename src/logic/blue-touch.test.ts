@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { blueTouchKind, blueTouchOffset, blueTouchPoint, blueTouchPressPose, blueTouchTransform, springOf, springSettled, stepSpring, type SpringState } from './blue-touch'
+import { advanceBlueTouchMotion, blueTouchKind, blueTouchMotionNeedsFrame, blueTouchMotionTransform, blueTouchOffset, blueTouchPoint, blueTouchPressPose, emptyBlueTouchMotion, springOf, springSettled, stepSpring, type BlueTouchInput, type BlueTouchMotion, type SpringState } from './blue-touch'
 
 const canvas = { width: 240, height: 190 }
 const bounds = { left: 10, top: 20, ...canvas }
@@ -117,7 +117,54 @@ describe('blue companion touch spring', () => {
     expect(Math.abs(state.value)).toBeLessThan(1.5)
     const squish = blueTouchPressPose('squish', 1)
     expect(squish.sx * squish.sy).toBeGreaterThan(0.98)
-    expect(blueTouchTransform(squish, 0)).toBe('translateY(0px) rotate(0deg) scale(1, 1)')
-    expect(blueTouchTransform(blueTouchPressPose('high-five', -1), 1)).toContain('rotate(-3deg)')
+    expect(blueTouchPressPose('high-five', -1).r).toBe(-3)
+  })
+})
+
+describe('blue companion touch continuity', () => {
+  const run = (state: BlueTouchMotion, input: BlueTouchInput | null, ms: number) => {
+    for (let time = 0; time < ms; time += 16) state = advanceBlueTouchMotion(state, input, 16)
+    return state
+  }
+
+  it('retargets opposite hands and different touch zones without changing the current pose or velocity', () => {
+    const contacts: BlueTouchInput[] = [
+      { id: 1, kind: 'high-five', side: -1, phase: 'press' },
+      { id: 2, kind: 'high-five', side: 1, phase: 'press' },
+      { id: 3, kind: 'pat', side: 1, phase: 'press' },
+      { id: 4, kind: 'squish', side: 1, phase: 'press' },
+    ]
+    let state = emptyBlueTouchMotion()
+    for (const contact of contacts) {
+      const retargeted = advanceBlueTouchMotion(state, contact, 0)
+      expect(retargeted.pose).toEqual(state.pose)
+      expect(blueTouchMotionTransform(retargeted)).toEqual(blueTouchMotionTransform(state))
+      state = run(retargeted, contact, 80)
+    }
+    expect(state.pose.sx.value).toBeGreaterThan(1.03)
+  })
+
+  it('gives release-only keyboard pats a finite press and rebound without another input', () => {
+    const pat: BlueTouchInput = { id: 1, kind: 'pat', side: 1, phase: 'release' }
+    const start = advanceBlueTouchMotion(emptyBlueTouchMotion(), pat, 0)
+    expect(blueTouchMotionNeedsFrame(start)).toBe(true)
+    const pressed = run(start, pat, 80)
+    expect(pressed.pose.sy.value).toBeLessThan(0.98)
+    const released = run(pressed, pat, 320)
+    expect(released.pose.sy.value).toBeGreaterThan(1)
+    const settled = run(released, pat, 2000)
+    expect(blueTouchMotionNeedsFrame(settled)).toBe(false)
+    expect(blueTouchMotionTransform(settled)).toBe('translateY(0px) rotate(0deg) scale(1, 1)')
+  })
+
+  it('cancels a keyboard pulse without resetting its pose or starting a delayed gesture', () => {
+    const pat: BlueTouchInput = { id: 1, kind: 'pat', side: 1, phase: 'release' }
+    const moving = run(emptyBlueTouchMotion(), pat, 64)
+    const cancelled = advanceBlueTouchMotion(moving, null, 0)
+    expect(cancelled.pose).toEqual(moving.pose)
+    expect(cancelled.phase).toBe('release')
+    const settled = run(cancelled, null, 2000)
+    expect(blueTouchMotionNeedsFrame(settled)).toBe(false)
+    expect(settled.pose).toEqual(emptyBlueTouchMotion().pose)
   })
 })

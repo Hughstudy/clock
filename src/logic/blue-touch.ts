@@ -56,13 +56,6 @@ export function blueTouchPressPose(kind: BlueTouchKind, side: 1 | -1): BlueTouch
   return { y: 2, sx: 1.055, sy: 0.94, r: 0 }
 }
 
-/** Blend from rest (0) to the press pose (1). Past rest the body lifts more than it sinks. */
-export function blueTouchTransform(press: BlueTouchPose, amount: number): string {
-  const y = amount >= 0 ? press.y * amount : 3 * Math.abs(press.y || 1) * amount
-  const f = (n: number) => Number(n.toFixed(4))
-  return `translateY(${f(y)}px) rotate(${f(press.r * amount)}deg) scale(${f(1 + (press.sx - 1) * amount)}, ${f(1 + (press.sy - 1) * amount)})`
-}
-
 /** Apple's perceptual spring: duration (pace) and bounce (character), unit mass. */
 export interface Spring { stiffness: number; damping: number }
 export function springOf(durationS: number, bounce: number): Spring {
@@ -88,4 +81,64 @@ export function stepSpring(state: SpringState, target: number, spring: Spring, d
 
 export function springSettled(state: SpringState, target: number): boolean {
   return Math.abs(state.value - target) < 0.001 && Math.abs(state.velocity) < 0.01
+}
+
+export interface BlueTouchInput { id: number; kind: BlueTouchKind; phase: 'press' | 'release'; side: 1 | -1 }
+type PoseSprings = Record<keyof BlueTouchPose, SpringState>
+export interface BlueTouchMotion {
+  pose: PoseSprings
+  contactId: number | null
+  phase: 'press' | 'pulse' | 'release'
+  pressed: BlueTouchPose
+  pulseElapsedMs: number
+}
+const REST: BlueTouchPose = { y: 0, sx: 1, sy: 1, r: 0 }
+const AXES = ['y', 'sx', 'sy', 'r'] as const
+// Relative tolerances keep small scale changes alive as long as rotation or translation.
+const SPAN: BlueTouchPose = { y: 2, sx: 0.055, sy: 0.06, r: 3 }
+const TOUCH_PRESS = springOf(0.12, 0)
+const TOUCH_RELEASE = springOf(0.5, 0.65)
+const KEYBOARD_PRESS_MS = 120
+
+export function emptyBlueTouchMotion(): BlueTouchMotion {
+  return { pose: { y: { value: 0, velocity: 0 }, sx: { value: 1, velocity: 0 }, sy: { value: 1, velocity: 0 }, r: { value: 0, velocity: 0 } },
+    contactId: null, phase: 'release', pressed: REST, pulseElapsedMs: 0 }
+}
+
+/** Retarget actual pose coordinates, not an amount multiplied by a replaceable pose.
+ * A change of touch zone or side therefore preserves both the painted pose and its velocity.
+ * A release-only contact (keyboard activation or a very quick tap) gets a short press first. */
+export function advanceBlueTouchMotion(previous: BlueTouchMotion, touch: BlueTouchInput | null, deltaMs: number): BlueTouchMotion {
+  let next = previous
+  if ((touch?.id ?? null) !== previous.contactId) next = { ...next, contactId: touch?.id ?? null,
+    phase: touch ? touch.phase === 'press' ? 'press' : 'pulse' : 'release',
+    pressed: touch ? blueTouchPressPose(touch.kind, touch.side) : previous.pressed, pulseElapsedMs: 0 }
+  else if (touch?.phase === 'release' && next.phase === 'press') next = { ...next, phase: 'release' }
+  const delta = Number.isFinite(deltaMs) ? Math.min(64, Math.max(0, deltaMs)) : 0
+  const pressing = next.phase !== 'release'
+  const target = pressing ? next.pressed : REST
+  const spring = pressing ? TOUCH_PRESS : TOUCH_RELEASE
+  const pose = { ...next.pose }
+  for (const axis of AXES) pose[axis] = stepSpring(next.pose[axis], target[axis], spring, delta)
+  next = { ...next, pose, pulseElapsedMs: next.pulseElapsedMs + (next.phase === 'pulse' ? delta : 0) }
+  if (next.phase === 'pulse' && next.pulseElapsedMs >= KEYBOARD_PRESS_MS) next = { ...next, phase: 'release' }
+  if (!blueTouchMotionNeedsFrame(next)) {
+    const final = next.phase === 'press' ? next.pressed : REST
+    for (const axis of AXES) pose[axis] = { value: final[axis], velocity: 0 }
+  }
+  return next
+}
+
+export function blueTouchMotionNeedsFrame(motion: BlueTouchMotion): boolean {
+  if (motion.phase === 'pulse') return true
+  const target = motion.phase === 'press' ? motion.pressed : REST
+  return AXES.some(axis => Math.abs(motion.pose[axis].value - target[axis]) >= SPAN[axis] * 0.001 ||
+    Math.abs(motion.pose[axis].velocity) >= SPAN[axis] * 0.01)
+}
+
+export function blueTouchMotionTransform(motion: BlueTouchMotion): string {
+  const f = (n: number) => Number(n.toFixed(4))
+  const { y, sx, sy, r } = motion.pose
+  // Keep the existing expressive lift on the rebound, with a continuous join at rest.
+  return `translateY(${f(y.value < 0 ? y.value * 3 : y.value)}px) rotate(${f(r.value)}deg) scale(${f(sx.value)}, ${f(sy.value)})`
 }

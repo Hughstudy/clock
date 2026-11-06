@@ -27,6 +27,7 @@ export function FocusPanel({ title, onClose, onBack = onClose, timerSummary, chi
     if (!panel) return
     const viewport = window.visualViewport
     const scene = panel.parentElement
+    const home = panel.closest<HTMLElement>('.home')
     let modal = false
     let frame = 0
     const revealFocus = () => {
@@ -43,6 +44,10 @@ export function FocusPanel({ title, onClose, onBack = onClose, timerSummary, chi
       panel.style.setProperty('--visible-height', `${height}px`)
       const box = scene?.getBoundingClientRect()
       const plate = placement === 'plate'
+      // The large-text console is a scrollport. A plate panel cannot grow
+      // above its clipping edge, so use the top layer instead of the old
+      // floor-band allowance. Keep this decision independent of panel size.
+      const scrollingPlate = plate && home?.dataset.layout === 'readable'
       // On the plate the panel replaces the card and may grow upward over the floor band; the
       // time reads above the companion. The plate's bottom padding is the tab bar's room.
       const padding = plate && scene ? getComputedStyle(scene) : null
@@ -57,7 +62,7 @@ export function FocusPanel({ title, onClose, onBack = onClose, timerSummary, chi
       // the wider viewport cannot trigger an endless local/modal resize loop.
       const font = Number.parseFloat(getComputedStyle(document.documentElement).fontSize) || 16
       const required = (plate ? Math.max(150, font * 7) : Math.max(260, font * 11)) + (modal ? 16 : 0)
-      const nextModal = placement === 'viewport' || covered > 80 || localBottom - localTop < required
+      const nextModal = placement === 'viewport' || scrollingPlate || covered > 80 || localBottom - localTop < required
       panel.dataset.layout = nextModal ? 'viewport' : 'local'
       panel.setAttribute('aria-modal', String(nextModal))
       if (nextModal !== modal) {
@@ -79,6 +84,8 @@ export function FocusPanel({ title, onClose, onBack = onClose, timerSummary, chi
     panel.querySelector<HTMLElement>('[data-initial-focus]')?.focus({ preventScroll: true })
     const observer = new ResizeObserver(fit)
     if (scene) observer.observe(scene)
+    const layoutObserver = new MutationObserver(fit)
+    if (home) layoutObserver.observe(home, { attributes: true, attributeFilter: ['data-layout'] })
     const header = panel.querySelector<HTMLElement>('.focus-panel__header')
     if (header) observer.observe(header)
     viewport?.addEventListener('resize', fit)
@@ -87,6 +94,7 @@ export function FocusPanel({ title, onClose, onBack = onClose, timerSummary, chi
     return () => {
       cancelAnimationFrame(frame)
       observer.disconnect()
+      layoutObserver.disconnect()
       viewport?.removeEventListener('resize', fit)
       viewport?.removeEventListener('scroll', fit)
       window.removeEventListener('resize', fit)

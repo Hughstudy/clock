@@ -21,6 +21,8 @@ DAY05 and later authored chapters, story continuation, persistent room/object st
 
 Snapshot v8 adds quote favorites with stable quote identity, captured text/content version, relation revisions and cancellation markers. Existing v7 data migrates without changing time records, drafts, preferences or scene assignments. Favorite commands use the same short lock and dataset-generation protections as existing mutations. Reading never creates a favorite or reward; welcome-note reading has no cancel-favorite action.
 
+The 2026-11-07 iOS review extends this to snapshot v9 with `restSuggestionSessionId`. Only a settled deadline creates that identity; explicit preparation or starting a session clears it. v8 migration preserves all existing data and the current timer mode, without guessing whether idle rest was automatic or explicitly chosen. See [the iOS review](../verification/ios-design-review.md).
+
 `QuoteFavoritesController` supplies confirmed selections and object-bound pending/error state. Timer command waiting is local: controls retain keyboard focus while repeated activation is refused. Main owns all facts and announcements. Animation remains a deterministic presentation consumer.
 
 Records sums only confirmed ended focus records. It keeps a pending result readable but outside official totals. Durable note content survives a pending edit, state change or deletion. Full-list search excludes drafts and unconfirmed new text. Browsing state is temporary and does not become a stored user-behavior record.

@@ -8,7 +8,7 @@ Screens and components render read-only views and dispatch intent. Hooks coordin
 
 | Change you need | Start here | Boundary to preserve |
 | --- | --- | --- |
-| Root navigation, announcements, update protection | `src/App.tsx` | One app-level live region; input and pending writes block updates |
+| Root navigation, announcements, update protection | `src/App.tsx`, `hooks/useScreenNavigation.ts`, `hooks/useFocusTaskBack.ts` | One browser-history owner and one app-level live region; input and pending writes block updates |
 | Focus preparation and timer controls | `screens/HomeScreen.tsx`, `hooks/useDurationChoice.ts`, `components/FocusPanel.tsx` | Choosing a duration does not start it |
 | Timing and session settlement | `logic/timer.ts`, `logic/app.ts`, `hooks/useClockApp.ts` | Deadline-based accounting; one transaction coordinator; stable session IDs |
 | Thought editor and recovery | `hooks/useThoughts.ts`, `logic/thoughts.ts`, `components/ThoughtPanel.tsx` | Preserve ownership, drafts, revisions and pending-save truth |
@@ -32,12 +32,12 @@ Paths in the table are relative to `src/` unless another prefix is present.
 
 | Internal file | Responsibility |
 | --- | --- |
-| `snapshot/migrations.ts` | Ordered v1–v8 upgrade transforms and migration runner |
+| `snapshot/migrations.ts` | Ordered v1–v9 upgrade transforms and migration runner |
 | `snapshot/read.ts` | Field readers and repair diagnostics for the current model |
 | `snapshot/merge.ts` | Same-generation merge and missing-data detection |
 | `snapshot/guards.ts` | Small shared predicates used by migration and readers |
 
-The format stays v8. Existing schema migrations and inert v5 scene history remain necessary compatibility paths. Full backup/restore, dataset replacement and authored story collection remain unfinished; moving files does not implement them.
+The current format is v9. Its explicit automatic-rest suggestion identity is recorded and retired with timer intent; migration preserves unknown legacy idle-rest intent instead of inferring it. See the [iOS review](verification/ios-design-review.md). Existing schema migrations and inert v5 scene history remain necessary compatibility paths. Full backup/restore, dataset replacement and authored story collection remain unfinished; moving files does not implement them.
 
 ## Records modules
 

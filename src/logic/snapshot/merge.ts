@@ -10,8 +10,9 @@ function newer(a: AppSnapshot, b: AppSnapshot): AppSnapshot {
 
 /**
  * Ended sessions and participation are append-only. Thoughts merge per ID by
- * revision with deletion markers winning ties. Settings, timer, draft and
- * one-off choice come from the newer snapshot. Different generations never merge.
+ * revision with deletion markers winning ties. Settings, timer with its pending
+ * break suggestion, draft and one-off choice come from the newer snapshot.
+ * Different generations never merge.
  */
 export function mergeSnapshots(a: AppSnapshot, b: AppSnapshot): AppSnapshot {
   if (a.datasetGeneration !== b.datasetGeneration) return a.datasetGeneration > b.datasetGeneration ? a : b

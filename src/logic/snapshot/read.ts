@@ -41,6 +41,14 @@ export function readTimer(raw: unknown, completionCount: number, issues: string[
   return { phase, session, completedFocusCount }
 }
 
+export function readRestSuggestion(raw: unknown, timer: TimerState, records: readonly FocusRecord[], issues: string[]): string | null {
+  if (raw === null) return null
+  if (isId(raw) && !timer.session && timer.phase !== 'focus' &&
+      records.some(record => record.sessionId === raw && record.endReason === 'deadline')) return raw
+  issues.push('restSuggestionSessionId')
+  return null
+}
+
 export function readRecords(raw: unknown, issues: string[]): FocusRecord[] {
   if (!Array.isArray(raw)) { issues.push('records'); return [] }
   const seen = new Set<string>()

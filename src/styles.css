@@ -30,12 +30,20 @@
   --tab-height: 4rem;
 
   font-family: 'Nunito Variable', 'PingFang SC', 'Microsoft YaHei', 'Noto Sans SC', ui-rounded, 'SF Pro Rounded', system-ui, sans-serif;
-  font-size: 16px;
+  font-size: 100%;
   line-height: 1.45;
   color: var(--ink);
   background: var(--paper);
   -webkit-text-size-adjust: 100%;
   -webkit-tap-highlight-color: transparent;
+}
+
+/* Safari's body text style follows iOS Larger Text. Other browsers retain their
+   chosen default size; rem-based controls scale with either source. */
+@supports (font: -apple-system-body) {
+  :root { font: -apple-system-body;
+    font-family: 'Nunito Variable', 'PingFang SC', 'Microsoft YaHei', 'Noto Sans SC', ui-rounded, system-ui, sans-serif;
+    line-height: 1.45; }
 }
 
 *,
@@ -129,7 +137,7 @@ button {
 }
 
 .btn:active {
-  transform: scale(0.97);
+  filter: brightness(0.94);
 }
 
 .btn:disabled {
@@ -149,7 +157,7 @@ button {
 
 .btn-primary:active {
   box-shadow: 0 2px 0 var(--accent-deep);
-  transform: translateY(2px);
+  transform: none;
 }
 
 .btn-secondary {
@@ -250,7 +258,7 @@ fieldset {
 
 /* Every pressable thing answers the press. */
 .step:active:not(:disabled), .notice-action:active:not(:disabled),
-.stats .records-switch button:active, .records-v35 .room-preview:active { transform: scale(0.96); }
+.stats .records-switch button:active, .records-v35 .room-preview:active { filter: brightness(0.94); }
 .record-summary:active { background: var(--paper); }
 .link-button:active:not(:disabled) { opacity: 0.7; }
 

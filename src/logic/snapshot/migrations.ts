@@ -62,6 +62,9 @@ export const MIGRATIONS: Readonly<Record<number, Migration>> = {
       dateKey: target?.dateKey ?? null } }
   },
   7: old => ({ ...old, version: 8, quoteFavorites: [] }),
+  // Earlier snapshots cannot distinguish a suggestion from explicit rest preparation.
+  // Preserve their exact timer mode without inventing an automatic suggestion.
+  8: old => ({ ...old, version: 9, restSuggestionSessionId: null }),
 }
 
 export function runMigrations(data: Json, from: number, to: number, migrations: Readonly<Record<number, Migration>>, context: MigrationContext): Json | null {

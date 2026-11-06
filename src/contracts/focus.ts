@@ -1,5 +1,6 @@
 /**
- * Focus and thought slice, snapshot v8. Edits retain their owner, first input
+ * Focus and thought slice, snapshot v9. Automatic break suggestions retain the
+ * ended session identity; explicit preparation clears it. Edits retain their owner, first input
  * date and base revisions. Receipts identify the operation and dataset generation.
  * Quote favorites have a separate contract. Story/world and import/export remain pending.
  */

@@ -73,11 +73,6 @@ interface PendingThought extends Thought {
   retirement?: { previous: string | null; next: string }
 }
 const EMPTY_THOUGHTS: readonly Thought[] = []
-/** A deadline ending that left focus prepared was retired as stale on opening (or moved past elsewhere). */
-function retiredByOpening(result: SessionResult | null, snapshot: AppSnapshot): SessionResult | null {
-  if (!result || result.phase !== 'focus' || snapshot.timer.session || snapshot.timer.phase !== 'focus') return result
-  return snapshot.records.find(r => r.sessionId === result.sessionId)?.endReason === 'deadline' ? null : result
-}
 const EMPTY_FAVORITES: readonly SavedQuote[] = []
 const TIMER_COMMANDS = new Set(['start', 'startFocus', 'startBreak', 'pause', 'resume', 'end', 'skipBreak', 'prepare'])
 
@@ -151,7 +146,7 @@ export function useClockApp(): ClockApp {
       }
     }
     const ids = store.savedRecordIds
-    const expired = retiredByOpening(expiredSessionResult(shownSession.current, snapshot), snapshot)
+    const expired = expiredSessionResult(shownSession.current, snapshot)
     shownSession.current = snapshot.timer.session
     setResult(prev => resolveSessionResult(expired ?? prev, snapshot, stored))
     const saveError = [...pending.current.values()].at(-1)?.error ?? null
@@ -220,7 +215,7 @@ export function useClockApp(): ClockApp {
         const ended = transition.ended
         const previous = before.timer.session
         if (!write.snapshot.timer.session && ended) {
-          setResult(retiredByOpening({ sessionId: ended.sessionId, phase: 'focus', elapsedMs: ended.elapsedMs, saved: write.saved }, write.snapshot))
+          setResult(resolveSessionResult({ sessionId: ended.sessionId, phase: 'focus', elapsedMs: ended.elapsedMs, saved: write.saved }, write.snapshot, store.durableSnapshot))
         } else if (!write.snapshot.timer.session && previous && before.timer.phase !== 'focus' &&
             (transition.completion || action.type === 'end' || action.type === 'skipBreak')) {
           const ending = write.snapshot.lastRestEnd

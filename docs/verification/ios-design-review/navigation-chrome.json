@@ -1,0 +1,31 @@
+{
+  "browser": "156.0.8078.80",
+  "checks": [
+    "Settings receives heading focus",
+    "Offline readiness stays available in Settings while Focus stays quiet",
+    "Browser Back returns from Settings to its opener",
+    "Offline readiness adds no Focus attention chip",
+    "Explicit Settings return consumes its entry and Home Back leaves the app",
+    "Records receives heading focus",
+    "Reload keeps the current screen and running session identity",
+    "Back from Records status restores its opener across browser focus conventions",
+    "Back closes the month draft before leaving Records",
+    "Forward skips a dismissed panel without reopening input or adding an extra Back",
+    "A second Back returns to Focus without changing the timer",
+    "The open editor transfers to Records with its input",
+    "Back closes the transferred editor on Records",
+    "Returning to Focus preserves the unsent draft",
+    "Reload retires the old task entry without reopening the keyboard",
+    "A reloaded task keeps its recoverable draft",
+    "A rapid Settings return followed by Records keeps a valid Back destination",
+    "Navigation leaves accounting unchanged",
+    "Browser Back commits a valid focused Settings duration before unmount and reload",
+    "Committing Settings on Back preserves the active timer",
+    "Browser Back preserves an invalid duration draft without changing the saved setting",
+    "Explicit return also commits a focused valid field without relying on pointer focus",
+    "Tab navigation commits a focused valid field through the same path",
+    "No browser page errors"
+  ],
+  "errors": [],
+  "physicalDevice": false
+}

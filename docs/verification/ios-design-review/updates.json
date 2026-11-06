@@ -1,0 +1,22 @@
+{
+  "browser": "156.0.8078.80",
+  "checks": [
+    "Prepared step remains after leaving the field",
+    "A retained prepared step disables explicit update after blur",
+    "A waiting worker does not force reload",
+    "A recoverable thought draft blocks update after its editor closes",
+    "An active session exposes no actionable reload",
+    "Waiting for update preserves the active session and document",
+    "Update becomes available only after explicit input handling and session end",
+    "The final reload check rejects a session started by another tab",
+    "An explicit safe update reloads the document",
+    "Update retains saved notes and both ended sessions without duplication",
+    "Sound preview with sound off does not change preference, timer or data",
+    "A newer-schema read-only fallback keeps explicit update available",
+    "Updating a newer-schema fallback preserves unknown raw data exactly",
+    "Blocked preview reports its actual result without changing data",
+    "No browser page errors"
+  ],
+  "errors": [],
+  "realServiceWorkerUpdate": true
+}

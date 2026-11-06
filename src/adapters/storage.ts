@@ -221,7 +221,7 @@ export class SnapshotStore {
     // Phase, session identity and its deadline/paused amount form one position.
     // Even an ended zero-second session advances the corresponding scene cursor.
     const diskStartedAnother = disk.scenes.focus.ordinal !== base.scenes.focus.ordinal || disk.scenes.rest.ordinal !== base.scenes.rest.ordinal
-    const diskMoved = !sameTimerPosition(base.timer, disk.timer) || diskStartedAnother
+    const diskMoved = !sameTimerPosition(base.timer, disk.timer) || disk.restSuggestionSessionId !== base.restSuggestionSessionId || diskStartedAnother
     const diskActive = disk.timer.session
     const localEndedDiskSession = !!diskActive && (disk.timer.phase === 'focus'
       ? records.some(r => r.sessionId === diskActive.id)
@@ -236,7 +236,7 @@ export class SnapshotStore {
     const lastFocusMinutes = disk.focusDefaultsRevision !== base.focusDefaultsRevision || disk.lastFocusMinutes !== base.lastFocusMinutes
       ? disk.lastFocusMinutes : local.lastFocusMinutes
     merged = {
-      ...merged, records, timer: { ...timerOwner.timer, completedFocusCount: completed },
+      ...merged, records, timer: { ...timerOwner.timer, completedFocusCount: completed }, restSuggestionSessionId: timerOwner.restSuggestionSessionId,
       scenes: mergeSceneStates(timerOwner.scenes, other.scenes),
       lastRestEnd: disk.lastRestEnd?.sessionId !== base.lastRestEnd?.sessionId || disk.lastRestEnd?.endedAt !== base.lastRestEnd?.endedAt
         ? disk.lastRestEnd : local.lastRestEnd,

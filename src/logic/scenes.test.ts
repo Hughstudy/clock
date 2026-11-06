@@ -3,7 +3,7 @@ import { sceneRules } from './scene-rules'
 import { spec } from '../data/spec'
 import { applyAction, type AppAction } from './app'
 import { endingTierForElapsed, initialScenes, mergeSceneStates, selectScene } from './scenes'
-import { createSnapshot, decodeSnapshot, encodeSnapshot, mergeSnapshots } from './snapshot'
+import { createSnapshot, decodeSnapshot, encodeSnapshot, mergeSnapshots, SNAPSHOT_VERSION } from './snapshot'
 import type { AppSnapshot, FocusRecord, SceneAssignment, SceneId } from './types'
 
 const MIN = 60_000
@@ -164,7 +164,7 @@ describe('scene compatibility and factual endings', () => {
         unlocked: [legacyUnlock], introduced: ['F4' as const], announced: [] },
     }
     const loaded = roundTrip(old)
-    expect(loaded.version).toBe(8)
+    expect(loaded.version).toBe(SNAPSHOT_VERSION)
     expect(loaded.timer).toEqual(old.timer)
     expect(loaded.records).toEqual(old.records)
     expect(loaded.datasetGeneration).toBe(3)

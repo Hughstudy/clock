@@ -14,6 +14,7 @@ import { useFocusTaskBack } from './hooks/useFocusTaskBack'
 import { useNow } from './hooks/useNow'
 import { usePwaUpdate } from './hooks/usePwaUpdate'
 import { useSettingsForm } from './hooks/useSettingsForm'
+import { useScreenNavigation } from './hooks/useScreenNavigation'
 import { useStatusExpiry } from './hooks/useStatusExpiry'
 import { useThoughts } from './hooks/useThoughts'
 import { useQuoteFavorites } from './hooks/useQuoteFavorites'
@@ -34,7 +35,7 @@ function changesFocusDefault(action: UserAction): boolean {
 
 export function App() {
   const app = useClockApp()
-  const [screen, setScreen] = useState<Screen>('home')
+  const { screen, navigate, back } = useScreenNavigation()
   const recordsVisit = useRef<RecordsVisit | null>(null)
   const visitGeneration = useRef(app.snapshot.datasetGeneration)
   if (visitGeneration.current !== app.snapshot.datasetGeneration) {
@@ -142,7 +143,9 @@ export function App() {
     const from = previousScreen.current
     previousScreen.current = screen
     if (from === screen) return
-    const target = screen === 'settings' ? '#settings-title' : screen === 'home' ? focusOnHome.current : null
+    const target = screen === 'settings' ? '#settings-title' : screen === 'home'
+      ? focusOnHome.current ?? (from === 'settings' ? '.home .fp-top .pill--icon' : '.tab[data-tab="home"]')
+      : '#stats-title'
     focusOnHome.current = null
     if (target) document.querySelector<HTMLElement>(target)?.focus({ preventScroll: true })
   }, [screen])
@@ -150,7 +153,7 @@ export function App() {
   // it slides in from the trailing edge, and Focus fades back in on return. Tabs stay instant.
   // The screen changes synchronously in the same tap; only its first frames ease in.
   const navTimer = useRef(0)
-  const openScreen = (next: Screen, focusTarget: string | null = null) => {
+  const openScreen = (next: Screen, focusTarget: string | null = null, returning = false) => {
     const root = document.documentElement
     window.clearTimeout(navTimer.current)
     if ((next === 'settings' || screen === 'settings') && !motion.reducedMotion) {
@@ -158,11 +161,13 @@ export function App() {
       navTimer.current = window.setTimeout(() => { delete root.dataset.nav }, 400)
     } else delete root.dataset.nav
     focusOnHome.current = focusTarget
-    setScreen(next)
+    if (returning) back(next)
+    else navigate(next)
   }
 
   // A new install opens quietly: offline readiness is listed in Settings › 应用状态, not on Focus.
   const systemNoticeSummary = app.notice ? '数据状态需要查看' : app.saveError ? '有更改尚未保存' : pwa.updateReady ? '新版本已准备好' : null
+  const settingsNoticeSummary = systemNoticeSummary ?? (pwa.offlineReady ? '已准备好离线使用。' : null)
   const notices = (
     <Notices
         inline={app.notice?.kind !== 'newer'}
@@ -208,15 +213,15 @@ export function App() {
               {app.saveState === 'pending' && <p className="panel-save-error">有更改尚未保存。
                 <button type="button" className="link-button" onClick={() => app.dispatch({ type: 'retrySave' })}>重试保存</button></p>}
             </FocusTaskDialog>}
-            {screen === 'settings' && <SettingsScreen form={form} canEdit={canEdit} onBack={() => openScreen('home', '.home .fp-top .pill--icon')}
-              systemNoticeSummary={systemNoticeSummary} systemNotices={notices} />}
+            {screen === 'settings' && <SettingsScreen form={form} canEdit={canEdit} onBack={() => openScreen('home', '.home .fp-top .pill--icon', true)}
+              systemNoticeSummary={settingsNoticeSummary} systemNotices={notices} />}
           </>
         )}
       </main>
       {unseenEnding && <TimerEndedBanner result={unseenEnding} onView={() => openScreen('home', '.home .fp-primary button')} onDismiss={() => setSeenEnding(unseenEnding.sessionId)} />}
       <TabBar active={screen} onSelect={next => {
         if (next === 'stats' && next !== screen) refresh()
-        setScreen(next)
+        openScreen(next)
       }} />
       <p className="sr-only" aria-live={announcement?.priority ?? 'polite'} aria-atomic="true">
         {announcement && <span key={announcement.id}>{announcement.text}</span>}

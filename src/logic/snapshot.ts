@@ -5,19 +5,19 @@ import { initialTimer } from './timer'
 import type { AppSnapshot } from './types'
 import { isRecord, isCount, isInstant, isId } from './snapshot/guards'
 import { MIGRATIONS, runMigrations, type Migration, type MigrationContext } from './snapshot/migrations'
-import { readTimer, readRecords, readParticipations, readThoughts, readDraft, readFavorites, readLastFocus, readScenes } from './snapshot/read'
+import { readTimer, readRestSuggestion, readRecords, readParticipations, readThoughts, readDraft, readFavorites, readLastFocus, readScenes } from './snapshot/read'
 
 // Stable entry point; consumers do not need to know the internal snapshot modules.
 export { MIGRATIONS, runMigrations, type Migration, type MigrationContext } from './snapshot/migrations'
 export { mergeSnapshots, hasMissingRecords } from './snapshot/merge'
 
-/** v8 adds durable quote snapshots and cancellation markers. */
-export const SNAPSHOT_VERSION = 8
+/** v9 distinguishes automatic break suggestions from explicitly prepared rest. */
+export const SNAPSHOT_VERSION = 9
 
 export function createSnapshot(spec: Spec): AppSnapshot {
   return {
     version: SNAPSHOT_VERSION, revision: 0, writer: '', datasetGeneration: 0, settings: defaultSettings(spec), timer: initialTimer(),
-    records: [], participations: [], lastRestEnd: null, lastFocusMinutes: null, focusDefaultsRevision: 0, thoughts: [], thoughtDraft: null, draftStamp: null, scenes: initialScenes(), quoteFavorites: [],
+    records: [], participations: [], restSuggestionSessionId: null, lastRestEnd: null, lastFocusMinutes: null, focusDefaultsRevision: 0, thoughts: [], thoughtDraft: null, draftStamp: null, scenes: initialScenes(), quoteFavorites: [],
   }
 }
 
@@ -45,6 +45,7 @@ export function decodeSnapshot(text: string, spec: Spec, context: MigrationConte
   const { settings, issues: settingIssues } = sanitizeSettings(data.settings, spec)
   issues.push(...settingIssues)
   let timer = readTimer(data.timer, records.filter((r) => r.endReason === 'deadline').length, issues)
+  const restSuggestionSessionId = readRestSuggestion(data.restSuggestionSessionId, timer, records, issues)
   const thoughts = readThoughts(data.thoughts, spec, issues)
   const quoteFavorites = readFavorites(data.quoteFavorites, issues)
   const thoughtDraft = readDraft(data.thoughtDraft, issues)
@@ -69,7 +70,7 @@ export function decodeSnapshot(text: string, spec: Spec, context: MigrationConte
   return { kind: 'ok', issues, snapshot: {
     version: SNAPSHOT_VERSION, revision: isCount(data.revision) ? data.revision : 0,
     writer: typeof data.writer === 'string' ? data.writer : '', datasetGeneration: data.datasetGeneration,
-    settings, timer, lastRestEnd, records, participations, lastFocusMinutes, focusDefaultsRevision, thoughts, thoughtDraft, draftStamp, scenes, quoteFavorites,
+    settings, timer, restSuggestionSessionId, lastRestEnd, records, participations, lastFocusMinutes, focusDefaultsRevision, thoughts, thoughtDraft, draftStamp, scenes, quoteFavorites,
   } }
 }
 

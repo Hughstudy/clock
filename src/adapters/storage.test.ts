@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest'
 import { spec } from '../data/spec'
-import { applyAction, type AppAction } from '../logic/app'
-import { encodeSnapshot } from '../logic/snapshot'
+import { applyAction, standingFocusResult, type AppAction } from '../logic/app'
+import { encodeSnapshot, SNAPSHOT_VERSION } from '../logic/snapshot'
 import type { AppSnapshot } from '../logic/types'
 import { createLock, type LockRunner } from './locks'
 import { SnapshotStore, type KeyValueStorage } from './storage'
@@ -135,6 +135,96 @@ describe('SnapshotStore persistence', () => {
 })
 
 describe('SnapshotStore across tabs', () => {
+  it('migrates an ambiguous v8 prepared rest without restoring a result or retiring the mode', async () => {
+    const storage = new MemoryStorage(), first = tab(storage, 'a')
+    await act(first, { type: 'startFocus', durationMinutes: 1, sessionId: 'focus', timeZone: 'UTC' }, T0)
+    await act(first, { type: 'reconcile' }, T0 + MIN)
+    const { restSuggestionSessionId: _, ...legacy } = stored(storage)
+    storage.data.set(KEY, JSON.stringify({ ...legacy, version: 8 }))
+    const reopened = tab(storage, 'v9')
+    expect(reopened.status.notice).toBeNull()
+    expect(standingFocusResult(reopened.snapshot, T0 + 2 * MIN, spec, reopened.savedRecordIds)).toBeNull()
+    await act(reopened, { type: 'reconcile', opening: true }, T0 + 62 * MIN)
+    expect(stored(storage)).toMatchObject({ version: SNAPSHOT_VERSION, restSuggestionSessionId: null, timer: legacy.timer,
+      records: legacy.records, participations: legacy.participations })
+  })
+
+  it('migrates an active v8 session and creates its suggestion only when it actually expires', async () => {
+    const storage = new MemoryStorage(), first = tab(storage, 'a')
+    await act(first, { type: 'startFocus', durationMinutes: 1, sessionId: 'focus', timeZone: 'UTC' }, T0)
+    const { restSuggestionSessionId: _, ...legacy } = stored(storage)
+    storage.data.set(KEY, JSON.stringify({ ...legacy, version: 8 }))
+    const reopened = tab(storage, 'v9')
+    expect(reopened.snapshot.timer).toEqual(legacy.timer)
+    expect(reopened.snapshot.restSuggestionSessionId).toBeNull()
+    await act(reopened, { type: 'reconcile', opening: true }, T0 + MIN)
+    await act(reopened, { type: 'reconcile', opening: true }, T0 + 2 * MIN)
+    expect(standingFocusResult(reopened.snapshot, T0 + 2 * MIN, spec, reopened.savedRecordIds)).toMatchObject({ sessionId: 'focus', saved: true })
+    expect(stored(storage)).toMatchObject({ version: SNAPSHOT_VERSION, restSuggestionSessionId: 'focus', timer: { completedFocusCount: 1 } })
+    expect(stored(storage).records).toHaveLength(1)
+    expect(stored(storage).participations).toEqual(legacy.participations)
+  })
+
+  it.each(['shortBreak', 'longBreak'] as const)('persists explicit %s through recent and late cold opens', async phase => {
+    const storage = new MemoryStorage(), first = tab(storage, 'a')
+    await act(first, { type: 'startFocus', durationMinutes: 1, sessionId: 'focus', timeZone: 'UTC' }, T0)
+    await act(first, { type: 'reconcile' }, T0 + MIN)
+    await act(first, { type: 'prepare', phase: 'focus', expectedPhase: 'shortBreak' }, T0 + 2 * MIN)
+    await act(first, { type: 'prepare', phase, expectedPhase: 'focus' }, T0 + 3 * MIN)
+    for (const now of [T0 + 4 * MIN, T0 + 62 * MIN]) {
+      const reopened = tab(storage, `reopened-${now}`)
+      expect(standingFocusResult(reopened.snapshot, now, spec, reopened.savedRecordIds)).toBeNull()
+      await act(reopened, { type: 'reconcile', opening: true }, now)
+      expect(reopened.snapshot).toMatchObject({ restSuggestionSessionId: null, timer: { phase, session: null, completedFocusCount: 1 } })
+      expect(reopened.snapshot.records).toHaveLength(1)
+      expect(reopened.snapshot.participations).toHaveLength(1)
+    }
+  })
+
+  it('restores a proven suggestion and settles concurrent expiry only once', async () => {
+    const storage = new MemoryStorage(), lock = sharedLock(), a = tab(storage, 'a', lock), b = tab(storage, 'b', lock)
+    await act(a, { type: 'startFocus', durationMinutes: 1, sessionId: 'focus', timeZone: 'UTC' }, T0)
+    await Promise.all([act(a, { type: 'reconcile', opening: true }, T0 + MIN), act(b, { type: 'reconcile', opening: true }, T0 + MIN)])
+    const reopened = tab(storage, 'reopened')
+    expect(standingFocusResult(reopened.snapshot, T0 + 2 * MIN, spec, reopened.savedRecordIds)).toEqual({ sessionId: 'focus', phase: 'focus', elapsedMs: MIN, saved: true })
+    await act(reopened, { type: 'reconcile', opening: true }, T0 + 62 * MIN)
+    expect(reopened.snapshot).toMatchObject({ restSuggestionSessionId: null, timer: { phase: 'focus', session: null, completedFocusCount: 1 } })
+    expect(reopened.snapshot.records).toHaveLength(1)
+    expect(reopened.snapshot.participations).toHaveLength(1)
+  })
+
+  it.each(['receive', 'locked read'])('keeps failed explicit preparation with an unrelated peer preference through %s', async delivery => {
+    const storage = new MemoryStorage(), lock = sharedLock(), local = tab(storage, 'a', lock)
+    await act(local, { type: 'startFocus', durationMinutes: 1, sessionId: 'focus', timeZone: 'UTC' }, T0)
+    await act(local, { type: 'reconcile' }, T0 + MIN)
+    const peer = tab(storage, 'z', lock)
+    storage.failWrites = true
+    await act(local, { type: 'prepare', phase: 'focus', expectedPhase: 'shortBreak' }, T0 + 2 * MIN)
+    expect((await act(local, { type: 'prepare', phase: 'shortBreak', expectedPhase: 'focus' }, T0 + 3 * MIN)).saved).toBe(false)
+    storage.failWrites = false
+    await act(peer, { type: 'updateSettings', patch: { soundEnabled: true } }, T0 + 4 * MIN)
+    if (delivery === 'receive') local.receive(storage.getItem(KEY))
+    await act(local, { type: 'reconcile', opening: true }, T0 + 62 * MIN)
+    expect(stored(storage)).toMatchObject({ restSuggestionSessionId: null, settings: { soundEnabled: true }, timer: { phase: 'shortBreak', session: null } })
+  })
+
+  it.each(['receive', 'locked read'])('does not let a failed stale retirement undo a peer explicit rest through %s', async delivery => {
+    const storage = new MemoryStorage(), lock = sharedLock(), local = tab(storage, 'z', lock)
+    await act(local, { type: 'startFocus', durationMinutes: 1, sessionId: 'focus', timeZone: 'UTC' }, T0)
+    await act(local, { type: 'reconcile' }, T0 + MIN)
+    const peer = tab(storage, 'a', lock)
+    storage.failWrites = true
+    await act(local, { type: 'reconcile', opening: true }, T0 + 62 * MIN)
+    expect(local.snapshot.timer.phase).toBe('focus')
+    storage.failWrites = false
+    await act(peer, { type: 'prepare', phase: 'focus', expectedPhase: 'shortBreak' }, T0 + 63 * MIN)
+    await act(peer, { type: 'prepare', phase: 'shortBreak', expectedPhase: 'focus' }, T0 + 64 * MIN)
+    if (delivery === 'receive') local.receive(storage.getItem(KEY))
+    await act(local, { type: 'reconcile', opening: true }, T0 + 65 * MIN)
+    expect(stored(storage)).toMatchObject({ restSuggestionSessionId: null, timer: { phase: 'shortBreak', session: null, completedFocusCount: 1 } })
+    expect(stored(storage).records).toHaveLength(1)
+  })
+
   it.each(['receive', 'locked read'])('preserves a failed pause beside a peer preference through %s', async delivery => {
     const storage = new MemoryStorage()
     const local = tab(storage, 'a')
@@ -377,7 +467,7 @@ describe('SnapshotStore across tabs', () => {
     const assignment = upgraded.snapshot.timer.session?.scene
     expect(assignment).toEqual(old.timer.session.scene)
     await act(upgraded, { type: 'reconcile' }, T0 + MIN)
-    expect(stored(storage).version).toBe(8)
+    expect(stored(storage).version).toBe(SNAPSHOT_VERSION)
     expect(stored(storage).timer).toEqual(old.timer)
     expect(stored(storage).scenes.focus).toEqual({ ...old.scenes.focus, remaining: [] })
     expect(tab(storage, 'reloaded').snapshot.timer.session?.scene).toEqual(assignment)
@@ -693,7 +783,7 @@ describe('durable early ends and recovery', () => {
     const upgraded = tab(storage, 'new')
     expect(upgraded.savedRecordIds.has('old-focus')).toBe(true)
     await act(upgraded, { type: 'reconcile' }, T0)
-    expect(stored(storage).version).toBe(8)
+    expect(stored(storage).version).toBe(SNAPSHOT_VERSION)
     expect(stored(storage).settings.soundEnabled).toBe(false)
     expect(tab(storage, 'reload').savedRecordIds.has('old-focus')).toBe(true)
   })

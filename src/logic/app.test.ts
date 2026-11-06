@@ -77,6 +77,53 @@ describe('timer actions', () => {
     expect(standingFocusResult(manual, T0 + 2 * MIN, spec, new Set(['m']))).toBeNull()
   })
 
+  it.each(['shortBreak', 'longBreak'] as const)('keeps explicitly prepared %s after dismissing a result and reopening', phase => {
+    const done = completeFocus(createSnapshot(spec), T0, 'a')
+    const deadline = done.records[0]!.endedAt
+    const prepared = run(done, [
+      [deadline + MIN, { type: 'prepare', phase: 'focus', expectedPhase: 'shortBreak' }],
+      [deadline + 2 * MIN, { type: 'prepare', phase, expectedPhase: 'focus' }],
+    ])
+    expect(prepared.restSuggestionSessionId).toBeNull()
+    for (const now of [deadline + 3 * MIN, deadline + spec.timer.restSuggestionStaleMs + MIN]) {
+      expect(standingFocusResult(prepared, now, spec, new Set(['a']))).toBeNull()
+      expect(staleBreakSuggestion(prepared, now, spec)).toBe(false)
+      const reopened = run(prepared, [[now, { type: 'reconcile', opening: true }]])
+      expect(reopened.timer).toEqual({ ...done.timer, phase })
+      expect(reopened.records).toEqual(done.records)
+      expect(reopened.participations).toEqual(done.participations)
+    }
+  })
+
+  it('clears the suggestion on an accepted same-mode preparation, but not a stale command', () => {
+    const done = completeFocus(createSnapshot(spec), T0, 'a')
+    const deadline = done.records[0]!.endedAt
+    expect(done.restSuggestionSessionId).toBe('a')
+    const stale = run(done, [[deadline + MIN, { type: 'prepare', phase: 'focus', expectedPhase: 'focus' }]])
+    expect(stale).toBe(done)
+    const prepared = run(done, [[deadline + MIN, { type: 'prepare', phase: 'shortBreak', expectedPhase: 'shortBreak' }]])
+    expect(prepared.timer).toBe(done.timer)
+    expect(prepared.restSuggestionSessionId).toBeNull()
+    const result: SessionResult = { sessionId: 'a', phase: 'focus', elapsedMs: done.records[0]!.elapsedMs, saved: true }
+    expect(resolveSessionResult(result, prepared, prepared)).toBeNull()
+    expect(resolveSessionResult(result, done, done)).toEqual(result)
+  })
+
+  it('retires a suggestion on start or skip without changing prior credit', () => {
+    const done = completeFocus(createSnapshot(spec), T0, 'a')
+    const now = done.records[0]!.endedAt + MIN
+    for (const action of [
+      { type: 'startFocus', sessionId: 'next', timeZone: 'UTC' },
+      { type: 'startBreak', sessionId: 'rest', timeZone: 'UTC' },
+      { type: 'skipBreak', sessionId: null },
+    ] satisfies AppAction[]) {
+      const next = run(done, [[now, action]])
+      expect(next.restSuggestionSessionId).toBeNull()
+      expect(next.records).toEqual(done.records)
+      expect(next.timer.completedFocusCount).toBe(done.timer.completedFocusCount)
+    }
+  })
+
   it('reports a rest that expired elsewhere, but not one ended early', () => {
     const resting = run(createSnapshot(spec), [[T0, { type: 'startBreak', phase: 'shortBreak', sessionId: 'r', timeZone: 'UTC' }]])
     const session = resting.timer.session!

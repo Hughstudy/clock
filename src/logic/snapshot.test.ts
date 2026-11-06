@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { spec } from '../data/spec'
-import { createSnapshot, decodeSnapshot, encodeSnapshot, hasMissingRecords, mergeSnapshots, runMigrations, type Migration } from './snapshot'
+import { createSnapshot, decodeSnapshot, encodeSnapshot, hasMissingRecords, mergeSnapshots, runMigrations, SNAPSHOT_VERSION, type Migration } from './snapshot'
 import type { AppSnapshot, FocusRecord } from './types'
 
 const ctx = { timeZone: 'Asia/Tokyo' }
@@ -31,7 +31,7 @@ function legacy(version: number) {
   }
 }
 
-describe('snapshot v7 and migration', () => {
+describe('snapshot v9 and migration', () => {
   it('round-trips without replacing valid fields', () => {
     const s = sample()
     expect(decodeSnapshot(encodeSnapshot(s), spec, ctx)).toEqual({ kind: 'ok', snapshot: s, issues: [] })
@@ -55,7 +55,7 @@ describe('snapshot v7 and migration', () => {
     const decoded = decodeSnapshot(JSON.stringify(legacy(version)), spec, ctx)
     if (decoded.kind !== 'ok') throw Error(decoded.kind)
     expect(decoded.issues).toEqual([])
-    expect(decoded.snapshot.version).toBe(8)
+    expect(decoded.snapshot.version).toBe(SNAPSHOT_VERSION)
     expect(decoded.snapshot.records).toEqual([{ ...record('s1', 5000) }])
     expect(decoded.snapshot.participations).toEqual(sample().participations)
     expect(decoded.snapshot.timer.session).toMatchObject({ status: 'paused', remainingMs: 600_000, startedAt: null, timeZone: version === 1 ? 'Asia/Tokyo' : 'Europe/Berlin' })
@@ -98,6 +98,30 @@ describe('snapshot v7 and migration', () => {
     }
     expect(runMigrations({ version: 1 }, 1, 3, steps, ctx)).toEqual({ version: 3, log: ['1→2', '2→3'] })
     expect(runMigrations({ version: 1 }, 1, 4, steps, ctx)).toBeNull()
+  })
+
+  it.each(['shortBreak', 'longBreak'] as const)('migrates v8 %s without guessing whether it was chosen or suggested', phase => {
+    const original = { ...sample(), timer: { phase, session: null, completedFocusCount: 1 } }
+    const { restSuggestionSessionId: _, ...old } = original
+    const decoded = decodeSnapshot(JSON.stringify({ ...old, version: 8 }), spec, ctx)
+    expect(decoded).toEqual({ kind: 'ok', issues: [], snapshot: { ...original, restSuggestionSessionId: null } })
+  })
+
+  it('round-trips a pending suggestion and protects raw data when its identity is invalid', () => {
+    const snapshot = { ...sample(), timer: { phase: 'shortBreak' as const, session: null, completedFocusCount: 1 }, restSuggestionSessionId: 's1' }
+    expect(decodeSnapshot(encodeSnapshot(snapshot), spec, ctx)).toEqual({ kind: 'ok', snapshot, issues: [] })
+    for (const broken of [
+      { ...snapshot, restSuggestionSessionId: 'missing' },
+      { ...snapshot, restSuggestionSessionId: 42 },
+      { ...snapshot, records: [{ ...record('s1'), endReason: 'manual' }] },
+      { ...snapshot, timer: sample().timer },
+      { ...snapshot, timer: { ...snapshot.timer, phase: 'focus' } },
+    ]) {
+      const decoded = decodeSnapshot(JSON.stringify(broken), spec, ctx)
+      if (decoded.kind !== 'ok') throw Error(decoded.kind)
+      expect(decoded.snapshot.restSuggestionSessionId).toBeNull()
+      expect(decoded.issues).toContain('restSuggestionSessionId')
+    }
   })
 })
 

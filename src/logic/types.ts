@@ -134,6 +134,8 @@ export interface AppSnapshot {
   datasetGeneration: number
   settings: Settings
   timer: TimerState
+  /** Deadline-ended focus whose automatic break suggestion is still pending. Explicit preparation clears it. */
+  restSuggestionSessionId: string | null
   /** At most one factual rest ending for confirmation/retry, independent of artwork. */
   lastRestEnd: { sessionId: string; endedAt: number; elapsedMs: number } | null
   records: FocusRecord[]

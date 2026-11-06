@@ -60,7 +60,7 @@ body { background: var(--paper); }
   -webkit-tap-highlight-color: transparent; transition: transform .12s ease, background-color .12s ease;
 }
 .pill::after, .text-action::after { content: none; }
-.pill:active:not(:disabled), .text-action:active:not(:disabled) { transform: scale(.96); }
+.pill:active:not(:disabled), .text-action:active:not(:disabled) { filter: brightness(.94); }
 .pill { min-height: 44px; min-width: 44px; padding: 0 14px; border-radius: 999px; font-size: .875rem; }
 .pill--glass { background: color-mix(in srgb, var(--cream) 82%, transparent); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
   box-shadow: 0 2px 8px #6a4a2414; }
@@ -85,7 +85,7 @@ body { background: var(--paper); }
 .tab svg { inline-size: 20px; block-size: 20px; }
 .tab[aria-current='page'] { background: color-mix(in srgb, var(--whale) 14%, transparent); color: var(--whale-deep); font-weight: 700; }
 .app[data-screen='settings'] .tab[data-tab='home'] { color: var(--whale); }
-.tab:active { transform: scale(.96); }
+.tab:active { filter: brightness(.94); }
 
 /* Notices float above the page instead of pushing the layout down. */
 .notices { position: fixed; z-index: 20; inset: calc(env(safe-area-inset-top) + 8px) 12px auto; max-inline-size: 496px; margin-inline: auto; display: grid; gap: 6px; pointer-events: none; }
@@ -144,7 +144,7 @@ body { background: var(--paper); }
 .fp-clock-phase { position: absolute; z-index: 2; inset: calc(env(safe-area-inset-top) + 55px) 0 auto;
   color: #46546a; font-size: .8125rem; line-height: 1.25rem; font-weight: 550; }
 .fp-clock-phase::before { content: ''; display: inline-block; width: .4rem; height: .4rem; margin-inline-end: .375rem; border-radius: 50%; background: currentColor; }
-.home[data-setting='dusk'] :is(.fp-top h1,.fp-clock-phase) { color: #fff6e8; }
+.home[data-setting='dusk'] :is(.fp-top h1,.fp-clock-phase) { color: #14213b; }
 .fp-digits { position: absolute; z-index: 2; inset-inline: 0; margin: 0; pointer-events: none;
   inset-block-start: calc(env(safe-area-inset-top) + 55px + 1.25rem);
   min-block-size: 44px; font-size: 2.125rem; line-height: max(44px, 1.2em); font-weight: 800; letter-spacing: .02em;
@@ -160,10 +160,7 @@ body { background: var(--paper); }
 .fp-unit { margin-inline-start: .12em; font-size: .5em; font-weight: 700; letter-spacing: 0; }
 @keyframes fp-result-in { from { opacity: 0; } to { opacity: 1; } }
 @media (prefers-reduced-motion: reduce) { .fp-result { animation: none; } }
-.home[data-setting='dusk'] .fp-digits { color: #fff6e8; }
-.home[data-setting='dusk'][data-tone='paused'] .fp-digits { color: #f6d39a; }
-.home[data-setting='dusk'][data-tone='rest'] .fp-digits { color: #c6ead8; }
-.home[data-setting='dusk'][data-tone='done'] .fp-digits { color: #e4e6ef; }
+.home[data-setting='dusk'] .fp-digits { color: #14213b; }
 /* The plate: one translucent card floating at the bottom of the scene; its bottom padding is
    the floating tab bar's room. The blur lives on a pseudo-element so a fixed panel inside is
    not trapped by it. Tracks are fixed so feedback never moves the primary action. */
@@ -186,7 +183,7 @@ body { background: var(--paper); }
   /* Drawn 40px tall inside the 44px target, so rows breathe without moving. */
   border: 2px solid transparent; background-clip: padding-box; border-radius: 999px; background-color: var(--primary); color: #fff; font-size: 1rem; font-weight: 700; letter-spacing: .02em;
   box-shadow: 0 4px 10px var(--primary-glow); transform: none; transition: transform .12s ease, box-shadow .12s ease; }
-.home .fp-primary .btn-primary:active:not(:disabled) { background-color: var(--primary); transform: scale(.97); box-shadow: 0 2px 6px var(--primary-glow); }
+.home .fp-primary .btn-primary:active:not(:disabled) { background-color: var(--primary); filter: brightness(.94); box-shadow: 0 2px 6px var(--primary-glow); }
 .fp-secondary { min-block-size: 30px; margin-top: 10px; display: flex; flex-wrap: wrap; justify-content: center; align-items: center; column-gap: 12px; }
 .fp-secondary .text-action::before { content: ''; display: inline-block; inline-size: 5px; block-size: 5px; margin-inline-end: 5px; border-radius: 50%; background: #c9d5ea; vertical-align: 2px; }
 /* Feedback floats above the card only while there is something to say. */
@@ -224,7 +221,7 @@ body { background: var(--paper); }
 .focus-panel .thought-form-actions { justify-content: flex-end; }
 .focus-panel .thought-form .btn { min-block-size: 44px; padding: 0 16px; border-radius: 999px; font-size: .875rem; font-weight: 700; box-shadow: none; }
 .focus-panel .thought-form .btn-primary { background: var(--whale); color: #fff; inline-size: auto; min-inline-size: 0; }
-.focus-panel .thought-form .btn-primary:active:not(:disabled), .focus-task .btn-primary:active:not(:disabled) { transform: scale(.97); box-shadow: none; }
+.focus-panel .thought-form .btn-primary:active:not(:disabled), .focus-task .btn-primary:active:not(:disabled) { filter: brightness(.94); box-shadow: none; }
 .focus-panel .thought-form .btn-secondary { background: #f3f5f9; color: #5b6f8c; border: 0; }
 .focus-panel .field-hint, .focus-panel .field-error { margin: 0; font-size: .75rem; }
 

@@ -59,7 +59,7 @@ export interface Transition {
 
 export interface SessionResult { sessionId: string; phase: 'focus' | 'rest'; elapsedMs: number; saved: boolean }
 
-/** Only a visit that observed an ending supplies an ID. A cold open stays ready. */
+/** A shown result remains factual; dismissed deadline suggestions cannot return after sync. */
 export function resolveSessionResult(previous: SessionResult | null, current: AppSnapshot, stored: AppSnapshot | null): SessionResult | null {
   if (!previous || current.timer.session) return null
   const durable = stored?.datasetGeneration === current.datasetGeneration ? stored : null
@@ -68,6 +68,8 @@ export function resolveSessionResult(previous: SessionResult | null, current: Ap
     : s?.lastRestEnd?.sessionId === previous.sessionId ? s.lastRestEnd : null
   const confirmed = ending(durable)
   const fact = confirmed ?? ending(current)
+  if (previous.phase === 'focus' && fact && 'endReason' in fact && fact.endReason === 'deadline' &&
+      current.restSuggestionSessionId !== previous.sessionId) return null
   return fact ? { ...previous, elapsedMs: fact.elapsedMs, saved: !!confirmed } : null
 }
 
@@ -86,16 +88,12 @@ export function expiredSessionResult(previous: Session | null, current: AppSnaps
 }
 
 /**
- * The deadline-ended focus record a waiting break is still answering: the break
- * that deadline suggested, with no session and no rest taken since.
+ * Only the explicitly recorded automatic suggestion can restore a focus result
+ * or age out. A manually prepared rest can have the same phase and history.
  */
 function answeredEnding(snapshot: AppSnapshot): FocusRecord | null {
   if (snapshot.timer.session || snapshot.timer.phase === 'focus') return null
-  let latest: FocusRecord | null = null
-  for (const record of snapshot.records) if (!latest || record.endedAt > latest.endedAt) latest = record
-  if (!latest || latest.endReason !== 'deadline') return null
-  if (snapshot.lastRestEnd && snapshot.lastRestEnd.endedAt >= latest.endedAt) return null
-  return latest
+  return snapshot.records.find(record => record.sessionId === snapshot.restSuggestionSessionId && record.endReason === 'deadline') ?? null
 }
 
 /** A break suggested by a deadline longer ago than the configured limit. A fresh open prepares focus instead. */
@@ -131,7 +129,8 @@ export function reconcile(snapshot: AppSnapshot, ctx: ActionContext, spec: Spec)
   if (known && snapshot.timer.phase === 'focus') {
     const count = Math.max(snapshot.timer.completedFocusCount, snapshot.records.filter((r) => r.endReason === 'deadline').length)
     const phase = known.endReason === 'deadline' ? breakAfterFocus(count, spec.timer.longBreakEvery) : 'focus'
-    return { ...unchanged(snapshot), snapshot: { ...snapshot, timer: { phase, session: null, completedFocusCount: count } }, changed: true }
+    return { ...unchanged(snapshot), snapshot: { ...snapshot, timer: { phase, session: null, completedFocusCount: count },
+      restSuggestionSessionId: known.endReason === 'deadline' ? known.sessionId : null }, changed: true }
   }
   const { timer, expired } = expireSession(snapshot.timer, ctx.now, spec.timer.longBreakEvery)
   if (!expired) return unchanged(snapshot)
@@ -153,7 +152,8 @@ export function reconcile(snapshot: AppSnapshot, ctx: ActionContext, spec: Spec)
     elapsedMs: expired.durationMs, endedAt: expired.deadline,
   } : null }
   return {
-    snapshot: { ...snapshot, timer, records, scenes, lastRestEnd: expired.phase === 'focus' ? snapshot.lastRestEnd :
+    snapshot: { ...snapshot, timer, records, scenes, restSuggestionSessionId: ended?.sessionId ?? null,
+      lastRestEnd: expired.phase === 'focus' ? snapshot.lastRestEnd :
       { sessionId: expired.sessionId, endedAt: expired.deadline, elapsedMs: expired.durationMs } },
     completion: { sessionId: expired.sessionId, phase: expired.phase, deadline: expired.deadline, credited: ended !== null },
     ended,
@@ -164,7 +164,10 @@ export function reconcile(snapshot: AppSnapshot, ctx: ActionContext, spec: Spec)
 
 function act(snapshot: AppSnapshot, action: AppAction, ctx: ActionContext, spec: Spec): Transition {
   const { now } = ctx
-  const withTimer = (timer: AppSnapshot['timer']): Transition => ({ ...unchanged(snapshot), snapshot: { ...snapshot, timer }, changed: timer !== snapshot.timer })
+  const withTimer = (timer: AppSnapshot['timer'], restSuggestionSessionId = snapshot.restSuggestionSessionId): Transition => ({
+    ...unchanged(snapshot), snapshot: { ...snapshot, timer, restSuggestionSessionId },
+    changed: timer !== snapshot.timer || restSuggestionSessionId !== snapshot.restSuggestionSessionId,
+  })
   if ((action.type === 'pause' || action.type === 'resume' || action.type === 'end') &&
       action.sessionId !== undefined && snapshot.timer.session?.id !== action.sessionId) return unchanged(snapshot)
   switch (action.type) {
@@ -189,9 +192,9 @@ function act(snapshot: AppSnapshot, action: AppAction, ctx: ActionContext, spec:
     }
     // Only the opening settle retires an old suggestion; a person's own commands never race it.
     case 'reconcile': return action.opening && staleBreakSuggestion(snapshot, now, spec)
-      ? withTimer({ ...snapshot.timer, phase: 'focus' }) : unchanged(snapshot)
-    case 'prepare': return snapshot.timer.session || snapshot.timer.phase !== action.expectedPhase || snapshot.timer.phase === action.phase
-      ? unchanged(snapshot) : withTimer({ ...snapshot.timer, phase: action.phase })
+      ? withTimer({ ...snapshot.timer, phase: 'focus' }, null) : unchanged(snapshot)
+    case 'prepare': return snapshot.timer.session || snapshot.timer.phase !== action.expectedPhase
+      ? unchanged(snapshot) : withTimer(snapshot.timer.phase === action.phase ? snapshot.timer : { ...snapshot.timer, phase: action.phase }, null)
     case 'start':
     case 'startFocus':
     case 'startBreak': {
@@ -212,6 +215,7 @@ function act(snapshot: AppSnapshot, action: AppAction, ctx: ActionContext, spec:
       return {
         ...unchanged(snapshot), changed: true,
         snapshot: { ...snapshot, timer: { ...started, session: started.session ? { ...started.session, scene: selection.assignment } : null }, scenes: selection.scenes,
+          restSuggestionSessionId: null,
           lastFocusMinutes: focus && chosen !== undefined ? chosen : snapshot.lastFocusMinutes,
           participations: focus
             ? [...snapshot.participations, { sessionId: action.sessionId, participatedAt: now, dateKey: ctx.dateKeyOf(now, action.timeZone), source: 'native' }]
@@ -244,7 +248,7 @@ function act(snapshot: AppSnapshot, action: AppAction, ctx: ActionContext, spec:
     case 'skipBreak': {
       const session = snapshot.timer.session
       if (action.sessionId !== undefined && (session?.id ?? null) !== action.sessionId) return unchanged(snapshot)
-      return session && snapshot.timer.phase !== 'focus' ? endRest(snapshot, ctx) : withTimer(skipBreak(snapshot.timer))
+      return session && snapshot.timer.phase !== 'focus' ? endRest(snapshot, ctx) : withTimer(skipBreak(snapshot.timer), null)
     }
     case 'updateSettings':
     case 'resetDurations': {

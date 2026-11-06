@@ -16,6 +16,7 @@ import { uiText } from '../data/ui-copy'
 import type { useFeedback } from '../hooks/useFeedback'
 import { useDurationChoice, validateDurationDraft } from '../hooks/useDurationChoice'
 import { useFocusTaskBack } from '../hooks/useFocusTaskBack'
+import { useFocusLayout } from '../hooks/useFocusLayout'
 import { useSceneFit } from '../hooks/useSceneFit'
 import type { SessionResult, UserAction } from '../hooks/useClockApp'
 import type { Thoughts } from '../hooks/useThoughts'
@@ -146,6 +147,7 @@ export function HomeScreen({ active, view, result, linkedThoughts, defaultsInten
     else close()
   }
   useFocusTaskBack(!!panel, back, panel === 'encouragement' && askOpen ? 'categories' : panel ?? '')
+  const readableLayout = useFocusLayout(sceneBox)
   useSceneFit(sceneBox, companion.sceneryEnabled)
   useLayoutEffect(() => {
     if (panel !== 'end' || !confirmExpired) return
@@ -214,6 +216,91 @@ export function HomeScreen({ active, view, result, linkedThoughts, defaultsInten
 
   const setting = companion.sceneryEnabled ? sceneSettingFor(scene?.id) : 'plain'
 
+
+  const noteRow = (
+    <div key="note" className="fp-note" aria-label="想法与保存状态" data-status-actions
+          hidden={!noteText && !thoughts.hasDraft && !thoughts.latestMarkerId && !thoughts.undo && !needsAttention}>
+          <span className="fp-note__text">{noteText}</span>
+          {thoughts.hasDraft && <button type="button" className="text-action" onClick={event => {
+            opener.current = event.currentTarget; companion.dismiss(); setTask(null); thoughts.openNew()
+          }}>{copy.resumeDraft}</button>}
+          {thoughts.latestMarkerId && <button type="button" className="text-action" disabled={!canEdit}
+            onClick={event => edit(thoughts.latestMarkerId!, event.currentTarget)}>{copy.supplement}</button>}
+          {thoughts.undo && <button type="button" className="text-action" disabled={!canEdit} onClick={event => {
+            const undo = thoughts.undo!
+            undo.run()
+            // The restore button goes once it works; keep keyboard focus on the tool it came from.
+            if (undo.removesItself && event.detail === 0) markButton.current?.focus()
+          }}>{thoughts.undo.label}</button>}
+          {needsAttention && <button type="button" className="text-action"
+            aria-label={copy.statusDetails} onClick={event => show('status', event.currentTarget)}>详情</button>}
+        </div>
+  )
+  const voiceRow = (
+    <div key="voice" ref={voiceBox} className="fp-voice-slot">
+          <button type="button" className="pill fp-voice-open" hidden={reading && !!requested} aria-expanded={reading}
+            onClick={event => show('encouragement', event.currentTarget)}>
+            <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="1.7"><path d="M20 11a8 8 0 0 1-8 8c-1.4 0-2.7-.3-3.8-.9L4 20l1.3-4A8 8 0 1 1 20 11Z"/></svg>
+            {uiText('UI19')}
+          </button>
+          {reading && requested && <EncouragementReader quote={requested} choosing={askOpen} canEdit={canEdit}
+            sceneRef={sceneBox} onBack={back} onClose={close} timerSummary={timerSummary}
+            {...(favorites ? { favorites } : {})} onNext={companion.next} onChooseMode={() => setAskOpen(true)} onReturn={() => setAskOpen(false)}
+            onChoose={pool => { if (pool !== requested.pool) companion.request(pool); setAskOpen(false) }} />}
+        </div>
+  )
+  const statusRow = (
+    <div key="status" className="fp-status">
+          {readyFocus && !restEnded ? (editingStep
+            ? <input className="fp-step-input" aria-label={uiText('UI10')} placeholder={uiText('UI11')} value={step} autoFocus
+                enterKeyHint="done" aria-invalid={stepTooLong} disabled={!canEdit}
+                onChange={e => setStep(e.target.value)} onBlur={() => { if (!stepTooLong) setEditingStep(false) }}
+                onKeyDown={e => { if ((e.key === 'Enter' || e.key === 'Escape') && !e.nativeEvent.isComposing && e.nativeEvent.keyCode !== 229 && !stepTooLong) { e.preventDefault(); setEditingStep(false) } }} />
+            : <button type="button" className="text-action" disabled={!canEdit} onClick={() => setEditingStep(true)}>
+              {step.trim() ? `${copy.stepPrefix}${step.trim()}` : copy.stepAdd}</button>)
+            : <span>{statusLine}{!ready && !view.isBreak && view.step && <span className="fp-current-step" title={view.step}> · {copy.stepPrefix}{view.step}</span>}</span>}
+          {(preparingRest || focusResult) && <select className="fp-rest-choice" aria-label="休息时长" value={restPhase}
+            disabled={!canEdit || timerPending} onChange={e => setRestChoice(e.target.value === 'longBreak' ? 'longBreak' : 'shortBreak')}>
+            {(['shortBreak', 'longBreak'] as const).map(phase => <option key={phase} value={phase}>
+              {PHASE_LABELS[phase]} {phase === 'shortBreak' ? view.shortBreakMinutes : view.longBreakMinutes} 分钟</option>)}
+          </select>}
+          {stepTooLong && <span className="fp-hint--error"> · 请缩短到 {view.stepMaxLength} 字以内</span>}
+        </div>
+  )
+  const controlsRow = (
+    <div key="controls" className="fp-controls" role="group" aria-label="计时控制">
+          <div className="fp-primary" ref={primaryRef}>
+            <TimerActionButton identity={readyFocus ? identity + '/' + focusMinutes : identity} primary disabled={!canEdit || (readyFocus && stepTooLong)} busy={timerPending} onActivate={primary.run}>
+              {timerPending ? '正在处理…' : primary.label}</TimerActionButton>
+          </div>
+          <div className="fp-control-secondary">
+            {focusResult ? <TimerActionButton identity={identity + 'prepareFocus'} className="pill pill--soft" disabled={!canEdit} busy={timerPending}
+              onActivate={() => dispatch({ type: 'prepare', phase: 'focus' })}>{copy.prepareFocus}</TimerActionButton>
+              : !ready ? view.isBreak
+                ? <TimerActionButton identity={identity + 'end'} className="pill pill--soft" disabled={!canEdit} busy={timerPending} onActivate={() => dispatch({ type: 'end' })}>{copy.endRest}</TimerActionButton>
+                : <button type="button" className="pill pill--soft" disabled={!canEdit} aria-disabled={timerPending}
+                  onClick={event => { if (!timerPending) show('end', event.currentTarget) }}>{uiText('UI05')}</button>
+              : <TimerActionButton identity={identity + 'prepareMode'} className="pill pill--soft" disabled={!canEdit} busy={timerPending}
+                onActivate={() => dispatch({ type: 'prepare', phase: preparingRest ? 'focus' : restPhase })}>{preparingRest ? copy.focusMode : copy.restMode}</TimerActionButton>}
+          </div>
+        </div>
+  )
+  const toolsRow = (
+    <div key="tools" className="fp-tools-slot">
+          <div className="fp-secondary fp-thought-tools" role="group" aria-label="想法工具">
+            <button ref={markButton} type="button" className="text-action" disabled={!canEdit}
+              onClick={thoughts.mark} onKeyDown={e => { if (e.repeat && (e.key === 'Enter' || e.key === ' ')) e.preventDefault() }}>
+              <svg width="16" height="16" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6"><path d="M6 4h12v16l-6-4-6 4zM9 9h6m-3-3v6"/></svg>{copy.mark}</button>
+            <button type="button" className="text-action" disabled={!canEdit} onClick={e => show('thought', e.currentTarget)}>
+              <svg width="16" height="16" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6"><path d="m5 15-1 5 5-1L20 8l-4-4zM14 6l4 4"/></svg>{copy.write}</button>
+            {/* The grid reserves this slot even when empty, so a save never moves either thought tool. */}
+            {!!linkedThoughts.length && <button type="button" className="text-action fp-tools-label" aria-label={`${copy.sessionThoughts}（${linkedThoughts.length}）`}
+              title={`${copy.sessionThoughts}（${linkedThoughts.length}）`} onClick={event => show('thoughts', event.currentTarget)}>
+              <svg width="16" height="16" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"><path d="M7 4h10a2 2 0 0 1 2 2v14l-3-2-4 2-4-2-3 2V6a2 2 0 0 1 2-2zM9 9h6M9 13h4"/></svg>
+              <span className="fp-tools-count">{linkedThoughts.length > 99 ? '99+' : linkedThoughts.length}</span></button>}
+          </div>
+        </div>
+  )
   return (
     <section className="screen home" data-tone={tone} data-setting={setting} data-panel={panel ?? ''} data-ready-focus={readyFocus} aria-label="专注计时">
       <div ref={sceneBox} className="fp-scene" data-setting={setting}>
@@ -282,84 +369,7 @@ export function HomeScreen({ active, view, result, linkedThoughts, defaultsInten
           {pending && <p className="fp-hint fp-hint--error">{copy.pending}
             <button type="button" className="text-action" onClick={() => dispatch({ type: 'retrySave' })}>{copy.retry}</button></p>}
         </FocusPanel>}
-        {/* Notes take a row at the top of the card while they have something to say, never a floating chip over the companion. */}
-        <div className="fp-note" aria-label="想法与保存状态" data-status-actions
-          hidden={!noteText && !thoughts.hasDraft && !thoughts.latestMarkerId && !thoughts.undo && !needsAttention}>
-          <span className="fp-note__text">{noteText}</span>
-          {thoughts.hasDraft && <button type="button" className="text-action" onClick={event => {
-            opener.current = event.currentTarget; companion.dismiss(); setTask(null); thoughts.openNew()
-          }}>{copy.resumeDraft}</button>}
-          {thoughts.latestMarkerId && <button type="button" className="text-action" disabled={!canEdit}
-            onClick={event => edit(thoughts.latestMarkerId!, event.currentTarget)}>{copy.supplement}</button>}
-          {thoughts.undo && <button type="button" className="text-action" disabled={!canEdit} onClick={event => {
-            const undo = thoughts.undo!
-            undo.run()
-            // The restore button goes once it works; keep keyboard focus on the tool it came from.
-            if (undo.removesItself && event.detail === 0) markButton.current?.focus()
-          }}>{thoughts.undo.label}</button>}
-          {needsAttention && <button type="button" className="text-action"
-            aria-label={copy.statusDetails} onClick={event => show('status', event.currentTarget)}>详情</button>}
-        </div>
-        <div ref={voiceBox} className="fp-voice-slot">
-          <button type="button" className="pill fp-voice-open" hidden={reading && !!requested} aria-expanded={reading}
-            onClick={event => show('encouragement', event.currentTarget)}>
-            <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="1.7"><path d="M20 11a8 8 0 0 1-8 8c-1.4 0-2.7-.3-3.8-.9L4 20l1.3-4A8 8 0 1 1 20 11Z"/></svg>
-            {uiText('UI19')}
-          </button>
-          {reading && requested && <EncouragementReader quote={requested} choosing={askOpen} canEdit={canEdit}
-            sceneRef={sceneBox} onBack={back} onClose={close} timerSummary={timerSummary}
-            {...(favorites ? { favorites } : {})} onNext={companion.next} onChooseMode={() => setAskOpen(true)} onReturn={() => setAskOpen(false)}
-            onChoose={pool => { if (pool !== requested.pool) companion.request(pool); setAskOpen(false) }} />}
-        </div>
-        <div className="fp-status">
-          {readyFocus && !restEnded ? (editingStep
-            ? <input className="fp-step-input" aria-label={uiText('UI10')} placeholder={uiText('UI11')} value={step} autoFocus
-                enterKeyHint="done" aria-invalid={stepTooLong} disabled={!canEdit}
-                onChange={e => setStep(e.target.value)} onBlur={() => { if (!stepTooLong) setEditingStep(false) }}
-                onKeyDown={e => { if ((e.key === 'Enter' || e.key === 'Escape') && !e.nativeEvent.isComposing && e.nativeEvent.keyCode !== 229 && !stepTooLong) { e.preventDefault(); setEditingStep(false) } }} />
-            : <button type="button" className="text-action" disabled={!canEdit} onClick={() => setEditingStep(true)}>
-              {step.trim() ? `${copy.stepPrefix}${step.trim()}` : copy.stepAdd}</button>)
-            : <span>{statusLine}{!ready && !view.isBreak && view.step && <span className="fp-current-step" title={view.step}> · {copy.stepPrefix}{view.step}</span>}</span>}
-          {(preparingRest || focusResult) && <select className="fp-rest-choice" aria-label="休息时长" value={restPhase}
-            disabled={!canEdit || timerPending} onChange={e => setRestChoice(e.target.value === 'longBreak' ? 'longBreak' : 'shortBreak')}>
-            {(['shortBreak', 'longBreak'] as const).map(phase => <option key={phase} value={phase}>
-              {PHASE_LABELS[phase]} {phase === 'shortBreak' ? view.shortBreakMinutes : view.longBreakMinutes} 分钟</option>)}
-          </select>}
-          {stepTooLong && <span className="fp-hint--error"> · 请缩短到 {view.stepMaxLength} 字以内</span>}
-        </div>
-
-        <div className="fp-controls" role="group" aria-label="计时控制">
-          <div className="fp-primary" ref={primaryRef}>
-            <TimerActionButton identity={readyFocus ? identity + '/' + focusMinutes : identity} primary disabled={!canEdit || (readyFocus && stepTooLong)} busy={timerPending} onActivate={primary.run}>
-              {timerPending ? '正在处理…' : primary.label}</TimerActionButton>
-          </div>
-          <div className="fp-control-secondary">
-            {focusResult ? <TimerActionButton identity={identity + 'prepareFocus'} className="pill pill--soft" disabled={!canEdit} busy={timerPending}
-              onActivate={() => dispatch({ type: 'prepare', phase: 'focus' })}>{copy.prepareFocus}</TimerActionButton>
-              : !ready ? view.isBreak
-                ? <TimerActionButton identity={identity + 'end'} className="pill pill--soft" disabled={!canEdit} busy={timerPending} onActivate={() => dispatch({ type: 'end' })}>{copy.endRest}</TimerActionButton>
-                : <button type="button" className="pill pill--soft" disabled={!canEdit} aria-disabled={timerPending}
-                  onClick={event => { if (!timerPending) show('end', event.currentTarget) }}>{uiText('UI05')}</button>
-              : <TimerActionButton identity={identity + 'prepareMode'} className="pill pill--soft" disabled={!canEdit} busy={timerPending}
-                onActivate={() => dispatch({ type: 'prepare', phase: preparingRest ? 'focus' : restPhase })}>{preparingRest ? copy.focusMode : copy.restMode}</TimerActionButton>}
-          </div>
-        </div>
-
-        <div className="fp-tools-slot">
-          <div className="fp-secondary fp-thought-tools" role="group" aria-label="想法工具">
-            <button ref={markButton} type="button" className="text-action" disabled={!canEdit}
-              onClick={thoughts.mark} onKeyDown={e => { if (e.repeat && (e.key === 'Enter' || e.key === ' ')) e.preventDefault() }}>
-              <svg width="16" height="16" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6"><path d="M6 4h12v16l-6-4-6 4zM9 9h6m-3-3v6"/></svg>{copy.mark}</button>
-            <button type="button" className="text-action" disabled={!canEdit} onClick={e => show('thought', e.currentTarget)}>
-              <svg width="16" height="16" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6"><path d="m5 15-1 5 5-1L20 8l-4-4zM14 6l4 4"/></svg>{copy.write}</button>
-            {/* A compact 44px entry at the end: the two tools move at most a third of their width when it
-                appears, so a quick second tap still lands on 留个标记, and the row fits at 320px. */}
-            {!!linkedThoughts.length && <button type="button" className="text-action fp-tools-label" aria-label={`${copy.sessionThoughts}（${linkedThoughts.length}）`}
-              title={`${copy.sessionThoughts}（${linkedThoughts.length}）`} onClick={event => show('thoughts', event.currentTarget)}>
-              <svg width="16" height="16" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"><path d="M7 4h10a2 2 0 0 1 2 2v14l-3-2-4 2-4-2-3 2V6a2 2 0 0 1 2-2zM9 9h6M9 13h4"/></svg>
-              <span className="fp-tools-count">{linkedThoughts.length}</span></button>}
-          </div>
-        </div>
+        {readableLayout ? [statusRow, controlsRow, toolsRow, noteRow, voiceRow] : [noteRow, voiceRow, statusRow, controlsRow, toolsRow]}
 
       </div>
     </section>

@@ -71,7 +71,7 @@ export function RecordsScreen({ view, thoughts, canEdit, onEditThought, onContin
 
   return <section ref={screen} className="screen stats records-v35" aria-labelledby="stats-title">
     <div className="records-header">
-      <h1 id="stats-title" className="screen-title">记录</h1>
+      <h1 id="stats-title" className="screen-title" tabIndex={-1}>记录</h1>
       <button type="button" className="link-button records-status-button" aria-label={`查看状态${statusLabel === '查看状态' ? '' : `：${statusLabel}`}${secondaryStatusLabel ? `，${secondaryStatusLabel}` : ''}`}
         aria-describedby={statusDescription ? statusDescriptionId : undefined} aria-haspopup="dialog" aria-expanded={statusPanel}
         onClick={openStatus}><span>{statusLabel}</span>{secondaryStatusLabel && <span>{secondaryStatusLabel}</span>}</button>
