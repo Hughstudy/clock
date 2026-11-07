@@ -9,8 +9,9 @@ export function useFocusLayout(scene: RefObject<HTMLElement>): boolean {
     if (!root) return
     const probe = document.createElement('span')
     probe.setAttribute('aria-hidden', 'true')
-    probe.style.cssText = 'position:absolute;visibility:hidden;pointer-events:none;width:1rem;height:1rem;contain:strict'
-    root.append(probe)
+    probe.style.cssText = 'position:fixed;inset:0 auto auto 0;visibility:hidden;pointer-events:none;width:1rem;height:1rem;contain:strict'
+    // Shared navigation uses this text size even when the Focus screen is hidden.
+    document.body.append(probe)
     const measure = () => {
       const font = probe.getBoundingClientRect().height
       root.dataset.layout = font >= 22 ? 'readable' : 'scene'

@@ -12,6 +12,71 @@ const check = (name, condition) => { assert.ok(condition, name); checks.push(nam
 const button = (page, name) => page.getByRole('button', { name, exact: true })
 const screen = (page, name) => page.locator(`.app[data-screen="${name}"]`).waitFor()
 const snapshot = page => page.evaluate(() => JSON.parse(localStorage.getItem('whale-focus:snapshot')))
+
+async function readTabLayout(page) {
+  return page.evaluate(async () => {
+    await document.fonts.ready
+    // Allow the resize observer and its scheduled layout update to finish.
+    for (let frame = 0; frame < 3; frame++) await new Promise(requestAnimationFrame)
+    const bar = document.querySelector('.tab-bar')
+    const controls = document.querySelector('.fp-controls').getBoundingClientRect()
+    const boxes = [bar, ...bar.querySelectorAll('button')].map(element => {
+      const { x, y, width, height } = element.getBoundingClientRect()
+      return { x, y, width, height }
+    })
+    return { boxes, controlsCenter: controls.x + controls.width / 2, viewportCenter: innerWidth / 2 }
+  })
+}
+
+function sameTabBounds(previous, current) {
+  return previous.boxes.length === current.boxes.length && previous.boxes.every((box, index) =>
+    Object.keys(box).every(key => Math.abs(box[key] - current.boxes[index][key]) <= 1))
+}
+
+async function checkTabletNavigation(browser, url) {
+  const page = await browser.newPage({ viewport: { width: 1194, height: 834 }, hasTouch: true, reducedMotion: 'reduce' })
+  page.on('pageerror', error => errors.push(error.message))
+  try {
+    await page.goto(url)
+    await screen(page, 'home')
+    let regularLandscape, enlargedLandscape
+    for (const [width, height, fontSize] of [[1194, 834, null], [1194, 700, null], [834, 1194, null], [1194, 834, 32]]) {
+      await page.setViewportSize({ width, height })
+      await page.evaluate(size => { document.documentElement.style.fontSize = size ? `${size}px` : '' }, fontSize)
+      const focus = await readTabLayout(page)
+      const bar = focus.boxes[0]
+      const landscape = width > height
+      const expectedCenter = landscape ? focus.controlsCenter : focus.viewportCenter
+      const label = `${width}×${height} ${fontSize ? 'enlarged' : 'default'} text`
+      check(`${label}: Focus tabs center on ${landscape ? 'the right-hand controls' : 'the viewport'}`,
+        (!landscape || focus.controlsCenter > focus.viewportCenter) && Math.abs(bar.x + bar.width / 2 - expectedCenter) <= 1)
+      await button(page, '记录').click()
+      await screen(page, 'stats')
+      check(`${label}: both tab targets keep their bounds on Records`, sameTabBounds(focus, await readTabLayout(page)))
+      await button(page, '专注').click()
+      await screen(page, 'home')
+      check(`${label}: returning to Focus keeps both tab targets in place`, sameTabBounds(focus, await readTabLayout(page)))
+      if (width === 1194 && height === 834) {
+        if (fontSize) enlargedLandscape = focus
+        else regularLandscape = focus
+      }
+    }
+
+    await button(page, '记录').click()
+    await screen(page, 'stats')
+    await page.reload()
+    await screen(page, 'stats')
+    check('Reloading directly into iPad Records keeps the default landscape tab positions', sameTabBounds(regularLandscape, await readTabLayout(page)))
+    await page.evaluate(() => { document.documentElement.style.fontSize = '32px' })
+    check('Increasing text size within Records aligns tabs while Focus is hidden', sameTabBounds(enlargedLandscape, await readTabLayout(page)))
+    await button(page, '专注').click()
+    await screen(page, 'home')
+    check('Opening Focus after resizing text within Records keeps the same enlarged tab positions', sameTabBounds(enlargedLandscape, await readTabLayout(page)))
+  } finally {
+    await page.close()
+  }
+}
+
 process.env.BASE_PATH = '/clock/'
 await mkdir(output, { recursive: true })
 await build({ build: { outDir } })
@@ -144,6 +209,7 @@ try {
   await screen(settingsPage, 'stats')
   await settingsPage.waitForFunction(() => JSON.parse(localStorage.getItem('whale-focus:snapshot')).settings.durationsMinutes.focus === 39)
   check('Tab navigation commits a focused valid field through the same path', true)
+  await checkTabletNavigation(browser, url)
   check('No browser page errors', errors.length === 0)
   await writeFile(path.join(output, 'report.json'), JSON.stringify({ browser: browser.version(), checks, errors, physicalDevice: false }, null, 2))
   await context.close()

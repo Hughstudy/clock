@@ -236,15 +236,18 @@ body { background: var(--paper); }
    the scene cannot fill: the art (at most 1.752 × the height below the reserve) must stay 1.25 × as
    wide as the scene, so the card's corners stay outside it. The column shares the scene's sky. */
 @media (orientation: landscape) and (min-aspect-ratio: 6/5) {
-  .app[data-screen='home'] { --plate-w: clamp(340px, 100vw - (100svh - 168px) * 1.4, 600px); }
+  .app {
+    --plate-w: clamp(340px, 100vw - (100svh - 168px) * 1.4, 600px);
+    --plate-end: max(12px, env(safe-area-inset-right));
+  }
   .home { --console: 0px; --art-clear: 0px; background: var(--sky); }
   .fp-scene { margin-inline-end: var(--plate-w); }
-  .fp-plate { inset: 12px max(12px, env(safe-area-inset-right)) calc(var(--bar-clear) - 10px) auto; inline-size: var(--plate-w); block-size: fit-content;
+  .fp-plate { inset: 12px var(--plate-end) calc(var(--bar-clear) - 10px) auto; inline-size: var(--plate-w); block-size: fit-content;
     max-block-size: calc(100% - var(--bar-clear) - 2px); margin-block: auto; padding: 14px; display: flex; flex-direction: column; justify-content: center;
     overflow-y: auto; overscroll-behavior: contain; }
   .fp-plate::before { inset: 0; }
-  /* The tab bar keeps to the console's column, so the scene stays clear. */
-  .app[data-screen='home'] .tab-bar { inset-inline: auto max(16px, env(safe-area-inset-right)); inline-size: calc(var(--plate-w) - 32px); margin: 0; }
+  /* Center the capped bar between the console edges on every destination. */
+  .tab-bar { inset-inline: calc(100% - var(--plate-w) - var(--plate-end)) var(--plate-end); inline-size: calc(var(--plate-w) - 32px); }
 }
 
 /* ---------- Settings ---------- */
