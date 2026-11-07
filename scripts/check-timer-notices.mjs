@@ -72,6 +72,29 @@ export async function checkTimerNotices(browser, url, check) {
     check('Dismissing leaves the reader on the same screen', !await banner.count() && await page.locator('.app').getAttribute('data-screen') === 'settings')
     check('Settings explains how a Focus choice carries over', (await page.locator('.settings').innerText()).includes('专注页调过的时长会沿用到下次'))
     await button('‹ 回到专注').click()
+    check('After a rest deadline, the clock names the next focus and the receipt gives the actual rest time',
+      await page.locator('.fp-clock-phase').innerText() === '准备专注' &&
+      (await page.locator('.fp-status').innerText()).includes('本次休息 5 分钟') && !await session())
+    await button('＋ 这一小步').click()
+    const oversized = '字'.repeat(81)
+    const stepInput = page.locator('.fp-step-input')
+    await stepInput.fill(oversized)
+    await button('选择休息').click()
+    await button('开始休息').click()
+    await button('结束休息').waitFor()
+    await page.clock.runFor(1000)
+    await button('结束休息').click()
+    const draftButton = button('这一小步：' + oversized)
+    await draftButton.waitFor()
+    check('A manual rest ending keeps the invalid focus step available for correction',
+      await button('开始专注').isDisabled() && await draftButton.isVisible() &&
+      (await page.locator('.fp-status').innerText()).includes('本次休息') && !await session())
+    await draftButton.click()
+    check('The original step is intact when reopened', await stepInput.inputValue() === oversized)
+    await stepInput.fill('读一页')
+    await stepInput.press('Enter')
+    check('Finishing the edit returns keyboard focus and enables Start',
+      await button('这一小步：读一页').evaluate(el => el === document.activeElement) && await button('开始专注').isEnabled())
 
     const note = page.locator('.fp-note')
     const details = button('查看状态')
@@ -101,6 +124,7 @@ export async function checkTimerNotices(browser, url, check) {
     await button('撤销标记', note).waitFor()
     await button('开始专注').click()
     await button('暂停专注').waitFor()
+    check('The next focus session uses the corrected step', (await session()).step === '读一页')
     await button('撤销标记', note).waitFor({ state: 'detached' })
     check('A new session retires the earlier mark shortcuts', !await button('补充文字', note).count())
     await button('结束专注').click()

@@ -18,7 +18,10 @@
 .blue-companion__outgoing * { animation: none !important; transition: none !important; }
 .blue-companion[data-static='true'] .blue-companion__outgoing { display: none; }
 @keyframes blue-layer-out { from { opacity: 1; } to { opacity: 0; } }
-.blue-companion__touch-surface { pointer-events: all; cursor: pointer; }
+.blue-companion__touch-surface { pointer-events: all; }
+.blue-companion .scene-rig, .blue-companion__body { pointer-events: visiblePainted; }
+.blue-companion [data-touch-kind] { cursor: pointer; }
+.blue-companion .scene-rig [opacity='0'], .blue-companion .blue-companion__outgoing * { pointer-events: none; }
 .blue-companion__face { transform: translate(var(--blue-gaze-x, 0px), var(--blue-gaze-y, 0px)); }
 .blue-companion__tuft { transform-origin: 111px 42px; }
 .blue-companion__shadow { transform-origin: 120px 165px; opacity: .55; }

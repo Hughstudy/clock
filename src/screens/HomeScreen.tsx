@@ -70,6 +70,7 @@ export function HomeScreen({ active, view, result, linkedThoughts, defaultsInten
   const voiceBox = useRef<HTMLDivElement>(null)
   const primaryRef = useRef<HTMLDivElement>(null)
   const markButton = useRef<HTMLButtonElement>(null)
+  const returnToStepButton = useRef(false)
   const opener = useRef<HTMLElement | null>(null)
   const previousPanel = useRef<Panel>(null)
 
@@ -209,7 +210,6 @@ export function HomeScreen({ active, view, result, linkedThoughts, defaultsInten
     : `${PHASE_LABELS[view.phase]} · ${paused ? copy.paused : copy.running} · 剩余 ${formatClock(view.remainingMs)}`
   const statusLine = focusResult
     ? `${copy.focusElapsed} ${formatMinutes(focusResult.elapsedMs)} · ${focusResult.saved ? copy.savedRecord : copy.unsavedRecord}`
-    : restEnded ? `${copy.restElapsed} ${formatMinutes(restEnded.elapsedMs)}`
     : preparingRest ? `${PHASE_LABELS[restPhase]} · ${copy.ready}`
     : ready ? null
     : `${PHASE_LABELS[view.phase]} · ${paused ? copy.paused : copy.running}${view.isBreak ? '' : ` · ${copy.target(Math.round(view.totalMs / 60000))}`}`
@@ -250,13 +250,25 @@ export function HomeScreen({ active, view, result, linkedThoughts, defaultsInten
         </div>
   )
   const statusRow = (
-    <div key="status" className="fp-status">
-          {readyFocus && !restEnded ? (editingStep
+    <div key="status" className="fp-status" data-step-details={readyFocus && (!!restEnded || stepTooLong)}>
+          {readyFocus && restEnded && <span>{copy.restElapsed} {formatMinutes(restEnded.elapsedMs)}</span>}
+          {readyFocus ? (editingStep
             ? <input className="fp-step-input" aria-label={uiText('UI10')} placeholder={uiText('UI11')} value={step} autoFocus
-                enterKeyHint="done" aria-invalid={stepTooLong} disabled={!canEdit}
+                enterKeyHint="done" aria-invalid={stepTooLong} aria-describedby={stepTooLong ? 'step-error' : undefined} disabled={!canEdit}
                 onChange={e => setStep(e.target.value)} onBlur={() => { if (!stepTooLong) setEditingStep(false) }}
-                onKeyDown={e => { if ((e.key === 'Enter' || e.key === 'Escape') && !e.nativeEvent.isComposing && e.nativeEvent.keyCode !== 229 && !stepTooLong) { e.preventDefault(); setEditingStep(false) } }} />
-            : <button type="button" className="text-action" disabled={!canEdit} onClick={() => setEditingStep(true)}>
+                onKeyDown={e => {
+                  if ((e.key !== 'Enter' && e.key !== 'Escape') || e.nativeEvent.isComposing || e.nativeEvent.keyCode === 229 || stepTooLong) return
+                  e.preventDefault()
+                  returnToStepButton.current = true
+                  setEditingStep(false)
+                }} />
+            : <button type="button" className="text-action" disabled={!canEdit} aria-describedby={stepTooLong ? 'step-error' : undefined}
+                ref={button => {
+                  if (button && returnToStepButton.current) {
+                    returnToStepButton.current = false
+                    button.focus({ preventScroll: true })
+                  }
+                }} onClick={() => setEditingStep(true)}>
               {step.trim() ? `${copy.stepPrefix}${step.trim()}` : copy.stepAdd}</button>)
             : <span>{statusLine}{!ready && !view.isBreak && view.step && <span className="fp-current-step" title={view.step}> · {copy.stepPrefix}{view.step}</span>}</span>}
           {(preparingRest || focusResult) && <select className="fp-rest-choice" aria-label="休息时长" value={restPhase}
@@ -264,7 +276,7 @@ export function HomeScreen({ active, view, result, linkedThoughts, defaultsInten
             {(['shortBreak', 'longBreak'] as const).map(phase => <option key={phase} value={phase}>
               {PHASE_LABELS[phase]} {phase === 'shortBreak' ? view.shortBreakMinutes : view.longBreakMinutes} 分钟</option>)}
           </select>}
-          {stepTooLong && <span className="fp-hint--error"> · 请缩短到 {view.stepMaxLength} 字以内</span>}
+          {readyFocus && stepTooLong && <span id="step-error" className="fp-hint--error">请缩短到 {view.stepMaxLength} 字以内</span>}
         </div>
   )
   const controlsRow = (
@@ -316,7 +328,7 @@ export function HomeScreen({ active, view, result, linkedThoughts, defaultsInten
               <BlueCompanion presentation={presentation} keyboardPat={keyboardPat} cueId={companion.cue?.id} scene={scene}
                 panelOpen={!!panel} sceneryEnabled={companion.sceneryEnabled} />} />
         </div>
-        <span aria-hidden="true" className="fp-clock-phase">{focusResult ? copy.focusEndedTitle : restEnded ? copy.restEndedTitle : ready ? (isRest ? '准备休息' : copy.prepareFocus) : paused ? copy.paused : isRest ? '休息中' : '专注中'}</span>
+        <span aria-hidden="true" className="fp-clock-phase">{focusResult ? copy.focusEndedTitle : ready ? (isRest ? '准备休息' : copy.prepareFocus) : paused ? copy.paused : isRest ? '休息中' : '专注中'}</span>
         <p className="fp-digits" {...(ready ? {} : { role: 'timer', 'aria-label': `${PHASE_LABELS[view.phase]}还剩${spokenClock(view.remainingMs)}` })}>
           {readyFocus ? <button type="button" className="fp-clock-trigger" aria-label={`调整专注时长，当前 ${focusMinutes} 分钟`}
             disabled={!pickerAvailable} tabIndex={panel === 'duration' ? -1 : undefined} aria-haspopup="dialog" aria-expanded={panel === 'duration'}

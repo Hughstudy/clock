@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState, type PointerEvent } from 'react'
-import { blueTouchKind, blueTouchOffset, blueTouchPoint, type BlueTouchKind, type BlueTouchPoint } from '../../logic/blue-touch'
+import { blueTouchOffset, blueTouchPoint, type BlueTouchKind, type BlueTouchPoint } from '../../logic/blue-touch'
 import type { BlueCompanionSpec } from '../../logic/blue-companion'
 import type { CompanionPresentation } from '../../logic/companion'
 
@@ -9,6 +9,13 @@ interface Touch {
   kind: BlueTouchKind
   point: BlueTouchPoint
   phase: 'press' | 'release'
+}
+
+// The browser resolves transforms, painted silhouettes and stacking. A prop
+// drawn over a hand or belly is the topmost painted hit and carries no gesture.
+function paintedTouchKind(target: EventTarget): BlueTouchKind | null {
+  const kind = target instanceof Element ? target.closest<SVGElement>('[data-touch-kind]')?.dataset.touchKind : null
+  return kind === 'pat' || kind === 'squish' || kind === 'high-five' ? kind : null
 }
 
 /** Local play only. Never captures a pointer, suppresses a click or calls the host. */
@@ -37,8 +44,11 @@ export function useBlueCompanionTouch(presentation: CompanionPresentation, spec:
   useEffect(() => {
     if (lastKeyboardPat.current === keyboardPat) return
     lastKeyboardPat.current = keyboardPat
-    if (stance !== 'neutral') setTouch({ id: ++sequence.current, pointerId: -1, kind: 'pat',
-      point: { x: spec.width / 2, y: spec.height / 4 }, phase: 'release' })
+    const svg = ref.current
+    const head = svg?.querySelector('[data-part="body"]')?.getBoundingClientRect()
+    if (!svg || !head || stance === 'neutral') return
+    const point = blueTouchPoint({ x: head.left + head.width / 2, y: head.top + head.height * .15 }, svg.getBoundingClientRect(), spec)
+    if (point) setTouch({ id: ++sequence.current, pointerId: -1, kind: 'pat', point, phase: 'release' })
   }, [keyboardPat, stance, spec])
   useEffect(() => {
     const hidden = () => { if (document.hidden) cancel() }
@@ -72,14 +82,19 @@ export function useBlueCompanionTouch(presentation: CompanionPresentation, spec:
   const handlers = {
     onPointerDown(event: PointerEvent<SVGSVGElement>) {
       if (!event.isPrimary || event.button !== 0 || stance === 'neutral') return
+      const kind = paintedTouchKind(event.target)
+      if (!kind) return
       const point = pointFrom(event)
-      if (point) setTouch({ id: ++sequence.current, pointerId: event.pointerId, kind: blueTouchKind(point, spec), point, phase: 'press' })
+      if (point) setTouch({ id: ++sequence.current, pointerId: event.pointerId, kind, point, phase: 'press' })
     },
     onPointerMove(event: PointerEvent<SVGSVGElement>) {
       if (!event.isPrimary) return
       const point = pointFrom(event)
       if (!point) { cancel(); return }
-      if (!staticOnly && stance !== 'neutral') setGaze(blueTouchOffset(point, spec))
+      if (!staticOnly && stance !== 'neutral') {
+        if (paintedTouchKind(event.target)) setGaze(blueTouchOffset(point, spec))
+        else setGaze(previous => previous.x || previous.y ? { x: 0, y: 0 } : previous)
+      }
       // Keep the original contact anchored, even if a finger moves. Native pan
       // and zoom remain available; pointercancel/scroll end the local press.
     },

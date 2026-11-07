@@ -51,10 +51,25 @@ async function focusReady(page) {
   if (await back.isVisible()) await back.click()
 }
 
+// Select by artwork coordinates so real touch hit testing includes the current
+// SVG transforms, foreground props, and the phone layout.
+function drawingPoint(part, x, y) {
+  return part.evaluate((element, point) => {
+    const position = new DOMPoint(...point).matrixTransform(element.getScreenCTM())
+    return { x: position.x, y: position.y }
+  }, [x, y])
+}
+
 // A reading layout that fits the centered creature can still miss the off-center
 // tea scene or cover a raised hand. Check each actual assignment at phone scale.
 async function inspectSpeech(page, id) {
   const session = (await readSaved(page)).data.timer.session
+  if (id === 'F3') {
+    const svg = page.locator('.home .blue-companion')
+    const table = await drawingPoint(svg.locator('[data-scene-part="table"]'), 160, 193)
+    await page.touchscreen.tap(table.x, table.y)
+    check('Touching the table in front of the character leaves its pose alone', await svg.getAttribute('data-touch') === '')
+  }
   const ask = page.getByRole('button', { name: '给我一句鼓励', exact: true })
   await ask.click()
   const reader = page.getByRole('region', { name: '一句鼓励' })
@@ -110,13 +125,31 @@ try {
   const fixtureResults = await fixtures.locator('.preview__result').allTextContents()
   await fixtures.close()
 
-  const context = await browser.newContext({ viewport: { width: 375, height: 850 }, timezoneId: 'Asia/Singapore' })
+  const context = await browser.newContext({ viewport: { width: 375, height: 850 }, hasTouch: true, timezoneId: 'Asia/Singapore' })
   const page = await context.newPage()
   observe(page)
   await page.clock.install({ time: new Date('2026-10-29T04:00:00Z') })
   await page.goto(appUrl)
   await page.evaluate(() => navigator.serviceWorker.ready)
   const primary = page.locator('.fp-primary .btn-primary')
+  const svg = page.locator('.home .blue-companion')
+  for (const viewport of [{width:375,height:667}, {width:390,height:844}, {width:430,height:932}]) {
+    await page.setViewportSize(viewport)
+    await page.clock.runFor(450)
+    const windowPoint = await drawingPoint(svg, 65, 50)
+    await page.touchscreen.tap(windowPoint.x, windowPoint.y)
+    check(`At ${viewport.width}px tapping the window leaves the character alone`, await svg.getAttribute('data-touch') === '')
+    const body = svg.locator('[data-part="body"]')
+    for (const [part, x, y, expected] of [['head',120,60,'pat'], ['belly',120,138,'squish'], ['left hand',58,117,'high-five'], ['right hand',180,117,'high-five']]) {
+      const point = await drawingPoint(body, x, y)
+      await page.touchscreen.tap(point.x, point.y)
+      check(`At ${viewport.width}px the visible ${part} receives and releases its touch`,
+        await svg.getAttribute('data-touch') === expected && await svg.getAttribute('data-touch-phase') === 'release')
+      await page.clock.runFor(1400)
+    }
+  }
+  await page.setViewportSize({width:375,height:850})
+  await page.clock.runFor(450)
   const beforeStart = await primary.boundingBox()
   await primary.click()
   const initial = await untilSaved(page, s => !!s.timer.session, 'first start')
@@ -131,11 +164,10 @@ try {
   await page.screenshot({ path: path.join(output, 'focus-375.png') })
   await inspectSpeech(page, firstScene)
 
-  const svg = page.locator('.home .blue-companion')
-  const bounds = await svg.boundingBox()
-  await page.mouse.move(bounds.x + bounds.width / 2, bounds.y + bounds.height * 130 / 190)
+  const head = await drawingPoint(svg.locator('[data-part="body"]'), 120, 60)
+  await page.mouse.move(head.x, head.y)
   await page.mouse.down()
-  check('Real pointer belly contact responds', await svg.getAttribute('data-touch') === 'squish')
+  check('Real pointer contact on the visible scene head responds', await svg.getAttribute('data-touch') === 'pat')
   await page.mouse.up()
   check('Touch leaves session identity intact', (await readSaved(page)).data.timer.session.id === firstId)
   await page.clock.fastForward(2000)

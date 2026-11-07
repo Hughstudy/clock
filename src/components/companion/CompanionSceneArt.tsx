@@ -151,13 +151,14 @@ function Cloud({x,y,scale=1}:{x:number;y:number;scale?:number}){return <g transf
 function Body({frame, happy}: {frame: ScenePoseFrame; happy: boolean}) {
   const part = (name: string, color: string) => {
     const art = blueCompanionSpec.parts[name]
-    return art && <g data-part={name}><P d={art.d} c={color}/></g>
+    const squish = name === 'belly' || name === 'footLeft' || name === 'footRight'
+    return art && <g data-part={name} data-touch-kind={squish ? 'squish' : undefined}><P d={art.d} c={color}/></g>
   }
   const restingEyes = frame.id === 'R1' || frame.id === 'R3'
   return <g transform={`translate(${frame.body.x} ${frame.body.y})`} data-scene-part="creature">
     <E x={120} y={169} rx={54} ry={5}/>
     {part('footLeft','shade')}{part('footRight','shade')}
-    <g className="scene-rig-breath">
+    <g className="scene-rig-breath" data-touch-kind="pat">
       {part('tuft','body')}{part('body','body')}{part('shine','highlight')}{part('belly','belly')}
       {part('cheekLeft','pink')}{part('cheekRight','pink')}
       <g className="scene-rig-gaze" transform={`translate(${frame.gaze.x} ${frame.gaze.y})`}><g className="scene-rig-look">
@@ -197,5 +198,5 @@ export function CompanionSceneArt({scene,frame:provided}:Props){
   if(id==='F8')back=<g data-scene-part="sky"><P d="M44 42 C19 49 28 75 49 70 C30 67 32 49 44 42Z" c="paper"/>{[[260,44],[75,31],[285,105],[224,23],[36,116],[252,85]].map(([x=0,y=0],i)=><g className="scene-rig-star" key={i}><Star x={x} y={y} opacity={i<2?1:stage(p,(i-2)*.17,.2+(i-2)*.17)}/></g>)}<P d="M260 44 L252 85 L285 105" c="softline" opacity={stage(p,.3,.6)}/><g opacity={stage(p,.92,1)}><P d="M211 32 L174 51 M214 37 L187 53" c="softline"/><Star x={216} y={31} r={7}/></g></g>
   if(id==='R2')back=<g data-scene-part="clouds"><Cloud x={63} y={58} scale={.67}/><Cloud x={252} y={91} scale={.5}/></g>
   if(id==='R3'){objects=<SideTable/>;held=<><Cup frame={f}/><Steam x={f.cup.x-13} y={f.cup.y-18} amount={1-f.cup.held}/></>}
-  return <g className="scene-rig" style={material} transform="scale(.75)" data-scene-part={`scene-${id}`} data-pose-progress={f.progress} data-contact-count={f.contacts.filter(c=>c.active).length} aria-hidden="true"><CompanionPaint id={paint}/><CompanionScenery scene={id}/><Ground/>{!usesTable&&id!=='F4'&&<Mat/>}{['F8','R2','R3'].includes(id)&&<Cushion/>}{back}<g transform={lean}><Body frame={f} happy={scene.status==='ended'||p===1}/></g>{usesTable&&<Table/>}{id==='F4'&&<Table tea/>}{objects}<g transform={lean} data-scene-part="arms"><path className="scene-draw-body" data-scene-hand="left" d={sceneArmPath(f.left)}/><path className="scene-draw-body" data-scene-hand="right" d={sceneArmPath(f.right)}/></g>{held}{f.contacts.map(c=><g key={c.name} data-scene-contact={c.name} data-contact-active={c.active} data-hand-x={c.hand.x} data-hand-y={c.hand.y} data-prop-x={c.prop.x} data-prop-y={c.prop.y}/>)}</g>
+  return <g className="scene-rig" style={material} transform="scale(.75)" data-scene-part={`scene-${id}`} data-pose-progress={f.progress} data-contact-count={f.contacts.filter(c=>c.active).length} aria-hidden="true"><CompanionPaint id={paint}/><CompanionScenery scene={id}/><Ground/>{!usesTable&&id!=='F4'&&<Mat/>}{['F8','R2','R3'].includes(id)&&<Cushion/>}{back}<g transform={lean}><Body frame={f} happy={scene.status==='ended'||p===1}/></g>{usesTable&&<Table/>}{id==='F4'&&<Table tea/>}{objects}<g transform={lean} data-scene-part="arms" data-touch-kind="high-five"><path className="scene-draw-body" data-scene-hand="left" d={sceneArmPath(f.left)}/><path className="scene-draw-body" data-scene-hand="right" d={sceneArmPath(f.right)}/></g>{held}{f.contacts.map(c=><g key={c.name} data-scene-contact={c.name} data-contact-active={c.active} data-hand-x={c.hand.x} data-hand-y={c.hand.y} data-prop-x={c.prop.x} data-prop-y={c.prop.y}/>)}</g>
 }

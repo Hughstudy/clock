@@ -48,9 +48,16 @@
 .home .focus-panel { display: flex; flex-direction: column; overflow: hidden; padding: 12px; margin: 0; border: 0; color: var(--ink);
   inline-size: auto; max-inline-size: none; max-block-size: calc(100% - var(--art-clear, 0px) - 84px - env(safe-area-inset-top)); }
 .home .focus-panel:not([open]) { display: none; }
-.home .focus-panel[data-layout='viewport'] { position: fixed; inset: calc(var(--visible-top, 0px) + 8px) 12px auto;
-  inline-size: calc(100vw - 24px); max-inline-size: 640px; block-size: calc(var(--visible-height, 100dvh) - 16px);
-  max-block-size: calc(var(--visible-height, 100dvh) - 16px); margin-inline: auto; z-index: 30; }
+.home .focus-panel[data-layout='viewport'] {
+  /* Only reserve the part of each safe inset that the visible viewport still includes. */
+  --panel-top: max(0px, env(safe-area-inset-top) - var(--visible-top, 0px));
+  --panel-bottom: max(0px, env(safe-area-inset-bottom) - var(--keyboard, 0px));
+  --panel-left: calc(env(safe-area-inset-left) + 12px);
+  --panel-right: calc(env(safe-area-inset-right) + 12px);
+  position: fixed; inset: calc(var(--visible-top, 0px) + var(--panel-top) + 8px) var(--panel-right) auto var(--panel-left);
+  inline-size: min(640px, 100vw - var(--panel-left) - var(--panel-right));
+  block-size: calc(var(--visible-height, 100dvh) - var(--panel-top) - var(--panel-bottom) - 16px);
+  max-block-size: none; margin-inline: auto; z-index: 30; }
 .home .focus-panel::backdrop { background: #24354c26; }
 .home .focus-panel__header { flex: none; min-block-size: 44px; }
 .home .focus-panel__header h2 { min-inline-size: 0; overflow-wrap: anywhere; }
@@ -75,14 +82,21 @@
 
 /* At accessibility sizes, the clock owns its own region. Everything below is
    in reading order and scrolls without changing the size chosen by the reader. */
-.home[data-layout='readable'] { --art-clear: 0px; background: var(--cream); }
-.home[data-layout='readable'] .fp-scene { flex: none; block-size: calc(env(safe-area-inset-top) + 5.875rem);
-  min-block-size: calc(env(safe-area-inset-top) + 5.875rem); margin: 0; overflow: visible; background: var(--cream); }
-.home[data-layout='readable'] .fp-scene::after, .home[data-layout='readable'] :is(.fp-art, .fp-bubble) { display: none; }
+.home[data-layout='readable'] { --art-clear: 0px; --clock-space: calc(env(safe-area-inset-top) + max(126px, 5.875rem));
+  --compact-art-height: clamp(80px, 40svh - 140px, 140px); background: var(--cream); }
+.home[data-layout='readable'] .fp-scene { flex: none; block-size: calc(var(--clock-space) + var(--compact-art-height));
+  margin: 0; overflow: visible; background: var(--cream); }
+.home[data-layout='readable'] .fp-scene::after, .home[data-layout='readable'] .fp-bubble { display: none; }
+/* The existing pet button and its complete drawing share this compact region, below the clock. */
+.home[data-layout='readable'] .fp-art { inset: var(--clock-space) 0 auto;
+  block-size: var(--compact-art-height); inline-size: min(100%, var(--compact-art-height) * 240 / 190);
+  margin-inline: auto; transform: none; opacity: 1; visibility: visible; }
+.home[data-layout='readable'] .fp-art .blue-companion { inline-size: min(100cqw, 100cqh * 240 / 190);
+  bottom: 50%; transform: translate(-50%, 50%); }
 .home[data-layout='readable'] .fp-top { inset-inline: max(12px, env(safe-area-inset-left)) max(12px, env(safe-area-inset-right)); }
-.home[data-layout='readable'] .fp-clock-phase { visibility: visible; inset: calc(env(safe-area-inset-top) + 2.05rem) 12px auto; line-height: 1.3; color: var(--ink); }
+.home[data-layout='readable'] .fp-clock-phase { visibility: visible; inset: calc(env(safe-area-inset-top) + max(55px, 2.05rem)) 12px auto; line-height: 1.3; color: var(--ink); }
 .home[data-layout='readable'] .fp-digits, .home[data-layout='readable'] .fp-scene[data-fit='hidden'] .fp-digits {
-  inset: calc(env(safe-area-inset-top) + 3.1rem) 12px auto; color: var(--ink); }
+  inset: calc(env(safe-area-inset-top) + max(77px, 3.1rem)) 12px auto; color: var(--ink); }
 .home[data-layout='readable'] .fp-top h1 { color: var(--ink); }
 .home[data-layout='readable'] .fp-plate { position: relative; inset: auto; flex: 1; inline-size: 100%; block-size: auto;
   min-block-size: 0; max-block-size: none; margin: 0 0 var(--bar-clear); padding: 10px max(20px, env(safe-area-inset-left)) 20px max(20px, env(safe-area-inset-right));
@@ -109,23 +123,24 @@
 .home[data-layout='readable'] .fp-voice-slot { order: 4; flex-shrink: 0; }
 .app:has(.home[data-layout='readable']) .tab-bar { inset-inline: 16px; inline-size: auto; }
 .app[data-screen='home']:has(.home[data-layout='readable']) .tab-bar { background: var(--cream); }
-/* Roomier accessibility layouts retain the character in a compact scene. */
-@media (min-height: 780px) and (orientation: portrait) {
-  .home[data-layout='readable'] .fp-scene { block-size: calc(env(safe-area-inset-top) + 5.875rem + 140px);
-    min-block-size: calc(env(safe-area-inset-top) + 5.875rem + 140px); }
-  .home[data-layout='readable'] .fp-art { display: block; inset: auto 0 0; block-size: 140px; --art-w: 170px;
-    transform: none; opacity: 1; visibility: visible; }
-}
-@media (orientation: landscape) and (min-width: 680px) {
+@media (orientation: landscape) and (min-width: 560px) {
   .app { --readable-scene-width: 40%; }
   .app:has(.home[data-layout='readable']) .tab-bar { inset-inline: var(--readable-scene-width) 0; }
-  .home[data-layout='readable'] .fp-scene { position: absolute; inset: 0 auto var(--bar-clear) 0;
-    inline-size: var(--readable-scene-width); block-size: auto; min-block-size: 0; }
+  .home[data-layout='readable'] .fp-scene { position: absolute; inset: 0 auto env(safe-area-inset-bottom) 0;
+    inline-size: var(--readable-scene-width); block-size: auto;
+    --compact-art-height: min(34svh, 240px); }
+  .home[data-layout='readable'] .fp-art { max-block-size: max(0px, 100% - var(--clock-space)); }
   .home[data-layout='readable'] .fp-plate { margin-inline-start: var(--readable-scene-width); inline-size: calc(100% - var(--readable-scene-width));
     padding-block-start: 12px; scrollbar-gutter: stable both-edges; }
-  .home[data-layout='readable'] .fp-controls { grid-template-columns: 1fr 1fr; }
+  .home[data-layout='readable'] .fp-controls { grid-template-columns: repeat(auto-fit, minmax(min(100%, 5.2rem), 1fr)); }
+  .home[data-layout='readable'] .fp-tools-slot { container: thought-tools / inline-size; }
   .home[data-layout='readable'] .fp-thought-tools { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 44px; }
   .home[data-layout='readable'] .fp-thought-tools .fp-tools-label { grid-column: 3; }
+  @container thought-tools (max-width: 12rem) {
+    .home[data-layout='readable'] .fp-thought-tools { grid-template-columns: minmax(0, 1fr) 44px; }
+    .home[data-layout='readable'] .fp-thought-tools > button { grid-column: 1; }
+    .home[data-layout='readable'] .fp-thought-tools .fp-tools-label { grid-area: 1 / 2; }
+  }
 }
 /* When the card alone exceeds a short viewport, its controls remain scrollable.
    This also covers user-enlarged text without reducing their chosen font size. */

@@ -27,7 +27,8 @@
 .home .duration-ruler__marker { position: absolute; inset-block-start: 2px; inset-inline-start: 50%; inline-size: 4px; block-size: 32px; margin-inline-start: -2px;
   border-radius: 4px; background: var(--whale); pointer-events: none; }
 .home .duration-ruler .fp-hint { margin: 0; font-size: .75rem; line-height: 1.3; text-align: center; }
-.home .duration-ruler__footer { display: flex; justify-content: space-between; align-items: center; gap: 10px; color: var(--muted); }
+.home .duration-ruler__footer { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 10px; color: var(--muted); }
+.home .duration-ruler__footer button { margin-inline-start: auto; }
 .home .duration-ruler__footer input { inline-size: 4rem; min-block-size: 44px; font: inherit; font-size: max(1rem,16px);
   border: 1px solid var(--cream-line); border-radius: 12px; text-align: center; background: var(--paper); color: var(--ink); }
 .home .fp-plate[data-panel='duration'] > :not(.fp-digits):not(.fp-duration-surface) { visibility: hidden; }

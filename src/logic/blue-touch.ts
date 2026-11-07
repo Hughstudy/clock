@@ -29,13 +29,6 @@ export function blueTouchPoint(client: BlueTouchPoint, bounds: Bounds, canvas: C
     && point.y >= 0 && point.y <= canvas.height ? point : null
 }
 
-/** Deliberate touch changes only the character's expression, never application state. */
-export function blueTouchKind(point: BlueTouchPoint, canvas: Canvas): BlueTouchKind {
-  if (!validPoint(point) || !validCanvas(canvas)) return 'squish'
-  if (point.x / canvas.width < 0.32 || point.x / canvas.width > 0.68) return 'high-five'
-  return point.y / canvas.height < 0.43 ? 'pat' : 'squish'
-}
-
 /** Small bounded gaze displacement, expressed in SVG units rather than screen pixels. */
 export function blueTouchOffset(point: BlueTouchPoint, canvas: Canvas): BlueTouchPoint {
   if (!validPoint(point) || !validCanvas(canvas)) return { x: 0, y: 0 }

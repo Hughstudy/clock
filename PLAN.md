@@ -32,6 +32,8 @@ The room's furnishings are initial scenery. Story objects with authored acquisit
 
 Earlier approved work remains documented in the [v26 plan](docs/plans/INTERACTION_OVERHAUL_PLAN.md), [v26 verification](docs/verification/interaction-v26.md), [layout/arms verification](docs/verification/layout-and-arms.md), and [animation refinement verification](docs/verification/animation-refinement.md). Those are historical evidence, not v35 acceptance. The later v35 decisions above supersede older proposals below where they conflict.
 
+**iPhone interaction follow-up, 2026-11-07.** Focus preparation keeps the optional step editable after a break and labels the next countdown separately from the elapsed rest time. Enlarged text retains the pettable companion, and full-height Focus panels place controls inside the visible safe area. Pet gestures follow the drawn head, hands and belly. Deleting a thought in Records keeps its undo within reach above the tabs. Production browser checks exercise these interactions in phone portrait and landscape, including 200% text. Physical iPhone Safari and VoiceOver checks remain open.
+
 ## 1. Sources and current baseline
 
 - Use the [v37 product map](docs/prd/README.md): A/B remain behavior/UI identifiers and D remains acceptance. The v36 single-file source and v35/v26/v5/v3 handoffs are historical references. Subsequent explicitly approved UI decisions in the reports below are retained; do not infer new story or data implementation from them.

@@ -7,6 +7,7 @@ import { useCompanionScene } from '../../hooks/companion/useCompanionScene'
 import { useLayerCrossfade } from '../../hooks/companion/useLayerCrossfade'
 import { useTouchSpring } from '../../hooks/companion/useTouchSpring'
 import { sampleScenePose } from '../../logic/scene-pose'
+import type { BlueTouchKind } from '../../logic/blue-touch'
 import type { SceneMotionKind } from '../../logic/scene-motion'
 import { CompanionSceneArt } from './CompanionSceneArt'
 import { CompanionScenery } from './CompanionScenery'
@@ -47,8 +48,8 @@ export function BlueCompanion({ presentation, cueId, scene, inspection, panelOpe
     mouth: touch.phase === 'press' ? ['mouth'] : ['mouthHappy', 'tongue'],
   } : scenePose
   const color = (tone: string) => tone === 'body' ? `url(#${gradientId}-body)` : tone === 'belly' ? `url(#${gradientId}-belly)` : spec.palette[tone]
-  const part = (name: string) => (
-    <g key={name} data-part={name}>
+  const part = (name: string, touchKind?: BlueTouchKind) => (
+    <g key={name} data-part={name} data-touch-kind={touchKind}>
       {sketch.parts[name]?.paths.map((path, i) => <path key={i} d={path.d}
         fill={path.fill ? color(path.fill) : 'none'} stroke={path.stroke ? color(path.stroke) : undefined}
         strokeWidth={path.width} strokeLinecap="round" strokeLinejoin="round" />)}
@@ -74,16 +75,16 @@ export function BlueCompanion({ presentation, cueId, scene, inspection, panelOpe
         {/* One stable element: a spring moves it, so a new tap never restarts the body from a pose. */}
         <g ref={touchGroup} className="blue-companion__touch">
           <g className="blue-companion__stance">
-            <g className="blue-companion__body">
-              {part('footLeft')}{part('footRight')}
+            <g className="blue-companion__body" data-touch-kind="pat">
+              {part('footLeft', 'squish')}{part('footRight', 'squish')}
               <g className="blue-companion__tuft">{part('tuft')}</g>
-              {part('body')}{part('shine')}{part('belly')}{part('bellyDimple')}
-              <g className="blue-companion__arm blue-companion__arm--left">{pose.arms[0] && part(pose.arms[0])}</g>
-              <g className="blue-companion__arm blue-companion__arm--right">{pose.arms[1] && part(pose.arms[1])}</g>
+              {part('body')}{part('shine')}{part('belly', 'squish')}{part('bellyDimple', 'squish')}
+              <g className="blue-companion__arm blue-companion__arm--left" data-touch-kind="high-five">{pose.arms[0] && part(pose.arms[0])}</g>
+              <g className="blue-companion__arm blue-companion__arm--right" data-touch-kind="high-five">{pose.arms[1] && part(pose.arms[1])}</g>
               <g className="blue-companion__face">
                 {part('cheekLeft')}{part('cheekRight')}
-                <g className="blue-companion__eyes">{pose.eyes.map(part)}</g>
-                {pose.mouth.map(part)}
+                <g className="blue-companion__eyes">{pose.eyes.map(name => part(name))}</g>
+                {pose.mouth.map(name => part(name))}
               </g>
             </g>
           </g>
@@ -108,15 +109,15 @@ export function BlueCompanion({ presentation, cueId, scene, inspection, panelOpe
       data-scene-progress={inspection ? scene?.completedProgress : sceneMotion.presentedProgress}
       data-scene-activity-progress={inspection ? scene?.completedProgress : sceneMotion.activityProgress}
       data-scene-action={inspection?.actionKind ?? sceneMotion.sampleKind} data-scene-action-progress={inspection?.actionProgress ?? sceneMotion.actionProgress}>
+      {/* A stable background receives releases even when a press changes the drawn pose.
+          Contact begins only on a painted part of the character above it. */}
+      <rect className="blue-companion__touch-surface" width={sketch.width} height={sketch.height} fill="transparent" aria-hidden="true" />
       {layer}
       {outgoing && <g key={`outgoing:${outgoingKey}`} className="blue-companion__outgoing" aria-hidden="true">{outgoing}</g>}
       {touch && <g key={touch.id} className="blue-companion__contact" transform={`translate(${touch.point.x} ${touch.point.y})`} aria-hidden="true">
         <circle className="blue-companion__contact-ring" r={spec.touch.contactRadius} />
         <g className="blue-companion__affection"><path d="M0 -6 C-9 -16 -17 -2 0 7 C17 -2 9 -16 0 -6Z" fill={spec.palette.blush} stroke={spec.palette.outline} strokeWidth="1" /></g>
       </g>}
-      {/* A fixed decorative surface inside the host's native button. It never
-          moves with the art, takes focus, captures pointers or dispatches clicks. */}
-      <rect className="blue-companion__touch-surface" x="34" y="12" width="172" height="158" rx="64" fill="transparent" aria-hidden="true" />
     </svg>
   )
 }

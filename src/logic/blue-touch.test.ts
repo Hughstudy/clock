@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { advanceBlueTouchMotion, blueTouchKind, blueTouchMotionNeedsFrame, blueTouchMotionTransform, blueTouchOffset, blueTouchPoint, blueTouchPressPose, emptyBlueTouchMotion, springOf, springSettled, stepSpring, type BlueTouchInput, type BlueTouchMotion, type SpringState } from './blue-touch'
+import { advanceBlueTouchMotion, blueTouchMotionNeedsFrame, blueTouchMotionTransform, blueTouchOffset, blueTouchPoint, blueTouchPressPose, emptyBlueTouchMotion, springOf, springSettled, stepSpring, type BlueTouchInput, type BlueTouchMotion, type SpringState } from './blue-touch'
 
 const canvas = { width: 240, height: 190 }
 const bounds = { left: 10, top: 20, ...canvas }
@@ -55,20 +55,6 @@ describe('blue companion touch geometry', () => {
     }
   })
 
-  it('classifies head, hands and belly consistently at different canvas sizes', () => {
-    for (const size of [100, 200]) {
-      const square = { width: size, height: size }
-      expect(blueTouchKind({ x: size * 0.5, y: size * 0.42 }, square)).toBe('pat')
-      expect(blueTouchKind({ x: size * 0.1, y: size * 0.39 }, square)).toBe('high-five')
-      expect(blueTouchKind({ x: size * 0.9, y: size * 0.39 }, square)).toBe('high-five')
-      expect(blueTouchKind({ x: size * 0.5, y: size * 0.43 }, square)).toBe('squish')
-      expect(blueTouchKind({ x: size * 0.31, y: size * 0.6 }, square)).toBe('high-five')
-      expect(blueTouchKind({ x: size * 0.69, y: size * 0.6 }, square)).toBe('high-five')
-      expect(blueTouchKind({ x: size * 0.32, y: size * 0.6 }, square)).toBe('squish')
-      expect(blueTouchKind({ x: size * 0.68, y: size * 0.6 }, square)).toBe('squish')
-    }
-  })
-
   it('keeps gaze centered or bounded even when the pointer leaves the canvas', () => {
     expect(blueTouchOffset({ x: 120, y: 95 }, canvas)).toEqual({ x: 0, y: 0 })
     expect(blueTouchOffset({ x: 0, y: 0 }, canvas)).toEqual({ x: -3, y: -2 })
@@ -78,8 +64,6 @@ describe('blue companion touch geometry', () => {
   })
 
   it('falls back to neutral touch geometry for invalid inputs', () => {
-    expect(blueTouchKind({ x: NaN, y: 10 }, canvas)).toBe('squish')
-    expect(blueTouchKind({ x: 10, y: 10 }, { width: 0, height: 190 })).toBe('squish')
     expect(blueTouchOffset({ x: Infinity, y: 10 }, canvas)).toEqual({ x: 0, y: 0 })
     expect(blueTouchOffset({ x: 10, y: 10 }, { width: 240, height: 0 })).toEqual({ x: 0, y: 0 })
   })

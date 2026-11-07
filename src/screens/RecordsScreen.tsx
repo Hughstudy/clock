@@ -68,6 +68,11 @@ export function RecordsScreen({ view, thoughts, canEdit, onEditThought, onContin
   const statusDescription = [stateLine, saveLine, systemNoticeSummary].filter(Boolean).join(' ')
   const yearValue = Number(year)
   const validYear = /^\d{1,4}$/.test(year) && yearValue >= 1 && yearValue <= 9999
+  // Keep the recovery action for the entry the person was reading within reach.
+  // Its eligibility and object version still come from the saved deletion.
+  const selectedUndo = thoughts.undos.find(undo => current.expanded === `thought:${undo.id}`)
+  const undoButton = (undo: Thoughts['undos'][number]) => <button type="button" key={undo.id} className="link-button"
+    disabled={!canEdit} onClick={event => { beforeUndo(event, undo.id); undo.run() }}>{undo.label}</button>
 
   return <section ref={screen} className="screen stats records-v35" aria-labelledby="stats-title">
     <div className="records-header">
@@ -144,13 +149,13 @@ export function RecordsScreen({ view, thoughts, canEdit, onEditThought, onContin
       </> : <RecordsFavorites quotes={quotesShown} total={savedQuotes.length} page={favPage} pageCount={favPageCount}
         expandedId={current.expanded} canEdit={canEdit} favorites={favorites} onPage={changePage} onToggle={toggle} onCloseWelcome={closeWelcome} />}
     </div>
+    {mode !== 'favorites' && selectedUndo && <div className="records-feedback records-undo" data-status-actions>
+      {undoButton(selectedUndo)}
+    </div>}
     {mode !== 'favorites' && <div className="records-feedback" data-status-actions>
       {thoughts.status?.text}
       {thoughts.status?.kind === 'error' && <button type="button" className="link-button" onClick={thoughts.retry}>重试保存</button>}
-      {thoughts.undos.map(undo => <button type="button" key={undo.id} className="link-button" disabled={!canEdit} onClick={event => {
-        beforeUndo(event, undo.id)
-        undo.run()
-      }}>{undo.label}</button>)}
+      {thoughts.undos.filter(undo => undo !== selectedUndo).map(undoButton)}
     </div>}
     {monthPanel && <FocusTaskDialog title="选择月份" closeLabel="返回记录" onClose={closeMonth}>
       <label className="records-year">年份<input data-initial-focus inputMode="numeric" type="number" min="1" max="9999" value={year} onChange={event => setYear(event.target.value)} aria-invalid={!validYear} /></label>

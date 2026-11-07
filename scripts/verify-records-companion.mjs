@@ -332,7 +332,19 @@ try {
   await deletion.getByRole('button', { name: '重试保存', exact: true }).first().click()
   await target.waitFor({ state: 'detached' })
   check('Confirmed deletion returns keyboard focus to the next thought', await deletion.locator('[data-thought-id="thought-1"] .record-summary').evaluate(element => element === document.activeElement))
-  await deletion.getByRole('button', { name: /撤销删除/ }).first().click()
+  const undo = deletion.getByRole('button', { name: '撤销删除：正式想法 0', exact: true })
+  const cdp = await deletionContext.newCDPSession(deletion)
+  for (const [width, height, text, bottom] of [[375, 667, 100, 0], [320, 568, 200, 0], [430, 932, 200, 34], [844, 390, 200, 21]]) {
+    await deletion.setViewportSize({ width, height })
+    await cdp.send('Emulation.setSafeAreaInsetsOverride', { insets: { bottom } })
+    await deletion.evaluate(size => { document.documentElement.style.fontSize = `${size}%`; window.scrollTo(0, 0) }, text)
+    check(`${width}×${height}/${text}%: a long list keeps the selected thought's Undo visible above navigation`, await undo.evaluate(button => {
+      const r = button.getBoundingClientRect(), tabs = document.querySelector('.tab-bar').getBoundingClientRect()
+      const hit = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2)
+      return r.top >= 0 && r.left >= 0 && r.right <= innerWidth && r.height >= 44 && r.bottom <= tabs.top && button.contains(hit)
+    }))
+  }
+  await undo.click()
   await target.waitFor()
   check('Undo restores the same identity and original text once', (await snapshot(deletion)).thoughts.filter(note => note.id === 'thought-0' && note.deletedAt === null).length === 1)
   await deletion.reload(); await openRecords(deletion)

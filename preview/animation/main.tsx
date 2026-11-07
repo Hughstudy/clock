@@ -16,7 +16,8 @@ import './preview.css'
 type Cue = NonNullable<CompanionPresentation['cue']>
 type Check = { label: string; passed: boolean }
 const wait = (ms = 45) => new Promise<void>(resolve => window.setTimeout(resolve, ms))
-const points = { pat: { x: 120, y: 55 }, squish: { x: 120, y: 130 }, 'high-five': { x: 184, y: 74 } }
+const touchParts = { pat: '[data-part="body"] path', squish: '[data-part="belly"] path',
+  'high-five': '.blue-companion__arm--right path, [data-scene-hand="right"]' }
 
 function Preview() {
   const [stance, setStance] = useState<CompanionStance>('ready')
@@ -83,23 +84,21 @@ function Preview() {
     if (!element) throw new Error('Character SVG is unavailable')
     return element
   }
-  function pointer(type: string, kind: keyof typeof points = 'squish', options: PointerEventInit = {}) {
+  function pointer(type: string, kind: keyof typeof touchParts = 'squish', options: PointerEventInit = {}) {
     const element = svg()
-    const surface = element.querySelector('.blue-companion__touch-surface')
-    if (!surface) throw new Error('Fixed touch surface is unavailable')
-    const rect = element.getBoundingClientRect()
-    const scale = Math.min(rect.width / 240, rect.height / 190)
-    const point = points[kind]
-    surface.dispatchEvent(new PointerEvent(type, {
+    const target = element.querySelector(touchParts[kind])
+    if (!target) throw new Error('Character part is unavailable')
+    const rect = target.getBoundingClientRect()
+    target.dispatchEvent(new PointerEvent(type, {
       bubbles: true, pointerId: 1, pointerType: 'touch', isPrimary: true,
       button: 0, buttons: type === 'pointerdown' ? 1 : 0,
-      clientX: rect.left + (rect.width - 240 * scale) / 2 + point.x * scale,
-      clientY: rect.top + (rect.height - 190 * scale) / 2 + point.y * scale,
+      clientX: rect.left + rect.width / 2,
+      clientY: rect.top + rect.height * (kind === 'pat' ? .15 : .5),
       ...options,
     }))
   }
   function cancel() { pointer('pointercancel'); setCue(null); setFrame('Settled; no queued gesture') }
-  async function inspect(kind: keyof typeof points, release = false) {
+  async function inspect(kind: keyof typeof touchParts, release = false) {
     flushSync(() => { setStance('ready'); setCue(null) })
     await wait()
     pointer('pointerdown', kind)
