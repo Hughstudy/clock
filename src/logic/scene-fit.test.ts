@@ -1,9 +1,32 @@
 import { describe, expect, it } from 'vitest'
-import { ART_CARD, ART_HEAD, ART_MAX_SCENE_RATIO, BUBBLE_RESERVE, fitSceneArt, PANEL_TUCK, type SceneFitInput } from './scene-fit'
+import { ART_CARD, ART_HEAD, ART_MAX_SCENE_RATIO, BUBBLE_RESERVE, fitSceneArt, PANEL_TUCK, ROOM_MIN_ZOOM, wideRoomFit, type SceneFitInput } from './scene-fit'
 
 const phone: SceneFitInput = { sceneWidth: 393, sceneHeight: 570, artWidth: 565, topLimit: 50, bubbleHeight: 0, timeHeight: 0, panelTop: null, framed: true }
 const headTop = (input: SceneFitInput, fit: ReturnType<typeof fitSceneArt>) =>
   input.sceneHeight + fit.shift - ART_HEAD * input.artWidth * fit.scale
+
+describe('wideRoomFit', () => {
+  const roomWidth = (zoom: number, artWidth: number) => 234 * zoom * artWidth / 240
+
+  it.each([[1180, 1050, 840], [1024, 855, 684], [1366, 1282, 1026]])('moves %i wide art clear of the card and still covers both edges', (width, art, cardLeft) => {
+    const { zoom, cardPan, roomShift } = wideRoomFit(width, art, cardLeft)
+    expect(width / 2 - cardPan + art * 0.32).toBeLessThanOrEqual(cardLeft - 8 + 1e-6)
+    const half = roomWidth(zoom, art) / 2
+    const shiftPx = roomShift * 0.75 * art / 240
+    for (const centre of [width / 2 + shiftPx, width / 2 - cardPan + shiftPx]) {
+      expect(centre - half).toBeLessThanOrEqual(0)
+      expect(centre + half).toBeGreaterThanOrEqual(width)
+    }
+  })
+
+  it('does not move the scene when the card is already clear', () => {
+    expect(wideRoomFit(1600, 900, 1500).cardPan).toBe(0)
+  })
+
+  it('falls back to the base size before the art has been measured', () => {
+    expect(wideRoomFit(1180, 0, 840)).toEqual({ zoom: ROOM_MIN_ZOOM, cardPan: 0, roomShift: 0 })
+  })
+})
 
 describe('fitSceneArt', () => {
   it('leaves the art untouched when nothing competes for the space', () => {

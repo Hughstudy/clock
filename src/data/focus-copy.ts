@@ -5,6 +5,7 @@
 export const focusCopy = {
   startFocus: '开始专注', startRest: '开始休息',
   prepareFocus: '准备专注',
+  showControls: '显示计时控制', handleHint: '点这里暂停、结束或记想法',
   minutes: (minutes: number) => `${minutes} 分钟`,
   target: (minutes: number) => `目标 ${minutes} 分钟`,
   useDuration: '用这个时长', cancel: '取消', durationTitle: '调专注时长',

@@ -2,7 +2,7 @@ import assert from 'node:assert/strict'
 import { mkdir, writeFile } from 'node:fs/promises'
 import path from 'node:path'
 import { webkit } from 'playwright'
-import { launchChromium } from './lib/browser.mjs'
+import { holdFocusCard, launchChromium } from './lib/browser.mjs'
 import { build, preview } from 'vite'
 
 const output = path.resolve(process.env.IOS_REVIEW_OUTPUT || '.preview/ios-design')
@@ -18,7 +18,7 @@ await mkdir(output, { recursive: true })
 await build({ build: { outDir } })
 const server = await preview({ build: { outDir }, preview: { host: '127.0.0.1', port: 0 } })
 const url = `http://127.0.0.1:${server.httpServer.address().port}/clock/`
-const browser = process.env.IOS_BROWSER === 'webkit' ? await webkit.launch() : await launchChromium()
+const browser = holdFocusCard(process.env.IOS_BROWSER === 'webkit' ? await webkit.launch() : await launchChromium())
 try {
   for (const [width, height] of [[320, 568], [375, 667], [375, 812], [430, 932], [568, 320], [667, 375], [844, 390]]) for (const font of [16, 32]) {
     const name = `${width}x${height}-${font === 32 ? '200' : '100'}`

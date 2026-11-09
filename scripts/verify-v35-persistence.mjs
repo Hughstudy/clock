@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict'
 import path from 'node:path'
 import { mkdir, writeFile } from 'node:fs/promises'
-import { launchChromium } from './lib/browser.mjs'
+import { holdFocusCard, launchChromium } from './lib/browser.mjs'
 import { build, preview } from 'vite'
 
 const output = path.resolve(process.env.V35_PERSISTENCE_OUTPUT || '.preview/v35-persistence')
@@ -63,7 +63,7 @@ await build({ build: { outDir } })
 const server = await preview({ build: { outDir }, preview: { host: '127.0.0.1', port: 0 } })
 let browser
 try {
-  browser = await launchChromium()
+  browser = holdFocusCard(await launchChromium())
   const url = `http://127.0.0.1:${server.httpServer.address().port}/clock/`
   const options = { viewport: { width: 375, height: 850 }, timezoneId: 'Asia/Singapore', reducedMotion: 'reduce' }
 

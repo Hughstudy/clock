@@ -2,7 +2,7 @@ import assert from 'node:assert/strict'
 import path from 'node:path'
 import { mkdir, writeFile } from 'node:fs/promises'
 import { webkit } from 'playwright'
-import { launchChromium } from './lib/browser.mjs'
+import { holdFocusCard, launchChromium } from './lib/browser.mjs'
 import { build, preview } from 'vite'
 
 const output = path.resolve(process.env.NAVIGATION_REVIEW_OUTPUT || '.preview/ios-navigation')
@@ -84,7 +84,7 @@ const server = await preview({ build: { outDir }, preview: { host: '127.0.0.1', 
 const url = `http://127.0.0.1:${server.httpServer.address().port}/clock/`
 let browser
 try {
-  browser = process.env.IOS_BROWSER === 'webkit' ? await webkit.launch() : await launchChromium()
+  browser = holdFocusCard(process.env.IOS_BROWSER === 'webkit' ? await webkit.launch() : await launchChromium())
   const context = await browser.newContext({ viewport: { width: 375, height: 812 }, reducedMotion: 'reduce' })
   const page = await context.newPage()
   page.setDefaultTimeout(10000)

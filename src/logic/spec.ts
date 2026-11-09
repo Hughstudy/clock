@@ -36,6 +36,16 @@ export interface Spec {
     /** How long a success message and its shortcuts stay in the feedback slot. */
     statusVisibleMs: number
   }
+  focusChrome: {
+    /** How long the card stays after a countdown starts or resumes. */
+    tuckAfterStartMs: number
+    /** How long the card stays after being called back or used. */
+    tuckAfterIdleMs: number
+    /** After a call-back, controls ignore taps this long so one gesture can't press them. */
+    arrivalGuardMs: number
+    /** The handle explains itself for this many started sessions. */
+    hintSessions: number
+  }
   decor: {
     roughness: number
     bowing: number
@@ -114,6 +124,7 @@ export function parseSpec(raw: unknown): Spec {
   const seeds = section(decor.seeds, 'decor.seeds')
   const presentation = section(root.presentation, 'presentation')
   const thoughts = section(root.thoughts, 'thoughts')
+  const focusChrome = section(root.focusChrome, 'focusChrome')
 
   return {
     presentation: {
@@ -136,6 +147,12 @@ export function parseSpec(raw: unknown): Spec {
       markCoalesceMs: int(thoughts.markCoalesceMs, 'thoughts.markCoalesceMs', 0, 5000),
       draftSaveDelayMs: int(thoughts.draftSaveDelayMs, 'thoughts.draftSaveDelayMs', 0, 10_000),
       statusVisibleMs: int(thoughts.statusVisibleSeconds, 'thoughts.statusVisibleSeconds', 1, 600) * 1000,
+    },
+    focusChrome: {
+      tuckAfterStartMs: int(focusChrome.tuckAfterStartMs, 'focusChrome.tuckAfterStartMs', 1000, 60_000),
+      tuckAfterIdleMs: int(focusChrome.tuckAfterIdleMs, 'focusChrome.tuckAfterIdleMs', 1000, 60_000),
+      arrivalGuardMs: int(focusChrome.arrivalGuardMs, 'focusChrome.arrivalGuardMs', 0, 1000),
+      hintSessions: int(focusChrome.hintSessions, 'focusChrome.hintSessions', 0, 100),
     },
     decor: {
       roughness: positive(decor.roughness, 'decor.roughness'),

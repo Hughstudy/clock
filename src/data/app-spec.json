@@ -36,6 +36,12 @@
     "draftSaveDelayMs": 600,
     "statusVisibleSeconds": 10
   },
+  "focusChrome": {
+    "tuckAfterStartMs": 4000,
+    "tuckAfterIdleMs": 8000,
+    "arrivalGuardMs": 300,
+    "hintSessions": 3
+  },
   "decor": {
     "roughness": 1.3,
     "bowing": 1.1,

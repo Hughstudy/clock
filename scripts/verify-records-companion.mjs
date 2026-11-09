@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict'
 import { mkdir, writeFile } from 'node:fs/promises'
 import path from 'node:path'
-import { launchChromium } from './lib/browser.mjs'
+import { holdFocusCard, launchChromium } from './lib/browser.mjs'
 import { build, preview } from 'vite'
 
 const output = path.resolve(process.env.RECORDS_REVIEW_OUTPUT || '.preview/records-v35')
@@ -80,7 +80,7 @@ await build({ build: { outDir } })
 const app = await preview({ build: { outDir }, preview: { host: '127.0.0.1', port: 4387, strictPort: true } })
 let browser
 try {
-  browser = await launchChromium()
+  browser = holdFocusCard(await launchChromium())
   const context = await browser.newContext({ viewport: { width: 375, height: 900 }, timezoneId: 'Asia/Singapore' })
   const page = await context.newPage()
   observe(page)

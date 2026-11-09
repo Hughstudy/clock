@@ -57,6 +57,33 @@ export interface SceneFit {
   hidden: boolean
 }
 
+/** The painted room is 312 units wide, drawn at .75 into a viewBox 240 wide. */
+const ROOM_VIEW_WIDTH = 234
+const ROOM_RIG_SCALE = 0.75
+const ART_VIEW_WIDTH = 240
+const ROOM_EDGE_MARGIN = 10
+export const ROOM_MIN_ZOOM = 1.27
+/** How far right of centre a hand or held item reaches, per unit of art width, sampled through every scene. */
+const ACTIVITY_REACH = 0.32
+const CARD_GAP = 8
+
+export interface WideRoomFit {
+  /** How far the room is enlarged, never the creature, so it reaches both screen edges. */
+  zoom: number
+  /** How far the scene moves left while the card is out, so the card covers no hand or held item. */
+  cardPan: number
+  /** Room offset to the right, in drawing units, so it covers the screen in both scene positions without growing more. */
+  roomShift: number
+}
+
+/** Fits a full-screen room beneath a card floating on the right. `cardLeft` is the card's left edge. */
+export function wideRoomFit(sceneWidth: number, artWidth: number, cardLeft: number): WideRoomFit {
+  if (!(artWidth > 0) || !(sceneWidth > 0)) return { zoom: ROOM_MIN_ZOOM, cardPan: 0, roomShift: 0 }
+  const cardPan = Math.max(0, sceneWidth / 2 + artWidth * ACTIVITY_REACH + CARD_GAP - cardLeft)
+  const zoom = Math.max(ROOM_MIN_ZOOM, ((sceneWidth + cardPan) / artWidth * ART_VIEW_WIDTH + ROOM_EDGE_MARGIN) / ROOM_VIEW_WIDTH)
+  return { zoom, cardPan, roomShift: cardPan / 2 / artWidth * ART_VIEW_WIDTH / ROOM_RIG_SCALE }
+}
+
 export function fitSceneArt(input: SceneFitInput): SceneFit {
   const { sceneWidth, sceneHeight, artWidth, topLimit, bubbleHeight, timeHeight, panelTop, framed } = input
   if (!(artWidth > 0) || !(sceneHeight > 0)) return { scale: 1, shift: 0, hidden: false }

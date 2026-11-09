@@ -10,6 +10,7 @@ Screens and components render read-only views and dispatch intent. Hooks coordin
 | --- | --- | --- |
 | Root navigation, announcements, update protection | `src/App.tsx`, `hooks/useScreenNavigation.ts`, `hooks/useFocusTaskBack.ts` | One browser-history owner and one app-level live region; input and pending writes block updates |
 | Focus preparation and timer controls | `screens/HomeScreen.tsx`, `hooks/useDurationChoice.ts`, `components/FocusPanel.tsx` | Choosing a duration does not start it |
+| Focus card stepping aside and full-screen room | `hooks/useFocusChrome.ts`, `logic/focus-chrome.ts`, `hooks/useSceneFit.ts`, `logic/scene-fit.ts` (`wideRoomFit`), `styles/focus-v35.css` | Presentation only: never reads or writes timer state; a pat never calls the card; scale the room, never the creature |
 | Timing and session settlement | `logic/timer.ts`, `logic/app.ts`, `hooks/useClockApp.ts` | Deadline-based accounting; one transaction coordinator; stable session IDs |
 | Thought editor and recovery | `hooks/useThoughts.ts`, `logic/thoughts.ts`, `components/ThoughtPanel.tsx` | Preserve ownership, drafts, revisions and pending-save truth |
 | Encouragement policy and quote favorites | `hooks/useFeedback.ts`, `logic/feedback-host.ts`, `logic/feedback.ts`, `hooks/useQuoteFavorites.ts` | Main logic decides eligibility and save truth; animation consumes permitted cues |

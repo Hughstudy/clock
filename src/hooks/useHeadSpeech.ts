@@ -39,7 +39,7 @@ export function useHeadSpeech(speechRef: RefObject<HTMLElement>, text: string, o
     for (const element of [scene, art, digits, speech]) if (element) sizes.observe(element)
     const changes = new MutationObserver(measure)
     if (art) changes.observe(art, { subtree: true, childList: true, attributes: true, attributeFilter: ['transform', 'data-scene-status'] })
-    changes.observe(scene, { attributes: true, attributeFilter: ['data-fit'] })
+    changes.observe(scene, { attributes: true, attributeFilter: ['data-fit', 'data-chrome'] })
     scene.addEventListener('transitionend', measure)
     scene.addEventListener('animationend', measure)
     viewport?.addEventListener('resize', measure)

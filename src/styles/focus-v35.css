@@ -73,6 +73,51 @@
 .home .fp-save-details > p { flex-basis: 100%; overflow-wrap: anywhere; }
 .home .fp-save-details > .notices { flex-basis: 100%; inline-size: 100%; }
 
+/* During an untouched countdown the card, tabs and top controls step aside for the companion.
+   They wait a moment on the way back, so the scene settles first. */
+.home :is(.fp-plate, .fp-top), .app[data-screen='home'] .tab-bar {
+  transition: opacity var(--dur-panel) var(--ease-out) 120ms, translate var(--dur-panel) var(--ease-out) 120ms, visibility 0s; }
+.home[data-chrome='away'] :is(.fp-plate, .fp-top), .app[data-screen='home']:has(.home[data-chrome='away']) .tab-bar {
+  opacity: 0; visibility: hidden; pointer-events: none;
+  transition: opacity var(--dur-panel) var(--ease-out), translate var(--dur-panel) var(--ease-out), visibility 0s var(--dur-panel); }
+.home[data-chrome='away'] .fp-plate, .app[data-screen='home']:has(.home[data-chrome='away']) .tab-bar { translate: 0 12px; }
+.home[data-arriving='true'] :is(.fp-plate, .fp-top), .app[data-screen='home']:has(.home[data-arriving='true']) .tab-bar { pointer-events: none; }
+.home[data-chrome] .fp-art { transition: transform .45s cubic-bezier(.2, .8, .2, 1), opacity .2s ease; }
+.home .fp-handle, .fp-handle-hint { position: absolute; z-index: 6; inset-inline-start: 50%; translate: -50% 0; }
+.home .fp-handle { inset-block-end: calc(env(safe-area-inset-bottom) + 22px); color: var(--ink); }
+.fp-handle-hint { inset-block-end: calc(env(safe-area-inset-bottom) + 76px); margin: 0; padding: 6px 14px; border-radius: 999px; pointer-events: none;
+  background: color-mix(in srgb, var(--cream) 82%, transparent); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+  color: var(--ink); font-size: .8125rem; font-weight: 600; white-space: nowrap; }
+.home .fp-handle, .fp-handle-hint { transition: opacity var(--dur-panel) var(--ease-out); }
+@starting-style { .home .fp-handle, .fp-handle-hint { opacity: 0; } }
+.home .fp-handle:focus-visible { outline: 3px solid #1b3158; outline-offset: 2px; box-shadow: 0 0 0 7px #fff; }
+/* In portrait the room and companion come closer, so the floor isn't left empty where the card was. */
+@media (orientation: portrait) {
+  .home[data-chrome='away'] .fp-art { --closer-scale: 1.11; transform: translateY(calc(var(--art-clear) - 132px)) scale(var(--closer-scale)); }
+  /* Plant, Tea, Bubbles and Boat reach toward the edges: they settle lower without growing, so nothing is cut off. */
+  .home[data-chrome='away'] .fp-art:has(.blue-companion:is([data-scene='F2'], [data-scene='F4'], [data-scene='F5'], [data-scene='F6'])) { --closer-scale: var(--fit-scale, 1); }
+}
+@media (orientation: portrait) and (min-width: 700px) {
+  .home[data-chrome='away'] .fp-art { --closer-scale: 1.36; transform: translateY(calc(var(--art-clear) - 104px)) scale(var(--closer-scale)); }
+  .home[data-chrome='away'] .fp-art:has(.blue-companion:is([data-scene='F2'], [data-scene='F4'], [data-scene='F5'], [data-scene='F6'])) { --closer-scale: 1.09; }
+}
+@media (orientation: landscape) and (min-aspect-ratio: 6/5) {
+  .home .fp-handle, .fp-handle-hint { inset-inline: auto calc(var(--plate-end) + 12px); translate: none; }
+}
+/* Tall landscapes: the room fills the screen and the card floats over it. The creature keeps
+   the size it has beside the card; only the room grows, about the floor, to reach both edges. */
+@media (orientation: landscape) and (min-aspect-ratio: 6/5) and (min-height: 600px) {
+  .home:not([data-layout='readable']) .fp-scene { margin-inline-end: 0; --art-room: calc(100cqw - var(--plate-w));
+    --art-w: min(max(var(--art-room) * 1.25, min(100cqh - 48px - env(safe-area-inset-top), var(--art-room) * .96, 510px) * 1.633), (100cqh - var(--art-reserve)) * 1.752); }
+  .home:not([data-layout='readable']) .fp-art [data-scenery] {
+    transform: translate(calc(160px - 160px * var(--room-zoom, 1.27) + var(--room-shift, 0px)), calc(158px - 158px * var(--room-zoom, 1.27))) scale(var(--room-zoom, 1.27)); }
+  /* Local panels keep to the space beside the card now that the scene runs beneath it. */
+  .home:not([data-layout='readable']) .focus-panel[data-layout='local']:not(.fp-duration-surface) { inset-inline-end: calc(var(--plate-w) + 10px); }
+  /* While the card is out the scene moves over, and it takes the middle again when the card leaves. */
+  .home[data-chrome='shown']:not([data-layout='readable']) .fp-art {
+    transform: translateX(calc(-1 * var(--card-pan, 0px))) translateY(var(--fit-shift, 0px)) scale(var(--fit-scale, 1)); }
+}
+
 @media (orientation: landscape) and (min-aspect-ratio: 6/5) {
   .home .fp-plate { min-block-size: 0; overflow-y: auto; justify-content: flex-start; }
   .home:not([data-layout='readable']) .fp-plate { inset-block-start: auto; margin-block: 0; }

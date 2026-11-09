@@ -17,8 +17,10 @@ import { uiText } from '../data/ui-copy'
 import type { useFeedback } from '../hooks/useFeedback'
 import { useDurationChoice, validateDurationDraft } from '../hooks/useDurationChoice'
 import { useFocusTaskBack } from '../hooks/useFocusTaskBack'
+import { useFocusChrome } from '../hooks/useFocusChrome'
 import { useFocusLayout } from '../hooks/useFocusLayout'
 import { useSceneFit } from '../hooks/useSceneFit'
+import { spec } from '../data/spec'
 import type { SessionResult, UserAction } from '../hooks/useClockApp'
 import type { Thoughts } from '../hooks/useThoughts'
 import type { TimerView } from '../hooks/useViews'
@@ -206,6 +208,16 @@ export function HomeScreen({ active, view, result, linkedThoughts, defaultsInten
   const noteStatus = thoughts.status
   const pending = saveState === 'pending'
   const needsAttention = pending || noteStatus?.kind === 'error' || !!systemNoticeSummary || saveState === 'memory-only' || saveState === 'read-only'
+  const chrome = useFocusChrome({ sessionKey: view.sessionId, running: view.status === 'running' && !timerPending, timings: spec.focusChrome,
+    // A mark's undo lasts all session and waits in the card. Only its short confirmation holds it.
+    held: !active || readableLayout || !!panel || needsAttention || !!noteStatus })
+  const focusPrimaryOnReturn = useRef(false)
+  useLayoutEffect(() => {
+    if (chrome.away || !focusPrimaryOnReturn.current) return
+    focusPrimaryOnReturn.current = false
+    primaryRef.current?.querySelector('button')?.focus({ preventScroll: true })
+  }, [chrome.away])
+  const awayAttrs = chrome.away ? { inert: '' } : {}
   const noteText = pending ? copy.pending : noteStatus?.text ?? (saveState === 'memory-only' ? copy.memoryOnly : saveState === 'read-only' ? '当前只读' : systemNoticeSummary ?? '')
   const timerSummary = ready ? focusResult ? `${copy.focusElapsed} ${formatMinutes(focusResult.elapsedMs)}` : preparingRest ? `准备休息 · ${restMinutes} 分钟` : `准备专注 · ${focusMinutes} 分钟`
     : `${PHASE_LABELS[view.phase]} · ${paused ? copy.paused : copy.running} · 剩余 ${formatClock(view.remainingMs)}`
@@ -316,9 +328,11 @@ export function HomeScreen({ active, view, result, linkedThoughts, defaultsInten
         </div>
   )
   return (
-    <section className="screen home" style={light ? { '--sky': light.sky, '--floor': light.floor } as CSSProperties : undefined} data-tone={tone} data-setting={setting} data-sky-ink={light?.skyInk ?? 'default'} data-panel={panel ?? ''} data-ready-focus={readyFocus} aria-label="专注计时">
-      <div ref={sceneBox} className="fp-scene" data-setting={setting}>
-        <div className="fp-top">
+    <section className="screen home" style={light ? { '--sky': light.sky, '--floor': light.floor } as CSSProperties : undefined} data-tone={tone} data-setting={setting} data-sky-ink={light?.skyInk ?? 'default'} data-panel={panel ?? ''} data-ready-focus={readyFocus} data-chrome={chrome.away ? 'away' : 'shown'} data-arriving={chrome.arriving} aria-label="专注计时">
+      {/* While the card is away, a tap on the room brings it back. A pat on the companion stays a pat. */}
+      <div ref={sceneBox} className="fp-scene" data-setting={setting} data-chrome={chrome.away ? 'away' : 'shown'}
+        onClick={event => { if (chrome.away && !(event.target as Element).closest('[data-touch-kind]')) chrome.callOut() }}>
+        <div className="fp-top" {...awayAttrs}>
           <h1>专注</h1>
           <button type="button" className="pill pill--glass pill--icon" onClick={onSettings} aria-label="设置">
             <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><path d="M5 4v16M12 4v16M19 4v16"/><path d="M2 8h6M9 15h6M16 9h6" strokeWidth="3.4"/></svg>
@@ -376,7 +390,7 @@ export function HomeScreen({ active, view, result, linkedThoughts, defaultsInten
         </FocusPanel>}
       </div>
 
-      <div className="fp-plate" data-panel={panel ?? ''} data-attention={needsAttention}>
+      <div className="fp-plate" data-panel={panel ?? ''} data-attention={needsAttention} {...awayAttrs}>
         {panel === 'duration' && pickerAvailable && <FocusPanel title={titles.duration} placement="plate" timerSummary={timerSummary}
           onClose={close} closeLabel={copy.cancel}>
           <DurationRuler draft={draft} minutes={focusMinutes} {...view.focusMinutesRange}
@@ -387,6 +401,13 @@ export function HomeScreen({ active, view, result, linkedThoughts, defaultsInten
         {readableLayout ? [statusRow, controlsRow, toolsRow, noteRow, voiceRow] : [noteRow, voiceRow, statusRow, controlsRow, toolsRow]}
 
       </div>
+      {chrome.away && <>
+        {view.handleHint && <p className="fp-handle-hint">{copy.handleHint}</p>}
+        <button type="button" className="pill pill--glass pill--icon fp-handle" aria-label={copy.showControls}
+          onClick={event => { focusPrimaryOnReturn.current = event.detail === 0; chrome.callOut() }}>
+          <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m6 15 6-6 6 6"/></svg>
+        </button>
+      </>}
     </section>
   )
 }
