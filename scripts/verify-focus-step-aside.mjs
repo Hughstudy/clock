@@ -290,7 +290,9 @@ const url = `http://127.0.0.1:${server.httpServer.address().port}/clock/`
 const versions = {}
 const sizes = [[320, 640], [375, 812], [430, 932], [744, 1133], [820, 1180], [1180, 820], [1024, 768]]
 try {
-  for (const [label, launch] of [['chrome', launchChromium], ['webkit', () => webkit.launch()]]) {
+  // CI installs Chromium only. Run WebKit locally with IOS_BROWSER=webkit, like the iOS checks.
+  const engines = process.env.IOS_BROWSER === 'webkit' ? [['webkit', () => webkit.launch()]] : [['chrome', launchChromium]]
+  for (const [label, launch] of engines) {
     const browser = await launch()
     try {
       versions[label] = browser.version()

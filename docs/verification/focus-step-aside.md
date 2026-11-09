@@ -22,7 +22,7 @@ Date: 2026-11-09. Scope: the Focus screen on iPhone and iPad. See the [PRD rule]
 | `verify-ios-design` and `verify-ios-navigation` in WebKit | Passed |
 | `/clock/` production build | Passed |
 
-Browsers: Chrome 156.0.8078.80 and Playwright WebKit 26.5, as desktop emulation. Chrome was used through `SCENE_BROWSER_EXECUTABLE` because this Playwright version's own Chromium was not installed.
+Browsers: Chrome 156.0.8078.80 and Playwright WebKit 26.5, as desktop emulation. Chrome was used through `SCENE_BROWSER_EXECUTABLE` because this Playwright version's own Chromium was not installed. The deployment workflow runs Chromium only; run the WebKit pass locally with `IOS_BROWSER=webkit`.
 
 The step-aside check covers 320×640, 375×812, 430×932, 744×1133, 820×1180, 1180×820 and 1024×768 in both browsers. The full behaviour flow runs at 375×812 and 1180×820 in both browsers. In Chrome, all 11 scenes run at 6%, 50% and 94% of a session at 1180×820, 1024×768, 820×1180 and 375×812. That walk confirms hands stay clear of the card and on screen, the head stays below the time, and the handle and hint do not cover the companion.
 
