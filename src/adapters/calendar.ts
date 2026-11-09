@@ -9,6 +9,12 @@ export function localHour(epochMs: number): number {
   return new Date(epochMs).getHours()
 }
 
+/** Minutes since local midnight, with seconds as a fraction. */
+export function localMinutes(epochMs: number): number {
+  const d = new Date(epochMs)
+  return d.getHours() * 60 + d.getMinutes() + d.getSeconds() / 60
+}
+
 /** The local calendar date of an instant, in the device's current time zone. */
 export function localDateKey(epochMs: number): DateKey {
   const d = new Date(epochMs)

@@ -98,14 +98,17 @@ try {
     await range(slider, 39)
     await fixture.getByLabel('Scene', { exact: true }).selectOption('F3')
     await fixture.clock.runFor(32)
-    // Deliver a new reading every 250 ms just as a running Focus timer does.
-    // The full 4.2 s handling path (design pass batch 2) gets four extra frame intervals of margin.
+    // Deliver a new reading every 250 ms just as a running Focus timer does. The activity
+    // follows each reading, with no burst at the 40% mark.
+    let steady = true, last = await handling()
     for (let tick = 0; tick < 17; tick++) {
-      await range(slider, 40 + tick / 10)
+      await range(slider, 39.2 + tick / 10)
       await fixture.clock.runFor(250)
+      const now = await handling()
+      steady &&= now >= last && now - last < .02
+      last = now
     }
-    await fixture.clock.runFor(164)
-    check('Quarter-second host readings keep the full handling cadence', await handling() === .4)
+    check('Quarter-second host readings advance the activity steadily, with no burst', steady && last > 0)
 
     await fixture.getByLabel('Scene', { exact: true }).selectOption('F4')
     await range(slider, 75)
@@ -114,11 +117,12 @@ try {
     const panel = fixture.getByLabel('Thought editor needs attention')
     await panel.check()
     await fixture.clock.runFor(600)
-    check('Opening a panel preserves a mid-reach hand and cup', before > .45 && before < .7 && await handling() === before && sameCupSupport(pose, await character.evaluate(cupSupport)))
+    check('Opening a panel preserves the hand and cup', before > .4 && await handling() === before && sameCupSupport(pose, await character.evaluate(cupSupport)))
     await panel.uncheck()
     check('Closing the panel starts at the held pose', await handling() === before && sameCupSupport(pose, await character.evaluate(cupSupport)))
+    await range(slider, 76)
     await fixture.clock.runFor(200)
-    check('The held reach continues when the panel closes', await handling() > before && await handling() < .75)
+    check('The activity continues with the timer when the panel closes', await handling() > before)
     await panel.check()
     await fixture.getByLabel('Scene state', { exact: true }).selectOption('error')
     check('An error supersedes a visible panel hold', await handling() === .75 && await character.getAttribute('data-scene-motion') === 'false')
@@ -178,10 +182,11 @@ try {
       input.dispatchEvent(new Event('input',{bubbles:true}))
       input.dispatchEvent(new Event('change',{bubbles:true}))
     })
-    check('Visibility recovery settles the first fresh host fraction immediately',Number(await character.getAttribute('data-scene-activity-progress'))===.75)
+    const recovered=Number(await character.getAttribute('data-scene-activity-progress'))
+    check('Visibility recovery settles the first fresh host fraction immediately',recovered>.5)
     const settled=await character.evaluate(cupSupport)
     await fixture.clock.runFor(320)
-    check('Visibility recovery does not replay missed handling',Number(await character.getAttribute('data-scene-activity-progress'))===.75&&await character.getAttribute('data-scene-phase')==='idle'&&sameCupSupport(settled,await character.evaluate(cupSupport)))
+    check('Visibility recovery does not replay missed handling',Number(await character.getAttribute('data-scene-activity-progress'))===recovered&&await character.getAttribute('data-scene-phase')==='idle'&&sameCupSupport(settled,await character.evaluate(cupSupport)))
   })
   await choose('R2');await page.getByLabel('Scene state',{exact:true}).selectOption('loop')
   check('Cloud watching keeps both eyes open',await svg.locator('[data-part="eyeLeft"], [data-part="eyeRight"]').count()===2&&await svg.locator('[data-part="eyesResting"]').count()===0)

@@ -145,20 +145,22 @@ try {
   await p.clock.fastForward(3601000); await p.reload(); await button(p, '开始休息').waitFor()
   check('Explicit rest remains selected after the automatic suggestion cutoff', (await snapshot(p)).timer.phase === 'shortBreak')
   await button(p, '返回专注').click()
-  let reviewedDusk = false
+  // The sky follows the device clock, so the garden is at its darkest here.
+  await p.clock.setSystemTime(new Date(2026, 10, 8, 20, 0, 0))
+  let reviewedNight = false
   for (let i = 0; i < 9; i++) {
     await button(p, '开始专注').click(); await button(p, '暂停专注').waitFor()
-    if (await p.locator('.home').getAttribute('data-setting') === 'dusk') {
+    if (await p.locator('.home').getAttribute('data-setting') === 'garden') {
       await button(p, '暂停专注').click(); await button(p, '继续专注').waitFor()
       const colors = await p.evaluate(() => [getComputedStyle(document.querySelector('.fp-digits')).color, getComputedStyle(document.querySelector('.fp-scene')).backgroundColor])
       const luminance = rgb => rgb.match(/[\d.]+/g).slice(0, 3).map(Number).map(v => { v /= 255; return v <= .04045 ? v / 12.92 : ((v + .055) / 1.055) ** 2.4 }).reduce((s, v, i) => s + v * [.2126, .7152, .0722][i], 0)
       const values = colors.map(luminance).sort((a, b) => b - a)
-      check('Dusk countdown meets at least 4.5:1 contrast', (values[0] + .05) / (values[1] + .05) >= 4.5)
-      await p.screenshot({ path: path.join(output, 'dusk-paused.png') }); reviewedDusk = true; break
+      check('Night countdown meets at least 4.5:1 contrast on the darkest sky', (values[0] + .05) / (values[1] + .05) >= 4.5)
+      await p.screenshot({ path: path.join(output, 'night-paused.png') }); reviewedNight = true; break
     }
     await button(p, '结束专注').click(); await button(p, '确认结束').click(); await button(p, '准备专注').click()
   }
-  check('The dusk scene was reached and reviewed', reviewedDusk)
+  check('The night scene was reached and reviewed', reviewedNight)
   await button(p, '记录').click(); await p.screenshot({ path: path.join(output, 'records.png') })
   check('No browser or console errors', errors.length === 0)
   await ctx.close()

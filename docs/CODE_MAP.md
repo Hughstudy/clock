@@ -20,6 +20,8 @@ Screens and components render read-only views and dispatch intent. Hooks coordin
 | Snapshot format and compatibility | `logic/snapshot.ts`, `logic/snapshot/` | Keep the stable entry point; protect old and newer raw data |
 | Storage and concurrency | `adapters/storage.ts`, `adapters/browser-store.ts`, `adapters/locks.ts` | Read latest, transition, write under one short lock |
 | Companion appearance and motion | `components/companion/`, `hooks/companion/`, `logic/scene-*.ts`, `data/scene-*.ts` | Rendering can be interrupted or disabled without changing saved facts |
+| Companion's performance across a focus session | `logic/focus-presence.ts`, `hooks/companion/useFocusPresence.ts`, `logic/scene-pose.ts` (`FOCUS_ATTENTION`, `FLIPPER_ARM`) | A pure function of main's elapsed time; frames only around a gesture; an arm moves only where it stays clear of every item |
+| Day and night in the scene | `logic/daylight.ts`, `data/scene-light.ts`, `hooks/companion/useSceneLight.ts`, `components/companion/CompanionScenery.tsx` | Follows the device clock; presentation only; the page's sky and floor match the art, and the clock text stays readable at every level |
 | Defaults and bounds | `data/app-spec.json`, `logic/spec.ts` | Runtime settings are validated independently of legacy artwork |
 | Retained install icon | `test/fixtures/legacy-icon.json`, `test/legacy-icon.ts`, `test/icon.test.ts` | Tooling only; retain provenance; generated public SVG must match byte-for-byte |
 | Browser checks and visual review | `scripts/`, `scripts/lib/browser.mjs` | All tools use the same explicit executable/channel policy |

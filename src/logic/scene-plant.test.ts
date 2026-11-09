@@ -40,24 +40,12 @@ function checkSupport(html:string) {
   // F2's body, arms and pot have the same parent scene scale and no lean.
   // If that layering changes, this assertion requires the test to account for it.
   expect(html).toContain('transform="rotate(0 162 198)" data-scene-part="arms"')
-  expect(html).toContain('data-scene-part="plant-pot"><path')
-  // Read the actual drawn wall, from the end of its top edge to its base.
-  const pot=html.slice(html.indexOf('data-scene-part="plant-pot"'))
-  const side=pot.match(/<path[^>]+ d="M[\d.]+ ([\d.]+) H([\d.]+) L([\d.]+) ([\d.]+)/)
-  if(!side)throw new Error('Missing pot side wall')
-  const topY=Number(side[1]),topX=Number(side[2]),baseX=Number(side[3]),baseY=Number(side[4])
-  const wallX=(y:number)=>topX + (baseX-topX)*(y-topY)/(baseY-topY)
-  const hands=[...left,...right]
-  const wall=hands.filter(p=>p.y>=topY&&p.y<=baseY)
-  expect(Math.min(...wall.map(p=>p.x-wallX(p.y)))).toBeGreaterThanOrEqual(-.001)
-  const lip=hands.filter(p=>Math.abs(p.y-rim.y)<=rim.ry)
-  const soilClearance=lip.map(p=>p.x-rim.x-rim.rx*Math.sqrt(1-((p.y-rim.y)/rim.ry)**2))
-  expect(Math.min(...soilClearance)).toBeGreaterThan(1)
-  const pad=left.filter(p=>p.y>rim.y+2*rim.ry&&p.y<=baseY)
-  const contact=pad.reduce((a,b)=>Math.abs(a.x-wallX(a.y))<Math.abs(b.x-wallX(b.y))?a:b)
-  expect(Math.abs(contact.x-wallX(contact.y))).toBeLessThan(.01)
+  // The two hands are exact mirror images about the creature's centre.
+  left.forEach((p,i)=>{expect(p.x).toBeCloseTo(324-right[i]!.x,2);expect(p.y).toBeCloseTo(right[i]!.y,2)})
+  // The pot and its rim stand clear of the left arm.
+  expect(Math.min(...left.map(p=>p.x))).toBeGreaterThan(rim.x+rim.rx+4)
   expect(html.indexOf('data-scene-part="arms"')).toBeGreaterThan(html.indexOf('data-scene-part="plant-pot"'))
-  // The moved pot's footprint still fits within the drawn tabletop.
+  // The pot's footprint still fits within the drawn tabletop.
   const floor=ellipse(html,'plant')
   const footprint=Array.from({length:36},(_,i)=>{
     const a=i*2*Math.PI/36
@@ -65,16 +53,18 @@ function checkSupport(html:string) {
     return ((x-table.x)/table.rx)**2+((y-table.y)/table.ry)**2
   })
   expect(Math.max(...footprint)).toBeLessThan(1)
-  // The lowered right palm lies within the solid tabletop, not beside/under it.
-  const bottom=right.reduce((a,b)=>a.y>b.y?a:b)
-  expect(((bottom.x-table.x)/table.rx)**2+((bottom.y-table.y)/table.ry)**2).toBeLessThan(1)
-  expect(bottom.y).toBeGreaterThan(table.y+3)
+  // Each lowered palm lies within the solid tabletop, not beside or under it.
+  for(const arm of [left,right]){
+    const bottom=arm.reduce((a,b)=>a.y>b.y?a:b)
+    expect(((bottom.x-table.x)/table.rx)**2+((bottom.y-table.y)/table.ry)**2).toBeLessThan(1)
+    expect(bottom.y).toBeGreaterThan(table.y+3)
+  }
   expect(right[0]).toEqual({x:213,y:143})
   expect(left[0]).toEqual({x:111,y:143})
 }
 
 describe('plant rendered hand and support geometry',()=>{
-  it('keeps the left palm on the outside wall and the hands off the soil in running, paused, early and full endings, including static mode',()=>{
+  it('rests both hands as mirror images on the table, clear of the pot, in running, paused, early and full endings, including static mode',()=>{
     for(const status of ['running','paused','ended'] as const)for(const progress of [0,.07,.4,.75,1])for(const staticOnly of [false,true])checkSupport(render({status,progress,staticOnly}))
   })
   it('preserves drawn support throughout the gesture and every interrupted ending sample',()=>{

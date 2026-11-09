@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { BLOCK_HEIGHT, BUBBLE_WAND, sampleScenePose, sceneArmPath, simpleGesturePulse, SCENE_CUP_BASE, SCENE_CUP_HANDLE, transformScenePoint, type SceneArm, type ScenePoint } from './scene-pose'
+import { BLOCK_HEIGHT, BUBBLE_WAND, PLANT_POT, sampleScenePose, sceneArmPath, simpleGesturePulse, SCENE_CUP_BASE, SCENE_CUP_HANDLE, transformScenePoint, type SceneArm, type ScenePoint } from './scene-pose'
 import { achievedSceneLandmark } from './scene-playback'
 import { blueCompanionSpec } from '../data/blue-companion'
 import type { SceneId } from './types'
@@ -92,7 +92,7 @@ describe('sampled scene contact and silhouette',()=>{
         expect(grips.has('kettle-handle')).toBe(false)
         expect(frame.kettle).toEqual(parked)
       }
-      if(distance(frame.cup,supportedCup)>.0001) expect(grips.has('cup-handle')).toBe(true)
+      if(distance(frame.cup,supportedCup)>.0001) expect(grips.has('cup-base')||grips.has('cup-handle')).toBe(true)
     }
     const final = at(1)
     expect(final.contacts.map(c=>c.name).sort()).toEqual(['cup-base','cup-handle'])
@@ -287,12 +287,64 @@ describe('sampled scene contact and silhouette',()=>{
       const shapes=[sampledOutline(f.left),sampledOutline(f.right)]
       if(id==='F7')for(const b of f.blocks)shapes.push([{x:b.x,y:b.y-BLOCK_HEIGHT-6},{x:b.x+31,y:b.y-BLOCK_HEIGHT-6},{x:b.x+31,y:b.y},{x:b.x,y:b.y}])
       if(id==='F4'){const c=f.cup,k=c.scale;shapes.push([{x:c.x-18*k,y:c.y-25*k},{x:c.x+37*k,y:c.y-25*k},{x:c.x+37*k,y:c.y+5*k},{x:c.x-18*k,y:c.y+5*k}])}
-      for(const [name,box] of Object.entries(face)){
-        const shift=name==='mouth'?{x:0,y:0}:f.gaze
+      // The face's resting attention, plus the furthest a quiet head tilt carries it either way.
+      for(const [name,box] of Object.entries(face))for(const side of [0,-1,1]){
+        const eye=name==='mouth'?0:1
+        const shift={x:f.attention.x+side*.8+eye*(f.gaze.x+f.attention.x*.6+side*.6),y:f.attention.y+(side?.3:0)+eye*(f.gaze.y+f.attention.y*.6)}
         const placed={l:box.l+f.body.x+shift.x,r:box.r+f.body.x+shift.x,t:box.t+f.body.y+shift.y,b:box.b+f.body.y+shift.y}
-        expect(coverage(placed,shapes),`${id} ${i/100} ${name}`).toBeLessThan(.1)
+        expect(coverage(placed,shapes),`${id} ${i/100} ${name} ${side}`).toBeLessThan(.1)
       }
     }
+  })
+  it('pours water straight down into the cup, only while the kettle is tilted enough',()=>{
+    let poured=0
+    for(let i=0;i<=2000;i++){
+      const f=sampleScenePose({id:'F4',progress:i/2000})
+      if(f.kettle.pour<=0)continue
+      poured++
+      expect(f.kettle.angle,`tilt at ${i}`).toBeGreaterThan(24)
+      const rim={x:f.cup.x+2*f.cup.scale,y:f.cup.y-21*f.cup.scale,half:20*f.cup.scale}
+      // The spout is over the opening and close above it, so the water falls rather than flies.
+      expect(Math.abs(f.kettle.spout.x-rim.x),`over the cup at ${i}`).toBeLessThan(rim.half)
+      expect(rim.y-f.kettle.spout.y,`height at ${i}`).toBeGreaterThan(4)
+      expect(rim.y-f.kettle.spout.y,`height at ${i}`).toBeLessThan(16)
+      expect(f.kettle.grip).toEqual(f.contacts.find(c=>c.name==='kettle-handle')!.prop)
+    }
+    expect(poured).toBeGreaterThan(50)
+  })
+  it('fills the cup only after the water starts and stops as it ends',()=>{
+    const firstPour=Array.from({length:2001},(_,i)=>i/2000).find(p=>sampleScenePose({id:'F4',progress:p}).kettle.pour>0)!
+    expect(sampleScenePose({id:'F4',progress:firstPour-.02}).cup.liquid).toBe(0)
+    expect(sampleScenePose({id:'F4',progress:.73}).cup.liquid).toBe(1)
+    expect(sampleScenePose({id:'F4',progress:.73}).kettle.pour).toBe(0)
+  })
+  it('mirrors the two hands wherever neither is doing a job',()=>{
+    for(const [id,progress] of [['F1',0],['F2',.5],['F3',0],['F5',0],['F7',0],['F8',.5]] as const){
+      const f=sampleScenePose({id,progress,status:'running'})
+      f.left.points.forEach((v,i)=>expect(v,`${id} point ${i}`).toBeCloseTo(i%2===0?324-f.right.points[i]!:f.right.points[i]!,1))
+    }
+  })
+  it('draws the ready and resting arms as exact mirror images',()=>{
+    const numbers=(name:string)=>(blueCompanionSpec.parts[name]!.d.match(/-?\d+/g)??[]).map(Number)
+    for(const [left,right] of [['armLeft','armRight'],['armLeftPaused','armRightPaused'],['armLeftHappy','armRightHappy']] as const){
+      numbers(left).forEach((v,i)=>expect(numbers(right)[i],`${right} ${i}`).toBe(i%2===0?239-v:v))
+    }
+  })
+  it('only lets an arm adjust itself where it is clear of every item and holding nothing',()=>{
+    const allowed:Partial<Record<SceneId,'left'|'right'>>={F2:'right',F5:'left',F8:'right'}
+    for(const id of ids)for(let i=0;i<100;i++){
+      const f=sampleScenePose({id,status:'running',progress:i/100})
+      expect(f.flipperArm,`${id} ${i}`).toBe(allowed[id]??null)
+      if(!f.flipperArm)continue
+      const palm=f[f.flipperArm].palm
+      expect(f.contacts.some(c=>c.active&&distance(c.hand,palm)<1),`${id} ${i} holds an item`).toBe(false)
+    }
+    // The nearest items in each allowed scene stay well beyond the arm's small arc.
+    const plant=sampleScenePose({id:'F2',status:'running',progress:.5})
+    expect(distance(plant.right.palm,{x:PLANT_POT.x,y:PLANT_POT.rimY})).toBeGreaterThan(90)
+    const bubbles=sampleScenePose({id:'F5',status:'running',progress:.5})
+    expect(distance(bubbles.left.palm,{x:BUBBLE_WAND.jarX,y:BUBBLE_WAND.rimY})).toBeGreaterThan(55)
+    for(const status of ['paused','ended'] as const)if(status==='ended')expect(sampleScenePose({id:'F2',status,progress:.5}).flipperArm).toBeNull()
   })
   it('sets the rest cup down before releasing the supporting hand',()=>{
     const initial=sampleScenePose({id:'R3',status:'running',progress:0})

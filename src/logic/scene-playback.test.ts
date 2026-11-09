@@ -1,9 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { advanceScenePlayback, emptyScenePlayback, scenePlaybackNeedsFrame, type ScenePlaybackInput } from './scene-playback'
-import { scenePace } from './scene-pacing'
-import { sampleScenePose } from './scene-pose'
 
-const input = (patch: Partial<ScenePlaybackInput> = {}): ScenePlaybackInput => ({ key: 'session-a', progress: 0, mode: 'run', handlingMs: 2600, action: null, ...patch })
+const input = (patch: Partial<ScenePlaybackInput> = {}): ScenePlaybackInput => ({ key: 'session-a', progress: 0, mode: 'run', action: null, ...patch })
 describe('scene presentation playback', () => {
   it('smooths precise host progress without inventing elapsed time or overshooting', () => {
     let cursor = advanceScenePlayback(emptyScenePlayback(), input(), 0)
@@ -65,22 +63,31 @@ describe('scene presentation playback', () => {
     const hidden = advanceScenePlayback(emptyScenePlayback(), input({ progress: 0.2, mode: 'settle' }), 0)
     const recovery = advanceScenePlayback(hidden, input({ progress: 0.8, mode: 'settle' }), 0)
     const visible = advanceScenePlayback(recovery, input({ progress: 0.8 }), 16)
-    expect(visible).toMatchObject({ progress: 0.8, activityProgress: 0.75, actionKind: 'idle' })
+    expect(visible).toMatchObject({ progress: 0.8, activityProgress: 0.8, actionKind: 'idle' })
     expect(scenePlaybackNeedsFrame(visible, input({ progress: 0.8 }))).toBe(false)
   })
-  it('plays handling in a finite interval only after an achieved progress landmark', () => {
+  it('advances the activity steadily with the timer, with no burst at any landmark', () => {
     let cursor = advanceScenePlayback(emptyScenePlayback(), input(), 0)
-    cursor = advanceScenePlayback(cursor, input({ progress: 0.399 }), 16)
-    expect(cursor.activityProgress).toBe(0)
-    cursor = advanceScenePlayback(cursor, input({ progress: 0.4 }), 16)
-    expect(cursor.activityProgress).toBeGreaterThan(0)
-    expect(cursor.activityProgress).toBeLessThan(0.4)
-    for (let i = 0; i < 170; i++) cursor = advanceScenePlayback(cursor, input({ progress: 0.4 }), 16)
-    expect(cursor.activityProgress).toBe(0.4)
-    expect(scenePlaybackNeedsFrame(cursor, input({ progress: 0.4 }))).toBe(false)
+    for (let i = 1; i <= 1000; i++) {
+      const previous = cursor.activityProgress
+      cursor = advanceScenePlayback(cursor, input({ progress: i / 1000 }), 64)
+      expect(cursor.activityProgress).toBeCloseTo(i / 1000, 2)
+      expect(cursor.activityProgress - previous).toBeLessThanOrEqual(0.004)
+    }
+    expect(scenePlaybackNeedsFrame(cursor, input({ progress: 1 }))).toBe(false)
     const restored = advanceScenePlayback(emptyScenePlayback(), input({ progress: 0.8 }), 0)
-    expect(restored.activityProgress).toBe(0.75)
-    expect(restored.actionKind).toBe('idle')
+    expect(restored).toMatchObject({ activityProgress: 0.8, actionKind: 'idle' })
+  })
+  it('keeps the activity with the timer while a panel holds a gesture, so nothing races afterwards', () => {
+    const start = advanceScenePlayback(emptyScenePlayback(), input({ progress: 0.2 }), 0)
+    const held = advanceScenePlayback(start, input({ progress: 0.5, mode: 'hold' }), 16)
+    expect(held).toMatchObject({ progress: 0.5, activityProgress: 0.5 })
+    expect(advanceScenePlayback(held, input({ progress: 0.5, mode: 'hold' }), 16)).toBe(held)
+  })
+  it('rests at the last achieved pose when motion is off', () => {
+    const still = input({ progress: 0.7, still: true, mode: 'settle' })
+    expect(advanceScenePlayback(emptyScenePlayback(), still, 0).activityProgress).toBe(0.4)
+    expect(advanceScenePlayback(emptyScenePlayback(), { ...still, progress: 0.8 }, 0).activityProgress).toBe(0.75)
   })
   it('paints a running session\'s small progress steps at once, so the scene can rest between them', () => {
     let cursor = advanceScenePlayback(emptyScenePlayback(), input({ progress: 0.2 }), 0)
@@ -88,25 +95,5 @@ describe('scene presentation playback', () => {
     cursor = advanceScenePlayback(cursor, input({ progress: 0.20017 }), 0)
     expect(cursor.progress).toBe(0.20017)
     expect(scenePlaybackNeedsFrame(cursor, input({ progress: 0.20017 }))).toBe(false)
-  })
-  it('paces handling by the hands\' travel without changing where it starts or ends', () => {
-    const pace = scenePace('F3')
-    expect(pace(0.75, 1, 0)).toBe(0.75)
-    expect(pace(0.75, 1, 1)).toBeCloseTo(1, 6)
-    let previous = 0.75, peakPaced = 0, peakPlain = 0
-    const palms = (a: number) => { const f = sampleScenePose({ id: 'F3', status: 'running', progress: 1, activityProgress: a, actionKind: 'idle', actionProgress: 1 }); return [f.left.palm.x, f.left.palm.y] }
-    for (let i = 1; i <= 240; i++) {
-      const u = i / 240, eased = u * u * (3 - 2 * u), prevU = (i - 1) / 240, prevEased = prevU * prevU * (3 - 2 * prevU)
-      const paced = pace(0.75, 1, eased)
-      expect(paced).toBeGreaterThanOrEqual(previous - 1e-9)
-      const [ax, ay] = palms(paced), [bx, by] = palms(previous)
-      peakPaced = Math.max(peakPaced, Math.hypot(ax! - bx!, ay! - by!))
-      const [cx, cy] = palms(0.75 + 0.25 * eased), [dx, dy] = palms(0.75 + 0.25 * prevEased)
-      peakPlain = Math.max(peakPlain, Math.hypot(cx! - dx!, cy! - dy!))
-      previous = paced
-    }
-    expect(peakPaced).toBeLessThan(peakPlain / 3)
-    // A span without hand travel keeps the plain eased cursor.
-    expect(scenePace('F2')(0, 0.4, 0.5)).toBeCloseTo(0.2, 6)
   })
 })

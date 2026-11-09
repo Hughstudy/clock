@@ -1,9 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { CompanionScene } from '../../contracts/presentation'
 import { sceneMotionSpec } from '../../data/scene-motion'
-import { emptySceneMotion, finishSceneMotion, nextSceneMotion, sceneBeatDelay, sceneCanMove, sceneHandlingDuration, sceneMotionDuration, startSceneBeat } from '../../logic/scene-motion'
+import { emptySceneMotion, finishSceneMotion, nextSceneMotion, sceneBeatDelay, sceneCanMove, sceneMotionDuration, startSceneBeat } from '../../logic/scene-motion'
 import { advanceScenePlayback, emptyScenePlayback, scenePlaybackNeedsFrame, type ScenePlaybackInput } from '../../logic/scene-playback'
-import { scenePace } from '../../logic/scene-pacing'
 
 interface Options { staticOnly: boolean; touching: boolean; panelOpen: boolean }
 
@@ -19,6 +18,8 @@ export function useCompanionScene(scene: CompanionScene | null | undefined, { st
   const lastFrameAt = useRef<number | null>(null)
   const currentScene = useRef(scene)
   currentScene.current = scene
+  const motionOff = useRef(staticOnly)
+  motionOff.current = staticOnly
   const key = scene?.key ?? null
   const status = scene?.status
   const allowBeats = scene?.allowBeats
@@ -37,7 +38,7 @@ export function useCompanionScene(scene: CompanionScene | null | undefined, { st
   const settle = useCallback(() => {
     finish()
     const latest = currentScene.current
-    cursor.current = advanceScenePlayback(cursor.current, { key: latest?.key ?? null, progress: latest?.completedProgress ?? 0, action: null, mode: 'settle', handlingMs: sceneHandlingDuration(latest?.id, sceneMotionSpec) }, 0)
+    cursor.current = advanceScenePlayback(cursor.current, { key: latest?.key ?? null, progress: latest?.completedProgress ?? 0, action: null, mode: 'settle', still: motionOff.current }, 0)
     setPlayback(cursor.current)
   }, [finish])
   useEffect(() => {
@@ -80,18 +81,16 @@ export function useCompanionScene(scene: CompanionScene | null | undefined, { st
   // Finite gestures no longer stop/restart independent ambient loops.
   const ambientAllowed = moving && !recovering && status === 'running'
   const durationMs = active && scene ? sceneMotionDuration(active.kind, scene, sceneMotionSpec) : 0
-  const handlingMs = sceneHandlingDuration(scene?.id, sceneMotionSpec)
-  const pace = useMemo(() => scenePace(scene?.id), [scene?.id])
   // During focus nothing new starts moving between the start and the end; rest keeps its beats.
   const beatsAllowed = ambientAllowed && scene?.phase !== 'focus'
   const mode: ScenePlaybackInput['mode'] = !scene || staticOnly || !visible || recovering || (!allowBeats && !panelOpen) ? 'settle'
     : status === 'paused' || touching || panelOpen ? 'hold' : 'run'
   const input = useMemo<ScenePlaybackInput>(() => ({
-    key, progress: scene?.completedProgress ?? 0, mode, handlingMs, pace,
+    key, progress: scene?.completedProgress ?? 0, mode, still: staticOnly,
     // Hiding already consumed old cues. A new main-permitted cue arriving on
     // return starts after placement recovery instead of being consumed by it.
     action: active && !recovering ? { id: active.id, kind: active.kind, durationMs } : null,
-  }), [key, scene?.completedProgress, mode, handlingMs, pace, active?.id, active?.kind, durationMs, recovering])
+  }), [key, scene?.completedProgress, mode, staticOnly, active?.id, active?.kind, durationMs, recovering])
 
   // A new session or an interruption starts a fresh local frame interval.
   // Ordinary host progress readings keep the last painted frame's timestamp.

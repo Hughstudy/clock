@@ -1,27 +1,30 @@
 import { memo, useId } from 'react'
 import type { SceneId } from '../../contracts/presentation'
-
-type Setting = 'workroom' | 'garden' | 'dusk'
+import { useSceneLight, type SceneLight, type SceneSetting } from '../../hooks/companion/useSceneLight'
 
 // The same orchard is visible from the workroom and across the terrace.
 /** Exported so the host can extend the matching sky beyond the framed art. */
-export function sceneSettingFor(scene?: SceneId): Setting {
+export function sceneSettingFor(scene?: SceneId): SceneSetting {
   switch (scene) {
-    case 'F8': return 'dusk'
-    case 'F2': case 'F5': case 'F6': case 'R1': case 'R2': return 'garden'
+    case 'F2': case 'F5': case 'F6': case 'F8': case 'R1': case 'R2': return 'garden'
     default: return 'workroom'
   }
 }
 
-function Workroom() {
+const MOON = 'M0 -13 C-25 -6 -16 20 5 15 C-14 12 -12 -6 0 -13Z'
+
+function Workroom({ light }: { light: SceneLight }) {
+  const { colors } = light
   return <>
     {/* Recessed arched window with two hills visible through the glass. */}
     <path fill="#d8bc9f" d="M13 129V72C13 44 34 26 61 26S109 45 109 71V129Z"/>
     <path fill="#f9e4be" d="M16 126V71C16 46 36 29 61 29S106 47 106 71V126Z"/>
-    <path fill="#b9dcd7" d="M21 121V72C21 49 38 35 61 35S101 51 101 72V121Z"/>
-    <circle cx="77" cy="60" r="11" fill="#fff0c2"/>
-    <path d="M21 89Q44 68 64 83T101 81V121H21Z" fill="#a6cbb8"/>
-    <path d="M21 104Q36 88 54 96Q77 105 101 89V121H21Z" fill="#83b49c"/>
+    <path fill={colors.viewSky} d="M21 121V72C21 49 38 35 61 35S101 51 101 72V121Z"/>
+    <circle cx="77" cy="60" r="11" fill="#fff0c2" opacity={light.sun}/>
+    <path d={MOON} transform="translate(78 58)" fill="#fbf1d4" opacity={light.moon}/>
+    <g fill="#fbf1d4" opacity={light.stars}><circle cx="52" cy="47" r="1.3"/><circle cx="90" cy="76" r="1.1"/><circle cx="66" cy="72" r="1"/></g>
+    <path d="M21 89Q44 68 64 83T101 81V121H21Z" fill={colors.viewFar}/>
+    <path d="M21 104Q36 88 54 96Q77 105 101 89V121H21Z" fill={colors.viewNear}/>
     <path d="M24 109Q45 104 59 108M73 104Q84 100 95 99" stroke="#c2d9ad" strokeWidth="2" fill="none"/>
     <path d="M60 35V123M21 83H101" stroke="#f6dfb9" strokeWidth="4"/>
     <path d="M17 47Q31 33 51 31Q43 59 28 77L31 115Q23 120 16 114Z" fill="#dcad9e"/>
@@ -55,56 +58,61 @@ function Workroom() {
   </>
 }
 
-function Terrace({ dusk }: { dusk: boolean }) {
-  const far = dusk ? '#afb4cb' : '#c0d8bc'
-  const near = dusk ? '#959fb6' : '#a5c8ae'
-  const hedge = dusk ? '#7e90a5' : '#87b298'
-  const leaf = dusk ? '#9ba9bb' : '#b2cfa0'
+function Terrace({ light, ownSky }: { light: SceneLight; ownSky: boolean }) {
+  const { colors } = light
   return <>
-    {!dusk && <g fill="#fff2ce">
+    <g fill="#fff2ce" opacity={light.sun}>
       <circle cx="254" cy="44" r="12"/>
       <path d="M89 49Q93 45 99 46Q105 38 114 43Q119 42 123 47Q129 46 134 50Z" opacity=".7"/>
-    </g>}
-    <path d="M0 122Q31 102 56 105Q86 108 116 96Q155 80 193 98Q224 110 256 93Q293 74 320 90V182H0Z" fill={far}/>
-    <path d="M0 139Q38 117 65 121Q106 130 142 118Q183 103 222 119Q261 128 286 112Q302 102 320 105V183H0Z" fill={near}/>
-    <path d="M0 142Q21 136 42 136M245 126Q260 127 276 120" stroke={leaf} strokeWidth="2" fill="none"/>
-    <path d="M0 116Q9 105 15 113Q16 96 28 101Q39 101 39 117Q52 105 60 118Q66 127 59 141Q72 134 79 146Q83 153 80 162H0Z" fill={hedge}/>
-    <path d="M320 106Q306 96 299 111Q288 103 280 116Q273 124 276 137Q259 125 252 141Q239 138 234 157H320Z" fill={hedge}/>
-    <g fill={leaf}>
+    </g>
+    {/* The stargazing activity draws its own moon and stars. */}
+    {!ownSky && <>
+      <path d={MOON} transform="translate(256 42)" fill="#fbf1d4" opacity={light.moon}/>
+      <g fill="#fbf1d4" opacity={light.stars}><circle cx="62" cy="38" r="1.3"/><circle cx="118" cy="26" r="1.1"/><circle cx="178" cy="44" r="1.2"/><circle cx="214" cy="24" r="1"/><circle cx="34" cy="66" r="1"/><circle cx="292" cy="72" r="1.2"/></g>
+    </>}
+    <path d="M0 122Q31 102 56 105Q86 108 116 96Q155 80 193 98Q224 110 256 93Q293 74 320 90V182H0Z" fill={colors.far}/>
+    <path d="M0 139Q38 117 65 121Q106 130 142 118Q183 103 222 119Q261 128 286 112Q302 102 320 105V183H0Z" fill={colors.near}/>
+    <path d="M0 142Q21 136 42 136M245 126Q260 127 276 120" stroke={colors.leaf} strokeWidth="2" fill="none"/>
+    <path d="M0 116Q9 105 15 113Q16 96 28 101Q39 101 39 117Q52 105 60 118Q66 127 59 141Q72 134 79 146Q83 153 80 162H0Z" fill={colors.hedge}/>
+    <path d="M320 106Q306 96 299 111Q288 103 280 116Q273 124 276 137Q259 125 252 141Q239 138 234 157H320Z" fill={colors.hedge}/>
+    <g fill={colors.leaf}>
       <path d="M17 127Q15 117 11 116Q9 125 17 127ZM18 132Q24 123 28 125Q26 132 18 132ZM43 134Q41 125 36 124Q34 131 43 134Z"/>
       <path d="M289 129Q286 120 282 121Q282 128 289 129ZM291 136Q298 124 302 126Q301 135 291 136Z"/>
     </g>
-    {!dusk && <g fill="#e8b497"><circle cx="24" cy="114" r="2.8"/><circle cx="49" cy="126" r="2.5"/><circle cx="302" cy="117" r="2.7"/></g>}
-    <path d="M0 155Q144 149 320 155V240H0Z" fill={dusk ? '#c2b5b6' : '#dfd1ad'}/>
-    <path d="M0 157Q151 150 320 157" fill="none" stroke={dusk ? '#a099aa' : '#b4b898'} strokeWidth="2"/>
-    <g fill="none" stroke={dusk ? '#aca3ae' : '#c2b798'} strokeWidth="1.2">
+    <g fill="#e8b497" opacity={light.sun}><circle cx="24" cy="114" r="2.8"/><circle cx="49" cy="126" r="2.5"/><circle cx="302" cy="117" r="2.7"/></g>
+    <path d="M0 155Q144 149 320 155V240H0Z" fill={colors.floor}/>
+    <path d="M0 157Q151 150 320 157" fill="none" stroke={colors.groundLine} strokeWidth="2"/>
+    <g fill="none" stroke={colors.groundMark} strokeWidth="1.2">
       <path d="M0 177L36 175M48 175L64 175M271 174L320 175M10 200L49 199M281 197L314 198"/>
       <path d="M30 175L26 182M296 198L299 205"/>
     </g>
-    <g fill={hedge}>
+    <g fill={colors.hedge}>
       <path d="M7 181Q8 173 10 170L11 178L15 174L13 181ZM302 178Q302 168 305 166L306 175L311 171L308 179Z"/>
     </g>
   </>
 }
 
 /** Stationary illustration, painted underneath the existing character and activity rig. */
-export const CompanionScenery = memo(function CompanionScenery({ scene }: { scene?: SceneId }) {
+export const CompanionScenery = memo(function CompanionScenery({ scene, night = 0 }: { scene?: SceneId; night?: number }) {
   const setting = sceneSettingFor(scene)
+  const light = useSceneLight(setting, night)!
   const id = useId().replace(/:/g, '')
   const clip = `scenery-${setting}-${id}`
   const wash = `${clip}-wash`
-  const colors = setting === 'dusk' ? ['#858eaf', '#d9bdba']
-    : setting === 'garden' ? ['#c4dedc', '#f4edd3'] : ['#f4dfc5', '#fbedd4']
-  return <g data-scenery={setting} aria-hidden="true" pointerEvents="none" strokeLinecap="round" strokeLinejoin="round">
+  const lamp = `${clip}-lamp`
+  return <g data-scenery={setting} data-night={night} aria-hidden="true" pointerEvents="none" strokeLinecap="round" strokeLinejoin="round">
     <defs>
       <clipPath id={clip}><rect x="4" y="8" width="312" height="223" rx="28"/></clipPath>
       <linearGradient id={wash} x1="0" x2=".16" y1="0" y2="1">
-        <stop stopColor={colors[0]}/><stop offset="1" stopColor={colors[1]}/>
+        <stop stopColor={light.colors.washTop}/><stop offset="1" stopColor={light.colors.washBottom}/>
       </linearGradient>
+      <radialGradient id={lamp}><stop stopColor="#ffdba6" stopOpacity=".55"/><stop offset="1" stopColor="#ffdba6" stopOpacity="0"/></radialGradient>
     </defs>
     <g clipPath={`url(#${clip})`}>
       <rect x="4" y="8" width="312" height="223" fill={`url(#${wash})`}/>
-      {setting === 'workroom' ? <Workroom/> : <Terrace dusk={setting === 'dusk'}/>}
+      {setting === 'workroom' ? <Workroom light={light}/> : <Terrace light={light} ownSky={scene === 'F8'}/>}
+      {light.dim > 0 && <rect x="4" y="8" width="312" height="223" fill={light.dimTint} opacity={light.dim} style={{ mixBlendMode: 'multiply' }}/>}
+      {setting === 'workroom' && light.lamp > 0 && <ellipse cx="162" cy="128" rx="150" ry="118" fill={`url(#${lamp})`} opacity={light.lamp}/>}
     </g>
   </g>
 })

@@ -107,7 +107,6 @@ body { background: var(--paper); }
   /* Sky and floor match the drawn wall and floor, so neither edge of the art shows a seam. */
   --sky: #f4dfc5; --floor: #edcfaf; }
 .home[data-setting='garden'] { --sky: #c4dedc; --floor: #dfd3ae; }
-.home[data-setting='dusk'] { --sky: #858eaf; --floor: #c2b5b6; }
 .home[data-setting='plain'] { --sky: var(--paper); --floor: var(--paper); }
 
 /* Grow the drawing with the space above the card. Its width also bounds the hands at
@@ -144,7 +143,6 @@ body { background: var(--paper); }
 .fp-clock-phase { position: absolute; z-index: 2; inset: calc(env(safe-area-inset-top) + 55px) 0 auto;
   color: #46546a; font-size: .8125rem; line-height: 1.25rem; font-weight: 550; }
 .fp-clock-phase::before { content: ''; display: inline-block; width: .4rem; height: .4rem; margin-inline-end: .375rem; border-radius: 50%; background: currentColor; }
-.home[data-setting='dusk'] :is(.fp-top h1,.fp-clock-phase) { color: #14213b; }
 .fp-digits { position: absolute; z-index: 2; inset-inline: 0; margin: 0; pointer-events: none;
   inset-block-start: calc(env(safe-area-inset-top) + 55px + 1.25rem);
   min-block-size: 44px; font-size: 2.125rem; line-height: max(44px, 1.2em); font-weight: 800; letter-spacing: .02em;
@@ -160,7 +158,9 @@ body { background: var(--paper); }
 .fp-unit { margin-inline-start: .12em; font-size: .5em; font-weight: 700; letter-spacing: 0; }
 @keyframes fp-result-in { from { opacity: 0; } to { opacity: 1; } }
 @media (prefers-reduced-motion: reduce) { .fp-result { animation: none; } }
-.home[data-setting='dusk'] .fp-digits { color: #14213b; }
+/* The sky follows the device clock; this text is drawn straight onto it, so its color follows too. */
+.home[data-sky-ink='deep'] :is(.fp-top h1, .fp-clock-phase, .fp-digits) { color: #0a1120; }
+.home[data-sky-ink='light'] :is(.fp-top h1, .fp-clock-phase, .fp-digits) { color: #fff; }
 /* The plate: one translucent card floating at the bottom of the scene; its bottom padding is
    the floating tab bar's room. The blur lives on a pseudo-element so a fixed panel inside is
    not trapped by it. Tracks are fixed so feedback never moves the primary action. */

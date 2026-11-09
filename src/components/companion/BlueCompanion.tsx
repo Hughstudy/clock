@@ -4,9 +4,10 @@ import type { CompanionScene } from '../../contracts/presentation'
 import { useBlueCompanion } from '../../hooks/companion/useBlueCompanion'
 import { useBlueCompanionTouch } from '../../hooks/companion/useBlueCompanionTouch'
 import { useCompanionScene } from '../../hooks/companion/useCompanionScene'
+import { useFocusPresence, type FocusTime } from '../../hooks/companion/useFocusPresence'
 import { useLayerCrossfade } from '../../hooks/companion/useLayerCrossfade'
 import { useTouchSpring } from '../../hooks/companion/useTouchSpring'
-import { sampleScenePose } from '../../logic/scene-pose'
+import { focusAttentionTransforms, NO_ATTENTION, PLAIN_FOCUS_ATTENTION, sampleScenePose } from '../../logic/scene-pose'
 import type { BlueTouchKind } from '../../logic/blue-touch'
 import type { SceneMotionKind } from '../../logic/scene-motion'
 import { CompanionSceneArt } from './CompanionSceneArt'
@@ -16,10 +17,12 @@ import '../../styles/blue-companion.css'
 import '../../styles/companion-scenes.css'
 
 export interface SceneInspection { actionKind: SceneMotionKind | 'idle'; actionProgress: number }
-interface Props { presentation: CompanionPresentation; cueId?: string | undefined; scene?: CompanionScene | null | undefined; inspection?: SceneInspection | undefined; panelOpen?: boolean; sceneryEnabled?: boolean; keyboardPat?: number | undefined }
+interface Props { presentation: CompanionPresentation; cueId?: string | undefined; scene?: CompanionScene | null | undefined; inspection?: SceneInspection | undefined; panelOpen?: boolean; sceneryEnabled?: boolean; keyboardPat?: number | undefined; focusTime?: FocusTime | undefined; night?: number }
+
+const NO_GAZE = { x: 0, y: 0 }
 
 /** Original, replaceable prototype art. Only semantic presentation cues enter this layer. */
-export function BlueCompanion({ presentation, cueId, scene, inspection, panelOpen = false, sceneryEnabled = true, keyboardPat }: Props) {
+export function BlueCompanion({ presentation, cueId, scene, inspection, panelOpen = false, sceneryEnabled = true, keyboardPat, focusTime, night = 0 }: Props) {
   // Scene entrances/endings have their own bound identities. Keep greeting and
   // requested encouragement, but don't play two start/end gestures together.
   const legacyPresentation = scene && (presentation.cue === 'begin' || presentation.cue === 'settle')
@@ -41,6 +44,13 @@ export function BlueCompanion({ presentation, cueId, scene, inspection, panelOpe
     beatIndex: sceneMotion.beatIndex, staticOnly: presentation.staticOnly,
     touchKind: touch?.kind ?? (active?.cue === 'support' ? 'high-five' : null),
   }) : null
+  const attention = sceneFrame?.attention ?? (presentation.stance === 'focused' ? PLAIN_FOCUS_ATTENTION : NO_ATTENTION)
+  const plainAttention = focusAttentionTransforms(scene ? NO_ATTENTION : attention)
+  const focusing = scene ? scene.phase === 'focus' && scene.status === 'running' && scene.completedProgress < 1 : presentation.stance === 'focused'
+  useFocusPresence(play.ref, {
+    time: focusTime, attention, gaze: sceneFrame?.gaze ?? NO_GAZE, sceneKey: scene?.key ?? null, immediate: presentation.staticOnly,
+    enabled: !!focusTime && focusing && !presentation.staticOnly && !touch && !active && !panelOpen && (!scene || sceneMotion.ambientAllowed),
+  })
   const pose = touch ? {
     arms: touch.kind === 'pat' ? spec.poses.paused.arms : touch.kind === 'high-five'
       ? (touch.point.x < spec.width / 2 ? ['armLeftHappy', 'armRight'] : spec.poses.support.arms) : spec.poses.settled.arms,
@@ -64,9 +74,9 @@ export function BlueCompanion({ presentation, cueId, scene, inspection, panelOpe
     '--blue-touch-side': touch && touch.point.x < spec.width / 2 ? -1 : 1,
   } as CSSProperties
   const layerKey = scene && sceneFrame ? scene.key : 'preparation'
-  const layer = scene && sceneFrame ? <CompanionSceneArt key={scene.key} scene={scene} frame={sceneFrame} /> : <>
+  const layer = scene && sceneFrame ? <CompanionSceneArt key={scene.key} scene={scene} frame={sceneFrame} night={night} /> : <>
       <CompanionPaint id={gradientId}/>
-      {sceneryEnabled && <g transform="scale(.75)"><CompanionScenery/></g>}
+      {sceneryEnabled && <g transform="scale(.75)"><CompanionScenery night={night}/></g>}
       {/* Same rig scale and anchor as every scene, so starting never resizes the creature. */}
       <g transform="scale(.75) translate(42 38)">
       {!sceneryEnabled && <>{part('ground')}{part('groundEdge')}</>}
@@ -77,15 +87,15 @@ export function BlueCompanion({ presentation, cueId, scene, inspection, panelOpe
           <g className="blue-companion__stance">
             <g className="blue-companion__body" data-touch-kind="pat">
               {part('footLeft', 'squish')}{part('footRight', 'squish')}
-              <g className="blue-companion__tuft">{part('tuft')}</g>
+              <g className="blue-companion__tuft"><g data-focus-rig="fins">{part('tuft')}</g></g>
               {part('body')}{part('shine')}{part('belly', 'squish')}{part('bellyDimple', 'squish')}
               <g className="blue-companion__arm blue-companion__arm--left" data-touch-kind="high-five">{pose.arms[0] && part(pose.arms[0])}</g>
-              <g className="blue-companion__arm blue-companion__arm--right" data-touch-kind="high-five">{pose.arms[1] && part(pose.arms[1])}</g>
-              <g className="blue-companion__face">
-                {part('cheekLeft')}{part('cheekRight')}
-                <g className="blue-companion__eyes">{pose.eyes.map(name => part(name))}</g>
-                {pose.mouth.map(name => part(name))}
-              </g>
+              <g className="blue-companion__arm blue-companion__arm--right" data-touch-kind="high-five"><g data-focus-arm="168 105 -1">{pose.arms[1] && part(pose.arms[1])}</g></g>
+              <g className="blue-companion__face"><g transform={plainAttention.head}><g data-focus-rig="head">
+                <g data-focus-rig="cheek-left">{part('cheekLeft')}</g><g data-focus-rig="cheek-right">{part('cheekRight')}</g>
+                <g transform={plainAttention.eyes}><g data-focus-rig="eyes"><g className="blue-companion__eyes">{pose.eyes.map(name => part(name))}</g></g></g>
+                <g data-focus-rig="mouth">{pose.mouth.map(name => part(name))}</g>
+              </g></g></g>
             </g>
           </g>
         </g>

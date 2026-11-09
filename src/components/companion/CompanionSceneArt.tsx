@@ -3,9 +3,10 @@ import { CompanionPaint } from './CompanionPaint'
 import { CompanionScenery } from './CompanionScenery'
 import type { CompanionScene } from '../../contracts/presentation'
 import { blueCompanionSpec } from '../../data/blue-companion'
+import { useSceneLight } from '../../hooks/companion/useSceneLight'
 import { sceneArtPalette, sceneArtSketch } from '../../data/scene-art'
 import { SPOON_RESTS } from '../../logic/scene-food-rig'
-import { BLOCK_HEIGHT, BUBBLE_WAND, PLANT_POT, sampleScenePose, sceneArmPath, sceneSmooth, type ScenePoseFrame } from '../../logic/scene-pose'
+import { BLOCK_HEIGHT, BUBBLE_WAND, focusAttentionTransforms, PLANT_POT, sampleScenePose, sceneArmPath, sceneSmooth, TEA_CUP_HOME, type ScenePoseFrame } from '../../logic/scene-pose'
 
 export function ScenePart({ name, className, transform }: { name: string; className?: string; transform?: string }) {
   return <g className={className} transform={transform} data-scene-part={name}>
@@ -18,7 +19,7 @@ const R = ({x,y,w,h,c='paper',r=3}:{x:number;y:number;w:number;h:number;c?:strin
 const clamp=(v:number)=>Math.min(1,Math.max(0,v))
 const stage=(p:number,a:number,b:number)=>sceneSmooth((p-a)/(b-a))
 function Ground(){return <g data-scene-part="ground"><E x={160} y={220} rx={137} ry={10}/><P d="M28 220 Q160 235 294 220" c="softline"/></g>}
-function Table({tea=false}:{tea?:boolean}){return tea?<g data-scene-part="tea-table"><P d="M72 188 L74 220 Q78 223 83 219 L85 190 M176 190 L182 219 Q186 223 191 219 L188 188" c="edge"/><P d="M46 184 L46 189 Q129 205 214 189 L214 184" c="edge"/><E x={130} y={184} rx={84} ry={13} c="table"/></g>:<g data-scene-part="table"><P d="M55 185 L54 220 Q59 224 65 220 L70 187 M248 187 L254 220 Q260 224 266 220 L265 185" c="edge"/><P d="M35 180 L35 187 Q159 210 285 187 L285 180" c="edge"/><E x={160} y={180} rx={125} ry={17} c="table"/><P d="M47 181 Q159 200 274 181" c="softline"/></g>}
+function Table({tea=false}:{tea?:boolean}){return tea?<g data-scene-part="tea-table" transform="translate(-8 0)"><P d="M72 188 L74 220 Q78 223 83 219 L85 190 M176 190 L182 219 Q186 223 191 219 L188 188" c="edge"/><P d="M46 184 L46 189 Q129 205 214 189 L214 184" c="edge"/><E x={130} y={184} rx={84} ry={13} c="table"/></g>:<g data-scene-part="table"><P d="M55 185 L54 220 Q59 224 65 220 L70 187 M248 187 L254 220 Q260 224 266 220 L265 185" c="edge"/><P d="M35 180 L35 187 Q159 210 285 187 L285 180" c="edge"/><E x={160} y={180} rx={125} ry={17} c="table"/><P d="M47 181 Q159 200 274 181" c="softline"/></g>}
 function Mat(){return <g data-scene-part="mat"><P d="M59 196 Q160 184 267 199 L285 217 Q154 238 37 218 Z" c="light"/><P d="M55 217 Q160 231 271 215" c="softline"/></g>}
 function Cushion(){return <g data-scene-part="cushion"><P d="M103 191 Q86 182 91 206 Q151 231 230 209 Q244 191 224 188 Q165 204 103 191Z" c="light"/><P d="M106 209 Q165 218 219 207" c="softline"/></g>}
 function SideTable(){return <g data-scene-part="side-table"><P d="M205 178 L205 217 M249 178 L249 215"/><E x={226} y={178} rx={30} ry={10} c="table"/><E x={226} y={177} rx={20} ry={4} c="paper"/></g>}
@@ -29,7 +30,13 @@ function Steam({x, y, amount = 1}: {x: number; y: number; amount?: number}) {
     {curls.map((d,i) => <P key={d} d={d} c="steam" opacity={clamp(amount-i)*.7}/>)}
   </g></g>
 }
-function Cup({frame}:{frame:ScenePoseFrame}){const c=frame.cup;return <g data-scene-part="cup" data-held={c.held>.99} transform={`translate(${c.x} ${c.y}) rotate(${c.angle}) scale(${c.scale})`}><P d="M20 -18 C37 -21 38 -3 21 -4 L21 -9 C31 -7 31 -17 21 -14" c="paper"/><P d="M-18 -21 L23 -21 L20 -3 Q1 7 -14 -3 Z" c="paper"/><E x={2} y={-21} rx={20} ry={4} c="paper"/><E x={2} y={-21} rx={18} ry={3} c="edge" opacity={c.liquid}/></g>}
+function Cup({frame}:{frame:ScenePoseFrame}){const c=frame.cup,l=c.liquid;return <g data-scene-part="cup" data-held={c.held>.99} transform={`translate(${c.x} ${c.y}) rotate(${c.angle}) scale(${c.scale})`}><P d="M20 -18 C37 -21 38 -3 21 -4 L21 -9 C31 -7 31 -17 21 -14" c="paper"/><P d="M-18 -21 L23 -21 L20 -3 Q1 7 -14 -3 Z" c="paper"/><E x={2} y={-21} rx={20} ry={4} c="paper"/><E x={2} y={-21+1.6*(1-l)} rx={11+7*l} ry={1.8+1.2*l} c="edge" opacity={Math.min(1,l*3)}/></g>}
+/** Water leaves the spout level and falls along a parabola into the cup's opening. */
+function Pour({frame}:{frame:ScenePoseFrame}){
+  const {spout,pour}=frame.kettle,c=frame.cup,x=spout.x+5,y=c.y-21*c.scale+1
+  const state=pour>0?'pouring':c.liquid>0?'done':'waiting'
+  return <path className="scene-draw-pour" data-scene-part="pour" data-pour={state} pathLength={1} d={`M${spout.x} ${spout.y} Q${(spout.x+x)/2} ${spout.y} ${x} ${y}`}/>
+}
 function Plant({progress:p}:{progress:number}) {
   const {x,rimY,rimWidth,rimDepth,bodyWidth,baseWidth,baseY,floorY}=PLANT_POT,h=13+42*p
   return <g data-scene-part="plant">
@@ -155,48 +162,54 @@ function Body({frame, happy}: {frame: ScenePoseFrame; happy: boolean}) {
     return art && <g data-part={name} data-touch-kind={squish ? 'squish' : undefined}><P d={art.d} c={color}/></g>
   }
   const restingEyes = frame.id === 'R1' || frame.id === 'R3'
+  const attention = focusAttentionTransforms(frame.attention)
   return <g transform={`translate(${frame.body.x} ${frame.body.y})`} data-scene-part="creature">
     <E x={120} y={169} rx={54} ry={5}/>
     {part('footLeft','shade')}{part('footRight','shade')}
-    <g className="scene-rig-breath" data-touch-kind="pat">
-      {part('tuft','body')}{part('body','body')}{part('shine','highlight')}{part('belly','belly')}
-      {part('cheekLeft','pink')}{part('cheekRight','pink')}
-      <g className="scene-rig-gaze" transform={`translate(${frame.gaze.x} ${frame.gaze.y})`}><g className="scene-rig-look">
-        <g className="scene-rig-eyes">
-          {happy || frame.touched ? part('eyesHappy','face') : restingEyes ? part('eyesResting','face') : <>
-            {part('eyeLeft','ink')}{part('eyeRight','ink')}{part('eyeShineLeft','glint')}{part('eyeShineRight','glint')}
-          </>}
-        </g>
+    {/* Only the torso and face move here, so hands stay on what they are holding. */}
+    <g data-focus-rig="lean"><g className="scene-rig-breath" data-touch-kind="pat">
+      <g data-focus-rig="fins">{part('tuft','body')}</g>{part('body','body')}{part('shine','highlight')}{part('belly','belly')}
+      <g transform={attention.head}><g data-focus-rig="head">
+        <g data-focus-rig="cheek-left">{part('cheekLeft','pink')}</g><g data-focus-rig="cheek-right">{part('cheekRight','pink')}</g>
+        <g className="scene-rig-gaze" transform={`translate(${frame.gaze.x} ${frame.gaze.y})`}><g className="scene-rig-look">
+          <g transform={attention.eyes}><g data-focus-rig="eyes"><g className="scene-rig-eyes">
+            {happy || frame.touched ? part('eyesHappy','face') : restingEyes ? part('eyesResting','face') : <>
+              {part('eyeLeft','ink')}{part('eyeRight','ink')}{part('eyeShineLeft','glint')}{part('eyeShineRight','glint')}
+            </>}
+          </g></g></g>
+        </g></g>
+        <g data-focus-rig="mouth">{frame.id === 'F5' ? <>
+          <g opacity={1-frame.wand.breath}>{part('mouth','face')}</g>
+          <ellipse cx="122" cy="110" rx="3" ry="2.2" className="scene-draw-ink" opacity={frame.wand.breath}/>
+        </> : part('mouth','face')}</g>
       </g></g>
-      {frame.id === 'F5' ? <>
-        <g opacity={1-frame.wand.breath}>{part('mouth','face')}</g>
-        <ellipse cx="122" cy="110" rx="3" ry="2.2" className="scene-draw-ink" opacity={frame.wand.breath}/>
-      </> : part('mouth','face')}
-    </g>
+    </g></g>
   </g>
 }
-interface Props { scene: CompanionScene; frame?: ScenePoseFrame }
+interface Props { scene: CompanionScene; frame?: ScenePoseFrame; night?: number }
 /** Full persistent scene, with hand and prop geometry sampled from one pose. */
-export function CompanionSceneArt({scene,frame:provided}:Props){
+export function CompanionSceneArt({scene,frame:provided,night=0}:Props){
+  const sky = useSceneLight('garden',night)!
   const paint = useId().replace(/:/g, '')
   const material = { '--scene-coat': `url(#${paint}-body)`, '--scene-belly': `url(#${paint}-belly)` } as CSSProperties
   const f=provided??sampleScenePose({id:scene.id,status:scene.status,progress:scene.completedProgress,staticOnly:true});const id=scene.id,p=f.progress;const lean=`rotate(${f.body.lean} ${f.body.x+120} ${f.body.y+160})`
   let back:ReactNode=null,objects:ReactNode=null,held:ReactNode=null
   const usesTable=['F1','F2','F3','F6','F7'].includes(id)
+  const focusArm=(side:'left'|'right')=>f.flipperArm===side?{'data-focus-arm':`${f[side].points[0]} ${f[side].points[1]} ${side==='left'?1:-1}`}:undefined
   if(id==='F1')objects=<>
     <FoodDish x={100} y={172} kind="greens" detail={f.food.greens}/><FoodDish x={162} y={188} kind="rice" detail={f.food.rice}/><FoodDish x={225} y={172} kind="soup" detail={f.food.soup}/>
     <g data-scene-part="utensil-rests">{SPOON_RESTS.map(rest=><R key={rest.x} {...rest} h={5} c="edge" r={2}/>)}</g>
     <FoodSpoon grip={f.food.spoon} tip={f.food.tip} held={f.food.leftHeld} name="serving-spoon"/><FoodSpoon grip={f.food.soupSpoon} tip={f.food.soupTip} held={f.food.rightHeld} name="soup-spoon"/>
     <Steam x={225} y={155} amount={f.food.soup*1.4}/>
   </>
-  if(id==='F2')objects=<><Plant progress={p}/><E x={f.right.palm.x+2} y={f.right.palm.y+5} rx={10} ry={2}/></>
+  if(id==='F2')objects=<><Plant progress={p}/><E x={f.left.palm.x-2} y={f.left.palm.y+5} rx={10} ry={2}/><E x={f.right.palm.x+2} y={f.right.palm.y+5} rx={10} ry={2}/></>
   if(id==='F3')objects=<Book frame={f}/>
-  if(id==='F4'){objects=<><E x={72} y={183} rx={26} ry={4} c="edge"/><E x={153} y={183} rx={20} ry={4} c="paper"/><Kettle frame={f}/><Steam x={f.kettle.x} y={f.kettle.y-38} amount={.5+2.5*p}/><P d={`M${f.kettle.spout.x} ${f.kettle.spout.y} Q${f.cup.x-9} ${f.kettle.spout.y+12} ${144} ${165}`} c="pour" opacity={f.kettle.pour}/></>;held=<><Kettle frame={f} front/><Cup frame={f}/><Steam x={f.cup.x} y={f.cup.y-17} amount={f.cup.liquid*(.6+f.cup.held*.5)*(1-stage(f.cup.x,186,204))}/></>}
+  if(id==='F4'){objects=<><E x={66} y={183} rx={26} ry={4} c="edge"/><E x={TEA_CUP_HOME.x} y={183} rx={20} ry={4} c="paper"/><Kettle frame={f}/><Steam x={f.kettle.x} y={f.kettle.y-38} amount={.5+2.5*p}/></>;held=<><Kettle frame={f} front/><Cup frame={f}/><Pour frame={f}/><Steam x={f.cup.x} y={f.cup.y-17} amount={f.cup.liquid*(.6+f.cup.held*.5)*(1-stage(f.cup.x,186,204))}/></>}
   if(id==='F5')objects=<Bubbles frame={f}/>
   if(id==='F6')objects=<Boat frame={f}/>
   if(id==='F7')objects=<g data-scene-part="block-inventory">{f.blocks.map((b,i)=><g key={i} data-block={i}><Block {...b} c={['green','table','light','green'][i]??'green'}/></g>)}<E x={127} y={185} rx={5} ry={2} c="edge"/><g data-scene-part="flag" transform={`translate(${f.flag.x} ${f.flag.y}) rotate(${f.flag.angle})`}><P d="M0 0 L0 -24"/><path className="scene-draw-pink" d="M0 -24 L16 -18 L0 -12Z" stroke="var(--scene-line)" strokeWidth="1.4"/></g></g>
-  if(id==='F8')back=<g data-scene-part="sky"><P d="M44 42 C19 49 28 75 49 70 C30 67 32 49 44 42Z" c="paper"/>{[[260,44],[75,31],[285,105],[224,23],[36,116],[252,85]].map(([x=0,y=0],i)=><g className="scene-rig-star" key={i}><Star x={x} y={y} opacity={i<2?1:stage(p,(i-2)*.17,.2+(i-2)*.17)}/></g>)}<P d="M260 44 L252 85 L285 105" c="softline" opacity={stage(p,.3,.6)}/><g opacity={stage(p,.92,1)}><P d="M211 32 L174 51 M214 37 L187 53" c="softline"/><Star x={216} y={31} r={7}/></g></g>
+  if(id==='F8')back=<g data-scene-part="sky"><P d="M44 42 C19 49 28 75 49 70 C30 67 32 49 44 42Z" c="paper" opacity={Math.max(.5,sky.moon)}/><g opacity={sky.stars}>{[[260,44],[75,31],[285,105],[224,23],[36,116],[252,85]].map(([x=0,y=0],i)=><g className="scene-rig-star" key={i}><Star x={x} y={y} opacity={i<2?1:stage(p,(i-2)*.17,.2+(i-2)*.17)}/></g>)}<P d="M260 44 L252 85 L285 105" c="softline" opacity={stage(p,.3,.6)}/><g opacity={stage(p,.92,1)}><P d="M211 32 L174 51 M214 37 L187 53" c="softline"/><Star x={216} y={31} r={7}/></g></g></g>
   if(id==='R2')back=<g data-scene-part="clouds"><Cloud x={63} y={58} scale={.67}/><Cloud x={252} y={91} scale={.5}/></g>
   if(id==='R3'){objects=<SideTable/>;held=<><Cup frame={f}/><Steam x={f.cup.x-13} y={f.cup.y-18} amount={1-f.cup.held}/></>}
-  return <g className="scene-rig" style={material} transform="scale(.75)" data-scene-part={`scene-${id}`} data-pose-progress={f.progress} data-contact-count={f.contacts.filter(c=>c.active).length} aria-hidden="true"><CompanionPaint id={paint}/><CompanionScenery scene={id}/><Ground/>{!usesTable&&id!=='F4'&&<Mat/>}{['F8','R2','R3'].includes(id)&&<Cushion/>}{back}<g transform={lean}><Body frame={f} happy={scene.status==='ended'||p===1}/></g>{usesTable&&<Table/>}{id==='F4'&&<Table tea/>}{objects}<g transform={lean} data-scene-part="arms" data-touch-kind="high-five"><path className="scene-draw-body" data-scene-hand="left" d={sceneArmPath(f.left)}/><path className="scene-draw-body" data-scene-hand="right" d={sceneArmPath(f.right)}/></g>{held}{f.contacts.map(c=><g key={c.name} data-scene-contact={c.name} data-contact-active={c.active} data-hand-x={c.hand.x} data-hand-y={c.hand.y} data-prop-x={c.prop.x} data-prop-y={c.prop.y}/>)}</g>
+  return <g className="scene-rig" style={material} transform="scale(.75)" data-scene-part={`scene-${id}`} data-pose-progress={f.progress} data-contact-count={f.contacts.filter(c=>c.active).length} aria-hidden="true"><CompanionPaint id={paint}/><CompanionScenery scene={id} night={night}/><Ground/>{!usesTable&&id!=='F4'&&<Mat/>}{['F8','R2','R3'].includes(id)&&<Cushion/>}{back}<g transform={lean}><Body frame={f} happy={scene.status==='ended'||p===1}/></g>{usesTable&&<Table/>}{id==='F4'&&<Table tea/>}{objects}<g transform={lean} data-scene-part="arms" data-touch-kind="high-five"><path className="scene-draw-body" data-scene-hand="left" d={sceneArmPath(f.left)} {...focusArm('left')}/><path className="scene-draw-body" data-scene-hand="right" d={sceneArmPath(f.right)} {...focusArm('right')}/></g>{held}{f.contacts.map(c=><g key={c.name} data-scene-contact={c.name} data-contact-active={c.active} data-hand-x={c.hand.x} data-hand-y={c.hand.y} data-prop-x={c.prop.x} data-prop-y={c.prop.y}/>)}</g>
 }

@@ -23,11 +23,16 @@ export interface ScenePoseInput {
 }
 export interface SceneContact { name: string; hand: ScenePoint; prop: ScenePoint; active: boolean }
 export interface SceneObject { x: number; y: number; angle: number }
+/** Where the face rests while focusing: toward the work, with the eyelids a little lowered. */
+export interface FocusAttention { x: number; y: number; tilt: number; lid: number }
 export interface ScenePoseFrame {
   id: SceneId
   progress: number
   action: number
   body: { x: number; y: number; lean: number }
+  attention: FocusAttention
+  /** The one arm that may make a small rigid adjustment; null keeps both arms exactly as placed. */
+  flipperArm: 'left' | 'right' | null
   left: SceneArm
   right: SceneArm
   cup: SceneObject & { scale: number; held: number; liquid: number }
@@ -56,6 +61,28 @@ export function simpleGesturePulse(progress:number):number {
   if(t<=second)return .04+.96*sceneSmooth((t-first)/(second-first))
   return 1-sceneSmooth((t-second)/(1-second))
 }
+export const NO_ATTENTION: FocusAttention = Object.freeze({ x: 0, y: 0, tilt: 0, lid: 1 })
+/** The drawing without an activity has nothing to look at but its own quiet work, just below. */
+export const PLAIN_FOCUS_ATTENTION: FocusAttention = Object.freeze({ x: 0, y: 2, tilt: 0, lid: .92 })
+// Stargazing already looks up through its own gaze and lean, so it keeps its eyes wide.
+const FOCUS_ATTENTION: Readonly<Record<string, FocusAttention>> = {
+  F1: { x: 0, y: 2.2, tilt: .6, lid: .92 }, F2: { x: -1.6, y: 1.6, tilt: -1.6, lid: .92 },
+  F3: { x: .4, y: 2.4, tilt: .8, lid: .9 }, F4: { x: -.8, y: .8, tilt: -1, lid: .92 },
+  F5: { x: 1, y: 0, tilt: .8, lid: .96 }, F6: { x: 1.4, y: 2, tilt: 1.2, lid: .92 },
+  F7: { x: -1.6, y: 1.8, tilt: -1.4, lid: .92 }, F8: { x: -.6, y: -.8, tilt: -1, lid: 1 },
+}
+/** Measured on the drawing: these arms stay clear of every item through the whole gesture. */
+const FLIPPER_ARM: Readonly<Record<string, 'left' | 'right'>> = { F2: 'right', F5: 'left', F8: 'right' }
+const FACE_CENTRE = { x: 120, y: 100 }, EYE_LINE = 94
+const fixed = (v: number) => Math.round(v * 1000) / 1000
+/** Static placement under the live gestures; shown unchanged with motion off. */
+export function focusAttentionTransforms(a: FocusAttention): { head: string | undefined; eyes: string | undefined } {
+  if (a.x === 0 && a.y === 0 && a.tilt === 0 && a.lid === 1) return { head: undefined, eyes: undefined }
+  return {
+    head: `translate(${a.x} ${a.y}) rotate(${a.tilt} ${FACE_CENTRE.x} ${FACE_CENTRE.y})`,
+    eyes: `translate(${fixed(a.x * .6)} ${fixed(a.y * .6)}) translate(${FACE_CENTRE.x} ${EYE_LINE}) scale(1 ${a.lid}) translate(${-FACE_CENTRE.x} ${-EYE_LINE})`,
+  }
+}
 const point = (x: number, y: number): ScenePoint => ({ x, y })
 const pointMix = (a: ScenePoint, b: ScenePoint, t: number): ScenePoint => point(mix(a.x, b.x, t), mix(a.y, b.y, t))
 const arm = (points: readonly number[], x: number, y: number): SceneArm => ({ points, palm: point(x, y) })
@@ -82,26 +109,8 @@ export function transformScenePoint(p: ScenePoint, object: SceneObject): ScenePo
 
 export const BUBBLE_WAND = { length: 23, ringWidth: 8.5, ringDepth: 5.5, jarX: 196, rimY: 191, rimWidth: 20, rimDepth: 5 } as const
 /** The plant's physical rim and table support, shared by the pose and drawing. */
-export const PLANT_POT = { x:86, rimY:158, rimWidth:20, rimDepth:5, bodyWidth:18, baseWidth:14, baseY:188, floorY:191 } as const
-const plantWallSlope = (PLANT_POT.baseWidth - PLANT_POT.bodyWidth) / (PLANT_POT.baseY - PLANT_POT.rimY)
-function plantWallPoint(fraction: number): ScenePoint {
-  return point(PLANT_POT.x + mix(PLANT_POT.bodyWidth, PLANT_POT.baseWidth, fraction),
-    mix(PLANT_POT.rimY, PLANT_POT.baseY, fraction))
-}
-// A hanging arm, with a rounded pad that follows the taper of the pot.
-function steadyPlant({ x, y }: ScenePoint): SceneArm {
-  const tangentX = 6 * plantWallSlope
-  return arm([
-    111,143,
-    119,140, 123,146, 122,155,
-    121,165, 116,y + 3, 110,y + 7,
-    x + 4,y + 10, x + tangentX,y + 6, x,y,
-    x - tangentX,y - 6, 108,164, 108.5,157,
-    109,150, 106,145.5, 111,143,
-  ], x, y)
-}
-const plantGrip = plantWallPoint(.58)
-const plantLeft = steadyPlant(plantGrip)
+export const PLANT_POT = { x:74, rimY:158, rimWidth:20, rimDepth:5, bodyWidth:18, baseWidth:14, baseY:188, floorY:191 } as const
+// Both hands rest on the table as mirror images, with the pot clear of the left arm.
 const plantRight = arm([
   213,143,
   221,141.5, 225,151, 223,160,
@@ -110,6 +119,7 @@ const plantRight = arm([
   194,180, 200,176, 202.5,171,
   206.5,163, 205,143, 213,143,
 ], 202,181)
+const plantLeft = mirror(plantRight)
 const bubbleFlights = [
   { from: 0, to: .4, x: 258, y: 88, radius: 17 },
   { from: .4, to: .75, x: 228, y: 54, radius: 12 },
@@ -165,6 +175,12 @@ function bubblePose(p: number) {
   }
 }
 export const SCENE_CUP_SCALE = .72
+/** Where the cup waits on its saucer: under the kettle's spout, so water can fall straight in. */
+export const TEA_CUP_HOME = {x:122,y:180}
+const TEA_CUP_HELD = {x:157,y:175}
+const POUR_TILT = 32
+// The hand position that puts the tilted spout just above the left of the cup's opening.
+const POUR_GRIP = point(88.85,123.24)
 export const SCENE_CUP_BASE = {x:-12,y:0}
 export const SCENE_CUP_HANDLE = {x:29,y:-9}
 export const BLOCK_HEIGHT = 22
@@ -195,7 +211,7 @@ export function sampleScenePose(input: ScenePoseInput): ScenePoseFrame {
   let left = restLeft, right = mirror(restLeft)
   const body = { x: 42, y: 38, lean: 0 }
   const contacts: SceneContact[] = []
-  const cup = { x: 156, y: 175, angle: 0, scale: SCENE_CUP_SCALE, held: 1, liquid: 1 }
+  const cup = { x: TEA_CUP_HELD.x-1, y: TEA_CUP_HELD.y, angle: 0, scale: SCENE_CUP_SCALE, held: 1, liquid: 1 }
   const kettle = { x: 131, y: 179, angle: 0, grip: point(131,135), spout: point(166,153), pour: 0 }
   const book = { turn: 0, close: 0, ribbon: span(p,.66,.74), corner: point(206,161), coverEdge: point(206,161), coverFront: point(214,175) }
   const boat = { fold: p, transfer: span(p,.78,1), x:150, y:0, scale:.71, left: point(135,173), right: point(189,174) }
@@ -206,27 +222,34 @@ export function sampleScenePose(input: ScenePoseInput): ScenePoseFrame {
   let stretch = 0
   let gaze = point(0,0)
   if (input.id === 'F4') {
-    const tilt = span(p,.64,.67) * (1-span(p,.72,.75))
-    const lift = span(p,.82,.96), support = span(p,.75,.88)
-    // Sit facing the tea table with the arms hanging slightly forward.
-    const gather = span(p,.72,.78)
-    body.x = 42 + 6 * gather; body.y = 38 + 2 * gather
+    // Lift first, then tilt. Water only runs once the spout is low enough, and it stops
+    // before the kettle levels out, so the stream never hangs from a level kettle.
+    const raise = span(p,.58,.625) * (1-span(p,.725,.75))
+    const tilt = span(p,.625,.665) * (1-span(p,.705,.735))
+    const lift = span(p,.795,.9), support = span(p,.76,.795)
+    // Sit facing the tea table with the arms hanging slightly forward, once the kettle is down.
+    const gather = span(p,.76,.82)
+    // A small lean toward the kettle as it goes down keeps the arm at its usual length.
+    const setDown = span(p,.725,.75) * (1-span(p,.76,.795))
+    body.x = 42 + 6 * gather - 4 * setDown; body.y = 38 + 2 * gather
     const ls = point(body.x+74,body.y+105), rs = point(body.x+161,body.y+105)
-    const handle = point(14.78125,-40.25) // three quarters along the top handle
-    const park = span(p,.72,.75), carryKettle = span(p,.60,.65) * (1-span(p,.72,.75))
-    const grip = point(72+handle.x-7*park+3*carryKettle,180+handle.y-14*carryKettle)
-    kettle.grip = grip; kettle.angle = 18*tilt
+    const handle = point(6.616,-43.4) // just past the middle of the top handle
+    // Set down a little further out, so the spout is clear of the arm reaching for the cup.
+    const park = span(p,.725,.75)
+    const grip = pointMix(point(72-7*park+handle.x,180+handle.y),POUR_GRIP,raise)
+    kettle.grip = grip; kettle.angle = POUR_TILT*tilt
     const handleOffset = transformScenePoint(handle,{x:0,y:0,angle:kettle.angle})
     kettle.x = grip.x-handleOffset.x; kettle.y = grip.y-handleOffset.y
     kettle.spout = transformScenePoint(point(47,-30),kettle)
-    kettle.pour = span(p,.67,.685) * (1-span(p,.705,.72))
-    cup.liquid = span(p,.675,.71)
-    cup.x = mix(153,157,lift); cup.y = mix(180,175,lift)
-    cup.held = span(p,.77,.815)
+    kettle.pour = span(tilt,.78,.92)
+    cup.liquid = span(p,.665,.708)
+    // The left palm under the cup carries it to the chest; the right hand joins near the end.
+    cup.x = mix(TEA_CUP_HOME.x,TEA_CUP_HELD.x,lift); cup.y = mix(TEA_CUP_HOME.y,TEA_CUP_HELD.y,lift)
+    cup.held = span(p,.87,.93)
     const rp = cupAnchor(SCENE_CUP_HANDLE,cup), lp = cupAnchor(SCENE_CUP_BASE,cup)
     // Release the stationary kettle through its near side. A low arc beyond
     // the lid and below the raised spout brings the palm under the cup.
-    const out = point(95,144), under = point(96,190)
+    const out = point(88,152), under = point(90,194)
     const a = pointMix(grip,out,support), b = pointMix(out,under,support), c = pointMix(under,lp,support)
     const leftPalm = pointMix(pointMix(a,b,support),pointMix(b,c,support),support)
     left = roundedReach('left',ls,leftPalm,.60)
@@ -317,10 +340,9 @@ export function sampleScenePose(input: ScenePoseInput): ScenePoseFrame {
     gaze = serving.gaze
     contacts.push(...serving.contacts)
   } else if(input.id==='F2') {
-    // The hand steadies the pot. Only the eyes turn toward the plant.
+    // Both hands rest on the table. Only the eyes turn toward the plant.
     left=plantLeft
     right=plantRight
-    contacts.push(contact('pot-wall',left.palm,plantGrip))
     if (!input.staticOnly) {
       gaze.x -= 1.5 * pulse
       gaze.y = pulse
@@ -328,6 +350,9 @@ export function sampleScenePose(input: ScenePoseInput): ScenePoseFrame {
   } else if(input.id==='F5') {
     const pose = bubblePose(p)
     right = pose.arm
+    // The idle hand mirrors the wand arm's resting shape.
+    const idle = bubbleArmJoints(0,0)
+    left = mirror(drawWandArm(idle.elbow,idle.palm))
     wand = pose.wand
     gaze = pose.gaze
     contacts.push(contact('wand-handle',right.palm,point(wand.x,wand.y),pose.held))
@@ -340,7 +365,7 @@ export function sampleScenePose(input: ScenePoseInput): ScenePoseFrame {
     body.y = 27 - 5 * Math.sin(Math.PI * first)
     body.x -= 4 * span(first,0,.84) * (1-span(p,.34,.44))
     const shoulder = point(body.x+69,body.y+105), rest = point(shoulder.x+22,shoulder.y+25)
-    right = roundedReach('right',point(body.x+171,body.y+105),point(body.x+149,body.y+130))
+    right = roundedReach('right',point(body.x+171,body.y+105),point(body.x+149,body.y+130),.56)
     const base=blocks[0]!, tableY=base.y, onBaseY=tableY-BLOCK_HEIGHT
     // The near palm supports the underside of the top block. A small lift
     // clears both stacks and keeps the hand below the face.
@@ -376,5 +401,7 @@ export function sampleScenePose(input: ScenePoseInput): ScenePoseFrame {
     left = rotateArm(restLeft, 170 * stretch)
     right = mirror(left)
   }
-  return {id:input.id,progress,action:pulse,body,left,right,cup,kettle,book,boat,wand,blocks,flag,food,stretch,gaze,touched:!!input.touchKind,contacts}
+  const attention = input.status !== 'ended' && progress < 1 ? FOCUS_ATTENTION[input.id] ?? NO_ATTENTION : NO_ATTENTION
+  const flipperArm = attention === NO_ATTENTION ? null : FLIPPER_ARM[input.id] ?? null
+  return {id:input.id,progress,action:pulse,body,attention,flipperArm,left,right,cup,kettle,book,boat,wand,blocks,flag,food,stretch,gaze,touched:!!input.touchKind,contacts}
 }

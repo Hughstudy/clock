@@ -1,5 +1,5 @@
 import { focusCopy as copy } from '../data/focus-copy'
-import { useEffect, useLayoutEffect, useRef, useState, type MouseEvent, type ReactNode } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type MouseEvent, type ReactNode } from 'react'
 import { EncouragementReader } from '../components/EncouragementReader'
 import { DurationRuler } from '../components/DurationRuler'
 import { ShortCompanionMessage } from '../components/ShortCompanionMessage'
@@ -10,6 +10,7 @@ import { TimerActionButton } from '../components/TimerActionButton'
 import { BlueCompanion } from '../components/companion/BlueCompanion'
 import { CompanionFeedback } from '../components/companion/CompanionFeedback'
 import { sceneSettingFor } from '../components/companion/CompanionScenery'
+import { useSceneLight } from '../hooks/companion/useSceneLight'
 import type { SaveState, Thought } from '../contracts/focus'
 import type { QuoteFavoritesController } from '../contracts/favorites'
 import { uiText } from '../data/ui-copy'
@@ -215,6 +216,7 @@ export function HomeScreen({ active, view, result, linkedThoughts, defaultsInten
     : `${PHASE_LABELS[view.phase]} · ${paused ? copy.paused : copy.running}${view.isBreak ? '' : ` · ${copy.target(Math.round(view.totalMs / 60000))}`}`
 
   const setting = companion.sceneryEnabled ? sceneSettingFor(scene?.id) : 'plain'
+  const light = useSceneLight(setting === 'plain' ? null : setting, view.night)
 
 
   const noteRow = (
@@ -314,7 +316,7 @@ export function HomeScreen({ active, view, result, linkedThoughts, defaultsInten
         </div>
   )
   return (
-    <section className="screen home" data-tone={tone} data-setting={setting} data-panel={panel ?? ''} data-ready-focus={readyFocus} aria-label="专注计时">
+    <section className="screen home" style={light ? { '--sky': light.sky, '--floor': light.floor } as CSSProperties : undefined} data-tone={tone} data-setting={setting} data-sky-ink={light?.skyInk ?? 'default'} data-panel={panel ?? ''} data-ready-focus={readyFocus} aria-label="专注计时">
       <div ref={sceneBox} className="fp-scene" data-setting={setting}>
         <div className="fp-top">
           <h1>专注</h1>
@@ -326,7 +328,8 @@ export function HomeScreen({ active, view, result, linkedThoughts, defaultsInten
         <div className="fp-art">
           <CompanionFeedback feedback={companion.feedback} reducedMotion={reducedMotion} renderCharacter={(presentation, keyboardPat) =>
               <BlueCompanion presentation={presentation} keyboardPat={keyboardPat} cueId={companion.cue?.id} scene={scene}
-                panelOpen={!!panel} sceneryEnabled={companion.sceneryEnabled} />} />
+                panelOpen={!!panel} sceneryEnabled={companion.sceneryEnabled} night={view.night}
+                focusTime={!ready && !view.isBreak ? { elapsedMs: view.totalMs - view.remainingMs, totalMs: view.totalMs } : undefined} />} />
         </div>
         <span aria-hidden="true" className="fp-clock-phase">{focusResult ? copy.focusEndedTitle : ready ? (isRest ? '准备休息' : copy.prepareFocus) : paused ? copy.paused : isRest ? '休息中' : '专注中'}</span>
         <p className="fp-digits" {...(ready ? {} : { role: 'timer', 'aria-label': `${PHASE_LABELS[view.phase]}还剩${spokenClock(view.remainingMs)}` })}>

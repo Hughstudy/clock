@@ -1,8 +1,9 @@
 import { useMemo } from 'react'
-import { localClockTime, localDateKey, localHour } from '../adapters/calendar'
+import { localClockTime, localDateKey, localHour, localMinutes } from '../adapters/calendar'
 import { spec } from '../data/spec'
 import { nextFocusMinutes } from '../logic/app'
 import { dayHeading, shortDate } from '../logic/calendar'
+import { nightLevel } from '../logic/daylight'
 import { recordsBand, type RecordsBand } from '../logic/record-stories'
 import { groupEntries, indexByDay, rangeTotals, type DayIndex, type HistoryDay, type RangeLength } from '../logic/stats'
 import { isLive } from '../logic/thoughts'
@@ -31,6 +32,8 @@ export interface TimerView {
   progress: number
   /** Precise elapsed focus proportion, 0 at start, 1 at deadline; pauses retain the value. */
   completedProgress: number
+  /** The device clock's level of night, 0 in daylight and 1 after dark. */
+  night: number
 }
 
 export function useTimerView(snapshot: AppSnapshot, now: number): TimerView {
@@ -55,6 +58,7 @@ export function useTimerView(snapshot: AppSnapshot, now: number): TimerView {
     progress: total > 0 ? remaining / total : 0,
     completedProgress: timer.session && !isBreak(timer.phase) && total > 0
       ? Math.min(1, Math.max(0, 1 - remaining / total)) : 0,
+    night: nightLevel(localMinutes(now)),
   }
 }
 

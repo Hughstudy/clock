@@ -13,7 +13,7 @@ const samples = [
   { id: '', label: 'Ready', scenery: 'workroom' },
   { id: 'F4', label: 'Tea', scenery: 'workroom' },
   { id: 'F2', label: 'Plant', scenery: 'garden' },
-  { id: 'F8', label: 'Stars', scenery: 'dusk' },
+  { id: 'F8', label: 'Stars', scenery: 'garden' },
 ]
 const captured = new Map()
 const checks = []
@@ -112,8 +112,8 @@ try {
   }
   await page.emulateMedia({ reducedMotion: 'reduce' })
   await page.locator('.preview__phone .blue-companion[data-static="true"]').waitFor()
-  check('Reduced motion retains the dusk illustration and stops scene animation',
-    await fixtureSvg.locator('[data-scenery="dusk"]').isVisible() && await fixtureSvg.evaluate(el => el.getAnimations({ subtree: true }).length === 0))
+  check('Reduced motion retains the Stars illustration and stops scene animation',
+    await fixtureSvg.locator('[data-scenery="garden"]').isVisible() && await fixtureSvg.evaluate(el => el.getAnimations({ subtree: true }).length === 0))
   await page.close()
 
   const real = await browser.newPage({ viewport: { width: 375, height: 820 }, colorScheme: 'light', reducedMotion: 'reduce' })
@@ -144,7 +144,7 @@ try {
     await real.getByRole('dialog').getByRole('button', { name: '确认结束', exact: true }).click()
     await real.locator('.home .blue-companion[data-scene-status="ended"]').waitFor()
   }
-  check('Captured ready, workroom, garden and dusk from the actual timer', captured.size === samples.length)
+  check('Captured ready, workroom, garden and Stars from the actual timer', captured.size === samples.length)
   assert.deepEqual(errors, [], 'Browser and console errors')
   await contactSheet(browser)
   const report = { browser: browser.version(), widths, productionScreenshots: { colorScheme: 'light', reducedMotion: 'reduce' }, scenes, checks, errors }
