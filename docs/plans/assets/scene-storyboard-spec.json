@@ -5,7 +5,7 @@
       "id": "F1",
       "title": "A pot of soup",
       "kind": "focus",
-      "support": "A pot in front with a prep bowl at each side, below each hand. A hand tips its bowl at the pot's rim, the pieces fall in, and the spoon stirs.",
+      "support": "A pot mid-table with a prep bowl at each side, beside each hand and well back from the edge. A hand tips its bowl at the pot's rim, the pieces fall in, and the spoon stirs.",
       "frames": [
         {
           "label": "0% · Table set",
@@ -130,11 +130,11 @@
       "id": "F6",
       "title": "Paper boat",
       "kind": "focus",
-      "support": "A dry folding area in front and a shallow water tray along the table's front, below both palms.",
+      "support": "A dry folding area in front and a slim water tray to its right, clear of the right arm and back from the table's edge.",
       "frames": [
         {
           "label": "0% · Lay out paper",
-          "caption": "The tray lies in front, clear of the right arm"
+          "caption": "The tray stands beyond the right palm"
         },
         {
           "label": "40% · Press a crease",
@@ -155,7 +155,7 @@
       "id": "F7",
       "title": "Block tower",
       "kind": "focus",
-      "support": "All blocks stand left of the left arm; the flag rides on the block that tops the tower.",
+      "support": "All blocks stand left of the left arm and back from the table's edge; the flag rides on the block that tops the tower.",
       "frames": [
         {
           "label": "0% · Blocks laid out",

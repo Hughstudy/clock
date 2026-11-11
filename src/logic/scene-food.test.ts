@@ -160,32 +160,41 @@ describe('a pot of soup that obeys the kitchen\'s physics', () => {
     }
   })
 
-  it('stands the bowls and the pot below both hands, clear of the arms at rest', () => {
-    const top=(bowl:{y:number})=>bowl.y-FOOD_BOWL.depth
+  it('stands the bowls and the pot well back from the table\'s edge, clear of the arms at rest', () => {
+    // A vessel's silhouette: its rim's ellipse above the middle and its rounded body below.
+    const inBowl=(p:ScenePoint,bowl:{x:number;y:number})=>((p.x-bowl.x)/FOOD_BOWL.width)**2+((p.y-bowl.y)/(p.y<bowl.y?FOOD_BOWL.depth:FOOD_BOWL.body))**2<1
+    const inPotShape=(p:ScenePoint)=>((p.x-pot.x)/(FOOD_POT_OPENING.width+1))**2+((p.y-pot.y)/(p.y<pot.y?FOOD_POT_OPENING.depth+.5:FOOD_POT_OPENING.body))**2<1
     for(const p of resting){
       const frame=pose(p)
-      for(const side of ['left','right'] as const)for(const point of drawn(frame[side])){
-        expect(point.y,`${side} over a bowl at ${p}`).toBeLessThan(Math.min(top(frame.food.leftBowl),top(frame.food.rightBowl))-2)
-        expect(point.y,`${side} over the pot at ${p}`).toBeLessThan(pot.y-FOOD_POT_OPENING.depth)
+      for(const side of ['left','right'] as const)for(const point of [...drawn(frame[side]),frame[side].palm]){
+        expect(inBowl(point,frame.food.leftBowl)||inBowl(point,frame.food.rightBowl),`${side} over a bowl at ${p}`).toBe(false)
       }
     }
     // An arm never reaches the pot, and never the other hand's bowl.
     for(let i=0;i<=1000;i++){
       const frame=pose(i/1000)
       for(const point of drawn(frame.left)){
-        if(Math.abs(point.x-pot.x)<FOOD_POT_OPENING.width)expect(point.y,`left over the pot at ${i}`).toBeLessThan(pot.y-FOOD_POT_OPENING.depth)
-        expect(point.x,`left at ${i}`).toBeLessThan(frame.food.rightBowl.x-FOOD_BOWL.width)
+        expect(inPotShape(point),`left over the pot at ${i}`).toBe(false)
+        expect(inBowl(point,frame.food.rightBowl),`left over the right bowl at ${i}`).toBe(false)
       }
       for(const point of drawn(frame.right)){
-        if(Math.abs(point.x-pot.x)<FOOD_POT_OPENING.width)expect(point.y,`right over the pot at ${i}`).toBeLessThan(pot.y-FOOD_POT_OPENING.depth)
-        expect(point.x,`right at ${i}`).toBeGreaterThan(frame.food.leftBowl.x+FOOD_BOWL.width)
+        expect(inPotShape(point),`right over the pot at ${i}`).toBe(false)
+        expect(inBowl(point,frame.food.leftBowl),`right over the left bowl at ${i}`).toBe(false)
       }
     }
-    // The three vessels stand side by side on the table without touching.
+    // The three vessels stand side by side without touching, the bowls mirrored about the pot.
     const {leftBowl,rightBowl}=pose(0).food
     expect(leftBowl.x+FOOD_BOWL.width).toBeLessThan(pot.x-FOOD_POT_OPENING.width-2)
     expect(rightBowl.x-FOOD_BOWL.width).toBeGreaterThan(pot.x+FOOD_POT_OPENING.width+2)
     expect(leftBowl.x+rightBowl.x).toBeCloseTo(2*pot.x,6)
-    for(const bowl of [leftBowl,rightBowl])expect(((bowl.x-160)/125)**2+((bowl.y+FOOD_BOWL.body-180)/17)**2,'on the tabletop').toBeLessThan(1)
+    // Safe on the table: each foot is well behind the front edge and in front of the back edge,
+    // across its whole width. The tabletop is an ellipse 125 by 17 around (160, 180).
+    const edge=(x:number)=>17*Math.sqrt(1-((x-160)/125)**2)
+    for(const [x,foot,half] of [[leftBowl.x,leftBowl.y+FOOD_BOWL.body,9],[rightBowl.x,rightBowl.y+FOOD_BOWL.body,9],[pot.x,pot.y+FOOD_POT_OPENING.body,13]] as const){
+      for(const dx of [-half,0,half]){
+        expect(180+edge(x+dx)-foot,`front margin at ${x+dx}`).toBeGreaterThan(6)
+        expect(foot-(180-edge(x+dx)),`back margin at ${x+dx}`).toBeGreaterThan(6)
+      }
+    }
   })
 })

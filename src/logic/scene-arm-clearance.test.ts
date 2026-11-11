@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { BLOCK_HEIGHT, BLOCK_WIDTH, BOAT_TRAY, sampleScenePose, TEA_CUP_HOME, type SceneArm, type ScenePoint, type ScenePoseFrame } from './scene-pose'
+import { BLOCK_HEIGHT, BLOCK_TABLE_Y, BLOCK_WIDTH, BOAT_TRAY, sampleScenePose, TEA_CUP_HOME, type SceneArm, type ScenePoint, type ScenePoseFrame } from './scene-pose'
 import { ART_MAX_SCENE_RATIO } from './scene-fit'
 import type { SceneId } from './types'
 
@@ -95,6 +95,23 @@ describe('arms keep their length and stay clear of items they are not handling',
         expect(block.x + BLOCK_WIDTH + 6, `block at ${progress}`).toBeLessThan(right)
       }
       expect(sampleScenePose({ id: 'F6', progress }).boat.x + 25).toBeLessThan(right)
+    }
+  })
+
+  it('stands the tray and the blocks well back from the table\'s front edge', () => {
+    // The tabletop is an ellipse 125 by 17 around (160, 180); its front edge is the lower half.
+    const front = (x: number) => 180 + 17 * Math.sqrt(1 - ((x - 160) / 125) ** 2)
+    for (const dx of [-BOAT_TRAY.width, -BOAT_TRAY.width / 2, 0, BOAT_TRAY.width / 2, BOAT_TRAY.width]) {
+      const edge = BOAT_TRAY.y + BOAT_TRAY.depth * Math.sqrt(1 - (dx / BOAT_TRAY.width) ** 2)
+      expect(front(BOAT_TRAY.x + dx) - edge, `tray at ${dx}`).toBeGreaterThan(5)
+    }
+    for (const progress of steps) {
+      const frame = sampleScenePose({ id: 'F7', progress })
+      for (const block of frame.blocks) {
+        expect(block.y).toBeLessThanOrEqual(BLOCK_TABLE_Y)
+        // A block's foot is its front face's lower edge.
+        for (const x of [block.x, block.x + BLOCK_WIDTH]) expect(front(x) - block.y, `block at ${progress}`).toBeGreaterThan(5)
+      }
     }
   })
 })

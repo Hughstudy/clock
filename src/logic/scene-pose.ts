@@ -175,15 +175,15 @@ function bubblePose(p: number) {
     wand: { ...grip, ring: transformScenePoint(bubbleLoop,grip), breath, bubbles },
   }
 }
-/** The water tray lies along the front of the table, below both palms, so the right arm is clear
- * of it at rest and while folding. It is wide enough for the whole boat and stays inside the
- * narrowest screen's view of the room. */
-export const BOAT_TRAY = {x:234,y:186,width:37,depth:7} as const
-/** How far the boat settles into the tray below the folding height. */
-export const BOAT_FLOAT = 3
+/** The water tray stands to the right of the folding spot, beyond the right palm, so the arm is
+ * clear of it at rest and while folding. It is wide enough for the whole boat, stays inside the
+ * narrowest screen's view of the room, and stands well back from the table's front edge. */
+export const BOAT_TRAY = {x:236,y:181,width:35,depth:6} as const
+/** The tray stands a little further back than the folding spot, so the boat rises this far onto it. */
+export const BOAT_FLOAT = -2
 const BOAT_FOLD_X = 162
 /** Where the hand lets go: the bow is over the water and the arm still hangs at a natural length. */
-const BOAT_LAUNCH_X = 216
+const BOAT_LAUNCH_X = 218
 export const SCENE_CUP_SCALE = .72
 /** Where the cup waits on its saucer: under the kettle's spout, so water can fall straight in. */
 export const TEA_CUP_HOME = {x:122,y:180}
@@ -202,6 +202,8 @@ export const BLOCK_HEIGHT = 22
 export const BLOCK_WIDTH = 25
 /** The tower stands as far left as the narrowest screen shows, and the step block flush beside it. */
 const BLOCK_TOWER_X = 49, BLOCK_STEP_X = BLOCK_TOWER_X + BLOCK_WIDTH
+/** Where the blocks stand in the table's depth: well back from its front edge, even at its narrow end. */
+export const BLOCK_TABLE_Y = 182
 /** The companion sits a little to the right here, so its left arm hangs clear of the blocks. */
 const BLOCK_SEAT_X = 52
 function cupAnchor(local: ScenePoint, cup: SceneObject & {scale:number}): ScenePoint { return transformScenePoint(point(local.x*cup.scale,local.y*cup.scale),cup) }
@@ -396,9 +398,9 @@ export function sampleScenePose(input: ScenePoseInput): ScenePoseFrame {
     body.x=BLOCK_SEAT_X-5*reach; body.y=27; body.lean=reach?-6*reach:0
     const shoulder=point(body.x+69,body.y+105), rest=point(shoulder.x+22,shoulder.y+25)
     right=roundedReach('right',point(body.x+171,body.y+105),point(body.x+149,body.y+130),.56)
-    const tableY=186, onBaseY=tableY-BLOCK_HEIGHT, stepX=mix(BLOCK_STEP_X+6,BLOCK_STEP_X,slide)
+    const tableY=BLOCK_TABLE_Y, onBaseY=tableY-BLOCK_HEIGHT, stepX=mix(BLOCK_STEP_X+6,BLOCK_STEP_X,slide)
     blocks[0]={x:BLOCK_TOWER_X,y:tableY,angle:0}
-    blocks[1]={x:214,y:tableY,angle:0}
+    blocks[1]={x:222,y:tableY,angle:0}
     blocks[2]={x:stepX,y:tableY,angle:0}
     blocks[3]=carry(lifted,[[0,stepX,onBaseY],[.22,stepX,onBaseY-5],[.74,BLOCK_TOWER_X,onBaseY-5],[1,BLOCK_TOWER_X,onBaseY]])
     flag.x=blocks[3]!.x+10; flag.y=blocks[3]!.y-BLOCK_HEIGHT-3

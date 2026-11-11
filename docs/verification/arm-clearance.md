@@ -2,7 +2,7 @@
 
 Date: 2026-11-11. The owner asked for the code to be verified against two goals: good interaction and layout, and smooth animation with no stretched arm and no arm over a different item. Partway through they said the Food scene looked wrong because its food appeared from nowhere, and asked for that scene to be planned again. After seeing the first replanned version they said the bowls' position was still not right and that the spoon should follow real-world physics. This records what was measured, what changed and what is still open.
 
-Status: the owner reviewed the before-and-after animation on 2026-11-11 and approved it for commit and push to main.
+Status: the owner reviewed the before-and-after animation on 2026-11-11 and approved it; it is on main as `ba83288`. Right after, they asked for Food's bowls and pot to stand in a safer place than the table's edge. That follow-up is described under [Back from the table's edge](#back-from-the-tables-edge); they reviewed it against main and approved it the same day.
 
 ## How it was measured
 
@@ -38,8 +38,8 @@ The scene now follows how prep bowls are really emptied. The Records picture for
 
 | Session | Key frame |
 | --- | --- |
-| 0% | The pot stands in front with its spoon leaning in it. A prep bowl stands on the table at each side, just below each hand: vegetables on the left, dumplings on the right. Both hands at rest. |
-| 3–9% | The left hand goes down to its bowl and takes it by the far rim. |
+| 0% | The pot stands in front with its spoon leaning in it. A prep bowl stands on the table at each side, beside each hand: vegetables on the left, dumplings on the right. Both hands at rest. |
+| 3–9% | The left hand goes down behind its bowl and takes it by the far rim. |
 | 9–15% | It brings the bowl, level, to the pot. |
 | 15–27% | It lifts the back of the bowl, so the lip rests on the pot's rim. Past 25° the four pieces slide out one by one and fall into the broth, which rises. |
 | 27–40% | The bowl goes back to its place, empty. The hand rests. |
@@ -47,7 +47,7 @@ The scene now follows how prep bowls are really emptied. The Records picture for
 | 75–98% | The right hand takes the spoon and stirs three slow circles. The pieces mix, the broth clouds and steam rises. |
 | 100% | Both bowls empty in their places, the spoon leaning, the soup steaming. |
 
-- **Bowls.** They stand on the table in front, beside the pot and below the hands, mirrored about the pot, clear of both arms at rest. A hand's own bowl is drawn over it, so the hand holds the bowl by its far rim.
+- **Bowls.** They stand on the table beside the pot and beside the hands, mirrored about the pot, clear of both arms at rest. A hand's own bowl is drawn over it, so the hand holds the bowl from behind its far rim.
 - **Conservation.** `sampleFoodPose` reports the share of each ingredient in its bowl and in the pot. Each pair adds up to one at every instant, a bowl only goes down and the pot only goes up.
 - **Gravity.** A bowl stays level while it is carried and tips only with its lip at the pot's rim. A piece leaves only when the bowl is tipped past the slip angle. Each piece then falls from the lip in about 300 ms of real time, however slowly the session tips the bowl, as the tea's water does. Checked in the real app: at the moment a piece slides off it is drawn at the lip, and it has landed 570 ms later.
 - **Displacement.** The broth rises as pieces go in.
@@ -78,6 +78,21 @@ The left palm takes the cup by its near side, where it can be seen, and slips un
 ### Warm drink
 
 The side table is narrower and sits further right, so the right arm rests clear of it once the cup is down.
+
+### Back from the table's edge
+
+After the push the owner pointed out that Food's bowls and pot stood on the edge of the table and asked for a better, safer position. Their feet were about 2 units from the table's front edge. The same was true of two other props moved in this work: the paper boat's tray (0.7 units) and the base block at the table's narrow left end (1.8 units).
+
+| Prop | Before | Now |
+| --- | --- | --- |
+| Food's bowls | Foot 1.9 units from the front edge | About 8 units, and more than 6 from the back edge |
+| Food's pot | 2 units | 9 units; the pot is 2 units shallower |
+| Paper boat's tray | 0.7 units | 5 units or more along its whole width; the tray is slimmer |
+| Blocks | 1.8 units at the base block's corner | 5.8 units or more for every block |
+
+A hand hangs no lower than it did, so the bowls could not simply move back: they would have been out of reach. The palm now holds a bowl from behind its far rim instead of from above it, which lets the bowl stand 5 units further back and further out from the pot. The pot stands between the arms, so it moved straight back. The tray moved back and right of the folding palm; the spare block moved right to stay clear of the right arm. Arm lengths are unchanged, and the arm-clearance and narrow-screen tests still pass.
+
+Two unit tests now hold these margins: Food's vessels at least 6 units from both the front and back edges across each foot, and the tray and every block at least 5 units from the front edge.
 
 ### Inside a narrow phone's view
 

@@ -88,7 +88,7 @@ const FOOD_DROPS={
 const mixed=(from:readonly [number,number],to:readonly [number,number],t:number)=>[from[0]+(to[0]-from[0])*t,from[1]+(to[1]-from[1])*t] as const
 /** The pot fills with what the bowls tip in: each piece falls, the broth rises, and stirring mixes it. */
 function FoodPot({frame}:{frame:ScenePoseFrame}) {
-  const {potGreens:g,potExtras:e,simmer,mix}=frame.food,{x,y}=FOOD_DISHES.pot,{width:w,depth:h}=FOOD_POT_OPENING
+  const {potGreens:g,potExtras:e,simmer,mix}=frame.food,{x,y}=FOOD_DISHES.pot,{width:w,depth:h,body}=FOOD_POT_OPENING
   // Whatever goes in raises the broth a little.
   const surface=1.5-1.5*(g+e)
   const piece=(kind:'greens'|'extras',i:number,landing:readonly [number,number],stirred:readonly [number,number],share:number)=>{
@@ -101,8 +101,8 @@ function FoodPot({frame}:{frame:ScenePoseFrame}) {
   const greens=[[[-15,.2],[-12,.6]],[[-10,1.9],[5,2]],[[-12,-1.5],[-3,-1.6]],[[-6,.3],[13,-.5]]] as const
   const extras=[[[15,.2],[12,1.2]],[[10,1.9],[-7,1.8]],[[12,-1.5],[3,.3]],[[6,.3],[-14,-.9]]] as const
   return <g data-scene-part="pot" data-filled={g+e} transform={`translate(${x} ${y})`}>
-    <E x={0} y={14} rx={22} ry={3.5}/>
-    <path className="scene-draw-pink" d={`M-${w+1} 0 L${w+1} 0 Q${w+1} 12 13 14 H-13 Q-${w+1} 12 -${w+1} 0 Z`} stroke="var(--scene-line)" strokeWidth="1.5"/>
+    <E x={0} y={body} rx={20} ry={3}/>
+    <path className="scene-draw-pink" d={`M-${w+1} 0 L${w+1} 0 Q${w+1} ${body-2} 13 ${body} H-13 Q-${w+1} ${body-2} -${w+1} 0 Z`} stroke="var(--scene-line)" strokeWidth="1.5"/>
     <E x={0} y={0} rx={w+1} ry={h+.5} c="paper"/>
     <g data-scene-part="broth">
       <ellipse className="scene-draw-water" cx={0} cy={surface} rx={w-4} ry={h-1.6}/>
@@ -142,7 +142,7 @@ function Book({frame}:{frame:ScenePoseFrame}){
     <P d={`M${150+(x-150)*.13} ${169+(y-169)*.13} l29 11`} c="softline" opacity={outerCover}/>
   </g>
 }
-function Boat({frame}:{frame:ScenePoseFrame}){const p=frame.boat.fold,f1=stage(p,.12,.39),f2=stage(p,.43,.73);const dx=frame.boat.x-160,dy=frame.boat.y;const topX=173-9*f1,topY=157-12*f1+10*f2;return <g data-scene-part="paper-boat"><g data-scene-part="water-tray"><E x={BOAT_TRAY.x} y={BOAT_TRAY.y} rx={BOAT_TRAY.width} ry={BOAT_TRAY.depth} c="edge"/><E x={BOAT_TRAY.x} y={BOAT_TRAY.y-1.5} rx={BOAT_TRAY.width-4} ry={BOAT_TRAY.depth-2} c="water"/></g><g transform={`translate(${dx} ${dy}) translate(160 180) scale(${frame.boat.scale}) translate(-160 -180)`}><P d={`M${112+7*f1} ${169+8*f1} L${topX} ${topY} L${210-5*f1+3*f2} ${178-f1} L${146-8*f1} ${191-3*f1} Z`} c="paper"/><P d={`M${134+30*f1} ${167-22*f1+10*f2} L${190-26*f1} ${180+f2} M${119} 177 L164 181 L208 177`} c="softline"/><P d={`M${119+10*f2} 177 L${208-9*f2} 177 L${189-6*f2} 188 L${138+7*f2} 188 Z`} c="paper" opacity={f2}/><P d="M145 177 L164 153 L183 177Z" c="paper" opacity={f2}/><P d="M164 154 L164 178" c="softline" opacity={f2}/></g></g>}
+function Boat({frame}:{frame:ScenePoseFrame}){const p=frame.boat.fold,f1=stage(p,.12,.39),f2=stage(p,.43,.73);const dx=frame.boat.x-160,dy=frame.boat.y;const topX=173-9*f1,topY=157-12*f1+10*f2;return <g data-scene-part="paper-boat"><g data-scene-part="water-tray"><E x={BOAT_TRAY.x} y={BOAT_TRAY.y} rx={BOAT_TRAY.width} ry={BOAT_TRAY.depth} c="edge"/><E x={BOAT_TRAY.x} y={BOAT_TRAY.y-1.5} rx={BOAT_TRAY.width-4} ry={BOAT_TRAY.depth-1.8} c="water"/></g><g transform={`translate(${dx} ${dy}) translate(160 180) scale(${frame.boat.scale}) translate(-160 -180)`}><P d={`M${112+7*f1} ${169+8*f1} L${topX} ${topY} L${210-5*f1+3*f2} ${178-f1} L${146-8*f1} ${191-3*f1} Z`} c="paper"/><P d={`M${134+30*f1} ${167-22*f1+10*f2} L${190-26*f1} ${180+f2} M${119} 177 L164 181 L208 177`} c="softline"/><P d={`M${119+10*f2} 177 L${208-9*f2} 177 L${189-6*f2} 188 L${138+7*f2} 188 Z`} c="paper" opacity={f2}/><P d="M145 177 L164 153 L183 177Z" c="paper" opacity={f2}/><P d="M164 154 L164 178" c="softline" opacity={f2}/></g></g>}
 function Block({x,y,angle,c}:{x:number;y:number;angle:number;c:string}){
   const top = -BLOCK_HEIGHT
   return <g transform={`translate(${x} ${y}) rotate(${angle})`}>

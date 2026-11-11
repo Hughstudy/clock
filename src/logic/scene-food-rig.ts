@@ -7,25 +7,27 @@ type Key = readonly [progress: number, shoulder: number, tilt: number]
 /**
  * A pot of soup that obeys the kitchen's physics.
  *
- * The pot stands in front of the companion with a prep bowl on the table at each side, just below
- * each hand: vegetables on the left, dumplings on the right. A hand takes its bowl by the far rim,
+ * The pot stands in front of the companion with a prep bowl on the table at each side, beside
+ * each hand: vegetables on the left, dumplings on the right. All three stand well back from the
+ * table's front edge. A hand takes its bowl by the far rim,
  * brings it to the pot and lifts its back, so the lip rests on the pot's rim. Past the slip angle
  * the pieces slide out one by one and fall into the broth, which rises as it fills. The bowl goes
  * back to its place. A short, rigid arm cannot carry a level spoonful from one side of the hand to
  * the other without turning the spoon over, so the spoon does what a spoon does here: it stands in
  * the pot, and at the end the right hand stirs with it in slow circles, which mixes the pieces.
  */
-export const FOOD_DISHES = { pot: { x: 162, y: 181 } } as const
-/** The pot's opening, around its rim. */
-export const FOOD_POT_OPENING = { width: 24, depth: 5.5 } as const
+export const FOOD_DISHES = { pot: { x: 162, y: 176 } } as const
+/** The pot's opening, around its rim, and how deep its body is below it. */
+export const FOOD_POT_OPENING = { width: 24, depth: 5.5, body: 12 } as const
 /** A prep bowl: half the rim's width and depth as drawn, how deep its body is, and where the palm
- * holds it, measured from the middle of the rim. */
-export const FOOD_BOWL = { width: 15, depth: 3.8, body: 10.5, grip: { x: 3, y: -7.5 } } as const
+ * holds it, measured from the middle of the rim. The palm is behind the far rim, so the bowl can
+ * stand well back from the table's front edge and still be picked up by a hand that hangs no lower. */
+export const FOOD_BOWL = { width: 15, depth: 3.8, body: 9, grip: { x: 3, y: -1.5 } } as const
 /** Pieces stay put until the bowl is tipped this far, and it is tipped a little further to empty it. */
 export const BOWL_SLIP_TILT = 25, BOWL_POUR_TILT = 32
 export const SPOON_LENGTH = 26
 /** The spoon leans in the pot at this tilt below level, its handle under the right palm. */
-const SPOON_LEAN = 45, SPOON_HAND = -9
+const SPOON_LEAN = 35, SPOON_HAND = -9
 
 function ease(progress: number, from: number, to: number) {
   const t = Math.max(0, Math.min(1, (progress - from) / (to - from)))
@@ -33,7 +35,7 @@ function ease(progress: number, from: number, to: number) {
 }
 
 // One bowl's journey, for the left hand: down to the bowl, across to the pot's rim, tip, back.
-const REACH = 30, AT_RIM = 10, TIPPED = 0
+const REACH = 46, AT_RIM = 10, TIPPED = 0
 const journey = (start: number, stretch = 1): Key[] => {
   const at = (offset: number) => start + offset * stretch
   return [
@@ -83,7 +85,7 @@ export function sampleFoodPose(
   const stirring = ease(p, STIR[0], STIR[0] + .03) * (1 - ease(p, STIR[1] - .03, STIR[1]))
   const round = 6 * Math.PI * (p - STIR[0]) / (STIR[1] - STIR[0])
   const left = turn(leftRest, l.shoulder)
-  const right = turn(rightRest, -(r.shoulder + SPOON_HAND * withSpoon + 2.5 * stirring * Math.sin(round)))
+  const right = turn(rightRest, -(r.shoulder + SPOON_HAND * withSpoon + 3 * stirring * Math.sin(round)))
   // A bowl nobody holds stays in its place on the table, which is exactly where the palm meets it.
   const leftHeld = p >= LEFT_HELD[0] && p <= LEFT_HELD[1], rightHeld = p >= RIGHT_HELD[0] && p <= RIGHT_HELD[1]
   const leftBowl = bowlAt(leftHeld ? left.palm : turn(leftRest, REACH).palm, leftHeld ? l.tilt : 0, 1)
@@ -91,7 +93,7 @@ export function sampleFoodPose(
   // The spoon is rigid. It leans in the pot until the palm closes on its handle.
   const stirHeld = withSpoon === 1
   const grip = stirHeld ? right.palm : turn(rightRest, -SPOON_HAND).palm
-  const lean = (180 - SPOON_LEAN + 7 * stirring * (1 - Math.cos(round)) / 2) * Math.PI / 180
+  const lean = (180 - SPOON_LEAN + 9 * stirring * (1 - Math.cos(round)) / 2) * Math.PI / 180
   const tip = { x: grip.x + SPOON_LENGTH * Math.cos(lean), y: grip.y + SPOON_LENGTH * Math.sin(lean) }
   const potGreens = share(p, FOOD_SLIPS.greens), potExtras = share(p, FOOD_SLIPS.extras)
   return {
