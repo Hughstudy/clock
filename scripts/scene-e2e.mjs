@@ -194,7 +194,7 @@ try {
   await page.getByRole('button', { name: '设置', exact: true }).click()
   await page.locator('#duration-focus').fill('1')
   await page.locator('#duration-focus').blur()
-  await page.getByRole('button', { name: '‹ 回到专注', exact: true }).click()
+  await page.getByRole('button', { name: '回到专注', exact: true }).click()
   await untilSaved(page, s => s.settings.durationsMinutes.focus === 1, 'one minute default')
 
   // Start from a local input panel: its closure must not consume the entrance.
@@ -288,12 +288,12 @@ try {
   await page.emulateMedia({ reducedMotion: 'no-preference' })
   await page.getByRole('button', { name: '设置', exact: true }).click()
   await page.getByRole('switch', { name: '伙伴小场景', exact: true }).uncheck()
-  await page.getByRole('button', { name: '‹ 回到专注', exact: true }).click()
+  await page.getByRole('button', { name: '回到专注', exact: true }).click()
   check('Scene variety off retains the plain companion', await sceneAttribute(page, '') === '' && await svg.locator('[data-scenery]').count() === 0)
   await page.getByRole('button', { name: '设置', exact: true }).click()
   await page.getByRole('switch', { name: '伙伴小场景', exact: true }).check()
   await page.getByRole('switch', { name: '伙伴动画', exact: true }).uncheck()
-  await page.getByRole('button', { name: '‹ 回到专注', exact: true }).click()
+  await page.getByRole('button', { name: '回到专注', exact: true }).click()
   check('Restoring variety retains assignment; app motion off is static', await sceneAttribute(page, '') === finalScene && await svg.evaluate(el => el.getAnimations({ subtree: true }).length === 0))
   await endEarly(page)
   const focusRecords = (await readSaved(page)).data.records.length
@@ -316,7 +316,7 @@ try {
 
   await page.getByRole('button', { name: '设置', exact: true }).click()
   await page.getByRole('switch', { name: '伙伴动画', exact: true }).check()
-  await page.getByRole('button', { name: '‹ 回到专注', exact: true }).click()
+  await page.getByRole('button', { name: '回到专注', exact: true }).click()
   await focusReady(page)
   await prepareMinutes(page, 5)
   check('Choosing the duration leaves the timer ready', !(await readSaved(page)).data.timer.session)

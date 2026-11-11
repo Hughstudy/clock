@@ -4,6 +4,7 @@ import { EncouragementReader } from '../components/EncouragementReader'
 import { DurationRuler } from '../components/DurationRuler'
 import { ShortCompanionMessage } from '../components/ShortCompanionMessage'
 import { FocusPanel } from '../components/FocusPanel'
+import { ConfirmPopover } from '../components/ConfirmPopover'
 import { formatClock, formatElapsedParts, formatMinutes, PHASE_LABELS, spokenClock } from '../components/format'
 import { ThoughtPanel } from '../components/ThoughtPanel'
 import { TimerActionButton } from '../components/TimerActionButton'
@@ -71,6 +72,7 @@ export function HomeScreen({ active, view, result, linkedThoughts, defaultsInten
   const submittedStep = useRef<string | null>(null)
   const sceneBox = useRef<HTMLDivElement>(null)
   const voiceBox = useRef<HTMLDivElement>(null)
+  const voiceButton = useRef<HTMLButtonElement>(null)
   const primaryRef = useRef<HTMLDivElement>(null)
   const markButton = useRef<HTMLButtonElement>(null)
   const returnToStepButton = useRef(false)
@@ -114,7 +116,7 @@ export function HomeScreen({ active, view, result, linkedThoughts, defaultsInten
     if (active && previousPanel.current && !panel) {
       const prior = opener.current
       const speechTask = previousPanel.current === 'message' || previousPanel.current === 'encouragement'
-      const fallback = speechTask ? voiceBox.current?.querySelector<HTMLButtonElement>('.fp-voice-open') : null
+      const fallback = speechTask ? voiceButton.current : null
       const target = prior?.isConnected && !prior.matches(':disabled') && prior.getClientRects().length
         ? prior : fallback ?? primaryRef.current?.querySelector<HTMLButtonElement>('button')
       target?.focus({ preventScroll: true })
@@ -155,11 +157,11 @@ export function HomeScreen({ active, view, result, linkedThoughts, defaultsInten
   useSceneFit(sceneBox, companion.sceneryEnabled)
   useLayoutEffect(() => {
     if (panel !== 'end' || !confirmExpired) return
-    const element = sceneBox.current?.querySelector<HTMLElement>('.focus-panel')
+    const element = document.querySelector<HTMLElement>('.fp-confirm')
     // Retire the old confirmation without stealing focus from another task or
     // navigation. A removed confirmation leaves focus on the document body.
     if (document.activeElement === document.body || element?.contains(document.activeElement)) {
-      element?.querySelector<HTMLButtonElement>('.focus-panel__header button')?.focus({ preventScroll: true })
+      element?.querySelector<HTMLButtonElement>('.fp-confirm__cancel')?.focus({ preventScroll: true })
     }
   }, [panel, confirmExpired])
 
@@ -252,45 +254,43 @@ export function HomeScreen({ active, view, result, linkedThoughts, defaultsInten
   )
   const voiceRow = (
     <div key="voice" ref={voiceBox} className="fp-voice-slot">
-          <button type="button" className="pill fp-voice-open" hidden={reading && !!requested} aria-expanded={reading}
-            onClick={event => show('encouragement', event.currentTarget)}>
-            <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="1.7"><path d="M20 11a8 8 0 0 1-8 8c-1.4 0-2.7-.3-3.8-.9L4 20l1.3-4A8 8 0 1 1 20 11Z"/></svg>
-            {uiText('UI19')}
-          </button>
           {reading && requested && <EncouragementReader quote={requested} choosing={askOpen} canEdit={canEdit}
             sceneRef={sceneBox} onBack={back} onClose={close} timerSummary={timerSummary}
             {...(favorites ? { favorites } : {})} onNext={companion.next} onChooseMode={() => setAskOpen(true)} onReturn={() => setAskOpen(false)}
             onChoose={pool => { if (pool !== requested.pool) companion.request(pool); setAskOpen(false) }} />}
         </div>
   )
+  // The step belongs with the time it describes. Large text keeps it in the card's reading order.
+  const stepControl = editingStep
+    ? <input className="fp-step-input" aria-label={uiText('UI10')} placeholder={uiText('UI11')} value={step} autoFocus
+        enterKeyHint="done" aria-invalid={stepTooLong} aria-describedby={stepTooLong ? 'step-error' : undefined} disabled={!canEdit}
+        onChange={e => setStep(e.target.value)} onBlur={() => { if (!stepTooLong) setEditingStep(false) }}
+        onKeyDown={e => {
+          if ((e.key !== 'Enter' && e.key !== 'Escape') || e.nativeEvent.isComposing || e.nativeEvent.keyCode === 229 || stepTooLong) return
+          e.preventDefault()
+          returnToStepButton.current = true
+          setEditingStep(false)
+        }} />
+    : <button type="button" className="text-action" disabled={!canEdit} aria-describedby={stepTooLong ? 'step-error' : undefined}
+        ref={button => {
+          if (button && returnToStepButton.current) {
+            returnToStepButton.current = false
+            button.focus({ preventScroll: true })
+          }
+        }} onClick={() => setEditingStep(true)}>
+      {step.trim() ? `${copy.stepPrefix}${step.trim()}` : copy.stepAdd}</button>
+  const stepError = readyFocus && stepTooLong && <span id="step-error" className="fp-hint--error">请缩短到 {view.stepMaxLength} 字以内</span>
   const statusRow = (
-    <div key="status" className="fp-status" data-step-details={readyFocus && (!!restEnded || stepTooLong)}>
+    <div key="status" className="fp-status" data-step-details={readyFocus && (!!restEnded || (readableLayout && stepTooLong))} data-running={!ready}>
           {readyFocus && restEnded && <span>{copy.restElapsed} {formatMinutes(restEnded.elapsedMs)}</span>}
-          {readyFocus ? (editingStep
-            ? <input className="fp-step-input" aria-label={uiText('UI10')} placeholder={uiText('UI11')} value={step} autoFocus
-                enterKeyHint="done" aria-invalid={stepTooLong} aria-describedby={stepTooLong ? 'step-error' : undefined} disabled={!canEdit}
-                onChange={e => setStep(e.target.value)} onBlur={() => { if (!stepTooLong) setEditingStep(false) }}
-                onKeyDown={e => {
-                  if ((e.key !== 'Enter' && e.key !== 'Escape') || e.nativeEvent.isComposing || e.nativeEvent.keyCode === 229 || stepTooLong) return
-                  e.preventDefault()
-                  returnToStepButton.current = true
-                  setEditingStep(false)
-                }} />
-            : <button type="button" className="text-action" disabled={!canEdit} aria-describedby={stepTooLong ? 'step-error' : undefined}
-                ref={button => {
-                  if (button && returnToStepButton.current) {
-                    returnToStepButton.current = false
-                    button.focus({ preventScroll: true })
-                  }
-                }} onClick={() => setEditingStep(true)}>
-              {step.trim() ? `${copy.stepPrefix}${step.trim()}` : copy.stepAdd}</button>)
+          {readyFocus ? readableLayout && stepControl
             : <span>{statusLine}{!ready && !view.isBreak && view.step && <span className="fp-current-step" title={view.step}> · {copy.stepPrefix}{view.step}</span>}</span>}
           {(preparingRest || focusResult) && <select className="fp-rest-choice" aria-label="休息时长" value={restPhase}
             disabled={!canEdit || timerPending} onChange={e => setRestChoice(e.target.value === 'longBreak' ? 'longBreak' : 'shortBreak')}>
             {(['shortBreak', 'longBreak'] as const).map(phase => <option key={phase} value={phase}>
               {PHASE_LABELS[phase]} {phase === 'shortBreak' ? view.shortBreakMinutes : view.longBreakMinutes} 分钟</option>)}
           </select>}
-          {readyFocus && stepTooLong && <span id="step-error" className="fp-hint--error">请缩短到 {view.stepMaxLength} 字以内</span>}
+          {readableLayout && stepError}
         </div>
   )
   const controlsRow = (
@@ -313,7 +313,10 @@ export function HomeScreen({ active, view, result, linkedThoughts, defaultsInten
   )
   const toolsRow = (
     <div key="tools" className="fp-tools-slot">
-          <div className="fp-secondary fp-thought-tools" role="group" aria-label="想法工具">
+          <div className="fp-thought-tools" role="group" aria-label="鼓励与想法工具">
+            <button ref={voiceButton} type="button" className="text-action fp-voice-open" aria-expanded={reading}
+              onClick={event => { if (reading) close(); else show('encouragement', event.currentTarget) }}>
+              <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="1.6"><path d="M20 11a8 8 0 0 1-8 8c-1.4 0-2.7-.3-3.8-.9L4 20l1.3-4A8 8 0 1 1 20 11Z"/></svg>{uiText('UI19')}</button>
             <button ref={markButton} type="button" className="text-action" disabled={!canEdit}
               onClick={thoughts.mark} onKeyDown={e => { if (e.repeat && (e.key === 'Enter' || e.key === ' ')) e.preventDefault() }}>
               <svg width="16" height="16" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6"><path d="M6 4h12v16l-6-4-6 4zM9 9h6m-3-3v6"/></svg>{copy.mark}</button>
@@ -345,22 +348,19 @@ export function HomeScreen({ active, view, result, linkedThoughts, defaultsInten
                 panelOpen={!!panel} sceneryEnabled={companion.sceneryEnabled} night={view.night}
                 focusTime={!ready && !view.isBreak ? { elapsedMs: view.totalMs - view.remainingMs, totalMs: view.totalMs } : undefined} />} />
         </div>
-        <span aria-hidden="true" className="fp-clock-phase">{focusResult ? copy.focusEndedTitle : ready ? (isRest ? '准备休息' : copy.prepareFocus) : paused ? copy.paused : isRest ? '休息中' : '专注中'}</span>
+        <span aria-hidden="true" className="fp-clock-phase">{focusResult ? copy.focusEndedTitle : ready ? (isRest ? '准备休息' : copy.prepareFocus) : paused ? copy.paused : isRest ? '休息中' : '专注中'}{!ready && !view.isBreak && ` · ${copy.target(Math.round(view.totalMs / 60000))}`}</span>
         <p className="fp-digits" {...(ready ? {} : { role: 'timer', 'aria-label': `${PHASE_LABELS[view.phase]}还剩${spokenClock(view.remainingMs)}` })}>
           {readyFocus ? <button type="button" className="fp-clock-trigger" aria-label={`调整专注时长，当前 ${focusMinutes} 分钟`}
             disabled={!pickerAvailable} tabIndex={panel === 'duration' ? -1 : undefined} aria-haspopup="dialog" aria-expanded={panel === 'duration'}
             onClick={event => { if (panel !== 'duration') show('duration', event.currentTarget) }}>{panel === 'duration' && duration.ok ? formatClock(duration.minutes * 60000) : digits}
               {panel !== 'duration' && <svg className="fp-clock-edit" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="m5 15-1 5 5-1L20 8l-4-4zM14 6l4 4"/></svg>}</button> : digits}
         </p>
-        {panel && panel !== 'duration' && panel !== 'encouragement' && <FocusPanel key={panel} title={titles[panel]} onClose={close} onBack={back} timerSummary={timerSummary}
-          closeLabel={panel === 'end' ? copy.cancelEnd : !ready && !view.isBreak ? uiText(view.step ? 'UI16' : 'UI17') : '返回'}>
-          {panel === 'end' && <div className="fp-end">
-            <p data-initial-focus tabIndex={-1}>{confirmExpired ? copy.endExpired : copy.endExplanation}</p>
-            {!confirmExpired && <div className="fp-panel-actions">
-              <TimerActionButton identity={identity + 'confirm'} className="pill pill--ink" disabled={!canEdit} busy={timerPending}
-                onActivate={() => { if (confirming.current === view.sessionId) dispatch({ type: 'end' }); close() }}>{copy.confirmEnd}</TimerActionButton>
-            </div>}
-          </div>}
+        {!readableLayout && <div className="fp-step" data-step-details={readyFocus && stepTooLong}>
+          {readyFocus ? <>{stepControl}{stepError}</>
+            : !ready && !view.isBreak && view.step && <p aria-hidden="true" className="fp-step__current" title={view.step}>{copy.stepPrefix}{view.step}</p>}
+        </div>}
+        {panel && panel !== 'duration' && panel !== 'encouragement' && panel !== 'end' && <FocusPanel key={panel} title={titles[panel]} onClose={close} onBack={back} timerSummary={timerSummary}
+          closeLabel={!ready && !view.isBreak ? uiText(view.step ? 'UI16' : 'UI17') : '返回'}>
           {panel === 'message' && <p className="fp-full-message" tabIndex={-1} data-initial-focus>{message}</p>}
           {panel === 'thoughts' && <ul className="fp-session-list">{linkedThoughts.map((note, index) => <li key={note.id} data-thought-id={note.id}>
             <p>{note.text || `标记 ${index + 1}`}{thoughts.pendingIds.has(note.id) && <span> · 更改待确认</span>}</p>
@@ -390,6 +390,14 @@ export function HomeScreen({ active, view, result, linkedThoughts, defaultsInten
         </FocusPanel>}
       </div>
 
+      {panel === 'end' && <ConfirmPopover title={titles.end} anchor={opener.current} cancelLabel={copy.cancelEnd} summary={timerSummary}
+        readout={sceneBox.current?.querySelector('.fp-digits') ?? null} onCancel={close}>
+        <p data-initial-focus tabIndex={-1}>{confirmExpired ? copy.endExpired : copy.endExplanation}</p>
+        {!confirmExpired && <TimerActionButton identity={identity + 'confirm'} className="pill fp-confirm__action" disabled={!canEdit} busy={timerPending}
+          onActivate={() => { if (confirming.current === view.sessionId) dispatch({ type: 'end' }); close() }}>{copy.confirmEnd}</TimerActionButton>}
+        {pending && <p className="fp-hint fp-hint--error">{copy.pending}
+          <button type="button" className="text-action" onClick={() => dispatch({ type: 'retrySave' })}>{copy.retry}</button></p>}
+      </ConfirmPopover>}
       <div className="fp-plate" data-panel={panel ?? ''} data-attention={needsAttention} {...awayAttrs}>
         {panel === 'duration' && pickerAvailable && <FocusPanel title={titles.duration} placement="plate" timerSummary={timerSummary}
           onClose={close} closeLabel={copy.cancel}>
@@ -403,10 +411,8 @@ export function HomeScreen({ active, view, result, linkedThoughts, defaultsInten
       </div>
       {chrome.away && <>
         {view.handleHint && <p className="fp-handle-hint">{copy.handleHint}</p>}
-        <button type="button" className="pill pill--glass pill--icon fp-handle" aria-label={copy.showControls}
-          onClick={event => { focusPrimaryOnReturn.current = event.detail === 0; chrome.callOut() }}>
-          <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m6 15 6-6 6 6"/></svg>
-        </button>
+        <button type="button" className="fp-handle" aria-label={copy.showControls}
+          onClick={event => { focusPrimaryOnReturn.current = event.detail === 0; chrome.callOut() }} />
       </>}
     </section>
   )

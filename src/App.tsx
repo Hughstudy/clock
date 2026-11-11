@@ -194,7 +194,8 @@ export function App() {
           <p role="status">历史数据由更新版本保存，当前无法读取。请更新应用后查看。</p>
         ) : (
           <>
-            <div hidden={screen !== 'home'}>
+            {/* Settings is a sheet over Focus, so Focus stays in view behind it, out of reach. */}
+            <div hidden={screen === 'stats'} {...(screen === 'settings' ? { inert: '' } : {})}>
               <HomeScreen key={app.snapshot.datasetGeneration} view={timerView} companion={companion} thoughts={thoughts} reducedMotion={motion.reducedMotion}
                 active={screen === 'home'} result={app.result} linkedThoughts={linkedThoughts} defaultsIntent={defaultsIntent}
                 favorites={favorites} timerPending={app.timerPending} onTaskChange={setFocusTaskOpen}

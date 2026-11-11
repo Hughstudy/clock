@@ -13,10 +13,14 @@ export function useHeadSpeech(speechRef: RefObject<HTMLElement>, text: string, o
     if (!speech || !scene) return
     const art = scene.querySelector<HTMLElement>('.fp-art')
     const digits = scene.querySelector<HTMLElement>('.fp-digits')
+    const step = scene.querySelector<HTMLElement>('.fp-step')
     const viewport = window.visualViewport
     const measure = () => {
       const head = art?.querySelector<SVGGraphicsElement>(HEAD)?.getBoundingClientRect()
-      const box = scene.getBoundingClientRect(), clock = digits?.getBoundingClientRect()
+      const box = scene.getBoundingClientRect(), time = digits?.getBoundingClientRect()
+      // A step shown under the time is part of the readout the bubble stays clear of.
+      const stepBox = step?.childElementCount && getComputedStyle(step).visibility !== 'hidden' ? step.getBoundingClientRect() : null
+      const clock = time && stepBox ? { bottom: Math.max(time.bottom, stepBox.bottom) } : time
       const inset = 12, font = parseFloat(getComputedStyle(speech).fontSize)
       if (!head?.width || !clock || scene.dataset.fit === 'hidden' || box.width < font * 13 ||
           (viewport?.height ?? window.innerHeight) < font * 16) {
@@ -36,7 +40,7 @@ export function useHeadSpeech(speechRef: RefObject<HTMLElement>, text: string, o
     }
     measure()
     const sizes = new ResizeObserver(measure)
-    for (const element of [scene, art, digits, speech]) if (element) sizes.observe(element)
+    for (const element of [scene, art, digits, step, speech]) if (element) sizes.observe(element)
     const changes = new MutationObserver(measure)
     if (art) changes.observe(art, { subtree: true, childList: true, attributes: true, attributeFilter: ['transform', 'data-scene-status'] })
     changes.observe(scene, { attributes: true, attributeFilter: ['data-fit', 'data-chrome'] })

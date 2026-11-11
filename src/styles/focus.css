@@ -37,14 +37,11 @@
 /* Focus and anchors clear the floating tab bar on screens that scroll. */
 html { scroll-padding-block-end: calc(var(--tab-height) + env(safe-area-inset-bottom) + 24px); }
 /* On scrolling screens, text fades out above the tab bar instead of running into it. */
-.app:is([data-screen='settings'], [data-screen='stats'])::after { content: ''; position: fixed; z-index: 9; inset: auto 0 0;
+.app[data-screen='stats']::after { content: ''; position: fixed; z-index: 9; inset: auto 0 0;
   block-size: calc(var(--tab-height) + env(safe-area-inset-bottom) + 44px); pointer-events: none;
   background: linear-gradient(to bottom, color-mix(in srgb, var(--paper) 0%, transparent), var(--paper) 48%); }
-/* Settings slides in from the trailing edge; on the way back Focus fades in. Only while the
-   app marks that navigation, so the tab bar's switches stay instant. The screens themselves
-   change at once; these are their first frames. */
-html[data-nav='forward'] .settings { transition: opacity 260ms var(--ease-out), translate 260ms var(--ease-out); }
-@starting-style { html[data-nav='forward'] .settings { opacity: 0; translate: 24px 0; } }
+/* On the way back from Records, Focus fades in. Only while the app marks that navigation, so
+   the tab bar's switches stay instant. The screens themselves change at once; this is the first frame. */
 html[data-nav='back'] .app[data-screen='home'] .app-main > div:not([hidden]) { transition: opacity 180ms var(--ease-out); }
 @starting-style { html[data-nav='back'] .app[data-screen='home'] .app-main > div:not([hidden]) { opacity: 0; } }
 body { background: var(--paper); }
@@ -69,7 +66,6 @@ body { background: var(--paper); }
 .pill--soft { background: #ede5d6; }
 .pill--ghost { background: #ede5d6; }
 .pill--solid { background: var(--whale); color: #fff; }
-.pill--ink { background: var(--whale); color: #fff; }
 .pill:disabled, .text-action:disabled { opacity: .45; cursor: default; }
 .text-action { min-height: 44px; min-width: 44px; padding: 0 6px; background: none; font-size: .875rem; font-weight: 500; color: var(--whale); white-space: nowrap; }
 .text-action:hover:not(:disabled) { color: var(--whale-deep); }
@@ -88,22 +84,24 @@ body { background: var(--paper); }
 .tab:active { filter: brightness(.94); }
 
 /* Notices float above the page instead of pushing the layout down. */
-.notices { position: fixed; z-index: 20; inset: calc(env(safe-area-inset-top) + 8px) 12px auto; max-inline-size: 496px; margin-inline: auto; display: grid; gap: 6px; pointer-events: none; }
+.notices { position: fixed; z-index: 45; inset: calc(env(safe-area-inset-top) + 8px) 12px auto; max-inline-size: 496px; margin-inline: auto; display: grid; gap: 6px; pointer-events: none; }
 .notices .notice { pointer-events: auto; margin: 0; border: 0; border-radius: 16px; background: #fffdf8f2; box-shadow: 0 6px 20px #3a4a6a1f; font-size: .8125rem; }
 
 /* ---------- Focus page ---------- */
 /* The scene runs the full height, under the floating tab bar. The console is one translucent
    card near the bottom, and the time reads above the companion's head. */
-.app[data-screen='home'] { max-width: none; padding: 0; min-height: 0; block-size: 100svh; display: flex; flex-direction: column; }
-.app[data-screen='home'] .app-main { flex: 1; min-block-size: 0; display: flex; flex-direction: column; padding-block-end: 0; }
-.app[data-screen='home'] .app-main > div:not([hidden]) { flex: 1; min-block-size: 0; display: flex; }
+/* Settings is a sheet over this page, so the same full-height layout holds while it is open. */
+.app:not([data-screen='stats']) { max-width: none; padding: 0; min-height: 0; block-size: 100svh; display: flex; flex-direction: column; }
+.app:not([data-screen='stats']) .app-main { flex: 1; min-block-size: 0; display: flex; flex-direction: column; padding-block-end: 0; }
+.app:not([data-screen='stats']) .app-main > div:not([hidden]) { flex: 1; min-block-size: 0; display: flex; }
 /* The card floats over the scene's floor band, so growing for a reader or a ruler covers the
    companion's feet instead of moving it. --art-clear is the band the art stays above. */
 .home { position: relative; flex: 1; min-block-size: 0; min-inline-size: 0; gap: 0; display: flex; flex-direction: column; align-items: stretch; text-align: center;
   --bar-clear: calc(var(--tab-height) + env(safe-area-inset-bottom) + 22px);
-  --voice-row: max(44px, 1.425rem);
-  /* One voice row only: the card grows upward over the feet while a note, a passing line or the reader needs a second. */
-  --console: calc(max(44px, 2.3rem) + max(44px, 2.75rem) * 2 + var(--voice-row) + 18px); --art-clear: calc(var(--console) + var(--bar-clear));
+  --voice-row: max(44px, 1.425rem); --control-row: max(50px, 3.125rem); --tools-row: max(52px, 3.25rem); --step-row: max(38px, 2.375rem);
+  /* Two rows only: timer controls and tools. The card grows upward over the feet while a note, a passing line,
+     the reader or a rest choice needs another. */
+  --console: calc(var(--control-row) + var(--tools-row) + 26px); --art-clear: calc(var(--console) + var(--bar-clear));
   /* Sky and floor match the drawn wall and floor, so neither edge of the art shows a seam. */
   --sky: #f4dfc5; --floor: #edcfaf; }
 .home[data-setting='garden'] { --sky: #c4dedc; --floor: #dfd3ae; }
@@ -113,7 +111,7 @@ body { background: var(--paper); }
    the sides and keeps the head below the top controls, the time and the speech reserve. */
 .fp-scene { position: relative; flex: 1; min-block-size: 0; overflow: hidden; overflow: clip;
   background: var(--sky);
-  container-type: size; --art-reserve: calc(env(safe-area-inset-top) + 168px);
+  container-type: size; --art-reserve: calc(env(safe-area-inset-top) + 168px + var(--step-row));
   --art-w: min(max(125cqw, min(100cqh - 48px - env(safe-area-inset-top), 96cqw, 510px) * 1.633), (100cqh - var(--art-reserve)) * 1.752); }
 .fp-scene[data-setting='plain'] { background: var(--sky); }
 .fp-scene::after { content: ''; position: absolute; z-index: 0; inset: auto 0 0; block-size: var(--art-clear); background: var(--floor); }
@@ -148,70 +146,97 @@ body { background: var(--paper); }
   min-block-size: 44px; font-size: 2.125rem; line-height: max(44px, 1.2em); font-weight: 800; letter-spacing: .02em;
   font-variant-numeric: tabular-nums; color: var(--ink); }
 .fp-digits .fp-clock-trigger { pointer-events: auto; }
-.fp-scene[data-fit='hidden'] .fp-clock-phase { visibility: hidden; }
-.fp-scene[data-fit='hidden'] .fp-digits { inset-block-start: calc(env(safe-area-inset-top) + 55px); }
-.home[data-tone='paused'] .fp-digits { color: #8f5f24; }
-.home[data-tone='rest'] .fp-digits { color: var(--mint-deep); }
-.home[data-tone='done'] .fp-digits { color: var(--ink); }
+/* The step belongs to the time: a quiet chip under the digits while preparing, plain text while it runs.
+   The slot keeps its height in every state, so the companion never resizes when a step comes or goes. */
+.fp-step { position: absolute; z-index: 2; inset-inline: 12px; inset-block-start: calc(env(safe-area-inset-top) + 55px + 1.25rem + max(44px, 2.55rem));
+  block-size: var(--step-row); display: flex; align-items: center; justify-content: center; gap: 6px; pointer-events: none; }
+.fp-step > * { pointer-events: auto; }
+.home .fp-step .text-action { min-block-size: 44px; max-inline-size: 100%; padding: 0 6px; overflow: hidden; text-overflow: ellipsis; color: var(--ink); font-size: .8125rem; font-weight: 600; }
+/* Drawn 32px tall inside the 44px target. */
+.home .fp-step .text-action::before { content: ''; position: absolute; z-index: -1; inset: 6px 0; border-radius: 999px;
+  background: color-mix(in srgb, var(--cream) 62%, transparent); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); }
+.home .fp-step .text-action { padding-inline: 14px; isolation: isolate; border-radius: 999px; }
+.fp-step__current { margin: 0; max-inline-size: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #46546a; font-size: .8125rem; font-weight: 550; }
+.fp-step[data-step-details='true'] { block-size: auto; flex-direction: column; gap: 0; }
+.fp-step .fp-hint--error { padding: 2px 10px; border-radius: 999px; background: var(--cream); font-size: .75rem; }
+
 /* The result reads as what was done: big numbers, small units, a short fade and nothing more. */
 .fp-result { display: inline-flex; align-items: baseline; gap: .3em; animation: fp-result-in .24s ease-out both; }
 .fp-unit { margin-inline-start: .12em; font-size: .5em; font-weight: 700; letter-spacing: 0; }
 @keyframes fp-result-in { from { opacity: 0; } to { opacity: 1; } }
 @media (prefers-reduced-motion: reduce) { .fp-result { animation: none; } }
 /* The sky follows the device clock; this text is drawn straight onto it, so its color follows too. */
-.home[data-sky-ink='deep'] :is(.fp-top h1, .fp-clock-phase, .fp-digits) { color: #0a1120; }
-.home[data-sky-ink='light'] :is(.fp-top h1, .fp-clock-phase, .fp-digits) { color: #fff; }
+.home[data-sky-ink='deep'] :is(.fp-top h1, .fp-clock-phase, .fp-digits, .fp-step__current) { color: #0a1120; }
+.home[data-sky-ink='light'] :is(.fp-top h1, .fp-clock-phase, .fp-digits, .fp-step__current) { color: #fff; }
 /* The plate: one translucent card floating at the bottom of the scene; its bottom padding is
    the floating tab bar's room. The blur lives on a pseudo-element so a fixed panel inside is
    not trapped by it. Tracks are fixed so feedback never moves the primary action. */
-.fp-plate { position: absolute; z-index: 4; inset: auto 0 0; margin: 0; padding: 6px 26px calc(var(--bar-clear) + 6px); background: transparent; }
+.fp-plate { position: absolute; z-index: 4; inset: auto 0 0; margin: 0; padding: 14px 22px calc(var(--bar-clear) + 6px); background: transparent;
+  display: flex; flex-direction: column; gap: 6px; }
 .fp-plate::before { content: ''; position: absolute; z-index: -1; inset: 0 12px var(--bar-clear); border-radius: 28px;
   background: color-mix(in srgb, var(--cream) 84%, transparent); backdrop-filter: blur(14px) saturate(1.2); -webkit-backdrop-filter: blur(14px) saturate(1.2);
   box-shadow: 0 10px 28px #6a4a2422, inset 0 0 0 1px #ffffff80; }
 .fp-status { min-block-size: 22px; display: flex; align-items: center; justify-content: center; gap: 2px; font-size: .875rem; font-weight: 500; color: var(--muted);
   overflow: hidden; white-space: nowrap; }
+.fp-status:empty { display: none; }
 .fp-status > span:first-child { overflow: hidden; text-overflow: ellipsis; }
 .fp-status .text-action { font-size: .875rem; min-height: 22px; max-inline-size: 100%; overflow: hidden; text-overflow: ellipsis; }
-.fp-step-input { inline-size: min(260px, 100%); block-size: 26px; padding: 0 10px; border: 1.5px solid #c7d6f4; border-radius: 13px; background: #fff;
+.fp-step-input { inline-size: min(260px, 100%); block-size: 36px; padding: 0 14px; border: 0; border-radius: 999px; background: #fff; box-shadow: inset 0 0 0 1.5px #c7d6f4;
   color: var(--ink); font: inherit; font-size: max(1rem, 16px); text-align: center; }
 .home .fp-status[data-step-details='true'] { display: grid; grid-template-columns: minmax(0, 1fr); justify-items: center;
   block-size: auto; gap: 2px; padding-block: 4px; white-space: normal; }
 .home .fp-status[data-step-details='true'] .text-action { display: block; white-space: nowrap; }
-.fp-primary { margin-top: 10px; display: flex; justify-content: center; }
+.fp-primary { display: flex; justify-content: center; }
+/* One accent in every state. Paused, rest and done are named by the label and the button's words. */
 .home { --primary: var(--whale); --primary-deep: var(--whale-deep); --primary-glow: #2f74d040; }
-.home[data-tone='paused'] { --primary: var(--warm); --primary-deep: var(--warm-deep); --primary-glow: #dc8c4633; }
-.home[data-tone='rest'], .home[data-tone='done'] { --primary: var(--mint); --primary-deep: var(--mint-deep); --primary-glow: #50aa8c33; }
 /* The one prominent button of the view: accent fill, capsule, a press state. */
-.home .fp-primary .btn-primary, .home .fp-primary .btn-primary:hover { inline-size: min(220px, 64%); min-inline-size: 0; min-block-size: 44px; padding: 0 16px;
-  /* Drawn 40px tall inside the 44px target, so rows breathe without moving. */
-  border: 2px solid transparent; background-clip: padding-box; border-radius: 999px; background-color: var(--primary); color: #fff; font-size: 1rem; font-weight: 700; letter-spacing: .02em;
-  box-shadow: 0 4px 10px var(--primary-glow); transform: none; transition: transform .12s ease, box-shadow .12s ease; }
+.home .fp-primary .btn-primary, .home .fp-primary .btn-primary:hover { inline-size: min(220px, 64%); min-inline-size: 0; min-block-size: var(--control-row); padding: 0 16px;
+  border: 0; border-radius: 999px; background-color: var(--primary); color: #fff; font-size: 1.0625rem; font-weight: 700; letter-spacing: .02em;
+  box-shadow: 0 6px 14px var(--primary-glow); transform: none; transition: transform .12s ease, box-shadow .12s ease; }
 .home .fp-primary .btn-primary:active:not(:disabled) { background-color: var(--primary); filter: brightness(.94); box-shadow: 0 2px 6px var(--primary-glow); }
-.fp-secondary { min-block-size: 30px; margin-top: 10px; display: flex; flex-wrap: wrap; justify-content: center; align-items: center; column-gap: 12px; }
-.fp-secondary .text-action::before { content: ''; display: inline-block; inline-size: 5px; block-size: 5px; margin-inline-end: 5px; border-radius: 50%; background: #c9d5ea; vertical-align: 2px; }
 /* Feedback floats above the card only while there is something to say. */
 .fp-note { min-block-size: 24px; flex-wrap: wrap; display: flex; align-items: center; justify-content: center; gap: 2px; font-size: .8125rem; color: var(--muted); overflow: hidden; }
 .fp-note[hidden] { display: none; }
 .fp-note .text-action { font-size: .8125rem; color: var(--whale); min-height: 24px; }
 
-/* One local panel resting on the plate; nothing below it is hidden or disabled. --plate-rise is
-   how far the card has grown above its band (a note row), so the panel never lies over it. */
-.focus-panel { position: absolute; z-index: 5; inset: auto 10px calc(var(--art-clear, 0px) + var(--plate-rise, 0px) + 8px); max-block-size: calc(100% - var(--art-clear, 0px) - var(--plate-rise, 0px) - 64px - env(safe-area-inset-top)); overflow-y: auto;
+/* The base of every task surface. The duration ruler uses it in the card's place; input, reading
+   and details override it as a bottom sheet (see focus-v35.css). */
+.focus-panel { position: absolute; z-index: 5; inset: auto 10px calc(var(--art-clear, 0px) + 8px); max-block-size: calc(100% - var(--art-clear, 0px) - 64px - env(safe-area-inset-top)); overflow-y: auto;
   padding: 12px 16px 14px; border-radius: var(--radius-card); background: #fff; box-shadow: 0 6px 22px #3c5a8229; text-align: start; overscroll-behavior: contain; }
 /* Panels rise in over 240 ms; they close at once so focus and controls never wait. */
 .focus-panel[open], .focus-task[open] { transition: opacity var(--dur-panel) var(--ease-out), translate var(--dur-panel) var(--ease-out); }
 @starting-style { .focus-panel[open], .focus-task[open] { opacity: 0; translate: 0 8px; } }
-.focus-panel[data-keyboard='true'] { position: fixed; inset: auto 10px calc(var(--keyboard) + 8px); max-block-size: calc(100svh - var(--keyboard) - 24px); }
 .focus-panel__header { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-block-size: 30px; }
 .focus-panel__header h2 { margin: 0; font-size: .95rem; color: var(--ink); }
 .focus-panel__header:has(h2.sr-only) { justify-content: flex-end; margin-bottom: -30px; }
 .focus-panel p { margin: 4px 0; font-size: .8125rem; color: var(--muted); }
 .focus-panel strong { color: var(--ink); font-size: .95rem; }
-.fp-panel-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 10px; }
-.fp-panel-actions .pill { min-height: 44px; padding: 0 18px; font-size: .875rem; }.fp-hint { text-align: center; font-size: .75rem !important; }
+.fp-hint { text-align: center; font-size: .75rem !important; }
 .fp-hint--error { color: #a1621f !important; }
-.fp-end { padding-inline-end: 84px; }
-.fp-end .fp-panel-actions { margin-inline-end: -84px; }
+/* A confirmation rises from the button that asked: a title, one line, the action and the way back.
+   When that button is gone or there is no room above it, the same card sits in the middle. */
+.fp-confirm { position: fixed; inset: auto auto var(--confirm-bottom, 50%) var(--confirm-left, 12px); margin: 0; inline-size: min(max(264px, 16.5rem), 100vw - 24px); max-inline-size: none;
+  padding: 18px 14px 14px; border: 0; border-radius: 28px; background: #fffdf8; color: var(--ink); text-align: center; overflow: visible;
+  box-shadow: inset 0 0 0 1px #ffffffb3, 0 14px 44px #14213b47; }
+.fp-confirm[open] { display: flex; flex-direction: column; gap: 8px; transition: opacity var(--dur-panel) var(--ease-out), scale var(--spring-gentle-duration) var(--spring-gentle);
+  transform-origin: var(--confirm-tail, 50%) 100%; }
+@starting-style { .fp-confirm[open] { opacity: 0; scale: .92; } }
+.fp-confirm::backdrop { background: #14213b47; transition: opacity var(--dur-panel) var(--ease-out); }
+@starting-style { .fp-confirm[open]::backdrop { opacity: 0; } }
+.fp-confirm[data-placement='anchor']::after { content: ''; position: absolute; inset-block-start: calc(100% - 9px); inset-inline-start: calc(var(--confirm-tail, 50%) - 9px);
+  inline-size: 18px; block-size: 18px; rotate: 45deg; border-radius: 4px; background: #fffdf8; }
+.fp-confirm[data-placement='center'] { inset: calc(var(--visible-top, 0px) + var(--visible-height, 100dvh) / 2) auto auto 50%; translate: -50% -50%;
+  inline-size: min(320px, 100vw - 24px); max-block-size: calc(var(--visible-height, 100dvh) - 24px); overflow-y: auto; overscroll-behavior: contain; transform-origin: 50% 50%; }
+.fp-confirm h2 { margin: 0; font-size: 1.0625rem; font-weight: 700; overflow-wrap: anywhere; }
+.fp-confirm p { margin: 0 0 4px; font-size: .8125rem; line-height: 1.45; color: var(--muted); overflow-wrap: anywhere; }
+.fp-confirm p:focus-visible { outline: none; }
+.fp-confirm__summary { display: none; font-variant-numeric: tabular-nums; }
+.fp-confirm:is([data-placement='center'], [data-covers='true']) .fp-confirm__summary { display: block; }
+.fp-confirm .pill { inline-size: 100%; min-block-size: 46px; font-size: 1rem; }
+.fp-confirm :is(.pill, .text-action):focus-visible { outline: 3px solid #1b3158; outline-offset: 2px; }
+/* Both answers are ordinary choices: ending is tinted, never an alarm colour; the way back is neutral. */
+.fp-confirm__action { background: var(--whale-soft); color: var(--whale-deep); font-weight: 700; }
+.fp-confirm__cancel { background: #ede5d6; color: var(--ink); font-weight: 600; }
 .fp-linked { margin: 6px 0 2px; font-size: .8125rem; color: var(--muted); }
 .fp-linked summary { cursor: pointer; padding: 4px 0; }
 .fp-linked ul { margin: 4px 0; padding-inline-start: 1.1rem; }
@@ -232,9 +257,7 @@ body { background: var(--paper); }
 /* Short screens: smaller numbers and gaps first; the companion keeps its share. */
 @media (max-height: 700px) {
   .fp-digits { font-size: 1.875rem; }
-  .fp-primary { margin-top: 8px; }
-  .home .fp-primary .btn-primary { min-block-size: 44px; }
-  .fp-secondary { margin-top: 6px; }
+  .home { --control-row: max(46px, 2.875rem); --tools-row: max(50px, 3.125rem); --step-row: max(34px, 2.125rem); }
 }
 /* Landscape (phones and iPads): scene beside the plate. On short screens the plate takes the width
    the scene cannot fill: the art (at most 1.752 × the height below the reserve) must stay 1.25 × as
@@ -254,10 +277,63 @@ body { background: var(--paper); }
   .tab-bar { inset-inline: calc(100% - var(--plate-w) - var(--plate-end)) var(--plate-end); inline-size: calc(var(--plate-w) - 32px); }
 }
 
-/* ---------- Settings ---------- */
-.settings-header { display: flex; align-items: center; gap: 10px; }
-.settings-header .screen-title { margin: 0; }
-.settings-header .pill { min-height: 44px; }
+/* ---------- Settings: a sheet over Focus ---------- */
+/* The sheet covers the tab bar, as any modal does; the page behind is dimmed and out of reach. */
+.app[data-screen='settings'] .tab-bar { visibility: hidden; }
+.settings { position: fixed; z-index: 30; inset: max(44px, env(safe-area-inset-top) + 10px) 0 0; inline-size: min(100%, 640px); margin-inline: auto; gap: 0;
+  overflow-y: auto; overscroll-behavior: contain; padding: 0 max(16px, env(safe-area-inset-right)) calc(env(safe-area-inset-bottom) + 28px) max(16px, env(safe-area-inset-left));
+  border-radius: 34px 34px 0 0; background: #f6f0e4; box-shadow: 0 0 0 100vmax #14213b47, 0 -10px 44px #14213b40;
+  translate: 0 var(--drag, 0px); transition: opacity var(--dur-panel) var(--ease-out), translate var(--spring-gentle-duration) var(--spring-gentle); }
+@starting-style { .settings { opacity: 0; translate: 0 96px; } }
+.settings[data-dragging='true'] { transition: none; }
+.settings > * { flex: none; }
+.settings-header { position: sticky; inset-block-start: 0; z-index: 2; display: grid; grid-template-columns: 44px minmax(0, 1fr) 44px; align-items: center;
+  margin-inline: -8px; padding: 20px 0 8px; background: linear-gradient(#f6f0e4 82%, #f6f0e400); touch-action: none; cursor: grab; user-select: none; -webkit-user-select: none; }
+.settings-header::before { content: ''; position: absolute; inset-block-start: 9px; inset-inline-start: 50%; translate: -50% 0; inline-size: 38px; block-size: 5px; border-radius: 3px; background: #cfc7b8; }
+.settings-header .screen-title { grid-column: 2; margin: 0; text-align: center; font-size: 1.0625rem; font-weight: 700; }
+.settings-header .settings-close { inline-size: 44px; min-inline-size: 44px; min-height: 44px; padding: 0; display: grid; place-items: center; background: none; cursor: pointer; }
+.settings-close svg { inline-size: 30px; block-size: 30px; padding: 8px; border-radius: 50%; background: #e6dece; }
+/* Grouped rows: one white rounded group per topic, a hairline between rows, and the explanation
+   as a quiet note under the group. */
+.settings .settings-form, .settings fieldset { gap: 0; }
+.settings .settings-subhead { margin: 0; padding: 18px 16px 7px; border: 0; font-size: .8125rem; font-weight: 600; letter-spacing: 0; color: var(--muted); }
+.settings legend.settings-subhead { float: inline-start; inline-size: 100%; padding-block-start: 4px; }
+.settings legend.settings-subhead + * { clear: both; }
+.settings-group { border-radius: 22px; background: #fff; overflow: hidden; box-shadow: 0 1px 2px #3a2a140f; }
+.settings .hint + .settings-group { margin-block-start: 16px; }
+.settings .settings-about { margin-block-start: 28px; }
+.settings-row { position: relative; display: flex; align-items: center; justify-content: space-between; gap: 4px 12px; inline-size: 100%; min-block-size: 54px; margin: 0; padding: 5px 12px 5px 16px;
+  border: 0; border-radius: 0; background: none; font: inherit; font-size: 1.0625rem; font-weight: 500; color: var(--ink); text-align: start; }
+.settings-group > :not(:first-child)::before { content: ''; position: absolute; inset: 0 0 auto 16px; block-size: 1px; background: #efe6d6; }
+.settings .field { display: grid; grid-template-columns: minmax(0, 1fr) auto; }
+.settings .field label { font-weight: 500; }
+.settings-action { color: var(--whale-deep); cursor: pointer; }
+.settings-action:active:not(:disabled) { background: #f4eee2; }
+.settings-action:disabled { opacity: .45; cursor: default; }
+.settings :is(.settings-row, .settings-info > summary):focus-visible { outline-offset: -3px; border-radius: 14px; }
+.settings .hint { margin: 0; padding: 7px 16px 0; font-size: .8125rem; line-height: 1.4; }
+/* The value, then one capsule of minus and plus. Each half is a 44px target drawn 34px tall. */
+.settings .stepper { gap: 0; }
+.settings .stepper input { order: -1; inline-size: 3.4rem; min-height: 44px; padding-inline: 4px 12px; border: 0; background: none; font-size: 1.0625rem; font-weight: 600; text-align: end; font-variant-numeric: tabular-nums; }
+.settings .stepper input:focus-visible { outline-offset: -3px; border-radius: 12px; }
+.settings .step { position: relative; inline-size: 46px; block-size: 44px; border: solid transparent; border-width: 5px 0; background-clip: padding-box; border-radius: 999px 0 0 999px; background-color: #efe8da;
+  font-size: 1.25rem; font-weight: 500; line-height: 1; }
+.settings .step:last-child { border-radius: 0 999px 999px 0; }
+.settings .step:last-child::before { content: ''; position: absolute; inset: 8px auto 8px 0; inline-size: 1px; background: #cfc5b3; }
+.settings .step:focus-visible { outline-offset: -2px; }
+.settings .switch-row { min-block-size: 54px; font-weight: 500; }
+.settings .switch { inline-size: 52px; block-size: 31px; flex: none; }
+.settings .switch::after { inset-block-start: 2px; inset-inline-start: 2px; inline-size: 27px; block-size: 27px; }
+.settings .switch:checked::after { transform: translateX(21px); }
+.settings .switch:not(:checked) { background: #ded6c6; }
+.settings .settings-info { position: relative; padding: 0 16px; }
+.settings .settings-info[open] { padding-block-end: 14px; }
+.settings .settings-info > summary { display: flex; align-items: center; justify-content: space-between; min-block-size: 54px; margin-inline: -16px; padding-inline: 16px; cursor: pointer;
+  list-style: none; font-size: 1.0625rem; font-weight: 500; color: var(--ink); }
+.settings .settings-info > summary::-webkit-details-marker { display: none; }
+.settings .settings-info > summary::after { content: ''; flex: none; inline-size: 9px; block-size: 9px; margin-inline-end: 4px; border: solid #b3a995; border-width: 2px 2px 0 0; rotate: 45deg; transition: rotate var(--dur-panel) var(--ease-out); }
+.settings .settings-info[open] > summary::after { rotate: 135deg; }
+.settings .settings-info .hint { padding-inline: 0; }
 
 /* ---------- Records and thought editing (shared) ---------- */
 .thought-form textarea { width: 100%; min-height: 44px; padding: 10px 14px; border: 1px solid var(--line); border-radius: 14px; background: #fff; color: var(--ink); font: inherit; font-size: 1rem; }.thought-form { width: 100%; display: grid; gap: 8px; padding: 12px; border: 1px solid var(--line); border-radius: 18px; background: #fff; text-align: start; }
@@ -296,49 +372,51 @@ body { background: var(--paper); }
 .stats .thoughts p { margin: 0; }.thought-row-actions { display: flex; flex-wrap: wrap; }
 .thought-row-actions .link-button { margin-left: 0; }
 
+/* Records and Settings tasks use the same bottom sheet as Focus: a grabber, a dimmed page, and
+   the keyboard's edge as its floor. */
 .focus-task {
-  position: fixed; inset: auto; inset-block-start: calc(var(--visible-top, 0px) + var(--visible-height, 100dvh) / 2);
-  inset-inline-start: 50%; transform: translate(-50%, -50%); margin: 0;
-  width: min(400px, calc(100vw - 24px)); max-width: none; max-height: calc(var(--visible-height, 100dvh) - 24px - env(safe-area-inset-bottom));
-  padding: 16px; overflow-y: auto; overscroll-behavior: contain; border: 1px solid var(--line);
-  border-radius: 20px; color: var(--ink); background: var(--card); text-align: start;
-  box-shadow: 0 12px 60px #1f38532b; overflow-wrap: anywhere;
+  position: fixed; inset: auto max(8px, env(safe-area-inset-left)) max(8px, env(safe-area-inset-bottom)) max(8px, env(safe-area-inset-right)); margin: 0 auto;
+  width: auto; max-width: 520px; max-height: calc(var(--visible-height, 100dvh) - max(8px, env(safe-area-inset-top)) - 16px);
+  padding: 28px 18px 18px; overflow-y: auto; overscroll-behavior: contain; border: 0;
+  border-radius: 34px; color: var(--ink); background: #fffdf8; text-align: start;
+  box-shadow: inset 0 0 0 1px #ffffffb3, 0 -10px 44px #14213b38; overflow-wrap: anywhere;
 }
-.focus-task::backdrop { background: rgb(33 50 70 / .24); }
-.focus-task__header { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
-.focus-task__header h2 { font-size: 1.125rem; margin: 0; }
+.focus-task[data-keyboard='true'] { inset-block-end: calc(var(--keyboard, 0px) + 8px); border-radius: 28px; max-height: calc(var(--visible-height, 100dvh) - 16px); }
+.focus-task::before { content: ''; position: absolute; inset-block-start: 9px; inset-inline-start: 50%; translate: -50% 0; inline-size: 38px; block-size: 5px; border-radius: 3px; background: #cfc7b8; }
+.focus-task[open] { transition: opacity var(--dur-panel) var(--ease-out), translate var(--spring-gentle-duration) var(--spring-gentle); }
+@starting-style { .focus-task[open] { opacity: 0; translate: 0 64px; } }
+.focus-task::backdrop { background: #14213b47; }
+.focus-task__header { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-block-size: 44px; margin-block-end: 6px; }
+.focus-task__header .btn { min-height: 44px; padding: 0 14px; border: 0; background: #ede5d6; font-size: .875rem; font-weight: 600; }
+.focus-task__header h2 { font-size: 1.0625rem; margin: 0; }
 .focus-task__body { display: grid; justify-items: start; gap: .5rem; padding-block: .5rem; }
 .focus-task__body p, .focus-task .thought-form p { margin: 0; }
-.focus-task .btn-primary { min-width: 0; }.focus-task .thought-form { border: 0; padding: .5rem 0; }
-.focus-task .thought-form textarea { min-height: 66px; max-height: 40dvh; }
-.focus-task .thought-form-actions { justify-content: start; }.panel-save-error { margin: .5rem 0 0; color: #71400c; }
+.focus-task .btn { min-height: 50px; border: 0; font-size: 1.0625rem; }
+.focus-task .btn-primary { inline-size: 100%; min-width: 0; background: var(--whale); box-shadow: 0 6px 14px #2f74d040; }
+.focus-task .btn-primary:disabled { opacity: 1; background: #b9cdea; box-shadow: none; }
+.focus-task .btn-secondary { inline-size: 100%; background: #ede5d6; font-weight: 600; }
+.focus-task .thought-form { border: 0; padding: .5rem 0; background: none; }
+.focus-task .thought-form textarea { min-height: 104px; max-height: 40dvh; padding: 12px 14px; border: 0; border-radius: 18px; background: #f4eee2; box-shadow: inset 0 0 0 1.5px #2f74d02e; font-size: max(1.0625rem, 16px); resize: none; }
+.focus-task .thought-form textarea:focus-visible { outline: 2px solid var(--whale); outline-offset: -2px; }
+.focus-task .thought-form-actions { display: grid; grid-template-columns: minmax(0, 1fr); gap: 8px; }
+.focus-task__body .btn { inline-size: 100%; }
+.focus-task .focus-task__header .btn { inline-size: auto; min-height: 44px; font-size: .875rem; }.panel-save-error { margin: .5rem 0 0; color: #71400c; }
 
 /* Records: the same soft language as Focus. Small pills, light cards, quiet meta text. */
 .stats { gap: 12px; }
 .stats .card { border: 1px solid var(--cream-line); border-radius: var(--radius-card); padding: 14px 16px; background: #fff; }
-.stats .records-switch { gap: 6px; }
-.stats .records-switch button { min-block-size: 44px; padding: 0 14px; border: 0; border-radius: var(--radius-field); background: #fff;
-  box-shadow: inset 0 0 0 1px var(--cream-line); color: var(--muted); font-size: .8125rem; font-weight: 600; position: relative; transition: transform var(--dur-quick) ease; }
+/* Segmented controls: a neutral capsule track; the chosen segment is a white pill. Each segment
+   is a 44px target drawn 38px tall. */
+.stats .records-switch { gap: 0; padding: 0 3px; border-radius: 999px; background: #efe8da; }
+.stats .records-switch button { min-block-size: 44px; padding: 0 14px; border: 3px solid transparent; background-clip: padding-box; border-radius: 999px; background-color: transparent;
+  color: #5b6b82; font-size: .8125rem; font-weight: 600; position: relative; transition: background-color var(--dur-quick) ease, color var(--dur-quick) ease; }
 .stats .records-switch button::after { content: none; }
-/* The same quiet selection the encouragement reader uses: a soft fill and a ring, no ledge. */
-.stats .records-switch button[aria-pressed='true'] { background: var(--whale-soft); color: var(--whale-deep); box-shadow: inset 0 0 0 1.5px var(--whale); font-weight: 700; }.stats .card-title { font-size: .875rem; color: var(--muted); }
+.stats .records-switch button[aria-pressed='true'] { border-color: transparent; background-color: #fff; color: var(--ink); font-weight: 700; filter: drop-shadow(0 1px 2px #3a2a1426); }.stats .card-title { font-size: .875rem; color: var(--muted); }
 .stats .record-day h4 { margin: .75rem 0 .25rem; font-size: .875rem; color: var(--ink); }
 .stats .record-identity strong { font-size: 1rem; }
 .stats .focus-records > li { border-top-color: #f3ece0; }.stats .link-button { text-decoration: none; font-size: .8125rem; }
-.settings .card { border: 1px solid var(--cream-line); border-radius: var(--radius-card); background: #fff; }
-
-/* Settings explanations stay local and use native, non-overlapping controls. */
-.settings-info > summary { min-block-size: 44px; display: list-item; align-content: center; cursor: pointer; font-weight: 700; color: var(--ink); }
-.settings-info[open] > summary { margin-bottom: 12px; }
 .sound-preview { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 10px; align-items: center; }
 .sound-preview .hint { margin: 0; min-block-size: 3em; }
-/* The whole row is the target, so the switch keeps its standard 56 × 32 drawing. */
-.settings .switch-row { min-block-size: 52px; }
-.settings-subhead { margin: 20px 0 2px; padding-block-start: 14px; border-block-start: 1px solid var(--cream-line);
-  font-size: .8125rem; font-weight: 600; letter-spacing: .04em; color: var(--muted); }
-.settings .settings-restore-note { margin-block: -4px 4px; }
-.settings .switch:not(:checked) { box-shadow: inset 0 0 0 1px var(--muted); }
-.settings .settings-form > .btn { margin-bottom: 12px; }
 .notices--inline { position: static; inset: auto; margin: 0; max-inline-size: none; pointer-events: auto; }
 .notices--inline .notice { padding: 12px; box-shadow: none; background: var(--cream); }
 .notices--inline .notice-action { min-block-size: 44px; }

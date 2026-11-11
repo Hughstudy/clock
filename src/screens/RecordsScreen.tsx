@@ -87,7 +87,8 @@ export function RecordsScreen({ view, thoughts, canEdit, onEditThought, onContin
     </div>
     {mode === 'all' && <RoomPreview band={reading.roomBand} activities={result.roomActivities} showArt={showArt} onOpen={openRoom}/>}
     {mode === 'all' && <section className="records-summary" aria-label="计时汇总">
-      <p>近{length}天 · {incomplete ? '计时汇总暂不可确认' : <><strong>{formatMinutes(totals.focusMs)}</strong> · {totals.count} 段已结束专注</>}</p>
+      {/* Read in order; shown with the number first and one separator. */}
+      <p><span>近{length}天<i> · </i></span>{incomplete ? '计时汇总暂不可确认' : <><strong>{formatMinutes(totals.focusMs)}</strong><span><i> · </i>{totals.count} 段已结束专注</span></>}</p>
       <button type="button" className="link-button" aria-expanded={summaryOpen} onClick={toggleSummary}>{summaryOpen ? '收起统计' : '查看统计'}</button>
       {summaryOpen && <div className="records-summary-detail">
         <div className="records-switch" role="group" aria-label="计时统计范围">{([7, 30] as const).map(days => <button type="button" key={days} aria-pressed={length === days} onClick={() => setLength(days)}>近{days}天</button>)}</div>

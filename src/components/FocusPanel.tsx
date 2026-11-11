@@ -1,4 +1,5 @@
 import { useLayoutEffect, useRef, type ReactNode } from 'react'
+import { useSheetDrag } from '../hooks/useSheetDrag'
 
 /** How far a plate panel may rise above the card, over the floor band, before going modal. */
 const PLATE_GROWTH = 140
@@ -12,23 +13,27 @@ interface Props {
   timerSummary?: string
   /** Visually hide the heading where the content already names the task. */
   quietTitle?: boolean
-  placement?: 'scene' | 'plate' | 'viewport'
+  /** A sheet rises from the bottom edge over the page. A plate panel takes the card's own place. */
+  placement?: 'sheet' | 'plate'
 }
 
 /**
- * One task surface, kept in the same DOM while the viewport changes. It is
- * normally non-modal; insufficient local space uses a native modal viewport
- * layout, preserving the input/caret while making the covered background inert.
+ * One task surface. Input, reading and details open as a bottom sheet: a native modal with a
+ * grabber, a dimmed page behind it, a close button and a downward drag that both dismiss it. A
+ * stray tap on the dimmed page does nothing, so typing is never interrupted by a missed key. It
+ * rests on the soft keyboard and scrolls inside itself, so the caret and the actions stay in view.
+ * The duration ruler instead takes the card's place, going modal only when it has no room there.
  */
-export function FocusPanel({ title, onClose, onBack = onClose, timerSummary, children, closeLabel = '返回', quietTitle = false, placement = 'scene' }: Props) {
+export function FocusPanel({ title, onClose, onBack = onClose, timerSummary, children, closeLabel = '返回', quietTitle = false, placement = 'sheet' }: Props) {
   const ref = useRef<HTMLDialogElement>(null)
+  const drag = useSheetDrag(ref, onClose, placement !== 'plate')
   useLayoutEffect(() => {
     const panel = ref.current
     if (!panel) return
     const viewport = window.visualViewport
+    const plate = placement === 'plate'
     const scene = panel.parentElement
     const home = panel.closest<HTMLElement>('.home')
-    const card = home?.querySelector<HTMLElement>('.fp-plate')
     let modal = false
     let frame = 0
     const revealFocus = () => {
@@ -43,30 +48,25 @@ export function FocusPanel({ title, onClose, onBack = onClose, timerSummary, chi
       panel.dataset.keyboard = String(covered > 80)
       panel.style.setProperty('--visible-top', `${top}px`)
       panel.style.setProperty('--visible-height', `${height}px`)
+      cancelAnimationFrame(frame)
+      frame = requestAnimationFrame(revealFocus)
+      if (!plate) return
       const box = scene?.getBoundingClientRect()
-      const plate = placement === 'plate'
       // The large-text console is a scrollport. A plate panel cannot grow
       // above its clipping edge, so use the top layer instead of the old
       // floor-band allowance. Keep this decision independent of panel size.
-      const scrollingPlate = plate && home?.dataset.layout === 'readable'
+      const scrollingPlate = home?.dataset.layout === 'readable'
       // On the plate the panel replaces the card and may grow upward over the floor band; the
       // time reads above the companion. The plate's bottom padding is the tab bar's room.
-      const padding = plate && scene ? getComputedStyle(scene) : null
-      const topControls = plate ? null : scene?.querySelector<HTMLElement>('.fp-top')?.getBoundingClientRect()
-      // In the scene the panel rests above the card's band, which the art box already excludes.
-      const sceneFloor = plate ? null : scene?.querySelector<HTMLElement>('.fp-art')
-      // The card may have grown over that band (a note row); the panel rests on the card as it is.
-      // useSceneFit publishes that growth on the scene.
-      const risen = plate || !scene ? 0 : parseFloat(getComputedStyle(scene).getPropertyValue('--plate-rise')) || 0
-      const localTop = Math.max(plate ? (box?.top ?? 0) - PLATE_GROWTH : (topControls?.bottom ?? (box?.top ?? 0) + 64) + 12, top + 8)
-      const localBottom = Math.min(plate ? (box?.bottom ?? 0) - parseFloat(padding?.paddingBottom ?? '0')
-        : (box?.top ?? 0) + (sceneFloor?.offsetHeight || box?.height || 0) - risen - 18, top + height - 8)
-      if (plate) panel.style.setProperty('--picker-space', `${Math.max(0, localBottom - localTop)}px`)
+      const padding = scene ? getComputedStyle(scene) : null
+      const localTop = Math.max((box?.top ?? 0) - PLATE_GROWTH, top + 8)
+      const localBottom = Math.min((box?.bottom ?? 0) - parseFloat(padding?.paddingBottom ?? '0'), top + height - 8)
+      panel.style.setProperty('--picker-space', `${Math.max(0, localBottom - localTop)}px`)
       // This budget is independent of the panel's own layout, so switching to
       // the wider viewport cannot trigger an endless local/modal resize loop.
       const font = Number.parseFloat(getComputedStyle(document.documentElement).fontSize) || 16
-      const required = (plate ? Math.max(150, font * 7) : Math.max(260, font * 11)) + (modal ? 16 : 0)
-      const nextModal = placement === 'viewport' || scrollingPlate || covered > 80 || localBottom - localTop < required
+      const required = Math.max(150, font * 7) + (modal ? 16 : 0)
+      const nextModal = scrollingPlate || covered > 80 || localBottom - localTop < required
       panel.dataset.layout = nextModal ? 'viewport' : 'local'
       panel.setAttribute('aria-modal', String(nextModal))
       if (nextModal !== modal) {
@@ -80,15 +80,17 @@ export function FocusPanel({ title, onClose, onBack = onClose, timerSummary, chi
         focused?.focus({ preventScroll: true })
         if (input && selection) input.setSelectionRange(selection[0], selection[1], selection[2] ?? undefined)
       }
-      cancelAnimationFrame(frame)
-      frame = requestAnimationFrame(revealFocus)
     }
-    panel.show()
+    if (plate) panel.show()
+    else {
+      panel.dataset.layout = 'sheet'
+      panel.setAttribute('aria-modal', 'true')
+      panel.showModal()
+    }
     fit()
     panel.querySelector<HTMLElement>('[data-initial-focus]')?.focus({ preventScroll: true })
     const observer = new ResizeObserver(fit)
-    if (scene) observer.observe(scene)
-    if (card && placement !== 'plate') observer.observe(card)
+    if (plate && scene) observer.observe(scene)
     const layoutObserver = new MutationObserver(fit)
     if (home) layoutObserver.observe(home, { attributes: true, attributeFilter: ['data-layout'] })
     const header = panel.querySelector<HTMLElement>('.focus-panel__header')
@@ -117,7 +119,7 @@ export function FocusPanel({ title, onClose, onBack = onClose, timerSummary, chi
       }}
       onKeyDown={event => {
         if (event.key === 'Escape') { event.preventDefault(); event.stopPropagation(); onBack(); return }
-        if (event.key !== 'Tab' || event.currentTarget.dataset.layout !== 'viewport') return
+        if (event.key !== 'Tab' || event.currentTarget.dataset.layout === 'local') return
         const items = [...event.currentTarget.querySelectorAll<HTMLElement>('button:not(:disabled), input:not(:disabled), textarea:not(:disabled), select:not(:disabled), a[href], [tabindex]:not([tabindex="-1"])')]
           .filter(element => element.tabIndex >= 0 && element.getClientRects().length > 0)
         const first = items[0], last = items.at(-1)
@@ -125,7 +127,7 @@ export function FocusPanel({ title, onClose, onBack = onClose, timerSummary, chi
         if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus() }
         else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus() }
       }}>
-      <header className="focus-panel__header">
+      <header className="focus-panel__header" {...drag}>
         <h2 id="focus-panel-title" className={quietTitle ? 'sr-only' : undefined}>{title}</h2>
         <button type="button" className="pill pill--ghost" onClick={onClose}>{closeLabel}</button>
       </header>

@@ -1,5 +1,5 @@
 import { useLayoutEffect, type RefObject } from 'react'
-import { fitSceneArt, plateRise, TIME_GAP, wideRoomFit } from '../logic/scene-fit'
+import { awayGroup, fitSceneArt, shownTimeDrop, TIME_GAP, wideRoomFit } from '../logic/scene-fit'
 
 // Matches the stylesheet's tall-landscape rule, where the room fills the screen beneath the card.
 const WIDE_ROOM = '(orientation: landscape) and (min-aspect-ratio: 6/5) and (min-height: 600px)'
@@ -11,16 +11,9 @@ export function useSceneFit(scene: RefObject<HTMLElement>, framed: boolean): voi
     const root = scene.current
     if (!root) return
     let frame = 0
+    // Where the time block was last placed with the card on screen.
+    let timeDrop = 0
     const resize = new ResizeObserver(() => schedule())
-    // A panel rests on the card as it is now, a note row included, never on top of it. Published
-    // at once, so a panel fitting itself in the same pass reads the current value.
-    const plate = root.closest<HTMLElement>('.home')?.querySelector<HTMLElement>('.fp-plate')
-    const rise = () => {
-      const band = root.offsetHeight - (root.querySelector<HTMLElement>('.fp-art')?.offsetHeight ?? root.offsetHeight)
-      root.style.setProperty('--plate-rise', `${plateRise(plate?.offsetHeight ?? 0, band)}px`)
-    }
-    const plateSize = new ResizeObserver(() => { rise(); schedule() })
-    if (plate) plateSize.observe(plate)
     const measure = () => {
       const art = root.querySelector<SVGSVGElement>('.fp-art .blue-companion')
       // The art box ends above the floor band the card sits on; that edge is the support.
@@ -28,8 +21,9 @@ export function useSceneFit(scene: RefObject<HTMLElement>, framed: boolean): voi
       const top = root.querySelector<HTMLElement>('.fp-top')
       const time = root.querySelector<HTMLElement>('.fp-digits')
       const panel = root.querySelector<HTMLElement>('.focus-panel')
+      // The step slot under the time keeps its height whether or not a step is set.
+      const step = root.querySelector<HTMLElement>('.fp-step')
       for (const element of [time, panel]) if (element) resize.observe(element)
-      rise()
       const box = root.getBoundingClientRect()
       const font = parseFloat(getComputedStyle(root).fontSize) || 16
       // Keep room for two lines and their tail even when nobody is speaking.
@@ -51,25 +45,50 @@ export function useSceneFit(scene: RefObject<HTMLElement>, framed: boolean): voi
         artWidth,
         topLimit: top ? top.getBoundingClientRect().bottom - box.top + 6 : 0,
         bubbleHeight,
-        timeHeight: time ? time.offsetHeight + phaseHeight + TIME_GAP : 0,
-        panelTop: panel ? panel.getBoundingClientRect().top - box.top : null,
+        timeHeight: time ? time.offsetHeight + phaseHeight + (step?.offsetHeight ?? 0) + TIME_GAP : 0,
+        // Where the sheet rests, not where its entry or a drag has it for the moment.
+        panelTop: panel ? panel.offsetTop - box.top : null,
+        timeFloor: (step ? step.offsetTop + step.offsetHeight : time ? time.offsetTop + time.offsetHeight : 0) + timeDrop + TIME_GAP,
         framed: framed && !wideRoom,
       })
       root.style.setProperty('--fit-scale', String(fit.scale))
       root.style.setProperty('--fit-shift', `${fit.shift}px`)
       root.dataset.fit = fit.hidden ? 'hidden' : fit.scale < 1 || fit.shift < 0 ? 'moved' : 'rest'
+      // While the card is away, the time sits just above the companion and the spare height is shared.
+      // The stylesheet names the scale and the floor kept for the handle; elsewhere both are absent.
+      const awayStyle = artBox ? getComputedStyle(artBox) : null
+      const awayScale = parseFloat(awayStyle?.getPropertyValue('--away-scale') ?? '') || 0
+      const timeBottom = time ? time.offsetTop + time.offsetHeight : 0
+      const away = awayGroup({
+        sceneHeight: box.height, artWidth, bubbleHeight, timeBottom, awayScale,
+        awayFloor: parseFloat(awayStyle?.getPropertyValue('--away-floor') ?? '') || 0,
+      })
+      root.style.setProperty('--away-time-drop', `${away.timeDrop}px`)
+      root.style.setProperty('--away-art-lift', `${away.artLift}px`)
+      // With the card on screen the same grouping holds; only the time moves. It keeps its place
+      // while a sheet has lifted the companion or sent it out, so the readout never follows a task.
+      if (!panel && !fit.hidden) {
+        const drop = awayScale > 0 ? shownTimeDrop({
+          sceneHeight: artBox?.offsetHeight || box.height, artWidth, scale: fit.scale, bubbleHeight,
+          blockBottom: step ? step.offsetTop + step.offsetHeight : timeBottom,
+        }) : 0
+        timeDrop = drop
+        root.style.setProperty('--time-drop', `${drop}px`)
+      }
     }
     function schedule() { cancelAnimationFrame(frame); frame = requestAnimationFrame(measure) }
     // Scene panels are direct children; they can temporarily change the support edge.
     const children = new MutationObserver(measure)
     measure()
+    // The first placement is where things are, not a move to animate.
+    let settle = requestAnimationFrame(() => { settle = requestAnimationFrame(() => { root.dataset.motion = 'on' }) })
     resize.observe(root)
     children.observe(root, { childList: true })
     window.visualViewport?.addEventListener('resize', schedule)
     return () => {
       cancelAnimationFrame(frame)
+      cancelAnimationFrame(settle)
       resize.disconnect()
-      plateSize.disconnect()
       children.disconnect()
       window.visualViewport?.removeEventListener('resize', schedule)
     }

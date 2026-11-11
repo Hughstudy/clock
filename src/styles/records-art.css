@@ -24,10 +24,9 @@
 .records-switch button[aria-pressed="true"] { border-color: var(--whale-deep); font-weight: 800; }
 .stats > .records-switch {
   position: sticky;
-  top: env(safe-area-inset-top, 0px);
+  top: calc(env(safe-area-inset-top, 0px) + 6px);
   z-index: 1;
-  padding-block: .25rem;
-  background: var(--paper);
+  box-shadow: 0 0 0 6px var(--paper);
 }
 .record-summary { scroll-margin-block-start: 4rem; }.range-chart-labels { justify-content: space-between; font-size: .8125rem; }
 .record-day h4 { margin: .875rem 0 .25rem; }

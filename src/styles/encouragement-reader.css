@@ -1,15 +1,10 @@
-/* The upper edge of the plate owns the request, follow-up actions and dismissal. It holds one
-   row; reading or a passing line's link adds a second above the button, growing the card upward
-   over the companion's feet while the timer controls below stay where they are. */
-.home .fp-voice-slot { position: relative; inline-size: min(100%, 400px); block-size: var(--voice-row);
-  margin-inline: auto; display: grid; grid-template-rows: minmax(0,1fr); place-items: center; border-bottom: 1px solid var(--cream-line); }
-.home .fp-voice-slot:has(> .fp-encouragement, > .fp-node-text) { block-size: calc(2 * var(--voice-row)); grid-template-rows: repeat(2, minmax(0,1fr)); }
-.home .fp-voice-slot > .fp-encouragement { grid-row: 1 / -1; }
-.home .fp-node-text { grid-row: 1; min-height: 44px; color: var(--muted); font-size: .8125rem; }
-.home .fp-voice-open { grid-row: -2; display: inline-flex; align-items: center; justify-content: center; gap: .4rem;
-  border: 2px solid transparent; background-clip: padding-box; background-color: var(--whale-soft); color: var(--ink); }
-.home .fp-voice-open[hidden] { display: none; }
-.home .fp-voice-open svg, .home .fp-reader-actions svg { flex: none; inline-size: 1rem; block-size: 1rem; }
+/* The request is the first tool of the card. Reading, or a passing line's link, adds rows above
+   the timer controls, growing the card upward over the companion's feet while the controls below
+   stay where they are. Nothing is kept for it while there is nothing to read. */
+.home .fp-voice-slot { position: relative; flex: none; inline-size: min(100%, 400px); margin-inline: auto; display: grid; place-items: center; }
+.home .fp-voice-slot:empty { display: none; }
+.home .fp-node-text { min-height: 44px; color: var(--muted); font-size: .8125rem; }
+.home .fp-reader-actions svg { flex: none; inline-size: 1rem; block-size: 1rem; }
 
 .home .fp-head-speech { position: absolute; z-index: 2; inline-size: max-content;
   padding: 8px 14px; border-radius: 21px 20px 21px 19px; background: var(--paper);
@@ -25,14 +20,14 @@
 @media (prefers-reduced-motion: reduce) { .home .fp-head-speech[data-visible='true'] { animation: none; } }
 .home .fp-head-speech p, .home .fp-encouragement p { margin: 0; }
 .home .fp-encouragement { inline-size: 100%; min-inline-size: 0; text-align: start; color: var(--ink); }
-.home .fp-encouragement[data-location='scene'] { max-block-size: 100%; overflow-y: auto; overscroll-behavior: contain; }
 .home .fp-reader-heading { display: flex; align-items: center; justify-content: space-between; min-block-size: var(--voice-row); gap: .4rem; }
-.home .fp-reader-actions { display: flex; align-items: stretch; gap: 2px; border-top: 1px solid var(--cream-line); }
+.home .fp-reader-actions { display: flex; align-items: stretch; gap: 6px; }
 .home .fp-reader-actions button { flex: 1 1 auto; display: inline-flex; align-items: center; justify-content: center; gap: .2rem; }
 .home .fp-encouragement button { min-block-size: 44px; min-inline-size: 44px; max-inline-size: 100%; white-space: normal; }
 .home .fp-reader-actions button, .home .fp-reader-heading .text-action { color: var(--ink); padding-inline: 3px; font-size: .8125rem; }
+.home .fp-reader-actions button { border-radius: 999px; background: #ede5d6; }
 .home .fp-reader-actions button[data-speech-control='next'], .home .fp-reader-actions button[aria-pressed='true'] {
-  color: var(--whale-deep); background: var(--whale-soft); border-radius: 12px; }
+  color: var(--whale-deep); background: var(--whale-soft); }
 .home .fp-voice-slot button:focus-visible { outline-offset: -3px; border-radius: 12px; }
 .home .fp-reader-category, .home .fp-reader-feedback { font-size: .8125rem; line-height: 1.4; color: var(--muted); }
 .home .fp-reader-feedback { overflow-wrap: anywhere; }

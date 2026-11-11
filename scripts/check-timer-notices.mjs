@@ -71,7 +71,7 @@ export async function checkTimerNotices(browser, url, check) {
     await button('知道了', banner).click()
     check('Dismissing leaves the reader on the same screen', !await banner.count() && await page.locator('.app').getAttribute('data-screen') === 'settings')
     check('Settings explains how a Focus choice carries over', (await page.locator('.settings').innerText()).includes('专注页调过的时长会沿用到下次'))
-    await button('‹ 回到专注').click()
+    await button('回到专注').click()
     check('After a rest deadline, the clock names the next focus and the receipt gives the actual rest time',
       await page.locator('.fp-clock-phase').innerText() === '准备专注' &&
       (await page.locator('.fp-status').innerText()).includes('本次休息 5 分钟') && !await session())

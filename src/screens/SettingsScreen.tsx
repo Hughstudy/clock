@@ -1,8 +1,9 @@
 import { PHASE_LABELS } from '../components/format'
 import type { SettingsForm } from '../hooks/useSettingsForm'
 import { useMotionPreference } from '../hooks/companion/useMotionPreference'
+import { useSheetDrag } from '../hooks/useSheetDrag'
 import { useSoundPreview } from '../hooks/useSoundPreview'
-import type { ReactNode } from 'react'
+import { useRef, type ReactNode } from 'react'
 
 interface Props {
   form: SettingsForm
@@ -13,134 +14,152 @@ interface Props {
   systemNotices?: ReactNode
 }
 
+/**
+ * Settings is a sheet over Focus: grouped rows, a short note under each group, and three
+ * explanations that open in place. It closes by its button, a pull on its header, Escape or Back.
+ */
 export function SettingsScreen({ form, canEdit, onBack, systemNoticeSummary, systemNotices }: Props) {
   const { systemReducedMotion } = useMotionPreference(form.motionEnabled)
   const sound = useSoundPreview()
+  const sheet = useRef<HTMLElement>(null)
+  const drag = useSheetDrag(sheet, onBack)
   return (
-    <section className="screen settings" aria-labelledby="settings-title">
-      <header className="settings-header">
-        <button type="button" className="pill pill--ghost" onClick={onBack}>‹ 回到专注</button>
+    <section ref={sheet} className="screen settings" aria-labelledby="settings-title"
+      onKeyDown={event => { if (event.key === 'Escape' && !event.defaultPrevented) { event.preventDefault(); onBack() } }}>
+      <header className="settings-header" {...drag}>
+        <button type="button" className="pill pill--ghost settings-close" aria-label="回到专注" onClick={onBack}>
+          <svg viewBox="0 0 16 16" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="m4 4 8 8m0-8-8 8"/></svg>
+        </button>
         <h1 id="settings-title" className="screen-title" tabIndex={-1}>设置</h1>
       </header>
-      <form className="card settings-form" aria-label="常用偏好" onSubmit={(e) => e.preventDefault()}>
-        <h3 className="card-title">常用偏好</h3>
+      <form className="settings-form" aria-label="常用偏好" onSubmit={(e) => e.preventDefault()}>
         <fieldset disabled={!canEdit}>
-          <legend className="card-title">默认时长（分钟）</legend>
-          {form.fields.map((field) => {
-            const id = `duration-${field.phase}`
-            const errorId = `${id}-error`
-            return (
-              <div className="field" key={field.phase}>
-                <label htmlFor={id}>{PHASE_LABELS[field.phase]}</label>
-                <div className="stepper">
-                  <button
-                    type="button"
-                    className="step"
-                    aria-label={`减少${PHASE_LABELS[field.phase]}分钟数`}
-                    disabled={field.value <= field.min}
-                    onClick={() => field.step(-1)}
-                  >
-                    −
-                  </button>
-                  <input
-                    id={id}
-                    type="number"
-                    inputMode="numeric"
-                    min={field.min}
-                    max={field.max}
-                    step={1}
-                    value={field.draft}
-                    aria-invalid={field.error ? true : undefined}
-                    aria-describedby={field.error ? errorId : undefined}
-                    onChange={(e) => field.onChange(e.target.value)}
-                    onBlur={field.onBlur}
-                  />
-                  <button
-                    type="button"
-                    className="step"
-                    aria-label={`增加${PHASE_LABELS[field.phase]}分钟数`}
-                    disabled={field.value >= field.max}
-                    onClick={() => field.step(1)}
-                  >
-                    +
-                  </button>
-                </div>
-                {field.error && (
-                  <p id={errorId} className="field-error">
-                    {field.error}仍按 {field.value} 分钟保存。
-                    <button type="button" className="link-button" onClick={field.restorePrevious}>
-                      恢复为 {field.value} 分钟
+          <legend className="settings-subhead">默认时长（分钟）</legend>
+          <div className="settings-group">
+            {form.fields.map((field) => {
+              const id = `duration-${field.phase}`
+              const errorId = `${id}-error`
+              return (
+                <div className="field settings-row" key={field.phase}>
+                  <label htmlFor={id}>{PHASE_LABELS[field.phase]}</label>
+                  <div className="stepper">
+                    <button
+                      type="button"
+                      className="step"
+                      aria-label={`减少${PHASE_LABELS[field.phase]}分钟数`}
+                      disabled={field.value <= field.min}
+                      onClick={() => field.step(-1)}
+                    >
+                      −
                     </button>
-                  </p>
-                )}
-              </div>
-            )
-          })}
+                    <input
+                      id={id}
+                      type="number"
+                      inputMode="numeric"
+                      min={field.min}
+                      max={field.max}
+                      step={1}
+                      value={field.draft}
+                      aria-invalid={field.error ? true : undefined}
+                      aria-describedby={field.error ? errorId : undefined}
+                      onChange={(e) => field.onChange(e.target.value)}
+                      onBlur={field.onBlur}
+                    />
+                    <button
+                      type="button"
+                      className="step"
+                      aria-label={`增加${PHASE_LABELS[field.phase]}分钟数`}
+                      disabled={field.value >= field.max}
+                      onClick={() => field.step(1)}
+                    >
+                      +
+                    </button>
+                  </div>
+                  {field.error && (
+                    <p id={errorId} className="field-error">
+                      {field.error}仍按 {field.value} 分钟保存。
+                      <button type="button" className="link-button" onClick={field.restorePrevious}>
+                        恢复为 {field.value} 分钟
+                      </button>
+                    </p>
+                  )}
+                </div>
+              )
+            })}
+          </div>
         </fieldset>
-
         <p className="hint">更改从下一段开始生效。专注页调过的时长会沿用到下次。</p>
-        <button type="button" className="btn btn-secondary" disabled={!canEdit} onClick={form.restoreDefaults}>
-          恢复默认时长
-        </button>
-        {/* The rule sits next to the action it describes. */}
-        <p className="hint settings-restore-note">改这里的专注时长或恢复默认后，专注页回到这里的时长。</p>
 
-        <h4 className="settings-subhead">声音</h4>
-        <label className="switch-row">
-          <span>到时提示音</span>
-          <input
-            type="checkbox"
-            role="switch"
-            className="switch"
-            disabled={!canEdit}
-            checked={form.soundEnabled}
-            onChange={(e) => form.setSoundEnabled(e.target.checked)}
-          />
-        </label>
-        <div className="sound-preview">
-          <button type="button" className="pill pill--ghost" disabled={sound.playing} onClick={() => void sound.preview()}>试听提示音</button>
-          <p className="hint" role="status">{sound.message || '试听不改变声音开关，也不影响计时。'}</p>
+        <div className="settings-group">
+          <button type="button" className="settings-row settings-action" disabled={!canEdit} onClick={form.restoreDefaults}>
+            恢复默认时长
+          </button>
         </div>
+        {/* The rule sits next to the action it describes. */}
+        <p className="hint">改这里的专注时长或恢复默认后，专注页回到这里的时长。</p>
 
-        <h4 className="settings-subhead">伙伴</h4>
-        <label className="switch-row">
-          <span>伙伴动画</span>
-          <input
-            type="checkbox"
-            role="switch"
-            className="switch"
-            disabled={!canEdit}
-            checked={form.motionEnabled}
-            aria-describedby="motion-hint"
-            onChange={(e) => form.setMotionEnabled(e.target.checked)}
-          />
-        </label>
+        <h2 className="settings-subhead">声音</h2>
+        <div className="settings-group">
+          <label className="switch-row settings-row">
+            <span>到时提示音</span>
+            <input
+              type="checkbox"
+              role="switch"
+              className="switch"
+              disabled={!canEdit}
+              checked={form.soundEnabled}
+              onChange={(e) => form.setSoundEnabled(e.target.checked)}
+            />
+          </label>
+          <button type="button" className="settings-row settings-action" disabled={sound.playing} onClick={() => void sound.preview()}>试听提示音</button>
+        </div>
+        <p className="hint" role="status">{sound.message || '试听不改变声音开关，也不影响计时。'}</p>
+
+        <h2 className="settings-subhead">伙伴</h2>
+        <div className="settings-group">
+          <label className="switch-row settings-row">
+            <span>伙伴动画</span>
+            <input
+              type="checkbox"
+              role="switch"
+              className="switch"
+              disabled={!canEdit}
+              checked={form.motionEnabled}
+              aria-describedby="motion-hint"
+              onChange={(e) => form.setMotionEnabled(e.target.checked)}
+            />
+          </label>
+        </div>
         <p id="motion-hint" className="hint">
           {systemReducedMotion
             ? '系统已开启减少动态，伙伴会保持静态，鼓励与功能照常。'
             : '关闭后，伙伴用静态表情陪你，鼓励与功能照常。'}
         </p>
 
-        <label className="switch-row">
-          <span>伙伴小场景</span>
-          <input type="checkbox" role="switch" className="switch" disabled={!canEdit}
-            checked={form.sceneVarietyEnabled} aria-describedby="scene-hint"
-            onChange={(e) => form.setSceneVarietyEnabled(e.target.checked)} />
-        </label>
+        <div className="settings-group">
+          <label className="switch-row settings-row">
+            <span>伙伴小场景</span>
+            <input type="checkbox" role="switch" className="switch" disabled={!canEdit}
+              checked={form.sceneVarietyEnabled} aria-describedby="scene-hint"
+              onChange={(e) => form.setSceneVarietyEnabled(e.target.checked)} />
+          </label>
+        </div>
         <p id="scene-hint" className="hint">所有小活动都可直接出现，每段随机轮换。关闭后保留伙伴和记录；减少动态时展示静态画面。</p>
 
-        <label className="switch-row">
-          <span>节点鼓励</span>
-          <input
-            type="checkbox"
-            role="switch"
-            className="switch"
-            disabled={!canEdit}
-            checked={form.encouragementEnabled}
-            aria-describedby="encouragement-hint"
-            onChange={(e) => form.setEncouragementEnabled(e.target.checked)}
-          />
-        </label>
+        <div className="settings-group">
+          <label className="switch-row settings-row">
+            <span>节点鼓励</span>
+            <input
+              type="checkbox"
+              role="switch"
+              className="switch"
+              disabled={!canEdit}
+              checked={form.encouragementEnabled}
+              aria-describedby="encouragement-hint"
+              onChange={(e) => form.setEncouragementEnabled(e.target.checked)}
+            />
+          </label>
+        </div>
         <p id="encouragement-hint" className="hint">
           {form.encouragementEnabled
             ? '开始、暂停、结束等时刻会附上一句鼓励。'
@@ -148,35 +167,37 @@ export function SettingsScreen({ form, canEdit, onBack, systemNoticeSummary, sys
         </p>
       </form>
 
-      <details className="card settings-info">
-        <summary>应用状态</summary>
-        {systemNoticeSummary ? systemNotices : <p className="hint">目前没有需要处理的应用提示。</p>}
-      </details>
+      <div className="settings-group settings-about">
+        <details className="settings-info">
+          <summary>应用状态</summary>
+          {systemNoticeSummary ? systemNotices : <p className="hint">目前没有需要处理的应用提示。</p>}
+        </details>
 
-      <details className="card info settings-info">
-        <summary>本机数据说明</summary>
-        <p>
-          记录只保存在当前设备的这个浏览器里。清除网站数据、隐私浏览或浏览器清理可能使记录丢失。
-          添加到主屏幕的应用可能单独保存数据，不会自动同步。
-        </p>
-      </details>
+        <details className="info settings-info">
+          <summary>本机数据说明</summary>
+          <p>
+            记录只保存在当前设备的这个浏览器里。清除网站数据、隐私浏览或浏览器清理可能使记录丢失。
+            添加到主屏幕的应用可能单独保存数据，不会自动同步。
+          </p>
+        </details>
 
-      <details className="card info settings-info">
-        <summary>应用与安装说明</summary>
-        <h3 className="card-title">添加到主屏幕</h3>
-        <p>
-          <strong>iPhone：</strong>用 Safari 打开，点分享，选择“添加到主屏幕”，再点“添加”。
-        </p>
-        <p>
-          <strong>Android：</strong>在 Chrome 中打开 ⋮ 菜单，选择“添加到主屏幕”或“安装应用”。
-        </p>
-        <h3 className="card-title">关于伙伴与素材</h3>
-        <p>
-          现在的蓝色小伙伴是原创造型原型，正式名称与品牌仍在探索。
-          安装图标等保留的旧 Whale-chan 素材是代码绘制的非商业同人设计，灵感来自社区的 DeepSeek Whale-chan
-          （设计者 ZipZipPipe 和上善无形），未使用第三方同人图片。本应用与 DeepSeek 无隶属或背书关系。
-        </p>
-      </details>
+        <details className="info settings-info">
+          <summary>应用与安装说明</summary>
+          <h3 className="card-title">添加到主屏幕</h3>
+          <p>
+            <strong>iPhone：</strong>用 Safari 打开，点分享，选择“添加到主屏幕”，再点“添加”。
+          </p>
+          <p>
+            <strong>Android：</strong>在 Chrome 中打开 ⋮ 菜单，选择“添加到主屏幕”或“安装应用”。
+          </p>
+          <h3 className="card-title">关于伙伴与素材</h3>
+          <p>
+            现在的蓝色小伙伴是原创造型原型，正式名称与品牌仍在探索。
+            安装图标等保留的旧 Whale-chan 素材是代码绘制的非商业同人设计，灵感来自社区的 DeepSeek Whale-chan
+            （设计者 ZipZipPipe 和上善无形），未使用第三方同人图片。本应用与 DeepSeek 无隶属或背书关系。
+          </p>
+        </details>
+      </div>
     </section>
   )
 }

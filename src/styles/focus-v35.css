@@ -1,38 +1,45 @@
 /* Focus keeps the scene above a single, compact timer console. */
-.home .fp-plate { padding-inline: max(26px, env(safe-area-inset-left) + 12px) max(26px, env(safe-area-inset-right) + 12px); }
+.home .fp-plate { padding-inline: max(22px, env(safe-area-inset-left) + 12px) max(22px, env(safe-area-inset-right) + 12px); }
 .home .fp-plate::before { inset-inline: max(12px, env(safe-area-inset-left)) max(12px, env(safe-area-inset-right)); }
 .home .fp-digits { block-size: max(44px, 2.55rem); min-block-size: 44px; line-height: max(44px, 2.55rem); }
-.home .fp-status { block-size: max(44px, 2.3rem); min-block-size: max(44px, 2.3rem); overflow: visible; font-size: .8125rem; }
+.home .fp-status { inline-size: min(100%, 400px); margin-inline: auto; block-size: max(44px, 2.3rem); min-block-size: max(44px, 2.3rem); overflow: visible; font-size: .8125rem; gap: 8px; }
 .home .fp-status > span:first-child { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; white-space: normal; line-height: 1.35; }
 .home .fp-status .text-action, .home .fp-step-input { min-block-size: 44px; }
-.home .fp-step-input { block-size: 44px; }
 .home .fp-current-step { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.home .fp-status { gap: 8px; }
 .home .fp-status .text-action { color: var(--whale-deep); }
-.home .fp-rest-choice { min-block-size: 44px; max-inline-size: 48%; padding: 0 6px; font: inherit; font-size: max(1rem, 16px); color: var(--ink); background: var(--cream);
-  border: 1px solid var(--cream-line); border-radius: 12px; }
+/* While a session runs the label above the time says it all; the full line stays for screen readers. */
+.home:not([data-layout='readable']) .fp-status[data-running='true'] { position: absolute; inline-size: 1px; block-size: 1px; min-block-size: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+/* A result or a rest to choose: the words on one side, the length on the other. */
+.home .fp-status:has(.fp-rest-choice) { justify-content: space-between; padding-inline: 4px; }
+.home .fp-rest-choice { appearance: none; -webkit-appearance: none; min-block-size: 44px; max-inline-size: 56%; padding: 0 30px 0 14px; border: 5px solid transparent; background-clip: padding-box; border-radius: 999px;
+  font: inherit; font-size: max(.875rem, 16px); font-weight: 600; color: var(--ink); text-overflow: ellipsis;
+  background-color: #ede5d6; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='%232c4a78' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m4 6 4 4 4-4'/%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-position: right 8px center; background-size: 14px; }
 /* The two timer choices are one set of equal size; style, not size, marks the main one. */
 .home .fp-controls { position: relative; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: stretch; gap: 10px;
-  inline-size: min(100%, 400px); margin: 4px auto 0; min-block-size: max(44px, 2.75rem); }
+  inline-size: min(100%, 400px); margin: 0 auto; min-block-size: var(--control-row); }
 .home .fp-primary { display: flex; margin: 0; }
-.home .fp-primary .btn-primary, .home .fp-primary .btn-primary:hover { inline-size: 100%; min-block-size: 44px; padding-inline: 8px; }
+.home .fp-primary .btn-primary, .home .fp-primary .btn-primary:hover { inline-size: 100%; min-block-size: var(--control-row); padding-inline: 8px; }
 .home .fp-control-secondary { display: flex; min-inline-size: 0; }
-.home .fp-control-secondary > button { inline-size: 100%; min-block-size: 44px; padding-inline: 12px; border: 2px solid transparent; background-clip: padding-box;
-  border-radius: 999px; background-color: #ede5d6; color: var(--primary-deep); font-weight: 600; font-size: .9375rem; transition: transform .12s ease; }
+.home .fp-control-secondary > button { inline-size: 100%; min-block-size: var(--control-row); padding-inline: 12px; border: 0;
+  border-radius: 999px; background-color: #ede5d6; color: var(--ink); font-weight: 600; font-size: 1rem; transition: transform .12s ease; }
 .home .fp-control-secondary > button:active:not(:disabled) { filter: brightness(.94); }
-/* Thought tools: one quiet row, grouped by space alone. */
-.home .fp-tools-slot { display: flex; flex-direction: column; inline-size: min(100%, 400px); block-size: max(44px, 2.75rem);
-  margin: 2px auto 0; padding: 0; border: 0; overflow: auto; overscroll-behavior: contain; }
-.home .fp-thought-tools { display: grid; flex: none; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 44px; align-items: center; gap: 8px; margin: 0; padding: 0; }
-.home .fp-thought-tools .fp-tools-label { grid-column: 3; min-inline-size: 44px; color: var(--ink); padding-inline: 0; gap: 3px; }
+/* Tools: one quiet row of equal thirds, an icon over its label, grouped by space alone. The count's
+   place is always kept, so a first note never moves a tool. */
+.home .fp-tools-slot { display: flex; flex-direction: column; inline-size: min(100%, 400px); min-block-size: var(--tools-row); margin: 0 auto; padding: 0; border: 0; }
+.home .fp-thought-tools { display: grid; flex: none; grid-template-columns: repeat(3, minmax(0, 1fr)) 44px; align-items: stretch; gap: 2px; margin: 0; padding: 0; }
+.home .fp-thought-tools .text-action { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; min-inline-size: 0;
+  min-block-size: var(--tools-row); padding: 4px 2px; border-radius: 16px; background: transparent; color: var(--ink);
+  font-size: .75rem; font-weight: 600; line-height: 1.2; white-space: normal; text-align: center; }
+.home .fp-thought-tools .text-action svg { flex: none; inline-size: 1.375rem; block-size: 1.375rem; color: var(--whale-deep); }
+.home .fp-thought-tools .text-action:active:not(:disabled) { background: #ede5d6; filter: none; }
+/* The encouragement tool stays put and reads as pressed while its reader is open. */
+.home .fp-thought-tools .fp-voice-open[aria-expanded='true'] { background: var(--whale-soft); color: var(--whale-deep); }
+.home .fp-thought-tools .fp-tools-label { grid-column: 4; min-inline-size: 44px; padding-inline: 0; }
 .home .fp-tools-count { font-variant-numeric: tabular-nums; font-weight: 700; }
-.home .fp-thought-tools .text-action { display: inline-flex; align-items: center; justify-content: center; gap: 5px; padding-inline: 6px;
-  min-block-size: 44px; background: transparent; color: var(--ink); white-space: normal; }
-.home .fp-thought-tools .text-action svg { flex: none; width: 1rem; height: 1rem; }
-.home .fp-thought-tools .text-action::before { display: none; }
 /* Feedback takes a row at the top of the card only while there is something to say. The card
    grows upward for it; nothing floats over the companion and no empty band is left behind. */
-.home .fp-note { position: static; inline-size: min(100%, 400px); max-inline-size: none; margin-inline: auto;
+.home .fp-note { position: static; flex: none; inline-size: min(100%, 400px); max-inline-size: none; margin-inline: auto;
   min-block-size: var(--voice-row); padding: 0; display: flex; flex-wrap: nowrap; justify-content: center; overflow: visible; gap: 4px; }
 .home .fp-note__text { flex: 0 1 auto; min-inline-size: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-align: start; }
 .home .fp-note__text:empty { display: none; }
@@ -46,7 +53,7 @@
 .home .fp-bubble .text-action { min-block-size: 44px; }
 
 .home .focus-panel { display: flex; flex-direction: column; overflow: hidden; padding: 12px; margin: 0; border: 0; color: var(--ink);
-  inline-size: auto; max-inline-size: none; max-block-size: calc(100% - var(--art-clear, 0px) - var(--plate-rise, 0px) - 84px - env(safe-area-inset-top)); }
+  inline-size: auto; max-inline-size: none; max-block-size: calc(100% - var(--art-clear, 0px) - 84px - env(safe-area-inset-top)); }
 .home .focus-panel:not([open]) { display: none; }
 .home .focus-panel[data-layout='viewport'] {
   /* Only reserve the part of each safe inset that the visible viewport still includes. */
@@ -59,14 +66,39 @@
   block-size: calc(var(--visible-height, 100dvh) - var(--panel-top) - var(--panel-bottom) - 16px);
   max-block-size: none; margin-inline: auto; z-index: 30; }
 .home .focus-panel::backdrop { background: #24354c26; }
+/* A sheet rises from the bottom edge over the card and the tab bar, inset like the card it covers.
+   Its body scrolls inside it, it rests on the soft keyboard, and its header drags it down to close. */
+.home .focus-panel[data-layout='sheet'] { position: fixed; z-index: 30; inset: auto max(8px, env(safe-area-inset-left)) max(8px, env(safe-area-inset-bottom)) max(8px, env(safe-area-inset-right));
+  inline-size: auto; max-inline-size: 520px; margin-inline: auto; block-size: auto;
+  max-block-size: calc(var(--visible-height, 100dvh) - max(8px, env(safe-area-inset-top)) - 16px);
+  padding: 0 18px 18px; border-radius: 34px; background: #fffdf8; box-shadow: inset 0 0 0 1px #ffffffb3, 0 -10px 44px #14213b38;
+  translate: 0 var(--drag, 0px); transition: opacity var(--dur-panel) var(--ease-out), translate var(--spring-gentle-duration) var(--spring-gentle); }
+@starting-style { .home .focus-panel[data-layout='sheet'][open] { opacity: 0; translate: 0 64px; } }
+.home .focus-panel[data-layout='sheet'][data-dragging='true'] { transition: none; }
+.home .focus-panel[data-layout='sheet'][data-keyboard='true'] { inset-block-end: calc(var(--keyboard, 0px) + 8px); border-radius: 28px;
+  max-block-size: calc(var(--visible-height, 100dvh) - 16px); }
+.home .focus-panel[data-layout='sheet']::backdrop { background: #14213b47; }
+.home .focus-panel[data-layout='sheet'] .focus-panel__header { position: relative; padding-block-start: 22px; min-block-size: 70px; touch-action: none; cursor: grab; user-select: none; -webkit-user-select: none; }
+.home .focus-panel[data-layout='sheet'] .focus-panel__header::before { content: ''; position: absolute; inset-block-start: 9px; inset-inline-start: 50%; translate: -50% 0;
+  inline-size: 38px; block-size: 5px; border-radius: 3px; background: #cfc7b8; }
+.home .focus-panel[data-layout='sheet'] .focus-panel__header:has(h2.sr-only) { margin-bottom: 0; }
+.home .focus-panel[data-layout='sheet'] .focus-panel__header h2 { font-size: 1.0625rem; }
+.home .focus-panel[data-layout='sheet'] .focus-panel__timer { margin: 0 0 10px; color: var(--muted); }
+.home .focus-panel[data-layout='sheet'] .thought-form { gap: 8px; padding: 0; }
+.home .focus-panel[data-layout='sheet'] .thought-form textarea { min-block-size: 104px; padding: 12px 14px; border: 0; border-radius: 18px; background: #f4eee2; box-shadow: inset 0 0 0 1.5px #2f74d02e;
+  font-size: max(1.0625rem, 16px); line-height: 1.45; resize: none; }
+/* One full-width main action; anything else is a quiet line of text under it. */
+.home .focus-panel[data-layout='sheet'] .thought-form-actions { display: grid; grid-template-columns: minmax(0, 1fr); gap: 4px; margin-block-start: 4px; }
+.home .focus-panel[data-layout='sheet'] .thought-form .btn-primary { inline-size: 100%; min-block-size: 50px; font-size: 1.0625rem; box-shadow: 0 6px 14px #2f74d040; }
+.home .focus-panel[data-layout='sheet'] .thought-form .btn-primary:disabled { opacity: 1; background: #b9cdea; box-shadow: none; }
+.home .focus-panel[data-layout='sheet'] .thought-form .btn-secondary { min-block-size: 44px; background: none; color: var(--whale-deep); font-size: .9375rem; font-weight: 600; }
 .home .focus-panel__header { flex: none; min-block-size: 44px; }
 .home .focus-panel__header h2 { min-inline-size: 0; overflow-wrap: anywhere; }
 .home .focus-panel__header .pill { min-block-size: 44px; max-inline-size: 60%; flex: none; white-space: normal; }
 .home .focus-panel .focus-panel__timer { flex: none; margin: 4px 0 8px; color: var(--ink); font-variant-numeric: tabular-nums; }
 .home .focus-panel__body { min-block-size: 0; min-inline-size: 0; overflow-y: auto; overflow-x: hidden; overscroll-behavior: contain; padding: 2px; }
 .home .focus-panel button { min-block-size: 44px; min-inline-size: 44px; }
-.home .focus-panel .fp-end { padding: 0; }
-.home .focus-panel .fp-end .fp-panel-actions { margin-inline: 0; }.home .fp-session-list { list-style: none; padding: 0; margin: 0; display: grid; gap: 12px; }
+.home .fp-session-list { list-style: none; padding: 0; margin: 0; display: grid; gap: 12px; }
 .home .fp-session-list li { padding-bottom: 8px; border-bottom: 1px solid var(--line); }
 .home .fp-session-list p, .home .fp-full-message { white-space: pre-wrap; overflow-wrap: anywhere; }
 .home .fp-save-details { display: flex; flex-wrap: wrap; gap: 8px; }
@@ -75,34 +107,54 @@
 
 /* During an untouched countdown the card, tabs and top controls step aside for the companion.
    They wait a moment on the way back, so the scene settles first. */
-.home :is(.fp-plate, .fp-top), .app[data-screen='home'] .tab-bar {
+.home :is(.fp-plate, .fp-top), .app:not([data-screen='stats']) .tab-bar {
   transition: opacity var(--dur-panel) var(--ease-out) 120ms, translate var(--dur-panel) var(--ease-out) 120ms, visibility 0s; }
-.home[data-chrome='away'] :is(.fp-plate, .fp-top), .app[data-screen='home']:has(.home[data-chrome='away']) .tab-bar {
+.home[data-chrome='away'] :is(.fp-plate, .fp-top), .app:not([data-screen='stats']):has(.home[data-chrome='away']) .tab-bar {
   opacity: 0; visibility: hidden; pointer-events: none;
   transition: opacity var(--dur-panel) var(--ease-out), translate var(--dur-panel) var(--ease-out), visibility 0s var(--dur-panel); }
-.home[data-chrome='away'] .fp-plate, .app[data-screen='home']:has(.home[data-chrome='away']) .tab-bar { translate: 0 12px; }
-.home[data-arriving='true'] :is(.fp-plate, .fp-top), .app[data-screen='home']:has(.home[data-arriving='true']) .tab-bar { pointer-events: none; }
+.home[data-chrome='away'] .fp-plate, .app:not([data-screen='stats']):has(.home[data-chrome='away']) .tab-bar { translate: 0 12px; }
+.home[data-arriving='true'] :is(.fp-plate, .fp-top), .app:not([data-screen='stats']):has(.home[data-arriving='true']) .tab-bar { pointer-events: none; }
 .home[data-chrome] .fp-art { transition: transform .45s cubic-bezier(.2, .8, .2, 1), opacity .2s ease; }
-.home .fp-handle, .fp-handle-hint { position: absolute; z-index: 6; inset-inline-start: 50%; translate: -50% 0; }
-.home .fp-handle { inset-block-end: calc(env(safe-area-inset-bottom) + 22px); color: var(--ink); }
-.fp-handle-hint { inset-block-end: calc(env(safe-area-inset-bottom) + 76px); margin: 0; padding: 6px 14px; border-radius: 999px; pointer-events: none;
+/* The time travels with the companion, on the same curve, so the two arrive as one group. */
+/* Large text gives the clock its own region at once; nothing glides into it. */
+.home:not([data-layout='readable']) .fp-scene[data-motion='on'] :is(.fp-clock-phase, .fp-digits, .fp-step) { transition: translate .45s cubic-bezier(.2, .8, .2, 1); }
+.home[data-chrome='away'] .fp-step { visibility: hidden; }
+/* The card has only been lowered: its top edge and grabber stay in reach, and bring it back. */
+.home .fp-handle { position: absolute; z-index: 6; inset: auto 12px 0; --handle-height: max(44px, env(safe-area-inset-bottom) + 30px); block-size: var(--handle-height);
+  padding: 0; border: 0; border-radius: 26px 26px 0 0; cursor: pointer; -webkit-tap-highlight-color: transparent;
+  background: color-mix(in srgb, var(--cream) 84%, transparent); backdrop-filter: blur(14px) saturate(1.2); -webkit-backdrop-filter: blur(14px) saturate(1.2);
+  box-shadow: 0 -4px 20px #14213b24, inset 0 1px 0 #ffffff80; }
+.home .fp-handle::before { content: ''; position: absolute; inset-block-start: 10px; inset-inline-start: 50%; translate: -50% 0; inline-size: 40px; block-size: 5px; border-radius: 3px; background: #a79d8b; }
+.home .fp-handle:active { filter: brightness(.94); }
+.fp-handle-hint { position: absolute; z-index: 6; inset-inline-start: 50%; translate: -50% 0; inset-block-end: calc(max(44px, env(safe-area-inset-bottom) + 30px) + 10px); margin: 0; padding: 6px 14px; border-radius: 999px; pointer-events: none;
   background: color-mix(in srgb, var(--cream) 82%, transparent); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
   color: var(--ink); font-size: .8125rem; font-weight: 600; white-space: nowrap; }
-.home .fp-handle, .fp-handle-hint { transition: opacity var(--dur-panel) var(--ease-out); }
-@starting-style { .home .fp-handle, .fp-handle-hint { opacity: 0; } }
-.home .fp-handle:focus-visible { outline: 3px solid #1b3158; outline-offset: 2px; box-shadow: 0 0 0 7px #fff; }
-/* In portrait the room and companion come closer, so the floor isn't left empty where the card was. */
+.home .fp-handle, .fp-handle-hint { transition: opacity var(--dur-panel) var(--ease-out), translate var(--dur-panel) var(--ease-out); }
+@starting-style { .home .fp-handle { opacity: 0; translate: 0 12px; } .fp-handle-hint { opacity: 0; } }
+.home .fp-handle:focus-visible { outline: 3px solid #1b3158; outline-offset: -3px; }
+/* In portrait the room and companion come closer, and the time comes down to sit just above the
+   companion, so the two read as one group. useSceneFit shares the spare height between the sky above
+   the time (--away-time-drop) and the floor under the companion (--away-art-lift). --away-floor is the
+   room kept under the support edge for the handle and its hint. */
 @media (orientation: portrait) {
-  .home[data-chrome='away'] .fp-art { --closer-scale: 1.11; transform: translateY(calc(var(--art-clear) - 132px)) scale(var(--closer-scale)); }
+  .home:not([data-layout='readable']) .fp-scene { --away-scale: 1.11; --away-floor: 132px; }
   /* Plant, Tea, Bubbles, Boat and Blocks reach toward the edges: they settle lower without growing, so nothing is cut off. */
-  .home[data-chrome='away'] .fp-art:has(.blue-companion:is([data-scene='F2'], [data-scene='F4'], [data-scene='F5'], [data-scene='F6'], [data-scene='F7'])) { --closer-scale: var(--fit-scale, 1); }
+  .home:not([data-layout='readable']) .fp-scene:has(.blue-companion:is([data-scene='F2'], [data-scene='F4'], [data-scene='F5'], [data-scene='F6'], [data-scene='F7'])) { --away-scale: var(--fit-scale, 1); }
+  .home[data-chrome='away'] .fp-art { transform: translateY(calc(var(--art-clear) - var(--away-floor) - var(--away-art-lift, 0px))) scale(var(--away-scale)); }
+  /* The floor follows the support edge up, so no strip of sky shows under a lifted room. */
+  .home[data-chrome='away'] .fp-scene::after { block-size: max(var(--art-clear), var(--away-floor) + var(--away-art-lift, 0px) + 8px); }
+  /* The time, its label and the step sit one bubble above the head in every state (--time-drop), so
+     no wide band of sky separates them from the companion and they barely move when the card leaves. */
+  .home:not([data-layout='readable']) :is(.fp-clock-phase, .fp-digits, .fp-step) { translate: 0 var(--time-drop, 0px); }
+  .home[data-chrome='away'] :is(.fp-clock-phase, .fp-digits) { translate: 0 var(--away-time-drop, 0px); }
 }
 @media (orientation: portrait) and (min-width: 700px) {
-  .home[data-chrome='away'] .fp-art { --closer-scale: 1.36; transform: translateY(calc(var(--art-clear) - 104px)) scale(var(--closer-scale)); }
-  .home[data-chrome='away'] .fp-art:has(.blue-companion:is([data-scene='F2'], [data-scene='F4'], [data-scene='F5'], [data-scene='F6'], [data-scene='F7'])) { --closer-scale: 1.09; }
+  .home:not([data-layout='readable']) .fp-scene { --away-scale: 1.36; --away-floor: 104px; }
+  .home:not([data-layout='readable']) .fp-scene:has(.blue-companion:is([data-scene='F2'], [data-scene='F4'], [data-scene='F5'], [data-scene='F6'], [data-scene='F7'])) { --away-scale: 1.09; }
 }
 @media (orientation: landscape) and (min-aspect-ratio: 6/5) {
-  .home .fp-handle, .fp-handle-hint { inset-inline: auto calc(var(--plate-end) + 12px); translate: none; }
+  .home .fp-handle { inset-inline: auto var(--plate-end); inline-size: min(var(--plate-w), 240px); }
+  .fp-handle-hint { inset-inline: auto calc(var(--plate-end) + 12px); translate: none; }
 }
 /* Tall landscapes: the room fills the screen and the card floats over it. The creature keeps
    the size it has beside the card; only the room grows, about the floor, to reach both edges. */
@@ -159,7 +211,7 @@
   min-block-size: max(44px, 1.8rem); padding-block: 6px; box-shadow: none; }
 .home[data-layout='readable'] .fp-tools-slot { order: 2; flex-shrink: 0; block-size: auto; margin: 0 auto; overflow: visible; }
 .home[data-layout='readable'] .fp-thought-tools { grid-template-columns: 1fr; gap: 8px; }
-.home[data-layout='readable'] .fp-thought-tools > button { min-block-size: max(44px, 1.6rem); justify-content: flex-start; }
+.home[data-layout='readable'] .fp-thought-tools > button { flex-direction: row; min-block-size: max(44px, 1.6rem); justify-content: flex-start; gap: 8px; padding-inline: 6px; font-size: .875rem; text-align: start; }
 .home[data-layout='readable'] .fp-thought-tools .fp-tools-label { grid-column: 1; }
 .home[data-layout='readable'] .fp-note { order: 3; flex-shrink: 0; min-block-size: 0; flex-wrap: wrap; justify-content: flex-start;
   gap: 8px; padding-block-start: 10px; border-top: 1px solid var(--cream-line); }
@@ -167,7 +219,7 @@
 .home[data-layout='readable'] .fp-note > button { max-inline-size: 100%; }
 .home[data-layout='readable'] .fp-voice-slot { order: 4; flex-shrink: 0; }
 .app:has(.home[data-layout='readable']) .tab-bar { inset-inline: 16px; inline-size: auto; }
-.app[data-screen='home']:has(.home[data-layout='readable']) .tab-bar { background: var(--cream); }
+.app:not([data-screen='stats']):has(.home[data-layout='readable']) .tab-bar { background: var(--cream); }
 @media (orientation: landscape) and (min-width: 560px) {
   .app { --readable-scene-width: 40%; }
   .app:has(.home[data-layout='readable']) .tab-bar { inset-inline: var(--readable-scene-width) 0; }
@@ -179,9 +231,9 @@
     padding-block-start: 12px; scrollbar-gutter: stable both-edges; }
   .home[data-layout='readable'] .fp-controls { grid-template-columns: repeat(auto-fit, minmax(min(100%, 5.2rem), 1fr)); }
   .home[data-layout='readable'] .fp-tools-slot { container: thought-tools / inline-size; }
-  .home[data-layout='readable'] .fp-thought-tools { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 44px; }
-  .home[data-layout='readable'] .fp-thought-tools .fp-tools-label { grid-column: 3; }
-  @container thought-tools (max-width: 12rem) {
+  .home[data-layout='readable'] .fp-thought-tools { grid-template-columns: repeat(3, minmax(0, 1fr)) 44px; }
+  .home[data-layout='readable'] .fp-thought-tools .fp-tools-label { grid-column: 4; }
+  @container thought-tools (max-width: 16rem) {
     .home[data-layout='readable'] .fp-thought-tools { grid-template-columns: minmax(0, 1fr) 44px; }
     .home[data-layout='readable'] .fp-thought-tools > button { grid-column: 1; }
     .home[data-layout='readable'] .fp-thought-tools .fp-tools-label { grid-area: 1 / 2; }
@@ -191,7 +243,14 @@
    This also covers user-enlarged text without reducing their chosen font size. */
 @media (max-height: 650px) and (orientation: portrait) {
   .home .fp-plate { max-block-size: 100%; overflow-y: auto; overscroll-behavior: contain; }
+  /* The ruler grows above the card's own edge; a scrolling card would cut its header off. */
+  .home .fp-plate[data-panel='duration'] { overflow: visible; }
 }
 @media (max-width: 360px) {
   .home .fp-controls { gap: 8px; }
+  /* Six characters stay on one line at the narrowest phone width. */
+  .home:not([data-layout='readable']) .fp-thought-tools .text-action { font-size: .6875rem; }
+  /* A result and its rest choice take a line each rather than squeeze. */
+  .home .fp-status:has(.fp-rest-choice) { flex-wrap: wrap; justify-content: center; block-size: auto; row-gap: 0; }
+  .home .fp-status:has(.fp-rest-choice) .fp-rest-choice { max-inline-size: 100%; }
 }

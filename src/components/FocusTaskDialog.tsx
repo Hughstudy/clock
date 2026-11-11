@@ -7,7 +7,7 @@ interface Props {
   closeLabel?: string
 }
 
-/** Native modal keeps background controls inert and handles Escape/platform close. */
+/** A bottom sheet for one task. The native modal keeps background controls inert and handles Escape/platform close. */
 export function FocusTaskDialog({ title, onClose, children, closeLabel = '返回' }: Props) {
   const ref = useRef<HTMLDialogElement>(null)
   useLayoutEffect(() => {
@@ -15,8 +15,12 @@ export function FocusTaskDialog({ title, onClose, children, closeLabel = '返回
     if (!dialog) return
     const viewport = window.visualViewport
     const fit = () => {
-      dialog.style.setProperty('--visible-top', `${viewport?.offsetTop ?? 0}px`)
-      dialog.style.setProperty('--visible-height', `${viewport?.height ?? window.innerHeight}px`)
+      const top = viewport?.offsetTop ?? 0, height = viewport?.height ?? window.innerHeight
+      const covered = Math.max(0, window.innerHeight - top - height)
+      dialog.style.setProperty('--visible-top', `${top}px`)
+      dialog.style.setProperty('--visible-height', `${height}px`)
+      dialog.style.setProperty('--keyboard', `${covered}px`)
+      dialog.dataset.keyboard = String(covered > 80)
     }
     fit()
     dialog.showModal()

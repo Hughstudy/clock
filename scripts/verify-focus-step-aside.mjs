@@ -82,6 +82,8 @@ async function layout(browser, url, label, viewport) {
     return { hintLeft: hint.left, hintRight: hint.right, tuftTop: rect(tuft).top, clockBottom: clock.bottom, width: innerWidth, blocked: !!hit({ x: innerWidth / 2, y: innerHeight - 40 }) }
   })
   check(`${label} ${name}: the head stays below the time`, shape.tuftTop >= shape.clockBottom)
+  // In portrait the time comes down to the companion: no more than a two-line bubble and its margins apart.
+  if (viewport.height > viewport.width) check(`${label} ${name}: the time sits just above the companion`, shape.tuftTop - shape.clockBottom <= 150)
   check(`${label} ${name}: the hint fits the screen`, shape.hintLeft >= 0 && shape.hintRight <= shape.width)
   check(`${label} ${name}: hidden controls can't be tapped`, !shape.blocked)
   await callOutFromRoom(page)
@@ -189,8 +191,11 @@ async function behaviour(browser, url, label, viewport) {
   await button(page, '确认结束').waitFor()
   if (viewport.width > viewport.height) {
     await settled(page)
-    const gap = await page.evaluate(() => document.querySelector('.fp-plate').getBoundingClientRect().left + 12 - document.querySelector('.focus-panel[open]').getBoundingClientRect().right)
-    check(`${label} ${name}: the end confirmation stays beside the card`, gap >= 0)
+    const onScreen = await page.evaluate(() => {
+      const box = document.querySelector('.fp-confirm[open]').getBoundingClientRect()
+      return box.left >= 0 && box.top >= 0 && box.right <= innerWidth && box.bottom <= innerHeight
+    })
+    check(`${label} ${name}: the end confirmation is whole on screen`, onScreen)
   }
   await tap(page, '确认结束')
   await button(page, '准备专注').waitFor()

@@ -74,7 +74,7 @@ try {
     }
     await p.screenshot({ path: path.join(output, `${name}-marked.png`) })
     await button(p, '暂停专注').focus()
-    for (const next of ['结束专注', '留个标记', '记下想法']) {
+    for (const next of ['结束专注', '给我一句鼓励', '留个标记', '记下想法']) {
       // macOS WebKit's default Tab mode skips buttons; Option-Tab includes all controls.
       await p.keyboard.press(process.env.IOS_BROWSER === 'webkit' ? 'Alt+Tab' : 'Tab')
       check(`${name}: keyboard follows the control order to ${next}`, await button(p, next).evaluate(e => e === document.activeElement))
@@ -133,7 +133,7 @@ try {
   const status = p.locator('details').filter({ has: p.locator('summary', { hasText: '应用状态' }) })
   await status.locator('summary').click()
   check('Settings keeps offline readiness available', (await status.innerText()).includes('已准备好离线使用'))
-  await p.screenshot({ path: path.join(output, 'settings.png') }); await button(p, '‹ 回到专注').click()
+  await p.screenshot({ path: path.join(output, 'settings.png') }); await button(p, '回到专注').click()
   await p.getByRole('button', { name: /^调整专注时长/ }).click(); await p.locator('#custom-minutes').fill('1'); await button(p, '用这个时长').click()
   await button(p, '开始专注').click(); await button(p, '暂停专注').waitFor(); await p.clock.fastForward(60100)
   await button(p, '准备专注').waitFor(); const finished = (await snapshot(p)).records[0].sessionId

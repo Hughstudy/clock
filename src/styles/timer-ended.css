@@ -1,4 +1,4 @@
-.timer-ended { position: fixed; z-index: 20; inset-inline: 12px; inset-block-end: calc(env(safe-area-inset-bottom) + 74px);
+.timer-ended { position: fixed; z-index: 40; inset-inline: 12px; inset-block-end: calc(env(safe-area-inset-bottom) + 74px);
   display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 8px 12px; max-inline-size: 520px; margin-inline: auto; padding: 12px 14px;
   border: 1px solid var(--cream-line); border-radius: 16px; background: var(--cream); color: var(--ink); box-shadow: 0 6px 20px #24354c33; }
 .timer-ended p { flex: 1 1 200px; margin: 0; font-size: .9rem; font-weight: 700; overflow-wrap: anywhere; }

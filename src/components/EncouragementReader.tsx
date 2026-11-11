@@ -122,7 +122,7 @@ export function EncouragementReader({ quote, choosing, canEdit, favorites, scene
       data-visible={inScene} aria-hidden={!inScene}>
       <p className={inScene ? 'fp-reader-quote' : undefined}>{quote.text}</p>
     </div>, sceneRef.current)}
-    {layout === 'viewport' ? <FocusPanel placement="viewport" title={copy.encouragementTitle} timerSummary={timerSummary}
+    {layout === 'viewport' ? <FocusPanel title={copy.encouragementTitle} timerSummary={timerSummary}
       closeLabel={copy.dismiss} onClose={onClose} onBack={onBack}>{reader}</FocusPanel> : reader}
   </>
 }

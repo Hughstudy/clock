@@ -15,8 +15,10 @@ export const ART_CARD_WIDTH = 234 / 240
 export const ART_CARD_SIDES = 192 / 240
 /** Height of those rounded corners. */
 export const ART_CARD_CORNER = 21 / 240
-/** The support edge tucks this far behind a panel's top, so the floor meets it. */
-export const PANEL_TUCK = 12
+/** Bottom of the face, just under the mouth, at viewBox y 118. */
+export const ART_FACE = 53 / 240
+/** Space between the face and the top edge of a sheet it looks over. */
+export const SHEET_GAP = 10
 /** Space between the speech bubble and the creature's head. */
 export const BUBBLE_GAP = 10
 /** Space between the time readout and whatever sits below it (the bubble or the head). */
@@ -44,8 +46,10 @@ export interface SceneFitInput {
   bubbleHeight: number
   /** Height of the time readout stacked above the bubble, its gap included, or 0. */
   timeHeight: number
-  /** Top of an open local panel, or null. */
+  /** Top of an open sheet, or null. The sheet covers whatever is below that line. */
   panelTop: number | null
+  /** Bottom of the time block where it is shown now, which a rising companion must not reach. */
+  timeFloor?: number
   /** Whether the art paints a scenery card whose edges must not show. */
   framed: boolean
 }
@@ -84,25 +88,69 @@ export function wideRoomFit(sceneWidth: number, artWidth: number, cardLeft: numb
   return { zoom, cardPan, roomShift: cardPan / 2 / artWidth * ART_VIEW_WIDTH / ROOM_RIG_SCALE }
 }
 
-/** How far the card has grown above the band reserved for it (a note row, a second line).
- * `reserved` is that band's height; zero means the card sits beside the scene instead. */
-export function plateRise(plateHeight: number, reserved: number): number {
-  return reserved > 0 && plateHeight > reserved ? Math.round(plateHeight - reserved) : 0
+/** Share of the spare height given to the sky above the time once the card has stepped aside.
+ * The rest stays as floor under the companion, so the group sits a little above the middle. */
+export const AWAY_SKY_SHARE = 0.6
+
+export interface AwayGroupInput {
+  sceneHeight: number
+  /** Bottom edge of the time readout where it rests while the card is on screen. */
+  timeBottom: number
+  /** Height kept between the time and the head for a two-line bubble and its tail. */
+  bubbleHeight: number
+  /** Rendered width of the art at scale 1. */
+  artWidth: number
+  /** Scale of the art while the card is away. */
+  awayScale: number
+  /** Height kept under the support edge for the handle and its hint. */
+  awayFloor: number
+}
+
+export interface AwayGroup {
+  /** How far the time moves down to sit just above the companion. */
+  timeDrop: number
+  /** How far the companion stays above its lowest resting place. */
+  artLift: number
+}
+
+/** While the card is away the time and the companion read as one group: the time sits a bubble's
+ * height above the head, and whatever height is left over is shared between the sky above the time
+ * and the floor under the companion. With no height to spare, nothing moves. */
+export function awayGroup({ sceneHeight, timeBottom, bubbleHeight, artWidth, awayScale, awayFloor }: AwayGroupInput): AwayGroup {
+  if (!(artWidth > 0) || !(sceneHeight > 0) || !(awayScale > 0)) return { timeDrop: 0, artLift: 0 }
+  const crown = sceneHeight - awayFloor - ART_HEAD * artWidth * awayScale
+  const spare = Math.max(0, crown - (bubbleHeight + BUBBLE_GAP) - timeBottom)
+  const timeDrop = Math.round(spare * AWAY_SKY_SHARE)
+  return { timeDrop, artLift: Math.round(spare) - timeDrop }
+}
+
+/** While the card is on screen the companion stands on it, so only the time can move: it comes
+ * down until its block (the label, the digits and the step's slot) ends a bubble above the head.
+ * `blockBottom` is that block's bottom edge where it rests under the top controls. */
+export function shownTimeDrop(input: { sceneHeight: number; artWidth: number; scale: number; bubbleHeight: number; blockBottom: number }): number {
+  const { sceneHeight, artWidth, scale, bubbleHeight, blockBottom } = input
+  if (!(artWidth > 0) || !(sceneHeight > 0) || !(scale > 0)) return 0
+  const crown = sceneHeight - ART_HEAD * artWidth * scale
+  return Math.max(0, Math.round(crown - (bubbleHeight + BUBBLE_GAP) - blockBottom))
 }
 
 export function fitSceneArt(input: SceneFitInput): SceneFit {
-  const { sceneWidth, sceneHeight, artWidth, topLimit, bubbleHeight, timeHeight, panelTop, framed } = input
+  const { sceneWidth, sceneHeight, artWidth, topLimit, bubbleHeight, timeHeight, panelTop, framed, timeFloor } = input
   if (!(artWidth > 0) || !(sceneHeight > 0)) return { scale: 1, shift: 0, hidden: false }
-  const support = panelTop === null ? sceneHeight : Math.min(sceneHeight, panelTop + PANEL_TUCK)
   const bubble = bubbleHeight > 0 ? bubbleHeight + BUBBLE_GAP : 0
   const above = timeHeight > 0 ? Math.max(bubble, BUBBLE_RESERVE) + timeHeight : bubble
-  let scale = Math.min(1, (support - topLimit - above) / (ART_HEAD * artWidth), sceneWidth * ART_MAX_SCENE_RATIO / artWidth)
+  let scale = Math.min(1, (sceneHeight - topLimit - above) / (ART_HEAD * artWidth), sceneWidth * ART_MAX_SCENE_RATIO / artWidth)
   // Once the card's own edges would show (its sides, or its rounded top corners when the
   // card's top is inside the scene), keep the whole card clear too.
-  const cornersInside = support - (ART_CARD - ART_CARD_CORNER) * artWidth * scale > 0
+  const cornersInside = sceneHeight - (ART_CARD - ART_CARD_CORNER) * artWidth * scale > 0
   const covered = artWidth * scale * (cornersInside ? ART_CARD_SIDES : ART_CARD_WIDTH) >= sceneWidth - EDGE_TOLERANCE
-  if (framed && !covered) scale = Math.min(scale, (support - topLimit) / (ART_CARD * artWidth))
-  const shift = support - sceneHeight
-  if (!(scale >= MIN_ART_SCALE)) return { scale: MIN_ART_SCALE, shift, hidden: true }
-  return { scale, shift, hidden: false }
+  if (framed && !covered) scale = Math.min(scale, (sceneHeight - topLimit) / (ART_CARD * artWidth))
+  if (!(scale >= MIN_ART_SCALE)) return { scale: MIN_ART_SCALE, shift: 0, hidden: true }
+  if (panelTop === null) return { scale, shift: 0, hidden: false }
+  // A sheet covers the floor and the body. The companion keeps its size and rises just far enough
+  // to look over the sheet's edge with its whole face; with no room for that above the time's own
+  // space, it steps out rather than show a face cut in half.
+  const shift = Math.min(0, panelTop - SHEET_GAP + ART_FACE * artWidth * scale - sceneHeight)
+  const crown = sceneHeight + shift - ART_HEAD * artWidth * scale
+  return { scale, shift, hidden: crown < Math.max(topLimit + timeHeight, timeFloor ?? 0) }
 }
