@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { ART_CARD, ART_HEAD, ART_MAX_SCENE_RATIO, BUBBLE_RESERVE, fitSceneArt, PANEL_TUCK, ROOM_MIN_ZOOM, wideRoomFit, type SceneFitInput } from './scene-fit'
+import { ART_CARD, ART_HEAD, ART_MAX_SCENE_RATIO, BUBBLE_RESERVE, fitSceneArt, PANEL_TUCK, plateRise, ROOM_MIN_ZOOM, wideRoomFit, type SceneFitInput } from './scene-fit'
 
 const phone: SceneFitInput = { sceneWidth: 393, sceneHeight: 570, artWidth: 565, topLimit: 50, bubbleHeight: 0, timeHeight: 0, panelTop: null, framed: true }
 const headTop = (input: SceneFitInput, fit: ReturnType<typeof fitSceneArt>) =>
@@ -88,5 +88,12 @@ describe('fitSceneArt', () => {
 
   it('ignores an unmeasured art box', () => {
     expect(fitSceneArt({ ...phone, artWidth: 0 })).toEqual({ scale: 1, shift: 0, hidden: false })
+  })
+
+  it('measures how far the card has grown above its band, and nothing when it sits beside the scene', () => {
+    expect(plateRise(268, 268)).toBe(0)
+    expect(plateRise(312, 268)).toBe(44)
+    expect(plateRise(260, 268)).toBe(0)
+    expect(plateRise(340, 0)).toBe(0)
   })
 })

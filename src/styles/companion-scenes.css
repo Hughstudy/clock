@@ -25,6 +25,10 @@
 .scene-draw-pour { fill:none;stroke:#d29e54;stroke-width:2;stroke-dasharray:1 1;stroke-dashoffset:1;opacity:0; }
 .scene-draw-pour[data-pour='pouring'] { stroke-dashoffset:0;opacity:1;transition:stroke-dashoffset 260ms cubic-bezier(.55,0,1,.6); }
 .scene-draw-pour[data-pour='done'] { stroke-dashoffset:-1;transition:stroke-dashoffset 220ms cubic-bezier(.55,0,1,.6),opacity 0ms 220ms; }
+/* A piece that slides out of a tipped bowl falls in its own time, like the water: it starts at
+   the bowl's lip and drops under gravity, however slowly the session tips the bowl. */
+.scene-fall { transform:translate(var(--fall-x),var(--fall-y)); opacity:0; }
+.scene-fall[data-landed='true'] { transform:none; opacity:1; transition:transform 300ms cubic-bezier(.55,0,1,.6); }
 .scene-rig [data-scene-part='ground'] .scene-draw-softline { stroke:#ac9985; stroke-opacity:.32; }
 .scene-rig-steam { animation:scene-rig-steam 4s ease-in-out infinite; transform-box:fill-box;transform-origin:center bottom; }
 .scene-rig[data-scene-part="scene-R2"] .scene-rig-look { animation:scene-rig-watch 16s ease-in-out infinite; }

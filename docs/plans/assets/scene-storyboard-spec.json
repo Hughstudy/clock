@@ -3,25 +3,25 @@
   "scenes": [
     {
       "id": "F1",
-      "title": "Prepare a little meal",
+      "title": "A pot of soup",
       "kind": "focus",
-      "support": "Vegetables, a rice dish and soup share a compact preparation table.",
+      "support": "A pot in front with a prep bowl at each side, below each hand. A hand tips its bowl at the pot's rim, the pieces fall in, and the spoon stirs.",
       "frames": [
         {
-          "label": "0% · Lay out ingredients",
-          "caption": "Three dishes have their places"
+          "label": "0% · Table set",
+          "caption": "Vegetables, a pot of water with its spoon, dumplings"
         },
         {
-          "label": "40% · Prepare vegetables",
-          "caption": "Spoon and palm move together"
+          "label": "40% · Vegetables in",
+          "caption": "The left bowl is back in its place, empty"
         },
         {
-          "label": "75% · Plate the rice",
-          "caption": "Rice is shaped on its plate"
+          "label": "75% · Dumplings in",
+          "caption": "The right bowl is back in its place, empty"
         },
         {
-          "label": "100% · Three dishes ready",
-          "caption": "Vegetables, rice and warm soup"
+          "label": "100% · Soup is ready",
+          "caption": "Stirred, mixed and steaming"
         }
       ],
       "slug": "F1-food"
@@ -80,19 +80,19 @@
       "id": "F4",
       "title": "A quiet cup of tea",
       "kind": "focus",
-      "support": "One cup on a small side table; short, relaxed arms reach only as far as the cup.",
+      "support": "The tea is made early; for most of the session both hands hold the one cup close.",
       "frames": [
         {
-          "label": "0% · Settle beside the table",
-          "caption": "Hands rest close to the body"
+          "label": "0% · Hand on the kettle",
+          "caption": "About to lift and pour"
         },
         {
-          "label": "40% · Tea is warming",
-          "caption": "One cup stays on its saucer"
+          "label": "40% · Tea in both hands",
+          "caption": "Poured, set down and lifted"
         },
         {
-          "label": "75% · Tea is poured",
-          "caption": "Kettle returns to its base"
+          "label": "75% · Sitting with the tea",
+          "caption": "Cup held close, base supported"
         },
         {
           "label": "100% · Enjoy the tea",
@@ -130,11 +130,11 @@
       "id": "F6",
       "title": "Paper boat",
       "kind": "focus",
-      "support": "A dry folding area and a shallow water tray share the craft table from the start.",
+      "support": "A dry folding area in front and a shallow water tray along the table's front, below both palms.",
       "frames": [
         {
           "label": "0% · Lay out paper",
-          "caption": "Dry paper beside the water tray"
+          "caption": "The tray lies in front, clear of the right arm"
         },
         {
           "label": "40% · Press a crease",
@@ -146,7 +146,7 @@
         },
         {
           "label": "100% · Float the boat",
-          "caption": "The same boat rests in water"
+          "caption": "Set on the water, it glides to the middle"
         }
       ],
       "slug": "F6-boat"
@@ -155,22 +155,22 @@
       "id": "F7",
       "title": "Block tower",
       "kind": "focus",
-      "support": "Each block is supported by a stable base on a floor mat.",
+      "support": "All blocks stand left of the left arm; the flag rides on the block that tops the tower.",
       "frames": [
         {
-          "label": "0% · Place the base",
-          "caption": "Two base blocks and two spares"
+          "label": "0% · Blocks laid out",
+          "caption": "Both arms rest clear of every block"
         },
         {
-          "label": "40% · Add one block",
-          "caption": "One spare joins the tower"
+          "label": "40% · Stack nudged to the base",
+          "caption": "The hand pushed from beside it"
         },
         {
-          "label": "75% · A taller tower",
-          "caption": "The last spare is placed"
+          "label": "75% · Flag block on top",
+          "caption": "Lifted across with a small lean"
         },
         {
-          "label": "100% · Flag on the tower",
+          "label": "100% · Tower and step",
           "caption": "Hands clear of the stable tower"
         }
       ],

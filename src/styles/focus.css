@@ -194,8 +194,9 @@ body { background: var(--paper); }
 .fp-note[hidden] { display: none; }
 .fp-note .text-action { font-size: .8125rem; color: var(--whale); min-height: 24px; }
 
-/* One local panel resting on the plate; nothing below it is hidden or disabled. */
-.focus-panel { position: absolute; z-index: 5; inset: auto 10px calc(var(--art-clear, 0px) + 8px); max-block-size: calc(100% - var(--art-clear, 0px) - 64px - env(safe-area-inset-top)); overflow-y: auto;
+/* One local panel resting on the plate; nothing below it is hidden or disabled. --plate-rise is
+   how far the card has grown above its band (a note row), so the panel never lies over it. */
+.focus-panel { position: absolute; z-index: 5; inset: auto 10px calc(var(--art-clear, 0px) + var(--plate-rise, 0px) + 8px); max-block-size: calc(100% - var(--art-clear, 0px) - var(--plate-rise, 0px) - 64px - env(safe-area-inset-top)); overflow-y: auto;
   padding: 12px 16px 14px; border-radius: var(--radius-card); background: #fff; box-shadow: 0 6px 22px #3c5a8229; text-align: start; overscroll-behavior: contain; }
 /* Panels rise in over 240 ms; they close at once so focus and controls never wait. */
 .focus-panel[open], .focus-task[open] { transition: opacity var(--dur-panel) var(--ease-out), translate var(--dur-panel) var(--ease-out); }

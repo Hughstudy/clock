@@ -41,6 +41,8 @@ The previous spout stopped 23 units short of the cup and the water flew sideways
 
 ## Open arm overlaps
 
+> Addressed on 2026-11-11; see [arm clearance](arm-clearance.md). The table below is the state as of 2026-11-09.
+
 | Scene | Arm | Item | Note |
 | --- | --- | --- | --- |
 | Food | Both | Side dishes and parked spoons | Rest over them for much of the session; predates this work |

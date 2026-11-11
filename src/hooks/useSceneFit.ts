@@ -1,5 +1,5 @@
 import { useLayoutEffect, type RefObject } from 'react'
-import { fitSceneArt, TIME_GAP, wideRoomFit } from '../logic/scene-fit'
+import { fitSceneArt, plateRise, TIME_GAP, wideRoomFit } from '../logic/scene-fit'
 
 // Matches the stylesheet's tall-landscape rule, where the room fills the screen beneath the card.
 const WIDE_ROOM = '(orientation: landscape) and (min-aspect-ratio: 6/5) and (min-height: 600px)'
@@ -12,6 +12,15 @@ export function useSceneFit(scene: RefObject<HTMLElement>, framed: boolean): voi
     if (!root) return
     let frame = 0
     const resize = new ResizeObserver(() => schedule())
+    // A panel rests on the card as it is now, a note row included, never on top of it. Published
+    // at once, so a panel fitting itself in the same pass reads the current value.
+    const plate = root.closest<HTMLElement>('.home')?.querySelector<HTMLElement>('.fp-plate')
+    const rise = () => {
+      const band = root.offsetHeight - (root.querySelector<HTMLElement>('.fp-art')?.offsetHeight ?? root.offsetHeight)
+      root.style.setProperty('--plate-rise', `${plateRise(plate?.offsetHeight ?? 0, band)}px`)
+    }
+    const plateSize = new ResizeObserver(() => { rise(); schedule() })
+    if (plate) plateSize.observe(plate)
     const measure = () => {
       const art = root.querySelector<SVGSVGElement>('.fp-art .blue-companion')
       // The art box ends above the floor band the card sits on; that edge is the support.
@@ -20,6 +29,7 @@ export function useSceneFit(scene: RefObject<HTMLElement>, framed: boolean): voi
       const time = root.querySelector<HTMLElement>('.fp-digits')
       const panel = root.querySelector<HTMLElement>('.focus-panel')
       for (const element of [time, panel]) if (element) resize.observe(element)
+      rise()
       const box = root.getBoundingClientRect()
       const font = parseFloat(getComputedStyle(root).fontSize) || 16
       // Keep room for two lines and their tail even when nobody is speaking.
@@ -59,6 +69,7 @@ export function useSceneFit(scene: RefObject<HTMLElement>, framed: boolean): voi
     return () => {
       cancelAnimationFrame(frame)
       resize.disconnect()
+      plateSize.disconnect()
       children.disconnect()
       window.visualViewport?.removeEventListener('resize', schedule)
     }

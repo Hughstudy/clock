@@ -26,11 +26,11 @@ try{
   // Slow inspection uses exactly the same sampler; never a second timer model.
   await page.locator('label').filter({hasText:'Inspect exact poses'}).locator('input').evaluate(el=>el.click())
   await page.locator('select[aria-label="Playback speed"]').evaluate(el=>{el.value='0.25';el.dispatchEvent(new Event('change',{bubbles:true}))})
-  await range('Completed progress',id==='F4'?55:id==='F3'?10:78)
+  await range('Completed progress',id==='F4'?2:id==='F3'?10:78)
   await page.locator('button').filter({hasText:/^Play sequence$/}).evaluate(el=>el.click())
   // Play sequence begins at zero, so hold then choose the critical range.
   await page.locator('button').filter({hasText:/^Hold this pose$/}).evaluate(el=>el.click())
-  const start=id==='F4'?.55:id==='F3'?.1:.78,end=id==='F4'?.98:id==='F3'?.4:1
+  const start=id==='F4'?.02:id==='F3'?.1:.78,end=id==='F4'?.45:id==='F3'?.4:1
   for(let i=0;i<=120;i++){await range('Completed progress',(start+(end-start)*i/120)*100);await page.waitForTimeout(45)}
   const video=page.video();await context.close();const file=path.join(output,`${id}-normal-and-slow.webm`);await video.saveAs(file);files.push(file);console.log(`Recorded ${id}: ${file}`)
  }

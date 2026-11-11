@@ -28,6 +28,7 @@ export function FocusPanel({ title, onClose, onBack = onClose, timerSummary, chi
     const viewport = window.visualViewport
     const scene = panel.parentElement
     const home = panel.closest<HTMLElement>('.home')
+    const card = home?.querySelector<HTMLElement>('.fp-plate')
     let modal = false
     let frame = 0
     const revealFocus = () => {
@@ -54,9 +55,12 @@ export function FocusPanel({ title, onClose, onBack = onClose, timerSummary, chi
       const topControls = plate ? null : scene?.querySelector<HTMLElement>('.fp-top')?.getBoundingClientRect()
       // In the scene the panel rests above the card's band, which the art box already excludes.
       const sceneFloor = plate ? null : scene?.querySelector<HTMLElement>('.fp-art')
+      // The card may have grown over that band (a note row); the panel rests on the card as it is.
+      // useSceneFit publishes that growth on the scene.
+      const risen = plate || !scene ? 0 : parseFloat(getComputedStyle(scene).getPropertyValue('--plate-rise')) || 0
       const localTop = Math.max(plate ? (box?.top ?? 0) - PLATE_GROWTH : (topControls?.bottom ?? (box?.top ?? 0) + 64) + 12, top + 8)
       const localBottom = Math.min(plate ? (box?.bottom ?? 0) - parseFloat(padding?.paddingBottom ?? '0')
-        : (box?.top ?? 0) + (sceneFloor?.offsetHeight || box?.height || 0) - 18, top + height - 8)
+        : (box?.top ?? 0) + (sceneFloor?.offsetHeight || box?.height || 0) - risen - 18, top + height - 8)
       if (plate) panel.style.setProperty('--picker-space', `${Math.max(0, localBottom - localTop)}px`)
       // This budget is independent of the panel's own layout, so switching to
       // the wider viewport cannot trigger an endless local/modal resize loop.
@@ -84,6 +88,7 @@ export function FocusPanel({ title, onClose, onBack = onClose, timerSummary, chi
     panel.querySelector<HTMLElement>('[data-initial-focus]')?.focus({ preventScroll: true })
     const observer = new ResizeObserver(fit)
     if (scene) observer.observe(scene)
+    if (card && placement !== 'plate') observer.observe(card)
     const layoutObserver = new MutationObserver(fit)
     if (home) layoutObserver.observe(home, { attributes: true, attributeFilter: ['data-layout'] })
     const header = panel.querySelector<HTMLElement>('.focus-panel__header')

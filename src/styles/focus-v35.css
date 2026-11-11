@@ -46,7 +46,7 @@
 .home .fp-bubble .text-action { min-block-size: 44px; }
 
 .home .focus-panel { display: flex; flex-direction: column; overflow: hidden; padding: 12px; margin: 0; border: 0; color: var(--ink);
-  inline-size: auto; max-inline-size: none; max-block-size: calc(100% - var(--art-clear, 0px) - 84px - env(safe-area-inset-top)); }
+  inline-size: auto; max-inline-size: none; max-block-size: calc(100% - var(--art-clear, 0px) - var(--plate-rise, 0px) - 84px - env(safe-area-inset-top)); }
 .home .focus-panel:not([open]) { display: none; }
 .home .focus-panel[data-layout='viewport'] {
   /* Only reserve the part of each safe inset that the visible viewport still includes. */
@@ -94,12 +94,12 @@
 /* In portrait the room and companion come closer, so the floor isn't left empty where the card was. */
 @media (orientation: portrait) {
   .home[data-chrome='away'] .fp-art { --closer-scale: 1.11; transform: translateY(calc(var(--art-clear) - 132px)) scale(var(--closer-scale)); }
-  /* Plant, Tea, Bubbles and Boat reach toward the edges: they settle lower without growing, so nothing is cut off. */
-  .home[data-chrome='away'] .fp-art:has(.blue-companion:is([data-scene='F2'], [data-scene='F4'], [data-scene='F5'], [data-scene='F6'])) { --closer-scale: var(--fit-scale, 1); }
+  /* Plant, Tea, Bubbles, Boat and Blocks reach toward the edges: they settle lower without growing, so nothing is cut off. */
+  .home[data-chrome='away'] .fp-art:has(.blue-companion:is([data-scene='F2'], [data-scene='F4'], [data-scene='F5'], [data-scene='F6'], [data-scene='F7'])) { --closer-scale: var(--fit-scale, 1); }
 }
 @media (orientation: portrait) and (min-width: 700px) {
   .home[data-chrome='away'] .fp-art { --closer-scale: 1.36; transform: translateY(calc(var(--art-clear) - 104px)) scale(var(--closer-scale)); }
-  .home[data-chrome='away'] .fp-art:has(.blue-companion:is([data-scene='F2'], [data-scene='F4'], [data-scene='F5'], [data-scene='F6'])) { --closer-scale: 1.09; }
+  .home[data-chrome='away'] .fp-art:has(.blue-companion:is([data-scene='F2'], [data-scene='F4'], [data-scene='F5'], [data-scene='F6'], [data-scene='F7'])) { --closer-scale: 1.09; }
 }
 @media (orientation: landscape) and (min-aspect-ratio: 6/5) {
   .home .fp-handle, .fp-handle-hint { inset-inline: auto calc(var(--plate-end) + 12px); translate: none; }

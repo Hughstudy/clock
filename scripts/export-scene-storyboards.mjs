@@ -28,13 +28,13 @@ for(const scene of scenes) {
 }
 await writeFile(path.join(out,'scene-storyboards.json'),JSON.stringify({version:2,viewBox:'0 0 320 240',styles,scenes},null,2)+'\n')
 const definitions = [
- ['tea-pour','F4','Tea · hold, pour and return',[.4,.63,.68,.75],['Supported kettle','Lift by the handle','Pour into the same cup','Return to the trivet']],
- ['tea-cup','F4','Tea · supported cup lift',[.8,.88,.93,1],['Reach the cup handle','Support the base','Lift the same cup','Settle close to the body']],
- ['food-serving','F1','Food · prepare three dishes',[0,.2,.5,.8,1],['Ingredients on the table','Prepare the vegetables','Plate the rice','Finish the soup','Three dishes ready']],
+ ['tea-pour','F4','Tea · hold, pour and return',[.03,.1,.15,.22],['Supported kettle','Lift by the handle','Pour into the same cup','Return to the trivet']],
+ ['tea-cup','F4','Tea · supported cup lift',[.27,.32,.37,.45],['Take the cup by its near side','Slip the palm under','Lift the same cup','Settle close to the body']],
+ ['food-serving','F1','Soup · tip each bowl at the rim, then stir',[0,.08,.15,.21,.4,.59,.75,.86,1],['Bowls beside the pot, below the hands','Hand on the bowl\'s far rim','Bowl brought to the pot','Tipped: the pieces fall in','Bowl back in its place','Dumplings tipped in','Both bowls empty','Stirring in circles','Soup is ready']],
  ['book-page','F3','Book · turn, mark and close',[.1,.2,.32,.58,.82,.885,.945,1],['Reach the page corner','Guide a single page','Let the page settle','Place the ribbon','Lift the cover edge','Guide the cover together','Lower onto the page stack','Release the closed book']],
- ['boat-fold','F6','Boat · fold and lower',[0,.3,.6,.82,.9,1],['Dry paper beside the tray','Press the crease','Open the hull','Lift with support','Lower into water','Release the boat']],
+ ['boat-fold','F6','Boat · fold and set afloat',[0,.3,.6,.86,.92,1],['Dry paper beside the tray','Press the crease','Open the hull','Lift with support','Set the bow on the water','The boat glides clear']],
  ['wand-turn','F5','Bubbles · reach, blow and put away',[0,.052,.14,.204,.30,.4],['Wand resting in the jar','Take the handle','Fold the forearm inward','Blow through the loop','Lower the wand','Rest the hand as the bubble drifts']],
- ['block-place','F7','Blocks · stack and top with a flag',[.12,.22,.32,.4,.75,.80,.88,1],['Grasp a nearby block','Carry with support','Guide onto the base','Release the block','Stack the solid faces','Grasp the stored flag','Carry the flag clear','Seat and release the flag']],
+ ['block-place','F7','Blocks · nudge the stack, then top the tower',[0,.14,.28,.4,.5,.6,.7,1],['Blocks clear of both arms','Palm beside the stack','Nudge it to the base','Rest','Support the flag block','Carry it across','Set it on the base','Tower, step and flag']],
  ['drink-sip','R3','Warm drink · sip and set down',[0,.22,.5,.8,.65,1],['Hold the cup close','Blow gently','Tilt toward the mouth','Return to a comfortable hold','Lower onto the table','Release the resting cup']],
 ]
 const sequences=definitions.map(([id,sceneId,title,positions,labels])=>({id,title,frames:positions.map((p,i)=>{const rest=sceneId==='R3',ended=rest&&i>=4,kind=rest?(ended?'ending':'beat'):'idle';return {label:labels[i],caption:rest?(ended?'Supported closing action':'Relaxed action cycle'):`Scene pose ${Math.round(p*100)}%`,sample:{progress:rest?0:p,actionKind:kind,actionProgress:rest?p:0,status:ended?'ended':'running'},svg:draw(sceneId,rest?0:p,kind,rest?p:0,ended)}})}))

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { BLOCK_HEIGHT, BUBBLE_WAND, PLANT_POT, sampleScenePose, sceneArmPath, simpleGesturePulse, SCENE_CUP_BASE, SCENE_CUP_HANDLE, transformScenePoint, type SceneArm, type ScenePoint } from './scene-pose'
+import { BLOCK_HEIGHT, BLOCK_WIDTH, BOAT_FLOAT, BOAT_TRAY, BUBBLE_WAND, PLANT_POT, sampleScenePose, sceneArmPath, simpleGesturePulse, SCENE_CUP_BASE, SCENE_CUP_HANDLE, transformScenePoint, type SceneArm, type ScenePoint } from './scene-pose'
 import { achievedSceneLandmark } from './scene-playback'
 import { blueCompanionSpec } from '../data/blue-companion'
 import type { SceneId } from './types'
@@ -73,7 +73,8 @@ describe('sampled scene contact and silhouette',()=>{
     for(const id of ['F4','R3'] as const)for(let i=0;i<=100;i++){
       const f=sampleScenePose({id,progress:i/100,activityProgress:i/100,actionKind:'beat',actionProgress:i/100})
       expect(f.cup.scale).toBe(.72)
-      for(const c of f.contacts.filter(c=>c.active&&c.name.startsWith('cup'))){
+      // The palm on the cup's near side slides under it on the way up; these two are fixed anchors.
+      for(const c of f.contacts.filter(c=>c.active&&(c.name==='cup-base'||c.name==='cup-handle'))){
         const local=c.name==='cup-base'?SCENE_CUP_BASE:SCENE_CUP_HANDLE
         const actual=transformScenePoint({x:local.x*f.cup.scale,y:local.y*f.cup.scale},f.cup)
         expect(distance(c.hand,actual),`${id} ${c.name} ${i}`).toBeLessThan(.001)
@@ -92,7 +93,7 @@ describe('sampled scene contact and silhouette',()=>{
         expect(grips.has('kettle-handle')).toBe(false)
         expect(frame.kettle).toEqual(parked)
       }
-      if(distance(frame.cup,supportedCup)>.0001) expect(grips.has('cup-base')||grips.has('cup-handle')).toBe(true)
+      if(distance(frame.cup,supportedCup)>.0001) expect(grips.has('cup-side')||grips.has('cup-base')||grips.has('cup-handle')).toBe(true)
     }
     const final = at(1)
     expect(final.contacts.map(c=>c.name).sort()).toEqual(['cup-base','cup-handle'])
@@ -119,7 +120,7 @@ describe('sampled scene contact and silhouette',()=>{
       expect(blocks.blocks).toHaveLength(4);expect(boat.boat.scale).toBe(.71)
     }
     const end=sampleScenePose({id:'F6',progress:1})
-    expect(end.boat.x).toBe(221);expect(end.boat.y).toBeCloseTo(0)
+    expect(end.boat.x).toBe(BOAT_TRAY.x);expect(end.boat.y).toBeCloseTo(BOAT_FLOAT)
   })
   it('supports the rotating cover edge throughout closure, including the handoff',()=>{
     for(let i=0;i<=1000;i++){
@@ -221,13 +222,13 @@ describe('sampled scene contact and silhouette',()=>{
       for(const samples of Object.values(areas))expect(Math.max(...samples)/Math.min(...samples)).toBeLessThan(2.1)
     }
   })
-  it('stacks one block squarely on the base, stands the other beside it and sets the flag inside the top footprint',()=>{
+  it('stacks one block squarely on the base, stands the other flush beside it and keeps the flag inside the top footprint',()=>{
     const frame=sampleScenePose({id:'F7',progress:1})
     const [base,,step,top]=frame.blocks
     expect(top!.y).toBe(base!.y-BLOCK_HEIGHT)
     expect(top!.x).toBe(base!.x)
     expect(step!.y).toBe(base!.y)
-    expect(step!.x).toBeGreaterThanOrEqual(base!.x+31)
+    expect(step!.x).toBe(base!.x+BLOCK_WIDTH)
     expect(frame.flag.y).toBeGreaterThan(top!.y-BLOCK_HEIGHT-6)
     expect(frame.flag.y).toBeLessThan(top!.y-BLOCK_HEIGHT)
     expect(frame.flag.x).toBeGreaterThan(top!.x+6)
@@ -315,13 +316,15 @@ describe('sampled scene contact and silhouette',()=>{
   it('fills the cup only after the water starts and stops as it ends',()=>{
     const firstPour=Array.from({length:2001},(_,i)=>i/2000).find(p=>sampleScenePose({id:'F4',progress:p}).kettle.pour>0)!
     expect(sampleScenePose({id:'F4',progress:firstPour-.02}).cup.liquid).toBe(0)
-    expect(sampleScenePose({id:'F4',progress:.73}).cup.liquid).toBe(1)
-    expect(sampleScenePose({id:'F4',progress:.73}).kettle.pour).toBe(0)
+    expect(sampleScenePose({id:'F4',progress:.2}).cup.liquid).toBe(1)
+    expect(sampleScenePose({id:'F4',progress:.2}).kettle.pour).toBe(0)
   })
   it('mirrors the two hands wherever neither is doing a job',()=>{
     for(const [id,progress] of [['F1',0],['F2',.5],['F3',0],['F5',0],['F7',0],['F8',.5]] as const){
       const f=sampleScenePose({id,progress,status:'running'})
-      f.left.points.forEach((v,i)=>expect(v,`${id} point ${i}`).toBeCloseTo(i%2===0?324-f.right.points[i]!:f.right.points[i]!,1))
+      // Mirrored about the body's own middle, wherever it sits at the table.
+      const across=2*(f.body.x+120)
+      f.left.points.forEach((v,i)=>expect(v,`${id} point ${i}`).toBeCloseTo(i%2===0?across-f.right.points[i]!:f.right.points[i]!,1))
     }
   })
   it('draws the ready and resting arms as exact mirror images',()=>{

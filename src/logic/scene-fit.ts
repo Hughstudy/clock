@@ -84,6 +84,12 @@ export function wideRoomFit(sceneWidth: number, artWidth: number, cardLeft: numb
   return { zoom, cardPan, roomShift: cardPan / 2 / artWidth * ART_VIEW_WIDTH / ROOM_RIG_SCALE }
 }
 
+/** How far the card has grown above the band reserved for it (a note row, a second line).
+ * `reserved` is that band's height; zero means the card sits beside the scene instead. */
+export function plateRise(plateHeight: number, reserved: number): number {
+  return reserved > 0 && plateHeight > reserved ? Math.round(plateHeight - reserved) : 0
+}
+
 export function fitSceneArt(input: SceneFitInput): SceneFit {
   const { sceneWidth, sceneHeight, artWidth, topLimit, bubbleHeight, timeHeight, panelTop, framed } = input
   if (!(artWidth > 0) || !(sceneHeight > 0)) return { scale: 1, shift: 0, hidden: false }

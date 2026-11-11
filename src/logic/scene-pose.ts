@@ -42,7 +42,8 @@ export interface ScenePoseFrame {
   wand: SceneObject & { ring: ScenePoint; breath: number; bubbles: readonly { x: number; y: number; radius: number; travel: number }[] }
   blocks: readonly SceneObject[]
   flag: SceneObject
-  food: { greens: number; rice: number; soup: number; spoon: ScenePoint; tip: ScenePoint; soupSpoon: ScenePoint; soupTip: ScenePoint; leftHeld: number; rightHeld: number }
+  /** Shares of each ingredient still in its bowl and in the pot; each pair always adds up to one. */
+  food: { greensLeft: number; extrasLeft: number; potGreens: number; potExtras: number; simmer: number; mix: number; leftBowl: SceneObject; rightBowl: SceneObject; leftLip: ScenePoint; rightLip: ScenePoint; spoon: ScenePoint; tip: ScenePoint; leftHeld: number; rightHeld: number; stirHeld: number }
   stretch: number
   gaze: ScenePoint
   touched: boolean
@@ -174,6 +175,15 @@ function bubblePose(p: number) {
     wand: { ...grip, ring: transformScenePoint(bubbleLoop,grip), breath, bubbles },
   }
 }
+/** The water tray lies along the front of the table, below both palms, so the right arm is clear
+ * of it at rest and while folding. It is wide enough for the whole boat and stays inside the
+ * narrowest screen's view of the room. */
+export const BOAT_TRAY = {x:234,y:186,width:37,depth:7} as const
+/** How far the boat settles into the tray below the folding height. */
+export const BOAT_FLOAT = 3
+const BOAT_FOLD_X = 162
+/** Where the hand lets go: the bow is over the water and the arm still hangs at a natural length. */
+const BOAT_LAUNCH_X = 216
 export const SCENE_CUP_SCALE = .72
 /** Where the cup waits on its saucer: under the kettle's spout, so water can fall straight in. */
 export const TEA_CUP_HOME = {x:122,y:180}
@@ -182,8 +192,18 @@ const POUR_TILT = 32
 // The hand position that puts the tilted spout just above the left of the cup's opening.
 const POUR_GRIP = point(88.85,123.24)
 export const SCENE_CUP_BASE = {x:-12,y:0}
+/** The near wall of the cup, where a palm holds it without hiding behind it. */
+export const SCENE_CUP_SIDE = {x:-25,y:-5}
+/** How much earlier the tea is made than it used to be, as a share of the session. */
+const TEA_LEAD = .53
 export const SCENE_CUP_HANDLE = {x:29,y:-9}
 export const BLOCK_HEIGHT = 22
+/** A block's front face is this wide; its side face adds the depth. */
+export const BLOCK_WIDTH = 25
+/** The tower stands as far left as the narrowest screen shows, and the step block flush beside it. */
+const BLOCK_TOWER_X = 49, BLOCK_STEP_X = BLOCK_TOWER_X + BLOCK_WIDTH
+/** The companion sits a little to the right here, so its left arm hangs clear of the blocks. */
+const BLOCK_SEAT_X = 52
 function cupAnchor(local: ScenePoint, cup: SceneObject & {scale:number}): ScenePoint { return transformScenePoint(point(local.x*cup.scale,local.y*cup.scale),cup) }
 const contact = (name: string, hand: ScenePoint, prop: ScenePoint, active = true): SceneContact => ({ name, hand, prop, active })
 
@@ -218,44 +238,49 @@ export function sampleScenePose(input: ScenePoseInput): ScenePoseFrame {
   let wand: ScenePoseFrame['wand'] = { x: 240, y: 165, angle: 0, ring: point(240,193), breath: 0, bubbles: [] }
   const blocks: SceneObject[] = [{x:64,y:186,angle:0},{x:196,y:186,angle:0},{x:100,y:186,angle:0},{x:100,y:164,angle:0}]
   const flag = { x: 136, y: 184, angle: 0 }
-  let food = { greens: span(p,.16,.29), rice: span(p,.43,.58), soup: span(p,.76,.88), spoon: point(129,188), tip: point(104,195), soupSpoon: point(222,188), soupTip: point(248,193), leftHeld: 0, rightHeld: 0 }
+  let food: ScenePoseFrame['food'] = { greensLeft: 1, extrasLeft: 1, potGreens: 0, potExtras: 0, simmer: 0, mix: 0, leftBowl: {x:115,y:183,angle:0}, rightBowl: {x:209,y:183,angle:0}, leftLip: point(130,183), rightLip: point(194,183), spoon: point(187,164), tip: point(169,183), leftHeld: 0, rightHeld: 0, stirHeld: 0 }
   let stretch = 0
   let gaze = point(0,0)
   if (input.id === 'F4') {
+    // The tea is made early and the cup is in both hands by 40% of the session, so the arm rests
+    // on the kettle only briefly and the long, settled part is the companion holding its tea.
+    const t = p + TEA_LEAD
     // Lift first, then tilt. Water only runs once the spout is low enough, and it stops
     // before the kettle levels out, so the stream never hangs from a level kettle.
-    const raise = span(p,.58,.625) * (1-span(p,.725,.75))
-    const tilt = span(p,.625,.665) * (1-span(p,.705,.735))
-    const lift = span(p,.795,.9), support = span(p,.76,.795)
+    const raise = span(t,.58,.625) * (1-span(t,.725,.75))
+    const tilt = span(t,.625,.665) * (1-span(t,.705,.735))
+    const lift = span(t,.795,.9), support = span(t,.76,.795)
     // Sit facing the tea table with the arms hanging slightly forward, once the kettle is down.
-    const gather = span(p,.76,.82)
+    const gather = span(t,.76,.80)
     // A small lean toward the kettle as it goes down keeps the arm at its usual length.
-    const setDown = span(p,.725,.75) * (1-span(p,.76,.795))
+    const setDown = span(t,.725,.75) * (1-span(t,.76,.795))
     body.x = 42 + 6 * gather - 4 * setDown; body.y = 38 + 2 * gather
     const ls = point(body.x+74,body.y+105), rs = point(body.x+161,body.y+105)
     const handle = point(6.616,-43.4) // just past the middle of the top handle
     // Set down a little further out, so the spout is clear of the arm reaching for the cup.
-    const park = span(p,.725,.75)
+    const park = span(t,.725,.75)
     const grip = pointMix(point(72-7*park+handle.x,180+handle.y),POUR_GRIP,raise)
     kettle.grip = grip; kettle.angle = POUR_TILT*tilt
     const handleOffset = transformScenePoint(handle,{x:0,y:0,angle:kettle.angle})
     kettle.x = grip.x-handleOffset.x; kettle.y = grip.y-handleOffset.y
     kettle.spout = transformScenePoint(point(47,-30),kettle)
     kettle.pour = span(tilt,.78,.92)
-    cup.liquid = span(p,.665,.708)
-    // The left palm under the cup carries it to the chest; the right hand joins near the end.
+    cup.liquid = span(t,.665,.708)
+    // The left palm takes the cup by its near side, in view, and slips under it on the way to
+    // the chest; the right hand joins near the end.
     cup.x = mix(TEA_CUP_HOME.x,TEA_CUP_HELD.x,lift); cup.y = mix(TEA_CUP_HOME.y,TEA_CUP_HELD.y,lift)
-    cup.held = span(p,.87,.93)
-    const rp = cupAnchor(SCENE_CUP_HANDLE,cup), lp = cupAnchor(SCENE_CUP_BASE,cup)
-    // Release the stationary kettle through its near side. A low arc beyond
-    // the lid and below the raised spout brings the palm under the cup.
-    const out = point(88,152), under = point(90,194)
-    const a = pointMix(grip,out,support), b = pointMix(out,under,support), c = pointMix(under,lp,support)
+    cup.held = span(t,.87,.93)
+    const under = span(lift,.05,.55)
+    const rp = cupAnchor(SCENE_CUP_HANDLE,cup), lp = cupAnchor(pointMix(SCENE_CUP_SIDE,SCENE_CUP_BASE,under),cup)
+    // Release the stationary kettle through its near side and come down beside the cup.
+    const out = point(88,152), low = point(92,186)
+    const a = pointMix(grip,out,support), b = pointMix(out,low,support), c = pointMix(low,lp,support)
     const leftPalm = pointMix(pointMix(a,b,support),pointMix(b,c,support),support)
-    left = roundedReach('left',ls,leftPalm,.60)
+    // Beside the spout the arm bows toward the body; it relaxes outward as the cup comes up.
+    left = roundedReach('left',ls,leftPalm,mix(.60,-.60,support*(1-under)))
     right = roundedReach('right',rs,palmArc(rs,point(rs.x-23,rs.y+29),rp,cup.held))
     if(support===0)contacts.push(contact('kettle-handle',left.palm,kettle.grip))
-    if(support===1)contacts.push(contact('cup-base',left.palm,lp))
+    if(support===1)contacts.push(contact(under===1?'cup-base':'cup-side',left.palm,lp))
     if(cup.held===1)contacts.push(contact('cup-handle',right.palm,rp))
     gaze.x=-2*(1-lift)
   } else if(input.id==='F3') {
@@ -294,15 +319,18 @@ export function sampleScenePose(input: ScenePoseInput): ScenePoseFrame {
     if(leftHold===1)contacts.push(contact('cover-left',left.palm,leftGrip))
   } else if(input.id==='F6') {
     const fold1=span(p,.12,.39),fold2=span(p,.43,.73),t=boat.transfer
-    const travel=span(t,.28,.88)
-    boat.x=mix(162,221,travel);boat.y=-3*Math.sin(travel*Math.PI)
-    const paperGrip = (x: number, y: number) => point(boat.x+(x-160)*.71,180+(y-180)*.71+boat.y)
+    // The hand carries the hull to the tray's near rim and lets go; the water takes it the rest
+    // of the way, so the arm never reaches across the tray or rests over it.
+    const carry=span(t,.28,.72),glide=span(t,.72,.96)
+    const carried=mix(BOAT_FOLD_X,BOAT_LAUNCH_X,carry)
+    boat.x=carried+(BOAT_TRAY.x-BOAT_LAUNCH_X)*glide;boat.y=-3*Math.sin(carry*Math.PI)+BOAT_FLOAT*span(carry,.5,1)
+    const paperGrip = (x: number, y: number) => point(carried+(x-160)*.71,180+(y-180)*.71+boat.y)
     boat.left=paperGrip(126+fold1*6,170-fold1*8+fold2*8)
     const rightPaper=paperGrip(192-fold1*3-fold2*5,170-fold2*5)
     // Slip one palm under the near corner while the paper is on the table,
     // then release the other before carrying the hull the short way to water.
-    boat.right=pointMix(rightPaper,point(boat.x+29-24*travel,178+boat.y),span(t,0,.15))
-    const leftRelease=span(t,.14,.28),rightRelease=span(t,.88,1)
+    boat.right=pointMix(rightPaper,point(carried+29-24*carry,178+boat.y),span(t,0,.15))
+    const leftRelease=span(t,.14,.28),rightRelease=span(t,.72,1)
     const ls = point(111,143), rs = point(213,143)
     left = roundedReach('left',ls,palmArc(ls,boat.left,restLeft.palm,leftRelease))
     right = roundedReach('right',rs,palmArc(rs,boat.right,mirror(restLeft).palm,rightRelease))
@@ -357,37 +385,34 @@ export function sampleScenePose(input: ScenePoseInput): ScenePoseFrame {
     gaze = pose.gaze
     contacts.push(contact('wand-handle',right.palm,point(wand.x,wand.y),pose.held))
   } else if(input.id==='F7') {
-    // Blocks on the low table, within the left hand's easy reach. The two to move start as a
-    // small stack beside the hand; the base stands to the left, a spare one on the right.
-    const first=span(p,.14,.34), second=span(p,.45,.7)
-    // Follow the little lift and settle over the stack instead of stretching
-    // the forearm across the table. Both shoulder roots travel with the torso.
-    body.y = 27 - 5 * Math.sin(Math.PI * first)
-    body.x -= 4 * span(first,0,.84) * (1-span(p,.34,.44))
-    const shoulder = point(body.x+69,body.y+105), rest = point(shoulder.x+22,shoulder.y+25)
-    right = roundedReach('right',point(body.x+171,body.y+105),point(body.x+149,body.y+130),.56)
-    const base=blocks[0]!, tableY=base.y, onBaseY=tableY-BLOCK_HEIGHT
-    // The near palm supports the underside of the top block. A small lift
-    // clears both stacks and keeps the hand below the face.
-    blocks[3] = carry(first,[[0,102,onBaseY],[.22,102,onBaseY-6],[.72,65,onBaseY-6],[1,64,onBaseY]])
-    blocks[2] = {x:mix(102,96,second),y:tableY,angle:0}
-    const hold1=span(p,.08,.14)*(1-span(p,.34,.4))
-    const hold2=span(second,.1,.3)*(1-span(p,.7,.75))
-    const grip1=point(blocks[3]!.x+20,blocks[3]!.y-1), grip2=point(blocks[2]!.x+27,blocks[2]!.y-19)
-    const raise=span(p,.8,.94)
-    const flagSeat = onBaseY-BLOCK_HEIGHT-3
-    // First move in front of the stack, lift outside its right edge, then
-    // put the pole into the top. The hand never cuts through its shoulder.
-    const flagGrip = carry(raise,[[0,127,168],[.29,79,156],[.66,78,117],[.82,79,116],[1,79,flagSeat-16]])
-    flag.x = flagGrip.x; flag.y = flagGrip.y + 16
-    const fg=point(flagGrip.x,flagGrip.y), flagHold=span(p,.76,.8)*(1-span(p,.94,1))
-    const [grip,hold] = flagHold>0 ? [fg,flagHold] as const : hold2>0 ? [grip2,hold2] as const : [grip1,hold1] as const
-    const palm = palmArc(shoulder,rest,grip,hold)
-    // The bend stays small as the palm turns out past the shoulder.
-    left = roundedReach('left',shoulder,palm,.56)
-    if(hold1>.999)contacts.push(contact('block-first',left.palm,grip1))
-    if(hold2>.999)contacts.push(contact('block-second',left.palm,grip2))
-    if(flagHold>.999)contacts.push(contact('flag-stem',left.palm,fg))
+    // Every block stands to the left of the left arm, so neither arm rests over a block. The
+    // flag rides on the block that will top the tower. The hand first nudges the little stack up
+    // against the base, then lifts its top block across; the body leans with the reach, so the
+    // arm keeps its length.
+    const slide=span(p,.14,.28), lifted=span(p,.48,.70)
+    const hold1=span(p,.08,.14)*(1-span(p,.28,.34))
+    const hold2=span(p,.42,.48)*(1-span(p,.70,.75))
+    const reach=span(lifted,.15,.74)*(1-span(p,.70,.75))
+    body.x=BLOCK_SEAT_X-5*reach; body.y=27; body.lean=reach?-6*reach:0
+    const shoulder=point(body.x+69,body.y+105), rest=point(shoulder.x+22,shoulder.y+25)
+    right=roundedReach('right',point(body.x+171,body.y+105),point(body.x+149,body.y+130),.56)
+    const tableY=186, onBaseY=tableY-BLOCK_HEIGHT, stepX=mix(BLOCK_STEP_X+6,BLOCK_STEP_X,slide)
+    blocks[0]={x:BLOCK_TOWER_X,y:tableY,angle:0}
+    blocks[1]={x:214,y:tableY,angle:0}
+    blocks[2]={x:stepX,y:tableY,angle:0}
+    blocks[3]=carry(lifted,[[0,stepX,onBaseY],[.22,stepX,onBaseY-5],[.74,BLOCK_TOWER_X,onBaseY-5],[1,BLOCK_TOWER_X,onBaseY]])
+    flag.x=blocks[3]!.x+10; flag.y=blocks[3]!.y-BLOCK_HEIGHT-3
+    // The palm stays beside the blocks rather than over them: it pushes at the seam of the
+    // stack, then supports the top block's near side, a little higher as it clears the step.
+    const push=point(stepX+BLOCK_WIDTH+11,onBaseY+1), corner=point(blocks[3]!.x+BLOCK_WIDTH+9,blocks[3]!.y-9*span(lifted,.3,.8))
+    const [grip,hold]=hold2>0?[corner,hold2] as const:[push,hold1] as const
+    // The arms are drawn leaning with the body, so place the palm in the body's own frame.
+    const pivot=point(body.x+120,body.y+160)
+    const turn=(g:ScenePoint,degrees:number)=>transformScenePoint(point(g.x-pivot.x,g.y-pivot.y),{...pivot,angle:degrees})
+    left=roundedReach('left',shoulder,palmArc(shoulder,rest,turn(grip,-body.lean),hold),.56)
+    const hand=turn(left.palm,body.lean)
+    if(hold1>.999)contacts.push(contact('block-stack',hand,push))
+    if(hold2>.999)contacts.push(contact('block-top',hand,corner))
   } else if(input.id==='F8'||input.id==='R2') {
     body.lean=-5;gaze.x=-2;gaze.y=-4
   } else if(input.id==='R1') {

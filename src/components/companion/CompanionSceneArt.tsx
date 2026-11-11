@@ -5,8 +5,8 @@ import type { CompanionScene } from '../../contracts/presentation'
 import { blueCompanionSpec } from '../../data/blue-companion'
 import { useSceneLight } from '../../hooks/companion/useSceneLight'
 import { sceneArtPalette, sceneArtSketch } from '../../data/scene-art'
-import { SPOON_RESTS } from '../../logic/scene-food-rig'
-import { BLOCK_HEIGHT, BUBBLE_WAND, focusAttentionTransforms, PLANT_POT, sampleScenePose, sceneArmPath, sceneSmooth, TEA_CUP_HOME, type ScenePoseFrame } from '../../logic/scene-pose'
+import { BOWL_POUR_TILT, FOOD_BOWL, FOOD_DISHES, FOOD_POT_OPENING, FOOD_SLIPS, SPOON_LENGTH } from '../../logic/scene-food-rig'
+import { BLOCK_HEIGHT, BOAT_TRAY, BUBBLE_WAND, focusAttentionTransforms, PLANT_POT, sampleScenePose, sceneArmPath, sceneSmooth, TEA_CUP_HOME, type ScenePoseFrame } from '../../logic/scene-pose'
 
 export function ScenePart({ name, className, transform }: { name: string; className?: string; transform?: string }) {
   return <g className={className} transform={transform} data-scene-part={name}>
@@ -22,7 +22,8 @@ function Ground(){return <g data-scene-part="ground"><E x={160} y={220} rx={137}
 function Table({tea=false}:{tea?:boolean}){return tea?<g data-scene-part="tea-table" transform="translate(-8 0)"><P d="M72 188 L74 220 Q78 223 83 219 L85 190 M176 190 L182 219 Q186 223 191 219 L188 188" c="edge"/><P d="M46 184 L46 189 Q129 205 214 189 L214 184" c="edge"/><E x={130} y={184} rx={84} ry={13} c="table"/></g>:<g data-scene-part="table"><P d="M55 185 L54 220 Q59 224 65 220 L70 187 M248 187 L254 220 Q260 224 266 220 L265 185" c="edge"/><P d="M35 180 L35 187 Q159 210 285 187 L285 180" c="edge"/><E x={160} y={180} rx={125} ry={17} c="table"/><P d="M47 181 Q159 200 274 181" c="softline"/></g>}
 function Mat(){return <g data-scene-part="mat"><P d="M59 196 Q160 184 267 199 L285 217 Q154 238 37 218 Z" c="light"/><P d="M55 217 Q160 231 271 215" c="softline"/></g>}
 function Cushion(){return <g data-scene-part="cushion"><P d="M103 191 Q86 182 91 206 Q151 231 230 209 Q244 191 224 188 Q165 204 103 191Z" c="light"/><P d="M106 209 Q165 218 219 207" c="softline"/></g>}
-function SideTable(){return <g data-scene-part="side-table"><P d="M205 178 L205 217 M249 178 L249 215"/><E x={226} y={178} rx={30} ry={10} c="table"/><E x={226} y={177} rx={20} ry={4} c="paper"/></g>}
+// Narrow enough to stand clear of the right arm at rest; the cup's saucer sits at its near side.
+function SideTable(){return <g data-scene-part="side-table"><P d="M216 178 L216 217 M250 178 L250 215"/><E x={233} y={178} rx={23} ry={9} c="table"/><E x={226} y={177} rx={15} ry={3.5} c="paper"/></g>}
 function Steam({x, y, amount = 1}: {x: number; y: number; amount?: number}) {
   const curls = ['M0 0 C12 -9 -9 -17 1 -28', 'M13 0 C27 -13 3 -22 15 -37', 'M-12 1 C0 -12 -22 -23 -9 -43']
   // The loop moves an inner group by transform; the placement stays on the outer one.
@@ -65,37 +66,57 @@ function Kettle({frame,front=false}:{frame:ScenePoseFrame;front?:boolean}){
     </> : <P d="M-17 -29 C-28 -49 28 -49 17 -29" c="handle"/>}
   </g>
 }
-function FoodDish({x,y,kind,detail}:{x:number;y:number;kind:'greens'|'rice'|'soup';detail:number}) {
-  const d=clamp(detail),riceHeight=.08+.92*d
-  return <g data-scene-part={`dish-${kind}`} data-prepared={d} transform={`translate(${x} ${y})`}>
-    <E x={0} y={1} rx={25} ry={4}/>
-    {kind==='rice'?<>
-      <E x={0} y={-1} rx={30} ry={7} c="paper"/><E x={0} y={-2} rx={24} ry={4} c="edge"/>
-      <g data-scene-part="rice-ingredients" opacity={1-d}>
-        <E x={-11} y={-6} rx={5} ry={2.5} c="paper"/><E x={1} y={-7} rx={6} ry={3} c="paper"/><E x={12} y={-5} rx={4} ry={2} c="paper"/>
-      </g>
-      <g data-scene-part="plated-rice" transform={`translate(0 -3) scale(1 ${riceHeight})`}>
-        <P d="M-20 0 Q-19 -9 -11 -10 Q-8 -18 0 -15 Q10 -19 13 -10 Q21 -8 21 0 Z" c="paper"/>
-        <P d="M-10 -6 l3 1 m4 -6 l3 1 m6 5 l3 -1 m-12 5 l3 1" c="softline" opacity={d}/>
-        <P d="M-4 -15 Q-8 -23 2 -21 Q6 -18 3 -14 Z" c="green" opacity={stage(d,.7,1)}/>
-      </g>
-    </>:<>
-      <P d="M-24 -12 L24 -12 Q21 4 0 5 Q-21 4 -24 -12 Z" c="paper"/><E x={0} y={-12} rx={24} ry={6} c="paper"/>
-      {kind==='greens'?<>
-        <P d={`M-18 -13 Q-24 ${-29+6*d} -13 ${-27+5*d} Q-12 ${-37+10*d} -4 ${-28+5*d} Q5 ${-36+10*d} 9 ${-26+5*d} Q20 ${-30+6*d} 20 -16 Q9 -8 -18 -13 Z`} c="green"/>
-        <P d={`M-10 ${-27+6*d} L-5 -14 M8 ${-28+6*d} L6 -14`} c="softline"/>
-        <E x={-11} y={-13} rx={5*d} ry={4*d} c="pink"/><E x={10} y={-16} rx={5*d} ry={4*d} c="pink"/>
-      </>:<>
-        <E x={0} y={-4-8*d} rx={12+9*d} ry={2+2.5*d} c="edge"/>
-        <E x={-7} y={-5-8*d} rx={4*d} ry={2*d} c="green"/><E x={7} y={-3-8*d} rx={3*d} ry={1.8*d} c="green"/>
-      </>}
-    </>}
+/** A prep bowl. Its pieces slide toward the lip as it tips and are gone once they have fallen. */
+function FoodBowl({bowl,kind,amount}:{bowl:ScenePoseFrame['food']['leftBowl'];kind:'greens'|'extras';amount:number}) {
+  const {width:w,depth:h,body}=FOOD_BOWL,a=clamp(amount),toLip=Math.sign(bowl.angle)*4*clamp(Math.abs(bowl.angle)/BOWL_POUR_TILT)
+  return <g data-scene-part={`bowl-${kind}`} data-amount={a} transform={`translate(${bowl.x} ${bowl.y}) rotate(${bowl.angle})`}>
+    <P d={`M${-w} 0 Q${-w+.5} ${body-.5} 0 ${body} Q${w-.5} ${body-.5} ${w} 0 Z`} c="paper"/>
+    <E x={0} y={0} rx={w} ry={h} c="paper"/>
+    <g transform={`translate(${toLip} 0)`}>
+      {/* Four pieces; the one nearest the lip leaves first. */}
+      {kind==='greens'
+        ?[[-7,-1.2],[-2,-2.6],[3,-1],[7,-2]].map(([dx=0,dy=0],i)=><g key={i} transform={`translate(${dx} ${dy}) scale(.25)`} opacity={a>(3-i)*.25+.125?1:0}><P d="M-18 3 Q-24 -13 -13 -11 Q-12 -21 -4 -12 Q5 -20 9 -10 Q20 -14 20 0 Q9 8 -18 3 Z" c="green"/></g>)
+        :[[-7,-.6],[-1.5,-2.4],[3.5,-.4],[8,-1.8]].map(([dx=0,dy=0],i)=><E key={i} x={dx} y={dy} rx={3.9} ry={2.6} c="paper" opacity={a>(3-i)*.25+.125?1:0}/>)}
+    </g>
   </g>
 }
-function FoodSpoon({grip,tip,held,name}:{grip:{x:number;y:number};tip:{x:number;y:number};held:number;name:string}) {
+/** Where each bowl's lip is while its pieces slide off, so they fall from there into the broth. */
+const FOOD_DROPS={
+  greens:FOOD_SLIPS.greens.map(progress=>sampleScenePose({id:'F1',progress}).food.leftLip),
+  extras:FOOD_SLIPS.extras.map(progress=>sampleScenePose({id:'F1',progress}).food.rightLip),
+}
+const mixed=(from:readonly [number,number],to:readonly [number,number],t:number)=>[from[0]+(to[0]-from[0])*t,from[1]+(to[1]-from[1])*t] as const
+/** The pot fills with what the bowls tip in: each piece falls, the broth rises, and stirring mixes it. */
+function FoodPot({frame}:{frame:ScenePoseFrame}) {
+  const {potGreens:g,potExtras:e,simmer,mix}=frame.food,{x,y}=FOOD_DISHES.pot,{width:w,depth:h}=FOOD_POT_OPENING
+  // Whatever goes in raises the broth a little.
+  const surface=1.5-1.5*(g+e)
+  const piece=(kind:'greens'|'extras',i:number,landing:readonly [number,number],stirred:readonly [number,number],share:number)=>{
+    // Each piece starts at the bowl's lip and drops in its own time, then drifts as the spoon stirs.
+    const from=FOOD_DROPS[kind][i]!,landed=share>i*.25+.125,[dx,dy]=mixed(landing,stirred,mix)
+    return <g key={kind+i} className="scene-fall" data-landed={landed} style={{'--fall-x':`${from.x-x-dx}px`,'--fall-y':`${from.y-y-surface-dy}px`} as CSSProperties}>
+      {kind==='greens'?<E x={dx} y={surface+dy} rx={3.4} ry={1.5} c="green"/>:<E x={dx} y={surface+dy} rx={3.6} ry={1.9} c="paper"/>}
+    </g>
+  }
+  const greens=[[[-15,.2],[-12,.6]],[[-10,1.9],[5,2]],[[-12,-1.5],[-3,-1.6]],[[-6,.3],[13,-.5]]] as const
+  const extras=[[[15,.2],[12,1.2]],[[10,1.9],[-7,1.8]],[[12,-1.5],[3,.3]],[[6,.3],[-14,-.9]]] as const
+  return <g data-scene-part="pot" data-filled={g+e} transform={`translate(${x} ${y})`}>
+    <E x={0} y={14} rx={22} ry={3.5}/>
+    <path className="scene-draw-pink" d={`M-${w+1} 0 L${w+1} 0 Q${w+1} 12 13 14 H-13 Q-${w+1} 12 -${w+1} 0 Z`} stroke="var(--scene-line)" strokeWidth="1.5"/>
+    <E x={0} y={0} rx={w+1} ry={h+.5} c="paper"/>
+    <g data-scene-part="broth">
+      <ellipse className="scene-draw-water" cx={0} cy={surface} rx={w-4} ry={h-1.6}/>
+      <ellipse className="scene-draw-edge" cx={0} cy={surface} rx={w-4} ry={h-1.6} opacity={.2*(g+e)+.6*simmer}/>
+      {greens.map(([landing,stirred],i)=>piece('greens',i,landing,stirred,g))}
+      {extras.map(([landing,stirred],i)=>piece('extras',i,landing,stirred,e))}
+    </g>
+  </g>
+}
+/** A rigid spoon standing in the pot. */
+function FoodSpoon({grip,tip,held}:{grip:{x:number;y:number};tip:{x:number;y:number};held:number}) {
   const angle=Math.atan2(tip.y-grip.y,tip.x-grip.x)*180/Math.PI
-  return <g data-scene-part={name} data-held={held>.999} transform={`translate(${grip.x} ${grip.y}) rotate(${angle})`}>
-    <P d="M-3 0 L22 0" c="handle"/><E x={26} y={0} rx={6} ry={3} c="paper"/>
+  return <g data-scene-part="soup-spoon" data-held={held>.999} transform={`translate(${grip.x} ${grip.y}) rotate(${angle})`}>
+    <P d={`M-3 0 L${SPOON_LENGTH-4} 0`} c="handle"/><E x={SPOON_LENGTH} y={0} rx={6} ry={3} c="paper"/>
   </g>
 }
 function Book({frame}:{frame:ScenePoseFrame}){
@@ -121,7 +142,7 @@ function Book({frame}:{frame:ScenePoseFrame}){
     <P d={`M${150+(x-150)*.13} ${169+(y-169)*.13} l29 11`} c="softline" opacity={outerCover}/>
   </g>
 }
-function Boat({frame}:{frame:ScenePoseFrame}){const p=frame.boat.fold,f1=stage(p,.12,.39),f2=stage(p,.43,.73);const dx=frame.boat.x-160,dy=frame.boat.y;const topX=173-9*f1,topY=157-12*f1+10*f2;return <g data-scene-part="paper-boat"><g data-scene-part="water-tray"><E x={221} y={180} rx={39} ry={11} c="edge"/><E x={221} y={178} rx={35} ry={8} c="water"/></g><g transform={`translate(${dx} ${dy}) translate(160 180) scale(${frame.boat.scale}) translate(-160 -180)`}><P d={`M${112+7*f1} ${169+8*f1} L${topX} ${topY} L${210-5*f1+3*f2} ${178-f1} L${146-8*f1} ${191-3*f1} Z`} c="paper"/><P d={`M${134+30*f1} ${167-22*f1+10*f2} L${190-26*f1} ${180+f2} M${119} 177 L164 181 L208 177`} c="softline"/><P d={`M${119+10*f2} 177 L${208-9*f2} 177 L${189-6*f2} 188 L${138+7*f2} 188 Z`} c="paper" opacity={f2}/><P d="M145 177 L164 153 L183 177Z" c="paper" opacity={f2}/><P d="M164 154 L164 178" c="softline" opacity={f2}/></g></g>}
+function Boat({frame}:{frame:ScenePoseFrame}){const p=frame.boat.fold,f1=stage(p,.12,.39),f2=stage(p,.43,.73);const dx=frame.boat.x-160,dy=frame.boat.y;const topX=173-9*f1,topY=157-12*f1+10*f2;return <g data-scene-part="paper-boat"><g data-scene-part="water-tray"><E x={BOAT_TRAY.x} y={BOAT_TRAY.y} rx={BOAT_TRAY.width} ry={BOAT_TRAY.depth} c="edge"/><E x={BOAT_TRAY.x} y={BOAT_TRAY.y-1.5} rx={BOAT_TRAY.width-4} ry={BOAT_TRAY.depth-2} c="water"/></g><g transform={`translate(${dx} ${dy}) translate(160 180) scale(${frame.boat.scale}) translate(-160 -180)`}><P d={`M${112+7*f1} ${169+8*f1} L${topX} ${topY} L${210-5*f1+3*f2} ${178-f1} L${146-8*f1} ${191-3*f1} Z`} c="paper"/><P d={`M${134+30*f1} ${167-22*f1+10*f2} L${190-26*f1} ${180+f2} M${119} 177 L164 181 L208 177`} c="softline"/><P d={`M${119+10*f2} 177 L${208-9*f2} 177 L${189-6*f2} 188 L${138+7*f2} 188 Z`} c="paper" opacity={f2}/><P d="M145 177 L164 153 L183 177Z" c="paper" opacity={f2}/><P d="M164 154 L164 178" c="softline" opacity={f2}/></g></g>}
 function Block({x,y,angle,c}:{x:number;y:number;angle:number;c:string}){
   const top = -BLOCK_HEIGHT
   return <g transform={`translate(${x} ${y}) rotate(${angle})`}>
@@ -196,18 +217,21 @@ export function CompanionSceneArt({scene,frame:provided,night=0}:Props){
   let back:ReactNode=null,objects:ReactNode=null,held:ReactNode=null
   const usesTable=['F1','F2','F3','F6','F7'].includes(id)
   const focusArm=(side:'left'|'right')=>f.flipperArm===side?{'data-focus-arm':`${f[side].points[0]} ${f[side].points[1]} ${side==='left'?1:-1}`}:undefined
-  if(id==='F1')objects=<>
-    <FoodDish x={100} y={172} kind="greens" detail={f.food.greens}/><FoodDish x={162} y={188} kind="rice" detail={f.food.rice}/><FoodDish x={225} y={172} kind="soup" detail={f.food.soup}/>
-    <g data-scene-part="utensil-rests">{SPOON_RESTS.map(rest=><R key={rest.x} {...rest} h={5} c="edge" r={2}/>)}</g>
-    <FoodSpoon grip={f.food.spoon} tip={f.food.tip} held={f.food.leftHeld} name="serving-spoon"/><FoodSpoon grip={f.food.soupSpoon} tip={f.food.soupTip} held={f.food.rightHeld} name="soup-spoon"/>
-    <Steam x={225} y={155} amount={f.food.soup*1.4}/>
-  </>
+  if(id==='F1'){
+    objects=<>
+      <FoodPot frame={f}/><FoodSpoon grip={f.food.spoon} tip={f.food.tip} held={f.food.stirHeld}/>
+      {/* Short curls, so the steam stays below the face. */}
+      <g transform={`translate(${FOOD_DISHES.pot.x-3} ${FOOD_DISHES.pot.y-5}) scale(.4)`}><Steam x={0} y={0} amount={.4*(f.food.potGreens+f.food.potExtras)+2*f.food.simmer}/></g>
+    </>
+    // The bowls are drawn over the hands, so a hand holds its bowl by the far rim.
+    held=<><FoodBowl bowl={f.food.leftBowl} kind="greens" amount={f.food.greensLeft}/><FoodBowl bowl={f.food.rightBowl} kind="extras" amount={f.food.extrasLeft}/></>
+  }
   if(id==='F2')objects=<><Plant progress={p}/><E x={f.left.palm.x-2} y={f.left.palm.y+5} rx={10} ry={2}/><E x={f.right.palm.x+2} y={f.right.palm.y+5} rx={10} ry={2}/></>
   if(id==='F3')objects=<Book frame={f}/>
   if(id==='F4'){objects=<><E x={66} y={183} rx={26} ry={4} c="edge"/><E x={TEA_CUP_HOME.x} y={183} rx={20} ry={4} c="paper"/><Kettle frame={f}/><Steam x={f.kettle.x} y={f.kettle.y-38} amount={.5+2.5*p}/></>;held=<><Kettle frame={f} front/><Cup frame={f}/><Pour frame={f}/><Steam x={f.cup.x} y={f.cup.y-17} amount={f.cup.liquid*(.6+f.cup.held*.5)*(1-stage(f.cup.x,186,204))}/></>}
   if(id==='F5')objects=<Bubbles frame={f}/>
   if(id==='F6')objects=<Boat frame={f}/>
-  if(id==='F7')objects=<g data-scene-part="block-inventory">{f.blocks.map((b,i)=><g key={i} data-block={i}><Block {...b} c={['green','table','light','green'][i]??'green'}/></g>)}<E x={127} y={185} rx={5} ry={2} c="edge"/><g data-scene-part="flag" transform={`translate(${f.flag.x} ${f.flag.y}) rotate(${f.flag.angle})`}><P d="M0 0 L0 -24"/><path className="scene-draw-pink" d="M0 -24 L16 -18 L0 -12Z" stroke="var(--scene-line)" strokeWidth="1.4"/></g></g>
+  if(id==='F7')objects=<g data-scene-part="block-inventory">{f.blocks.map((b,i)=><g key={i} data-block={i}><Block {...b} c={['green','table','light','green'][i]??'green'}/></g>)}<g data-scene-part="flag" transform={`translate(${f.flag.x} ${f.flag.y}) rotate(${f.flag.angle})`}><P d="M0 0 L0 -24"/><path className="scene-draw-pink" d="M0 -24 L16 -18 L0 -12Z" stroke="var(--scene-line)" strokeWidth="1.4"/></g></g>
   if(id==='F8')back=<g data-scene-part="sky"><P d="M44 42 C19 49 28 75 49 70 C30 67 32 49 44 42Z" c="paper" opacity={Math.max(.5,sky.moon)}/><g opacity={sky.stars}>{[[260,44],[75,31],[285,105],[224,23],[36,116],[252,85]].map(([x=0,y=0],i)=><g className="scene-rig-star" key={i}><Star x={x} y={y} opacity={i<2?1:stage(p,(i-2)*.17,.2+(i-2)*.17)}/></g>)}<P d="M260 44 L252 85 L285 105" c="softline" opacity={stage(p,.3,.6)}/><g opacity={stage(p,.92,1)}><P d="M211 32 L174 51 M214 37 L187 53" c="softline"/><Star x={216} y={31} r={7}/></g></g></g>
   if(id==='R2')back=<g data-scene-part="clouds"><Cloud x={63} y={58} scale={.67}/><Cloud x={252} y={91} scale={.5}/></g>
   if(id==='R3'){objects=<SideTable/>;held=<><Cup frame={f}/><Steam x={f.cup.x-13} y={f.cup.y-18} amount={1-f.cup.held}/></>}
