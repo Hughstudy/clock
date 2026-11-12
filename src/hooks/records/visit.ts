@@ -1,6 +1,6 @@
 import type { RecordsMode as Mode, MonthFilter } from './useRecordsQuery'
 import type { RangeLength } from '../../logic/stats'
-import type { FocusSceneId } from '../../logic/types'
+import type { SceneId } from '../../logic/types'
 import type { RecordsBand } from '../../logic/record-stories'
 
 export const RECORDS_MODES: Record<Mode, string> = { all: '全部记录', thoughts: '只看想法', scenes: '生活场景', favorites: '我的收藏' }
@@ -11,7 +11,7 @@ export interface RecordsVisit {
   length: RangeLength
   summaryOpen: boolean
   trend: boolean
-  roomTag: FocusSceneId | null
+  roomTag: SceneId | null
   roomBand: RecordsBand
   roomOpener: 'spot' | 'label'
   sourceTop: number | null

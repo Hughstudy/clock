@@ -1,11 +1,11 @@
 import { sceneNames } from '../data/scene-copy'
 import type { RecordsBand } from '../logic/record-stories'
-import type { FocusSceneId } from '../logic/types'
+import type { SceneId } from '../logic/types'
 import { ScenePart } from './companion/CompanionSceneArt'
 import { RecordsGreetingArt } from './companion/RecordsArt'
 
 /** Each sketch uses the same props as its activity. The room and its furniture are initial scenery. */
-const sketches: Record<FocusSceneId, { box: string; parts: string[] }> = {
+const sketches: Record<SceneId, { box: string; parts: string[] }> = {
   F1: { box: '-10 -13 69 56', parts: ['pot', 'potHandles', 'potLid', 'lidKnob'] },
   F2: { box: '-3 -49 42 79', parts: ['stem', 'leaves', 'plantPot', 'plantRim'] },
   F3: { box: '-5 -7 82 49', parts: ['bookLeft', 'bookRight', 'bookCover', 'bookLines', 'bookmark'] },
@@ -14,9 +14,12 @@ const sketches: Record<FocusSceneId, { box: string; parts: string[] }> = {
   F6: { box: '-4 -28 76 53', parts: ['boat', 'boatStripe'] },
   F7: { box: '-4 -7 32 33', parts: ['blockGold'] },
   F8: { box: '-14 -15 28 29', parts: ['star'] },
+  R1: { box: '33 14 174 165', parts: ['footLeft', 'footRight', 'tuft', 'body', 'shine', 'belly', 'armLeftHappy', 'armRightHappy', 'cheekLeft', 'cheekRight', 'eyesResting', 'mouth'] },
+  R2: { box: '-10 -28 92 54', parts: ['cloud'] },
+  R3: { box: '-6 -26 54 57', parts: ['saucer', 'cup', 'cupTea', 'steam'] },
 }
-const tagIds = Object.keys(sketches) as FocusSceneId[]
-function Sketch({ id }: { id: FocusSceneId }) {
+const tagIds = Object.keys(sketches) as SceneId[]
+export function MemorySketch({ id }: { id: SceneId }) {
   const { box, parts } = sketches[id]
   return <svg viewBox={box} className="room-sketch" aria-hidden="true" focusable="false">
     {parts.map(name => <ScenePart key={name} name={name}/>)}
@@ -35,21 +38,22 @@ function BookLedge() {
 
 interface RoomInfo {
   band: RecordsBand
-  activities: ReadonlyMap<FocusSceneId, readonly unknown[]>
+  activities: ReadonlyMap<SceneId, readonly unknown[]>
 }
 interface PictureProps extends RoomInfo {
-  selected?: FocusSceneId | null
-  onSelect?: (id: FocusSceneId, trigger: HTMLButtonElement) => void
+  selected?: SceneId | null
+  onSelect?: (id: SceneId, trigger: HTMLButtonElement) => void
 }
 function RoomPicture({ band, activities, selected, onSelect }: PictureProps) {
   const ids = tagIds.filter(id => activities.has(id))
+  const shelves = Array.from({ length: Math.ceil(ids.length / 4) }, (_, i) => ids.slice(i * 4, (i + 1) * 4))
   return <span className="room-picture" data-band={band}>
     <RecordsGreetingArt band={band}/>
-    {ids.length > 0 && <span className="room-shelf">{[ids.slice(0, 4), ids.slice(4)].filter(row => row.length > 0).map(row =>
+    {ids.length > 0 && <span className="room-shelf">{shelves.map(row =>
       <span className="room-shelf-row" key={row[0]}>{row.map(id => onSelect
-      ? <button key={id} type="button" data-room-spot={id} aria-label={`${sceneNames[id]}，查看 ${activities.get(id)!.length} 段专注`}
-          aria-pressed={selected === id} onClick={event => onSelect(id, event.currentTarget)}><span className="room-ticket"><Sketch id={id}/></span></button>
-      : <span key={id} className="room-sample"><span className="room-ticket"><Sketch id={id}/></span></span>)}
+      ? <button key={id} type="button" data-room-spot={id} aria-label={`${sceneNames[id]}，查看 ${activities.get(id)!.length} 段${id.startsWith('R') ? '休息' : '专注'}`}
+          aria-pressed={selected === id} onClick={event => onSelect(id, event.currentTarget)}><span className="room-ticket"><MemorySketch id={id}/></span></button>
+      : <span key={id} className="room-sample"><span className="room-ticket"><MemorySketch id={id}/></span></span>)}
         <BookLedge/>
       </span>)}</span>}
   </span>
@@ -57,8 +61,9 @@ function RoomPicture({ band, activities, selected, onSelect }: PictureProps) {
 
 export function RoomPreview({ band, activities, showArt, onOpen }: RoomInfo & { showArt: boolean; onOpen: () => void }) {
   return <button type="button" className="room-preview" onClick={onOpen}>
-    <span>查看窗边的小屋 <span aria-hidden="true">›</span></span>
     {showArt && <span className="room-thumbnail" aria-hidden="true"><RoomPicture band={band} activities={activities}/></span>}
+    <span className="room-preview-title">查看窗边的小屋</span>
+    <span className="room-preview-chevron" aria-hidden="true">›</span>
   </button>
 }
 
@@ -67,8 +72,8 @@ export function RecordsRoom({ band, activities, selected, onSelect, incomplete }
     <h3 tabIndex={-1}>窗边的小屋</h3>
     <RoomPicture band={band} activities={activities} selected={selected} onSelect={onSelect}/>
     <p className="room-directions">{activities.size
-      ? '架上的画签对应已保存的伙伴活动。点一枚，就能找到那几段专注。'
-      : incomplete ? '目前没有能确认来源的画签。' : '窗边是小屋原来的布景。有了带伙伴活动的专注记录，架上就会出现对应的画签。'}</p>
+      ? '挑一张画签，看看它出现在哪些日子。'
+      : incomplete ? '目前没有能确认来源的画签。' : '架子还空着。以后在专注或休息时遇见的小片刻，会在这里留下画签。'}</p>
     {activities.size > 0 && <div className="room-tag-list" role="group" aria-label="按活动找记录">
       {tagIds.filter(id => activities.has(id)).map(id => <button type="button" key={id} data-room-label={id}
         aria-pressed={selected === id} onClick={event => onSelect(id, event.currentTarget)}>{sceneNames[id]} · {activities.get(id)!.length} 段</button>)}

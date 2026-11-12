@@ -131,6 +131,30 @@ describe('timer actions', () => {
     expect(expiredSessionResult(session, expired)).toEqual({ sessionId: 'r', phase: 'rest', elapsedMs: session.durationMs, saved: false })
     expect(expiredSessionResult(session, run(resting, [[T0 + 10_000, { type: 'end', sessionId: 'r' }]]))).toBeNull()
   })
+  it('saves both manual and natural rest endings once with the actual elapsed time and original civil date', () => {
+    const start: AppAction = { type: 'startBreak', sessionId: 'zero', phase: 'shortBreak', timeZone: 'Pacific/Honolulu' }
+    const first = run(createSnapshot(spec), [[T0, start], [T0, { type: 'skipBreak', sessionId: 'zero' }]])
+    expect(first.restMemories).toMatchObject([{ sessionId: 'zero', elapsedMs: 0, endReason: 'manual', phase: 'shortBreak' }])
+    expect(run(first, [[T0, start]])).toBe(first)
+    const second = run(first, [[T0, { ...start, sessionId: 'long', phase: 'longBreak', durationMinutes: 1 }],
+      [T0 + 1000, { type: 'pause' }], [T0 + 11_000, { type: 'resume' }]])
+    const deadline = T0 + MIN + 10_000
+    const after = applyAction(second, { type: 'end', sessionId: 'long' }, {
+      now: deadline + 4 * MIN, dateKeyOf: (ms, zone) => {
+        expect([ms, zone]).toEqual([deadline, 'Pacific/Honolulu'])
+        return '2026-10-27'
+      },
+    }, spec)
+    expect(after.snapshot.restMemories[1]).toEqual({ sessionId: 'long', elapsedMs: MIN, endedAt: deadline,
+      phase: 'longBreak', endReason: 'deadline', dateKey: '2026-10-27', sceneId: second.timer.session!.scene!.sceneId })
+    expect(after.snapshot.records).toEqual([])
+    expect(after.snapshot.participations).toEqual([])
+    expect(after.snapshot.timer.completedFocusCount).toBe(0)
+    expect(after.completion?.credited).toBe(false)
+    const stale = { ...after.snapshot, timer: second.timer }
+    expect(reconcile(stale, ctx(deadline + MIN), spec).snapshot.restMemories).toEqual(after.snapshot.restMemories)
+    expect(reconcile(stale, ctx(deadline + MIN), spec).snapshot.timer.session).toBeNull()
+  })
   it('uses a paused legacy rest’s remaining time for its result without a scene or a focus record', () => {
     const s = createSnapshot(spec)
     const paused: AppSnapshot = { ...s, timer: { ...s.timer, phase: 'shortBreak',
@@ -139,6 +163,7 @@ describe('timer actions', () => {
     expect(ended.records).toEqual([])
     expect(ended.scenes.lastEnded).toBeNull()
     expect(ended.lastRestEnd).toEqual({ sessionId: 'legacy-rest', elapsedMs: MIN, endedAt: T0 })
+    expect(ended.restMemories).toMatchObject([{ sessionId: 'legacy-rest', elapsedMs: MIN, sceneId: null, endReason: 'manual' }])
     expect(resolveSessionResult({sessionId:'legacy-rest', phase:'rest', elapsedMs:0, saved:false}, ended, ended))
       .toMatchObject({elapsedMs: MIN, saved:true})
   })

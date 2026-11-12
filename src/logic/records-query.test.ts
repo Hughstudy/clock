@@ -1,12 +1,15 @@
 import { describe, expect, it } from 'vitest'
-import { entryId, indexRoomActivities, pageContaining, queryRecords } from './records-query'
+import { entryId, indexRoomActivities, pageContaining, queryRecords, type RecordsEntry } from './records-query'
 import type { HistoryEntry } from './stats'
-import type { FocusRecord, SceneId, Thought } from './types'
+import type { FocusRecord, RestMemory, SceneId, Thought } from './types'
 
 function note(id: number, text = `想法 ${id}`, dateKey = '2026-11-02'): HistoryEntry {
   const thought: Thought = { id: `n${id}`, createdAt: id, dateKey, sessionId: null, text, status: 'open', rev: 1, deletedAt: null }
   return { kind: 'thought', thought }
 }
+
+const rest = (sessionId: string, sceneId: RestMemory['sceneId'], endedAt: number, dateKey: RestMemory['dateKey']) =>
+  ({ kind: 'rest', memory: { sessionId, sceneId, endedAt, dateKey, elapsedMs: 10_000, phase: null, endReason: null } } as const)
 
 describe('records reading queries', () => {
   it('groups only confirmed focus assignments, retaining every real source and unknown dates', () => {
@@ -20,6 +23,30 @@ describe('records reading queries', () => {
     expect([...tags.keys()]).toEqual(['F6'])
     expect(tags.get('F6')).toEqual([first, second])
     expect(queryRecords(tags.get('F6')!, { page: 1, month: null, search: '' }).days[0]?.dateKey).toBe('')
+  })
+  it('indexes repeated rest activities using their original sessions, including undated sources', () => {
+    const latest = rest('latest', 'R2', 20, '2026-11-02')
+    const older = rest('earlier', 'R2', 15, null)
+    const unidentified = rest('unknown', null, 40, null)
+    const entries = [older, unidentified, latest]
+    const tags = indexRoomActivities(entries)
+    expect([...tags.keys()]).toEqual(['R2'])
+    const sources = queryRecords(tags.get('R2')!, { month: null, search: '', page: 1 })
+    expect(sources.all.map(entryId)).toEqual(['rest:latest', 'rest:earlier'])
+    expect(queryRecords(entries, { month: 'unknown', search: '', page: 1 }).all).toEqual([unidentified, older])
+  })
+
+  it('mixes rest memories into the dated timeline, pagination and focus anchors', () => {
+    const entries: RecordsEntry[] = Array.from({ length: 19 }, (_, i) => note(100 + i))
+    const memory = rest('shared-id', 'R3', 80, '2026-11-02')
+    const focus: RecordsEntry = { kind: 'record', record: { sessionId: 'shared-id', dateKey: '2026-11-02',
+      startedAt: null, endedAt: 70, elapsedMs: 500, targetMs: 60_000, endReason: 'manual', source: 'native', step: null } }
+    entries.push(memory, focus, rest('last-month', 'R3', 30, '2026-10-30'))
+    const page = queryRecords(entries, { month: '2026-11', search: '', page: 1 })
+    expect(page.total).toBe(21)
+    expect(page.items.at(-1)).toBe(memory)
+    expect(pageContaining(page.all, entryId(focus), 1)).toBe(2)
+    expect(queryRecords(entries, { month: '2026-11', search: '', page: 2 }).items).toEqual([focus])
   })
   it('pages a busy single day by logical entries, with no overlap or loss', () => {
     const entries = Array.from({ length: 53 }, (_, i) => note(i))

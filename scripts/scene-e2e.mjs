@@ -156,7 +156,7 @@ try {
   const firstId = initial.timer.session.id
   const firstScene = initial.timer.session.scene.sceneId
   const focusScenes = [firstScene]
-  check('New focus uses the full shipped pool and v2 selection', focusPool.includes(firstScene) && initial.version === 9 && initial.timer.session.scene.selectionVersion === 2 && await sceneAttribute(page, '') === firstScene)
+  check('New focus uses the full shipped pool and v2 selection', focusPool.includes(firstScene) && initial.version === 10 && initial.timer.session.scene.selectionVersion === 2 && await sceneAttribute(page, '') === firstScene)
   check('Permitted start has a scene entrance', await sceneAttribute(page, 'phase') === 'open')
   const afterStart = await primary.boundingBox()
   check('Start and Pause keep the same target', ['x', 'y', 'width', 'height'].every(key => Math.abs(beforeStart[key] - afterStart[key]) < 1))

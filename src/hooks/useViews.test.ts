@@ -4,7 +4,7 @@ import { describe, expect, it } from 'vitest'
 import { spec } from '../data/spec'
 import { applyAction, type AppAction } from '../logic/app'
 import { createSnapshot } from '../logic/snapshot'
-import type { AppSnapshot } from '../logic/types'
+import type { AppSnapshot, RestMemory } from '../logic/types'
 import { useStatsView, useTimerView, type StatsView, type TimerView } from './useViews'
 import type { Thought } from '../logic/types'
 
@@ -17,14 +17,25 @@ function viewOf(snapshot: AppSnapshot, now: number): TimerView {
   return value!
 }
 
-function statsOf(snapshot: AppSnapshot, saved: ReadonlySet<string>, durable: readonly Thought[]): StatsView {
+function statsOf(snapshot: AppSnapshot, saved: ReadonlySet<string>, durable: readonly Thought[], durableRests: readonly RestMemory[] = []): StatsView {
   let value: StatsView | undefined
-  function Probe() { value = useStatsView(snapshot, T0, saved, durable); return null }
+  function Probe() { value = useStatsView(snapshot, T0, saved, durable, durableRests); return null }
   renderToStaticMarkup(createElement(Probe))
   return value!
 }
 
 describe('confirmed records and formal thought projection', () => {
+  it('shows only durable rest memories, latest first, without crediting focus time', () => {
+    const ended = act(act(createSnapshot(spec), { type: 'startBreak', sessionId: 'one', timeZone: 'UTC' }), { type: 'end' }, T0 + 100)
+    const second = act(act(ended, { type: 'startBreak', sessionId: 'two', timeZone: 'UTC' }), { type: 'end' }, T0 + 200)
+    const pending = statsOf(second, new Set(), [], ended.restMemories)
+    expect(pending.restMemories.map(rest => rest.sessionId)).toEqual(['one'])
+    const saved = statsOf(second, new Set(), [], second.restMemories)
+    expect(saved.restMemories.map(rest => rest.sessionId)).toEqual(['two', 'one'])
+    expect(saved.totalsByDay.size).toBe(0)
+    expect(second.restMemories.map(rest => rest.sessionId)).toEqual(['one', 'two'])
+  })
+
   it('keeps pending ended time out of totals until persistence confirms it', () => {
     const ended = act(act(createSnapshot(spec), { type: 'start', sessionId: 'pending', timeZone: 'UTC' }), { type: 'end' }, T0 + 20_000)
     const pending = statsOf(ended, new Set(), [])

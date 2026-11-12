@@ -8,7 +8,8 @@ import {
 } from '../logic/snapshot'
 import type { Spec } from '../logic/spec'
 import { mergeSceneStates } from '../logic/scenes'
-import type { AppSnapshot, TimerState } from '../logic/types'
+import { remainingMs } from '../logic/timer'
+import type { AppSnapshot, RestMemory, TimerState } from '../logic/types'
 import type { LockRunner } from './locks'
 import { quoteKey } from '../contracts/favorites'
 import { sameFavorite } from '../logic/favorites'
@@ -78,6 +79,15 @@ function sameTimerPosition(a: TimerState, b: TimerState): boolean {
   if (!a.session || !b.session) return a.session === b.session
   if (a.session.status === 'paused') return b.session.status === 'paused' && a.session.remainingMs === b.session.remainingMs
   return b.session.status === 'running' && a.session.deadline === b.session.deadline
+}
+
+/** A pending end can follow a competing pause or resume only if the saved clock agrees. */
+function matchesRestPosition(rest: RestMemory, disk: AppSnapshot): boolean {
+  const session = disk.timer.session
+  if (session?.id !== rest.sessionId) return false
+  if (rest.endReason === 'deadline') return session.status === 'running' && session.deadline === rest.endedAt
+  if (rest.endReason !== 'manual' || (session.status === 'running' && session.deadline <= rest.endedAt)) return false
+  return rest.elapsedMs === session.durationMs - remainingMs(disk.timer, disk.settings, rest.endedAt)
 }
 
 /**
@@ -214,6 +224,7 @@ export class SnapshotStore {
     const draftOwner = disk.draftStamp === base.draftStamp ? local : disk
     const durableRecords = new Map(disk.records.map(record => [record.sessionId, record]))
     const records = merged.records.map(record => durableRecords.get(record.sessionId) ?? record)
+    const durableRests = new Map(disk.restMemories.map(rest => [rest.sessionId, rest]))
     const disputedCompletions = local.records.filter(r => r.endReason === 'deadline' && durableRecords.get(r.sessionId)?.endReason === 'manual').length
     const completed = Math.max(local.timer.completedFocusCount - disputedCompletions, disk.timer.completedFocusCount,
       records.filter(r => r.endReason === 'deadline').length)
@@ -221,25 +232,36 @@ export class SnapshotStore {
     // Phase, session identity and its deadline/paused amount form one position.
     // Even an ended zero-second session advances the corresponding scene cursor.
     const diskStartedAnother = disk.scenes.focus.ordinal !== base.scenes.focus.ordinal || disk.scenes.rest.ordinal !== base.scenes.rest.ordinal
-    const diskMoved = !sameTimerPosition(base.timer, disk.timer) || disk.restSuggestionSessionId !== base.restSuggestionSessionId || diskStartedAnother
+    const positionChanged = !sameTimerPosition(base.timer, disk.timer)
+    const diskMoved = positionChanged || disk.restSuggestionSessionId !== base.restSuggestionSessionId || diskStartedAnother
     const diskActive = disk.timer.session
+    // A failed read may have settled a rest from its old clock. If the saved
+    // timer has since paused or resumed on a different timeline, that ending
+    // cannot establish elapsed time. Reconcile the saved position on retry.
+    const contested = diskActive && positionChanged && disk.timer.phase !== 'focus' && base.timer.session?.id === diskActive.id
+      ? local.restMemories.find(rest => rest.sessionId === diskActive.id && !durableRests.has(rest.sessionId)) : null
+    const staleRestId = contested && !matchesRestPosition(contested, disk) ? contested.sessionId : null
+    const restMemories = merged.restMemories.filter(rest => rest.sessionId !== staleRestId).map(rest => durableRests.get(rest.sessionId) ?? rest)
     const localEndedDiskSession = !!diskActive && (disk.timer.phase === 'focus'
       ? records.some(r => r.sessionId === diskActive.id)
-      : local.lastRestEnd?.sessionId === diskActive.id)
-    // Both tabs settled the old session. Preserve a new local rest/focus already
-    // running after it when the other tab only published that common ending.
+      : restMemories.some(rest => rest.sessionId === diskActive.id))
+    // If the peer only settled the shared session, preserve any subsequent
+    // local start, including a session the user has already ended.
     const priorId = base.timer.session?.id
-    const continuedAfterEnd = priorId && !diskActive && !diskStartedAnother && local.timer.session &&
-      local.timer.session.id !== priorId && (durableRecords.has(priorId) || disk.lastRestEnd?.sessionId === priorId)
+    const localStartedAnother = local.scenes.focus.ordinal > base.scenes.focus.ordinal || local.scenes.rest.ordinal > base.scenes.rest.ordinal
+    const continuedAfterEnd = priorId && !diskActive && !diskStartedAnother && localStartedAnother &&
+      (durableRecords.has(priorId) || durableRests.has(priorId))
     const timerOwner = diskMoved && !localEndedDiskSession && !continuedAfterEnd ? disk : local
     const other = timerOwner === disk ? local : disk
+    const recent = timerOwner.lastRestEnd
+    const accepted = recent && durableRests.get(recent.sessionId)
+    const lastRestEnd = accepted ? { sessionId: accepted.sessionId, endedAt: accepted.endedAt, elapsedMs: accepted.elapsedMs } : recent
     const lastFocusMinutes = disk.focusDefaultsRevision !== base.focusDefaultsRevision || disk.lastFocusMinutes !== base.lastFocusMinutes
       ? disk.lastFocusMinutes : local.lastFocusMinutes
     merged = {
-      ...merged, records, timer: { ...timerOwner.timer, completedFocusCount: completed }, restSuggestionSessionId: timerOwner.restSuggestionSessionId,
+      ...merged, records, restMemories, timer: { ...timerOwner.timer, completedFocusCount: completed }, restSuggestionSessionId: timerOwner.restSuggestionSessionId,
       scenes: mergeSceneStates(timerOwner.scenes, other.scenes),
-      lastRestEnd: disk.lastRestEnd?.sessionId !== base.lastRestEnd?.sessionId || disk.lastRestEnd?.endedAt !== base.lastRestEnd?.endedAt
-        ? disk.lastRestEnd : local.lastRestEnd,
+      lastRestEnd,
       lastFocusMinutes, focusDefaultsRevision: Math.max(disk.focusDefaultsRevision, local.focusDefaultsRevision),
       settings: { ...mergePreferenceFields(base.settings, disk.settings, local.settings),
         durationsMinutes: mergePreferenceFields(base.settings.durationsMinutes, disk.settings.durationsMinutes, local.settings.durationsMinutes) },

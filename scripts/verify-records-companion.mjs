@@ -86,7 +86,15 @@ try {
   observe(page)
   await page.clock.setFixedTime(t0)
   await page.goto(url)
-  await openRecords(page); await page.locator('.room-preview').click()
+  await openRecords(page)
+  check('First visit offers the cottage and welcome letter before any memory exists',
+    await page.locator('.memory-room-print').isVisible() && await page.locator('.memory-letter').isVisible() &&
+    await page.locator('.memory-postcard, .records-summary').count() === 0)
+  await page.evaluate(() => document.fonts.ready)
+  await page.screenshot({ path: path.join(output, 'records-first-375.png'), animations: 'disabled' })
+  await page.locator('.memory-letter').click()
+  await page.getByRole('dialog', { name: '欢迎笺' }).getByRole('button', { name: '返回记录' }).click()
+  await page.locator('.room-preview').click()
   check('An empty dataset shows the furnished room and no picture tags or fabricated activity', await page.locator('.records-room .records-art').isVisible() && await page.locator('[data-room-spot]').count() === 0 && await page.locator('.records-activity').count() === 0)
   await press(page, '全部记录')
   await press(page, '专注')
@@ -107,6 +115,7 @@ try {
     await row(page, latest).getAttribute('data-saved') === 'false' &&
     (await row(page, latest).innerText()).includes('20 秒') && await row(page, latest).locator('.record-story').count() === 0 &&
     (await page.locator('.records-summary').innerText()).includes('20 秒') && (await snapshot(page)).records.length === 2)
+  await page.getByRole('dialog', { name: '专注手记' }).getByRole('button', { name: '返回记录' }).click()
   await page.evaluate(() => window.restoreRecordWrites())
   await retrySave(page)
   await page.locator(`li[data-record-id="${latest}"][data-saved="true"]`).waitFor()
@@ -134,8 +143,10 @@ try {
     await page.locator('.records-status-button').evaluate(element => element === document.activeElement) && (await snapshot(page)).revision === beforePanels)
   const openFirst = row(page, first).locator('.record-summary')
   await openFirst.focus(); await page.keyboard.press('Enter')
-  check('Keyboard expands one record and retains focus on its trigger', await openFirst.getAttribute('aria-expanded') === 'true' && await openFirst.evaluate(el => el === document.activeElement) && await row(page, latest).locator('.record-summary').getAttribute('aria-expanded') === 'false')
+  check('Keyboard opens the original memory in one modal sheet', await openFirst.getAttribute('aria-expanded') === 'true' && await page.locator('dialog:modal').count() === 1 && await row(page, latest).locator('.record-summary').getAttribute('aria-expanded') === 'false')
   check('Record activity uses the persisted scene and has no invented hash story', await row(page, first).locator('.record-story').getAttribute('data-scene-id') === base.records.find(record => record.sessionId === first).scene.sceneId && await page.locator('[data-story-id]').count() === 0)
+  await page.keyboard.press('Escape')
+  check('Closing the keyboard-opened focus memory restores its row', await openFirst.evaluate(el => el === document.activeElement))
   for (const width of widths) {
     await page.setViewportSize({ width, height: 900 })
     check(`Records has no horizontal overflow at ${width}px`, await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth))
@@ -177,20 +188,100 @@ try {
   check('Welcome is read-only and close returns focus; browsing never creates writes', await page.getByRole('button', { name: '欢迎笺', exact: true }).evaluate(el => el === document.activeElement) && (await snapshot(page)).revision === revisionBefore)
   await context.close()
 
+  // Use the timer itself for both kinds of rest ending. A source in the album must survive
+  // a later activity, a failed commit and reopening the app with the deadline already past.
+  const { context: restContext, page: restPage } = await seedPage(browser, base)
+  const startRest = async () => {
+    const prepare = restPage.getByRole('button', { name: '准备专注', exact: true })
+    if (await prepare.isVisible()) await prepare.click()
+    await press(restPage, '选择休息')
+    await press(restPage, '开始休息')
+    await restPage.waitForFunction(k => !!JSON.parse(localStorage.getItem(k)).timer.session, key)
+    return (await snapshot(restPage)).timer.session
+  }
+  await fixTime(restPage, t0 + 60_000)
+  const manualRest = await startRest()
+  await fixTime(restPage, t0 + 83_000)
+  await failWrites(restPage)
+  await press(restPage, '结束休息')
+  await openRecords(restPage)
+  check('An unconfirmed rest has no saved memory or room picture',
+    await restPage.locator('[data-rest-id]').count() === 0 && (await snapshot(restPage)).restMemories.length === 0)
+  await press(restPage, '生活场景')
+  check('A failed rest write leaves its picture off the shelf', await restPage.locator(`[data-room-spot="${manualRest.scene.sceneId}"]`).count() === 0)
+  await press(restPage, '全部记录')
+  await restPage.evaluate(() => window.restoreRecordWrites())
+  await retrySave(restPage)
+  const manualRow = restPage.locator(`li[data-rest-id="${manualRest.id}"]`)
+  await manualRow.waitFor()
+  const savedManual = (await snapshot(restPage)).restMemories
+  check('Retry saves the same 23-second manual rest with its assigned activity exactly once',
+    savedManual.length === 1 && savedManual[0].sessionId === manualRest.id && savedManual[0].endReason === 'manual' &&
+    savedManual[0].elapsedMs === 23_000 && savedManual[0].sceneId === manualRest.scene.sceneId)
+  await manualRow.locator('.record-summary').click()
+  const restReader = restPage.getByRole('dialog', { name: '休息手记', exact: true })
+  check('The rest memory sheet identifies the actual elapsed time', (await restReader.innerText()).includes('23 秒'))
+  await restPage.screenshot({ path: path.join(output, 'rest-memory-sheet-375.png'), animations: 'disabled' })
+  await restReader.getByRole('button', { name: '返回记录', exact: true }).click()
+  check('Closing the rest memory returns focus to its exact source row', await manualRow.locator('.record-summary').evaluate(el => document.activeElement === el))
+  await restPage.locator(`.memory-postcard[data-featured-id="rest:${manualRest.id}"]`).waitFor()
+  await restPage.evaluate(async () => { await document.fonts.ready; document.activeElement?.blur(); window.scrollTo(0, 0) })
+  await restPage.mouse.move(374, 1)
+  await restPage.screenshot({ path: path.join(output, 'records-focus-rest-375.png'), animations: 'disabled' })
+  await press(restPage, '专注')
+  await fixTime(restPage, Date.parse('2026-11-03T23:59:00+08:00'))
+  const fullRest = await startRest()
+  await fixTime(restPage, fullRest.deadline + 60_000)
+  await restPage.reload()
+  await openRecords(restPage)
+  await restPage.locator(`li[data-rest-id="${fullRest.id}"]`).waitFor()
+  const afterRests = await snapshot(restPage)
+  const expiredMemory = afterRests.restMemories.find(memory => memory.sessionId === fullRest.id)
+  check('Both rests survive reopening; expiry retains its exact deadline, duration and captured day',
+    afterRests.restMemories.length === 2 && expiredMemory?.endReason === 'deadline' && expiredMemory.endedAt === fullRest.deadline &&
+    expiredMemory.elapsedMs === fullRest.durationMs && expiredMemory.dateKey === '2026-11-04' && await manualRow.count() === 1)
+  check('Rest-only dates have no focus subtotal and neither rest changes focus totals or cadence',
+    await restPage.locator('.record-day[data-date="2026-11-04"] h3 small').count() === 0 &&
+    (await restPage.locator('.records-summary').innerText()).includes('40 秒') &&
+    afterRests.records.length === base.records.length && afterRests.timer.completedFocusCount === base.timer.completedFocusCount)
+  const featuredRest = restPage.locator(`.memory-postcard[data-featured-id="rest:${fullRest.id}"]`)
+  await featuredRest.click()
+  check('The latest rest postcard opens the saved activity from that exact rest', await restReader.locator('[data-scene-id]').getAttribute('data-scene-id') === fullRest.scene.sceneId)
+  await restPage.waitForFunction(() => history.state?.clockFocusTask === true)
+  await restPage.evaluate(() => history.back())
+  await restReader.waitFor({ state: 'hidden' })
+  check('System Back returns keyboard focus to the featured postcard', await featuredRest.evaluate(el => document.activeElement === el))
+  const revisionAfterRests = afterRests.revision
+  await press(restPage, '生活场景')
+  const restSpot = restPage.locator(`[data-room-spot="${manualRest.scene.sceneId}"]`)
+  await restSpot.click()
+  const restSource = restPage.locator(`.records-activity[data-entry-id="rest:${manualRest.id}"]`)
+  await restSource.locator('[data-view-original]').click()
+  check('A rest picture opens the matching original rest, with no focus record substitution',
+    await restSource.locator(`li[data-rest-id="${manualRest.id}"]`).isVisible() && await restSource.locator('[data-record-id]').count() === 0)
+  await restSource.locator('[data-return-activity]').click()
+  await press(restPage, '返回小屋')
+  check('Returning from a rest original restores the same picture without writing', await restSpot.evaluate(el => document.activeElement === el) &&
+    (await snapshot(restPage)).revision === revisionAfterRests)
+  await restContext.close()
+
   const catalogSample = makeSample(base, 10)
   catalogSample.settings.sceneVarietyEnabled = false
   catalogSample.records.forEach((record, i) => {
     if (i < 9) record.scene = { sceneId: i === 8 ? 'F6' : `F${i + 1}`, ordinal: i + 1, selectionVersion: 2 }
   })
+  catalogSample.restMemories = ['R1', 'R2', 'R3'].map((sceneId, i) => ({
+    sessionId: `sample-rest-${i}`, sceneId, endedAt: t0 - i, elapsedMs: 23_000, dateKey: '2026-11-02', phase: 'shortBreak', endReason: 'manual',
+  }))
   const { context: catalogContext, page: catalog } = await seedPage(browser, catalogSample)
   await openRecords(catalog)
   check('Hidden Focus art keeps a text-only cottage preview available', await catalog.locator('.room-preview').isVisible() && await catalog.locator('.room-thumbnail').count() === 0)
   await catalog.locator('.room-preview').click()
-  check('The explicit panorama shows all eight activity sketches and equivalent text entries without changing the art preference',
-    await catalog.locator('[data-room-spot]').count() === 8 && await catalog.locator('[data-room-label]').count() === 8 && (await snapshot(catalog)).settings.sceneVarietyEnabled === false)
+  check('The explicit panorama shows all eleven focus and rest activity sketches and equivalent text entries without changing the art preference',
+    await catalog.locator('[data-room-spot]').count() === 11 && await catalog.locator('[data-room-label]').count() === 11 && (await snapshot(catalog)).settings.sceneVarietyEnabled === false)
   for (const width of widths) {
     await catalog.setViewportSize({ width, height: 812 })
-    check(`${width}px room fits eight labeled, non-overlapping picture targets of at least44px`, await catalog.locator('[data-room-spot]').evaluateAll(nodes => {
+    check(`${width}px room fits eleven labeled, non-overlapping picture targets of at least44px`, await catalog.locator('[data-room-spot]').evaluateAll(nodes => {
       const boxes = nodes.map(el => el.getBoundingClientRect())
       return boxes.every((r,i) => r.height >= 44 && r.width >= 44 && boxes.every((b,j) => i === j || r.bottom <= b.top || b.bottom <= r.top || r.right <= b.left || b.right <= r.left)) &&
         document.documentElement.scrollWidth <= innerWidth
@@ -237,6 +328,9 @@ try {
     await press(scale, '下一页')
     await scale.locator('.records-list .record-summary').first().click()
     const monthAnchor = await scale.locator('.records-list [data-entry-id]').first().getAttribute('data-entry-id')
+    const memoryReader = scale.getByRole('dialog', { name: '专注手记' })
+    const readInSheet = await memoryReader.isVisible()
+    if (readInSheet) await memoryReader.getByRole('button', { name: '返回记录' }).click()
     await press(scale, '生活场景')
     await scale.locator('[data-room-label="F3"]').click()
     check(`${count} records group repeated readings into one picture tag with all cross-month sources`, await scale.locator('[data-room-spot]').count() === 1 &&
@@ -303,7 +397,7 @@ try {
       check(`${count} a saved edit leaving search stays readable until explicitly closed`, await scale.locator('.records-detached').isVisible() && (await scale.locator('.records-detached').innerText()).includes('保存后不再匹配'))
     }
     await press(scale, '全部记录')
-    check(`${count} mode return keeps month, page2 and expanded identity`, (await scale.locator('.records-filter-row').innerText()).includes('2026年10月') && (await scale.locator('.records-pagination').innerText()).includes('第2页') && await scale.locator(`[data-entry-id="${monthAnchor}"]`).isVisible() && await scale.locator(`[data-entry-id="${monthAnchor}"] .record-summary`).getAttribute('aria-expanded') === 'true')
+    check(`${count} mode return keeps the month, page and original reading position`, (await scale.locator('.records-filter-row').innerText()).includes('2026年10月') && (await scale.locator('.records-pagination').innerText()).includes('第2页') && await scale.locator(`[data-entry-id="${monthAnchor}"]`).isVisible() && await scale.locator(`[data-entry-id="${monthAnchor}"] .record-summary`).getAttribute('aria-expanded') === String(!readInSheet))
     await press(scale, '专注'); await openRecords(scale)
     check(`${count} temporary Focus visit retains query and page`, (await scale.locator('.records-filter-row').innerText()).includes('2026年10月') && (await scale.locator('.records-pagination').innerText()).includes('第2页'))
     await press(scale, '我的收藏')

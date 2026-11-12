@@ -9,7 +9,7 @@ import { recordsBand, type RecordsBand } from '../logic/record-stories'
 import { groupEntries, indexByDay, rangeTotals, type DayIndex, type HistoryDay, type RangeLength } from '../logic/stats'
 import { isLive } from '../logic/thoughts'
 import { isBreak, remainingMs, totalMs } from '../logic/timer'
-import type { AppSnapshot, FocusRecord, Phase, Session, Thought } from '../logic/types'
+import type { AppSnapshot, FocusRecord, Phase, RestMemory, Session, Thought } from '../logic/types'
 
 const MINUTE_MS = 60_000
 
@@ -82,6 +82,8 @@ export interface StatsView {
   todayKey: string
   active: { phase: Phase; status: Session['status']; id: string } | null
   recordBySession: ReadonlyMap<string, RecordView>
+  /** Confirmed endings, newest first. Focus totals use only focus records. */
+  restMemories: readonly RestMemory[]
   confirmedThoughtIds: ReadonlySet<string>
   pendingThoughtIds: ReadonlySet<string>
   totalsByDay: DayIndex
@@ -107,9 +109,11 @@ export function useHistoryRange(view: StatsView, length: RangeLength) {
   return { totals, ...history }
 }
 
-export function useStatsView(snapshot: AppSnapshot, now: number, savedRecordIds: ReadonlySet<string>, durableThoughts: readonly Thought[]): StatsView {
+export function useStatsView(snapshot: AppSnapshot, now: number, savedRecordIds: ReadonlySet<string>, durableThoughts: readonly Thought[], durableRests: readonly RestMemory[]): StatsView {
   const todayKey = localDateKey(now)
   const band = recordsBand(localHour(now))
+  const restMemories = useMemo(() => [...durableRests].sort((a, b) =>
+    b.endedAt - a.endedAt || a.sessionId.localeCompare(b.sessionId, 'en')), [durableRests])
   const index = useMemo(() => indexByDay(snapshot.records.filter(r => savedRecordIds.has(r.sessionId))), [snapshot.records, savedRecordIds])
   const durableById = useMemo(() => new Map(durableThoughts.map(t => [t.id, t])), [durableThoughts])
   const live = useMemo(() => {
@@ -147,6 +151,7 @@ export function useStatsView(snapshot: AppSnapshot, now: number, savedRecordIds:
         pendingThoughtIds,
         active: snapshot.timer.session && { phase: snapshot.timer.phase, status: snapshot.timer.session.status, id: snapshot.timer.session.id },
         recordBySession: new Map(records.map(record => [record.sessionId, record])),
+        restMemories,
         totalsByDay: index,
         historyDays: groupEntries<RecordView>([
           ...records.map(record => ({ kind: 'record' as const, record })),
@@ -158,6 +163,6 @@ export function useStatsView(snapshot: AppSnapshot, now: number, savedRecordIds:
         clockTime: localClockTime,
       }
     },
-    [band, index, todayKey, snapshot.records, snapshot.thoughts, snapshot.timer, live, savedRecordIds, durableThoughts, durableById],
+    [band, index, todayKey, snapshot.records, snapshot.thoughts, snapshot.timer, live, savedRecordIds, durableThoughts, durableById, restMemories],
   )
 }

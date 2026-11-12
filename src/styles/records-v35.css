@@ -10,14 +10,10 @@
   .records-v35 .records-modes { grid-template-columns: repeat(2, minmax(0, 1fr)); border-radius: 24px; }
   .records-v35 .records-modes button { white-space: normal; overflow-wrap: anywhere; }
 }
-/* The sentence wraps on its own line; 查看统计 stays at the end instead of dropping below. */
-/* The number leads; the range and count caption it. 查看统计 stays at the end instead of dropping below. */
-.records-v35 .records-summary { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: end; gap: .25rem .6rem; padding: .875rem 1rem; border: 0; border-radius: 22px; background: #fff; box-shadow: 0 1px 2px #3a2a140f; }
-.records-v35 .records-summary > p { margin: 0; display: flex; flex-wrap: wrap; column-gap: .3em; font-size: .8125rem; color: var(--muted); }
-.records-v35 .records-summary > p i { font-style: normal; }
-.records-v35 .records-summary > p strong { order: -1; flex-basis: 100%; font-size: clamp(1.45rem, 7.4vw, 1.875rem); line-height: 1.15; font-weight: 800; color: var(--ink); font-variant-numeric: tabular-nums; }
-.records-v35 .records-summary > p strong + span i { display: none; }
-.records-v35 .records-summary > .link-button { margin: 0; padding: 0 14px; border-radius: 999px; background: var(--whale-soft); font-weight: 600; }
+.records-v35 .records-summary { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; column-gap: .5rem; padding: 0 .25rem; }
+.records-v35 .records-summary > p { display: flex; flex-wrap: wrap; gap: 0 .3em; margin: 0; color: var(--muted); font-size: .8125rem; }
+.records-v35 .records-summary > p strong { font-weight: 650; }
+.records-v35 .records-summary > .link-button { margin: 0; padding: 0 .25rem; }
 .records-v35 .records-summary-detail { grid-column: 1 / -1; padding-block: .45rem; }
 .records-v35 .records-summary-detail .records-switch { display: inline-grid; grid-template-columns: 1fr 1fr; }
 .records-v35 .records-summary-detail .records-switch button { padding-inline: 16px; }
@@ -37,7 +33,7 @@
 /* Each day is one grouped list: a quiet header, then its entries in one rounded card. */
 .records-v35 .record-day h3 { font-size: .8125rem; margin: .875rem 1rem .375rem; font-weight: 600; color: var(--muted); }
 .records-v35 .record-day h3 small { font-size: inherit; font-weight: 500; }
-.records-v35 .focus-records { margin: 0; border-radius: 22px; background: #fff; overflow: hidden; box-shadow: 0 1px 2px #3a2a140f; }
+.records-v35 .focus-records { margin: 0; border-radius: 18px; background: #fff; overflow: hidden; box-shadow: 0 1px 2px #3a2a1412, 0 0 0 1px #70532a14; }
 .records-v35 .focus-records > li { position: relative; border-top: 0; }
 .records-v35 .focus-records > li + li::before { content: ''; position: absolute; inset: 0 0 auto 1rem; block-size: 1px; background: #efe6d6; }
 .records-v35 .focus-records .record-summary { min-height: 60px; padding: .625rem 1rem; gap: .75rem; }
@@ -60,8 +56,9 @@
 .records-v35 .records-scene-preview { display: block; width: min(100%, 240px); height: auto; margin-inline: auto; }
 .records-v35 .records-activity .record-detail .focus-records { border: 1px solid var(--line); border-radius: 12px; padding: .3rem; }
 .records-v35 { container-type: inline-size; }
-.records-v35 .room-preview { display: flex; align-items: center; justify-content: space-between; gap: .6rem; min-height: 54px; min-width: 0; overflow: hidden; padding: 0 0 0 1.125rem; border: 0; border-radius: 22px; transition: transform var(--dur-quick) ease; background: #f7ead4; font: inherit; font-size: 1.0625rem; font-weight: 700; color: var(--ink); text-align: start; box-shadow: 0 1px 2px #3a2a140f; }
-.room-preview .room-thumbnail { display: block; width: 8.25rem; height: 68px; flex: 0 0 auto; }
+.records-v35 .room-preview { display: flex; align-items: center; gap: .55rem; inline-size: 100%; min-height: 48px; padding: .25rem 1.1rem; border: 0; border-top: 1px solid #dbcdb7; background: #fff9ec; color: var(--album-action); font-size: .875rem; font-weight: 650; text-align: start; }
+.room-preview .room-thumbnail { display: block; width: 42px; height: 27px; border-radius: 4px; overflow: hidden; flex: none; }
+.room-preview-chevron { margin-inline-start: auto; font-size: 1.2em; }
 .room-thumbnail .room-picture { height: 100%; width: 100%; border-radius: 0; }
 .room-thumbnail .records-art { height: 100%; max-width: 100%; }
 .room-picture { --room-timber: #d3ae87; --room-shade: #a68466; display: flex; flex-direction: column; align-items: stretch; overflow: hidden; border-radius: 16px; background: #f6e7c9; }
@@ -104,3 +101,91 @@
 .records-month-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .5rem; margin-block: .8rem; }
 @media (max-width: 350px) { .records-v35 .records-pagination { justify-content: center; } }
 @media (max-width: 280px) { .records-v35 .records-modes { grid-template-columns: minmax(0, 1fr); } .records-month-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+
+/* A postcard and its matching little prints give the album a recognizable paper object. */
+.records-v35 {
+  --ink: #443c38;
+  --muted: #70665c;
+  --album-action: #365c6d;
+  --album-serif: 'Songti SC', 'STSong', 'Noto Serif CJK SC', Georgia, serif;
+  color: var(--ink);
+}
+.records-v35 .screen-title { font-family: var(--album-serif); font-weight: 700; }
+.memory-album {
+  overflow: hidden; border: 1px solid #dacbb4; border-radius: 17px; background: #f9efdc;
+  box-shadow: 0 3px 8px #65462511, 0 1px 1px #6546250d;
+}
+.memory-postcard, .memory-intro {
+  position: relative; isolation: isolate; display: flex; align-items: center; justify-content: space-between;
+  gap: .65rem; width: 100%; min-width: 0; padding: 1.2rem 1.35rem; border: 0; color: var(--ink); text-align: start;
+  background-color: #fbf0da;
+  background-image: radial-gradient(ellipse at 95% 10%, #e5c49569, transparent 68%),
+    repeating-linear-gradient(0deg, #97754407 0 1px, transparent 1px 4px);
+}
+.memory-postcard:focus-visible { outline-offset: -4px; }
+.memory-postcard-copy { min-width: 0; display: grid; justify-items: start; gap: .25rem; }
+.memory-kicker, .memory-caption, .memory-letter small { color: #786348; font-size: .8125rem; line-height: 1.5; }
+.memory-postcard-copy strong, .memory-intro h2 {
+  margin: 0; font-family: var(--album-serif); font-size: clamp(1.5rem, 7vw, 1.95rem);
+  font-weight: 700; letter-spacing: .025em; line-height: 1.3; color: #4c4033;
+}
+.memory-read { display: inline-flex; gap: .4rem; align-items: center; margin-top: .35rem; font-size: .875rem; font-weight: 650; color: var(--album-action); }
+.postcard-art { position: relative; flex: none; display: grid; place-items: center; width: clamp(80px, 27vw, 130px); min-height: 108px; }
+.memory-stamp {
+  --stamp-field: #f1d9a4; position: relative; display: inline-grid; flex: none; place-items: center; padding: 5px;
+  width: 46px; aspect-ratio: .88; background: #fffcf2;
+  mask: linear-gradient(#000 0 0) center / calc(100% - 5px) calc(100% - 5px) no-repeat,
+    radial-gradient(circle at 3px 0, transparent 1.8px, #000 2px) 0 0 / 6px 51% repeat-x,
+    radial-gradient(circle at 3px 100%, transparent 1.8px, #000 2px) 0 100% / 6px 51% repeat-x;
+}
+.memory-stamp-print { position: relative; display: grid; place-items: center; width: 100%; height: 100%;
+  border: 1px solid #8a765f52; background: radial-gradient(ellipse at 48% 40%, #fffc 0%, transparent 72%), var(--stamp-field); }
+.memory-stamp-print::after { content: ''; position: absolute; inset: 2px; border: 1px solid #fff9; pointer-events: none; }
+.memory-stamp .room-sketch { width: 80%; height: 76%; }
+.memory-stamp:is([data-picture='F2'], [data-picture='F6'], [data-picture='R3']) { --stamp-field: #bdd8c2; }
+.memory-stamp:is([data-picture='F3'], [data-picture='F1'], [data-picture='R1']) { --stamp-field: #f1cdb7; }
+.memory-stamp:is([data-picture='F5'], [data-picture='F8'], [data-picture='R2']) { --stamp-field: #c5d9e3; }
+.postcard-art .memory-stamp { width: 76%; padding: 8px; transform: rotate(7deg); }
+.postcard-art { filter: drop-shadow(1px 2px 2px #70533049); }
+.postmark { position: absolute; right: -4%; bottom: 3%; width: 33%; aspect-ratio: 1; border: 3px double #966c4e7a; border-radius: 50%; transform: rotate(-16deg); }
+.postmark::after { content: ''; position: absolute; width: 100%; height: 35%; top: 32%; right: 65%;
+  background: repeating-linear-gradient(0deg, #976e5094 0 1px, transparent 1px 4px); }
+.memory-intro { flex-direction: column; align-items: stretch; padding: 1.6rem 1.25rem 1rem; }
+.memory-intro h2 { font-size: 1.5rem; }
+.memory-intro p { margin: .35rem 0 0; font-size: .9375rem; color: #705c46; line-height: 1.6; }
+.memory-room-print { display: block; position: relative; align-self: center; width: min(72%, 230px); padding: 5px 5px 10px; margin-block-end: .5rem;
+  transform: rotate(-3deg); background: #fffdf3; box-shadow: 0 3px 6px #7e644a39; }
+.memory-room-print::before { content: ''; position: absolute; z-index: 1; width: 33%; height: 14px; top: -6px; left: 34%; background: #d8bc88a8; transform: rotate(3deg); }
+.memory-room-print .records-art { width: 100%; }
+.memory-letter { display: flex; align-items: center; gap: .9rem; text-align: start; padding: .75rem 1rem;
+  border: 1px solid #e5d9c7; border-radius: 15px; background: #fffcf6; color: var(--ink); }
+.memory-letter svg { width: 45px; flex: none; }
+.memory-letter span:nth-child(2) { display: grid; }
+.memory-letter span:last-child { margin-left: auto; color: var(--album-action); }
+.memory-letter-text { white-space: pre-line; line-height: 1.75; color: var(--ink); }
+.records-filter-row h2 { margin: 0 auto 0 0; font-family: var(--album-serif); font-size: 1.25rem; color: var(--ink); }
+.records-filter-row h2 + span { margin-inline-end: 0; }
+.records-v35 .records-filter-row .link-button { background: transparent; color: var(--album-action); padding-inline: .45rem; }
+.records-v35 .focus-records .record-summary { min-height: 65px; }
+.records-v35 .focus-records .record-summary:focus-visible { outline-offset: -3px; }
+.records-v35 .record-summary strong { overflow-wrap: anywhere; }
+.records-v35 .record-summary > .memory-stamp { width: 43px; transform: rotate(-3deg); }
+.records-v35 .record-day h3 { margin-inline: .25rem; }
+.records-v35 .record-meta { line-height: 1.5; }
+.records-v35 .memory-detail .record-story, .memory-page { padding: 1rem; margin: .4rem 0 1rem; background: #f7efdf; border-radius: 14px; }
+.memory-page { display: flex; align-items: center; gap: 1.2rem; }
+.memory-page .memory-stamp { width: 75px; transform: rotate(-4deg); }
+.records-v35 .memory-page h3 { margin: .25rem 0; color: var(--ink); font-family: var(--album-serif); font-size: 1.35rem; line-height: 1.35; }
+.records-v35 .focus-records .focus-task .memory-detail { padding: 0; }
+.records-v35 .record-story small, .records-v35 .memory-detail .memory-step { color: var(--ink); }
+.records-v35 .records-feedback:empty { display: none; }
+@container (max-width: 18rem) {
+  .memory-postcard { flex-wrap: wrap; gap: .5rem; padding: 1rem; }
+  .memory-postcard-copy { flex: 1 1 6rem; }
+  .postcard-art { width: 62px; min-height: 62px; }
+  .postcard-art .memory-stamp { width: 100%; padding: 5px; }
+  .records-v35 .records-summary { grid-template-columns: 1fr; justify-items: start; }
+  .records-filter-row h2 { flex-basis: 100%; }
+  .records-v35 .focus-records .record-summary { padding-inline: .55rem; }
+  .memory-page { flex-wrap: wrap; }
+}

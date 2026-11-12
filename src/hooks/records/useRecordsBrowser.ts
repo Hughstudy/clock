@@ -1,11 +1,11 @@
-import { useLayoutEffect, useRef, useState, type MouseEvent, type MutableRefObject } from 'react'
+import { useLayoutEffect, useMemo, useRef, useState, type MouseEvent, type MutableRefObject } from 'react'
 import { quoteKey, type QuoteFavoritesController } from '../../contracts/favorites'
 import { sceneNames } from '../../data/scene-copy'
-import type { FocusSceneId } from '../../logic/types'
+import type { SceneId } from '../../logic/types'
 import type { RangeLength } from '../../logic/stats'
 import { RECORDS_PAGE_SIZE } from '../../logic/records-query'
 import { useFocusTaskBack } from '../useFocusTaskBack'
-import type { RecordView, StatsView } from '../useViews'
+import type { StatsView } from '../useViews'
 import { useRecordsQuery, type RecordsMode as Mode, type MonthFilter } from './useRecordsQuery'
 import { initialVisit, monthLabel, RECORDS_MODES, type Browse, type Position, type RecordsVisit } from './visit'
 
@@ -44,13 +44,16 @@ export function useRecordsBrowser({ view, favorites, visit, incomplete, thoughts
   const favoriteRemovedFocus = useRef<string | true | null>(null)
   const localFocus = useRef<{ entry: string; source: boolean } | 'welcome' | null>(null)
   const sourceRecord = reading.browse.scenes.sourceRecord
-  const roomReturn = useRef<FocusSceneId | null>(null)
+  const roomReturn = useRef<SceneId | null>(null)
   const fromRoomPreview = useRef(false)
   const [activeSeen, setActiveSeen] = useState(!!view.active)
   const result = useRecordsQuery(view, mode, current, reading.roomTag)
   const { entryKey: entryId } = result
-  const selectedOriginal = sourceRecord ? view.recordBySession.get(sourceRecord) : null
-  const missingSource = sourceRecord && (!selectedOriginal?.saved || selectedOriginal.scene?.sceneId !== reading.roomTag)
+  const selectedOriginal = useMemo(() => {
+    if (!sourceRecord || !reading.roomTag) return null
+    return result.roomActivities.get(reading.roomTag)?.find(entry => entryId(entry) === sourceRecord)
+  }, [sourceRecord, reading.roomTag, result.roomActivities, entryId])
+  const missingSource = !!sourceRecord && !selectedOriginal
   const detachedThought = mode === 'thoughts' && current.expanded?.startsWith('thought:') && !result.all.some(entry => entryId(entry) === current.expanded)
     ? result.thoughtById.get(current.expanded) : undefined
   const queryKey = `${mode}/${current.month}/${current.search}/${mode === 'scenes' ? reading.roomTag : ''}`
@@ -104,7 +107,9 @@ export function useRecordsBrowser({ view, favorites, visit, incomplete, thoughts
     previousQuery.current = queryKey
     previousIds.current = ids
     const position = positions.current[mode]
-    const anchor = mode === 'scenes' && sourceRecord ? `record:${sourceRecord}` : position.anchor ?? current.expanded
+    // While a sheet is open, a peer insert must keep its source on the rendered page.
+    const openMemory = mode === 'all' && current.expanded && !current.expanded.startsWith('thought:') ? current.expanded : null
+    const anchor = mode === 'scenes' && sourceRecord ? sourceRecord : openMemory ?? position.anchor ?? current.expanded
     if (changed && !pageFocus.current && position.anchor && ids.includes(position.anchor)) restorePosition.current = { ...position }
     if (changed && current.expanded && !ids.includes(current.expanded) && !result.thoughtById.has(current.expanded) && document.activeElement === document.body) {
       const removedAt = oldIds.indexOf(current.expanded)
@@ -213,7 +218,7 @@ export function useRecordsBrowser({ view, favorites, visit, incomplete, thoughts
     remember(mode); setMonthPanel(false); setStatusPanel(false)
     setReading(value => ({ ...value, mode: next }))
   }
-  const selectTag = (id: FocusSceneId, opener: HTMLButtonElement) => {
+  const selectTag = (id: SceneId, opener: HTMLButtonElement) => {
     positions.current.scenes.anchor = null
     pageFocus.current = true
     announceQuery.current = true
@@ -226,7 +231,7 @@ export function useRecordsBrowser({ view, favorites, visit, incomplete, thoughts
   }
   const returnToTag = () => {
     if (!sourceRecord) return
-    localFocus.current = { entry: `record:${sourceRecord}`, source: false }
+    localFocus.current = { entry: sourceRecord, source: false }
     patch({ sourceRecord: null, expanded: null })
     if (missingSource && reading.roomTag) {
       if (result.roomActivities.has(reading.roomTag)) pageFocus.current = true
@@ -243,11 +248,11 @@ export function useRecordsBrowser({ view, favorites, visit, incomplete, thoughts
     positions.current.scenes = { offset: 0, anchor: null, relative: 0, focus: null }
     setReading(value => ({ ...value, mode: 'scenes', roomTag: null, browse: { ...value.browse, scenes: { ...value.browse.scenes, page: 1, expanded: null, sourceRecord: null } } }))
   }
-  const openOriginal = (record: RecordView, id: string, opener: HTMLButtonElement) => {
-    if (sourceRecord === record.sessionId) { returnToTag(); return }
+  const openOriginal = (id: string, opener: HTMLButtonElement) => {
+    if (sourceRecord === id) { returnToTag(); return }
     const sourceTop = opener.getBoundingClientRect().top
     localFocus.current = { entry: id, source: true }
-    setReading(value => ({ ...value, sourceTop, browse: { ...value.browse, scenes: { ...value.browse.scenes, expanded: id, sourceRecord: record.sessionId } } }))
+    setReading(value => ({ ...value, sourceTop, browse: { ...value.browse, scenes: { ...value.browse.scenes, expanded: id, sourceRecord: id } } }))
   }
   const beforeUndo = (event: MouseEvent<HTMLButtonElement>, id: string) => {
     // The button goes once the restore works, so a keyboard needs somewhere to stay.

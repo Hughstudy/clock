@@ -2,7 +2,7 @@
 
 **Current product documentation:** [番茄是个番茄 — PRD map](docs/prd/README.md) (v37, November 6, 2026). Start with the product overview, then follow the map to behavior, UI, data, acceptance, character, dialogue and the code bridge. This is the maintained product source; earlier handoffs remain historical snapshots. The split and new dialogue candidates do not change the application or establish full product acceptance.
 
-The current prototype implements the authorized interaction increment from the November 2 PRD v35. Focus keeps timing and thought controls in stable groups, results require explicit preparation before another start, and encouragement has a category reader with saved favorites. Records offers four views, full-history thought search, month selection and 20-item pages. Snapshot v8 preserves earlier data and adds quote favorites. See the [v35 scope](docs/plans/INTERACTION_V35_PLAN.md) and [verification](docs/verification/interaction-v35.md).
+The November 2 PRD v35 increment introduced the current Focus controls and Records navigation. Focus keeps timing and thought controls in stable groups, results require explicit preparation before another start, and encouragement has a category reader with saved favorites. Records offers four views, full-history thought search, month selection and 20-item pages. Snapshot v8 preserves earlier data and adds quote favorites. See the [v35 scope](docs/plans/INTERACTION_V35_PLAN.md) and [verification](docs/verification/interaction-v35.md).
 
 The implementation baseline `e6daa66` contains the supplied 2026-10-29 PRD v3 handoff and
 the blue companion integration. This includes start, pause/resume, manual early
@@ -36,7 +36,7 @@ updated. Engineering plans and reports use English. The user-requested product d
 
 Tap **开始专注** to start the displayed time. Tap the digits or the pencil to adjust the length on the ruler. Applying the new value returns to preparation. Choose **给我一句鼓励** to hear from the companion in a speech bubble and optionally favorite its words. Reading stays open while the timer changes.
 
-Open **记录 → 生活场景** to find a session by its activity. For example, the paper-boat picture opens the list of saved paper-boat records. The room's furniture is initial scenery. The shelf indexes saved activities and grows by one picture per distinct focus activity.
+Open **记录 → 全部记录** to revisit a focus session or a rest. The illustrated keepsake opens the original entry. The timeline groups memories and thoughts by date, and the compact statistics count saved focus sessions only. In **生活场景**, choose an activity picture to see the sessions behind it. For example, the paper boat leads back to times the companion folded paper. The room’s furniture is initial scenery.
 
 A mobile-first Pomodoro-style focus timer built with React 18, TypeScript,
 Vite and rough.js. Early and full endings receive equal supportive feedback.
@@ -101,8 +101,7 @@ One-time setup: in the repository's **Settings → Pages**, set **Source** to
   key. Unreadable or partially invalid data is copied to a
   `whale-focus:snapshot:backup:<timestamp>` key before anything is replaced;
   if no copy can be made, the original is left untouched.
-- The current schema is v8. The migration chain upgrades v1/v2 completions to ended focus records and participation,
-  preserving IDs, totals and dates. Unknown legacy start times remain null.
+- Snapshot v10 retains each ended rest by session ID alongside focus history. Older versions kept at most the last identifiable rest. Migration preserves that evidence and leaves an unknown original date, break kind or ending reason unspecified. Earlier migrations retain legacy focus IDs, totals and dates.
 - Start, pause, resume and end write immediately under a short lock. A running
   session continues while the page is hidden or closed, capped at its saved
   deadline. Reopening settles at most that one session, silently. A paused

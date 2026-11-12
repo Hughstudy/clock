@@ -1,9 +1,9 @@
 import { applySettingsPatch, defaultSettings, isValidDuration, sameSettings, type SettingsPatch } from './settings'
-import { selectScene } from './scenes'
+import { isFocusSceneId, selectScene } from './scenes'
 import type { Spec } from './spec'
 import { canRestore, isLive, isWellFormedUnicode, normalizeStep, purgeExpiredText } from './thoughts'
 import { breakAfterFocus, expireSession, pauseSession, remainingMs, resetSession, resumeSession, skipBreak, startSession } from './timer'
-import type { AppSnapshot, DateKey, FocusRecord, Phase, Session, Settings, Thought, ThoughtDraft } from './types'
+import type { AppSnapshot, DateKey, FocusRecord, Phase, RestMemory, Session, Settings, Thought, ThoughtDraft } from './types'
 import { quoteKey, type FavoriteQuote } from '../contracts/favorites'
 
 export type FavoriteAction = { type: 'setQuoteFavorite'; quote: FavoriteQuote; selected: boolean; expectedRev: number | null; requestedAt: number }
@@ -132,9 +132,14 @@ export function reconcile(snapshot: AppSnapshot, ctx: ActionContext, spec: Spec)
     return { ...unchanged(snapshot), snapshot: { ...snapshot, timer: { phase, session: null, completedFocusCount: count },
       restSuggestionSessionId: known.endReason === 'deadline' ? known.sessionId : null }, changed: true }
   }
+  if (active && snapshot.timer.phase !== 'focus' && snapshot.restMemories.some(rest => rest.sessionId === active.id)) {
+    return { ...unchanged(snapshot), changed: true, snapshot: { ...snapshot, timer: skipBreak(snapshot.timer) } }
+  }
   const { timer, expired } = expireSession(snapshot.timer, ctx.now, spec.timer.longBreakEvery)
   if (!expired) return unchanged(snapshot)
-  const ended: FocusRecord | null = expired.phase === 'focus' ? {
+  const completion = { sessionId: expired.sessionId, phase: expired.phase, deadline: expired.deadline, credited: expired.phase === 'focus' }
+  if (expired.phase !== 'focus') return { ...endRest(snapshot, ctx, expired.deadline, 'deadline'), completion }
+  const ended: FocusRecord = {
     sessionId: expired.sessionId,
     startedAt: expired.startedAt,
     endedAt: expired.deadline,
@@ -145,17 +150,14 @@ export function reconcile(snapshot: AppSnapshot, ctx: ActionContext, spec: Spec)
     source: expired.startedAt === null ? 'legacy' : 'native',
     step: expired.step,
     ...(active?.scene ? { scene: active.scene } : {}),
-  } : null
-  const records = ended ? [...snapshot.records, ended] : snapshot.records
+  }
   const scenes: AppSnapshot['scenes'] = { ...snapshot.scenes, lastEnded: active?.scene ? {
-    sessionId: active.id, phase: expired.phase === 'focus' ? 'focus' : 'rest', scene: active.scene,
+    sessionId: active.id, phase: 'focus', scene: active.scene,
     elapsedMs: expired.durationMs, endedAt: expired.deadline,
   } : null }
   return {
-    snapshot: { ...snapshot, timer, records, scenes, restSuggestionSessionId: ended?.sessionId ?? null,
-      lastRestEnd: expired.phase === 'focus' ? snapshot.lastRestEnd :
-      { sessionId: expired.sessionId, endedAt: expired.deadline, elapsedMs: expired.durationMs } },
-    completion: { sessionId: expired.sessionId, phase: expired.phase, deadline: expired.deadline, credited: ended !== null },
+    snapshot: { ...snapshot, timer, records: [...snapshot.records, ended], scenes, restSuggestionSessionId: ended.sessionId },
+    completion,
     ended,
     thought: null,
     changed: true,
@@ -199,6 +201,7 @@ function act(snapshot: AppSnapshot, action: AppAction, ctx: ActionContext, spec:
     case 'startFocus':
     case 'startBreak': {
       if (snapshot.timer.session || snapshot.records.some((r) => r.sessionId === action.sessionId) ||
+          snapshot.restMemories.some(rest => rest.sessionId === action.sessionId) ||
           snapshot.participations.some((r) => r.sessionId === action.sessionId)) return unchanged(snapshot)
       if (action.expectedPhase !== undefined && action.expectedPhase !== snapshot.timer.phase) return unchanged(snapshot)
       const timer = action.type === 'startBreak'
@@ -227,7 +230,7 @@ function act(snapshot: AppSnapshot, action: AppAction, ctx: ActionContext, spec:
     case 'end': {
       const session = snapshot.timer.session
       if (!session) return unchanged(snapshot)
-      if (snapshot.timer.phase !== 'focus') return endRest(snapshot, ctx)
+      if (snapshot.timer.phase !== 'focus') return endRest(snapshot, ctx, now, 'manual')
       const ended: FocusRecord = {
         sessionId: session.id,
         startedAt: session.startedAt,
@@ -248,7 +251,7 @@ function act(snapshot: AppSnapshot, action: AppAction, ctx: ActionContext, spec:
     case 'skipBreak': {
       const session = snapshot.timer.session
       if (action.sessionId !== undefined && (session?.id ?? null) !== action.sessionId) return unchanged(snapshot)
-      return session && snapshot.timer.phase !== 'focus' ? endRest(snapshot, ctx) : withTimer(skipBreak(snapshot.timer), null)
+      return session && snapshot.timer.phase !== 'focus' ? endRest(snapshot, ctx, now, 'manual') : withTimer(skipBreak(snapshot.timer), null)
     }
     case 'updateSettings':
     case 'resetDurations': {
@@ -264,14 +267,18 @@ function act(snapshot: AppSnapshot, action: AppAction, ctx: ActionContext, spec:
   }
 }
 
-function endRest(snapshot: AppSnapshot, ctx: ActionContext): Transition {
-  const session = snapshot.timer.session
-  if (!session) return unchanged(snapshot)
-  const lastRestEnd = { sessionId: session.id, endedAt: ctx.now,
-    elapsedMs: session.durationMs - remainingMs(snapshot.timer, snapshot.settings, ctx.now) }
+function endRest(snapshot: AppSnapshot, ctx: ActionContext, endedAt: number, endReason: 'manual' | 'deadline'): Transition {
+  const { session, phase } = snapshot.timer
+  if (!session || phase === 'focus') return unchanged(snapshot)
+  const lastRestEnd = { sessionId: session.id, endedAt,
+    elapsedMs: session.durationMs - remainingMs(snapshot.timer, snapshot.settings, endedAt) }
+  const sceneId = session.scene?.sceneId
+  const memory: RestMemory = { ...lastRestEnd, dateKey: ctx.dateKeyOf(endedAt, session.timeZone), phase, endReason,
+    sceneId: sceneId && !isFocusSceneId(sceneId) ? sceneId : null }
   const lastEnded = session.scene ? { ...lastRestEnd, phase: 'rest' as const, scene: session.scene } : null
   return { ...unchanged(snapshot), changed: true, snapshot: { ...snapshot, timer: skipBreak(snapshot.timer),
-    lastRestEnd, scenes: { ...snapshot.scenes, lastEnded } } }
+    lastRestEnd, restMemories: [...snapshot.restMemories, memory], restSuggestionSessionId: null,
+    scenes: { ...snapshot.scenes, lastEnded } } }
 }
 
 function actOnThought(snapshot: AppSnapshot, action: ThoughtAction, ctx: ActionContext, spec: Spec): Transition {

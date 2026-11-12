@@ -15,9 +15,9 @@ Screens and components render read-only views and dispatch intent. Hooks coordin
 | Timing and session settlement | `logic/timer.ts`, `logic/app.ts`, `hooks/useClockApp.ts` | Deadline-based accounting; one transaction coordinator; stable session IDs |
 | Thought editor and recovery | `hooks/useThoughts.ts`, `logic/thoughts.ts`, `components/ThoughtPanel.tsx` | Preserve ownership, drafts, revisions and pending-save truth |
 | Encouragement policy and quote favorites | `hooks/useFeedback.ts`, `logic/feedback-host.ts`, `logic/feedback.ts`, `hooks/useQuoteFavorites.ts` | Main logic decides eligibility and save truth; animation consumes permitted cues |
-| Records layout | `screens/RecordsScreen.tsx`, `components/records/` | Screen composes existing controls; no independent time or storage calculations |
+| Records layout | `screens/RecordsScreen.tsx`, `components/records/` | Featured session keepsake, date-grouped focus/rest memories, thought entries and secondary focus totals |
 | Records browsing and return position | `hooks/records/useRecordsBrowser.ts`, `hooks/records/visit.ts` | Mode, page, expanded object, scroll anchor and focus restoration stay coordinated |
-| Records query and saved-only totals | `hooks/records/useRecordsQuery.ts`, `logic/records-query.ts`, `hooks/useViews.ts`, `logic/stats.ts` | Full-list search; 20-item replacement pages; confirmed data only in totals |
+| Records query and saved-only totals | `hooks/records/useRecordsQuery.ts`, `logic/records-query.ts`, `hooks/useViews.ts`, `logic/stats.ts` | Combined focus/rest history, full-list thought search and 20-item pages. Totals use confirmed focus records |
 | Settings | `screens/SettingsScreen.tsx`, `hooks/useSettingsForm.ts`, `logic/settings.ts` | New settings apply to future sessions |
 | Snapshot format and compatibility | `logic/snapshot.ts`, `logic/snapshot/` | Keep the stable entry point; protect old and newer raw data |
 | Storage and concurrency | `adapters/storage.ts`, `adapters/browser-store.ts`, `adapters/locks.ts` | Read latest, transition, write under one short lock |
@@ -37,12 +37,12 @@ Paths in the table are relative to `src/` unless another prefix is present.
 
 | Internal file | Responsibility |
 | --- | --- |
-| `snapshot/migrations.ts` | Ordered v1–v9 upgrade transforms and migration runner |
+| `snapshot/migrations.ts` | Ordered v1–v10 upgrade transforms and migration runner |
 | `snapshot/read.ts` | Field readers and repair diagnostics for the current model |
 | `snapshot/merge.ts` | Same-generation merge and missing-data detection |
 | `snapshot/guards.ts` | Small shared predicates used by migration and readers |
 
-The current format is v9. Its explicit automatic-rest suggestion identity is recorded and retired with timer intent; migration preserves unknown legacy idle-rest intent instead of inferring it. See the [iOS review](verification/ios-design-review.md). Existing schema migrations and inert v5 scene history remain necessary compatibility paths. Full backup/restore, dataset replacement and authored story collection remain unfinished; moving files does not implement them.
+Snapshot v10 adds durable ended rests keyed by session ID. A v9 snapshot can supply at most its last evidenced rest ending. The original archive date, short/long break kind, ending reason or scene can be unknown. The v9 migration still preserves the identity of an automatic rest suggestion separately from an explicitly prepared rest. See the [iOS review](verification/ios-design-review.md). Existing schema migrations and inert v5 scene history remain necessary compatibility paths. Full backup/restore, dataset replacement and authored story collection remain unfinished; moving files does not implement them.
 
 ## Records modules
 

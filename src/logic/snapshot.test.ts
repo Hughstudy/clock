@@ -31,7 +31,42 @@ function legacy(version: number) {
   }
 }
 
-describe('snapshot v9 and migration', () => {
+describe('snapshot v10 and migration', () => {
+  it('recovers the latest known legacy rest and only its matching scene, without assigning a date, kind or reason', () => {
+    const before = sample()
+    const lastRestEnd = { sessionId: 'rest', endedAt: 42, elapsedMs: 0 }
+    const lastEnded = { ...lastRestEnd, phase: 'rest', scene: { sceneId: 'R2', ordinal: 12, selectionVersion: 2 } }
+    for (const [art, expectedId] of [[lastEnded, 'R2'], [{ ...lastEnded, sessionId: 'other' }, null],
+      [{ ...lastEnded, elapsedMs: 99 }, null], [null, null]] as const) {
+      const raw = { ...before, version: 9, lastRestEnd, scenes: { ...before.scenes, lastEnded: art } }
+      const decoded = decodeSnapshot(JSON.stringify(raw), spec, ctx)
+      if (decoded.kind !== 'ok') throw Error(decoded.kind)
+      expect(decoded.issues).toEqual([])
+      expect(decoded.snapshot.restMemories).toEqual([{ ...lastRestEnd, sceneId: expectedId, dateKey: null, phase: null, endReason: null }])
+      expect(decodeSnapshot(encodeSnapshot(decoded.snapshot), spec, ctx)).toEqual(decoded)
+    }
+  })
+  it('protects the raw data when repairing an invalid rest or duplicate, and keeps readable facts without invalid artwork', () => {
+    const memory = { sessionId: 'rest', elapsedMs: 100, endedAt: 1234, phase: 'shortBreak', endReason: 'manual', dateKey: '2026-10-28', sceneId: 'F3' }
+    const invalid = [{ elapsedMs: -1 }, { elapsedMs: 0.5 }, { endedAt: 9e15 }, { elapsedMs: 0, endReason: 'deadline' }]
+    const decoded = decodeSnapshot(JSON.stringify({ ...sample(), restMemories: [memory, memory,
+      ...invalid.map((fields, i) => ({ ...memory, ...fields, sessionId: 'bad-' + i }))] }), spec, ctx)
+    if (decoded.kind !== 'ok') throw Error(decoded.kind)
+    expect(decoded.snapshot.restMemories).toEqual([{ ...memory, sceneId: null }])
+    expect(decoded.issues).toEqual(['restMemories.sceneId', 'restMemories (5 unreadable)'])
+  })
+  it('accepts the epoch and rejects unrenderable dates in both legacy sources', () => {
+    const before = sample()
+    const ending = { sessionId: 'old-rest', elapsedMs: 0, endedAt: 0 }
+    for (const endedAt of [0, 9e15]) {
+      const lastRestEnd = { ...ending, endedAt }
+      const lastEnded = { ...lastRestEnd, phase: 'rest', scene: { sceneId: 'R2', ordinal: 1, selectionVersion: 2 } }
+      const decoded = decodeSnapshot(JSON.stringify({ ...before, version: 9, lastRestEnd, scenes: { ...before.scenes, lastEnded } }), spec, ctx)
+      if (decoded.kind !== 'ok') throw Error(decoded.kind)
+      expect(decoded.issues).toEqual(endedAt ? ['lastRestEnd', 'scenes.lastEnded'] : [])
+      expect(decoded.snapshot.restMemories).toHaveLength(endedAt ? 0 : 1)
+    }
+  })
   it('round-trips without replacing valid fields', () => {
     const s = sample()
     expect(decodeSnapshot(encodeSnapshot(s), spec, ctx)).toEqual({ kind: 'ok', snapshot: s, issues: [] })
@@ -126,6 +161,18 @@ describe('snapshot v9 and migration', () => {
 })
 
 describe('concurrent snapshots', () => {
+  it('merges distinct rest memories across tabs and keeps one entry per session', () => {
+    const base = sample()
+    const rest = { sessionId: 'one', elapsedMs: 0, endedAt: 10, phase: null, endReason: null, dateKey: null, sceneId: null }
+    const a = { ...base, restMemories: [rest] }
+    const b = { ...base, revision: base.revision + 1, restMemories: [{ ...rest, sessionId: 'two', endedAt: 20 }] }
+    const merged = mergeSnapshots(a, b)
+    expect(merged.restMemories.map(r => r.sessionId).sort()).toEqual(['one', 'two'])
+    expect(hasMissingRecords(b, a)).toBe(true)
+    expect(hasMissingRecords(merged, a)).toBe(false)
+    expect(mergeSnapshots(b, a)).toEqual(merged)
+    expect(mergeSnapshots(merged, b)).toBe(merged)
+  })
   it('uses the newer timer/settings, unions stable records, and deduplicates participation', () => {
     const a = { ...sample(), revision: 8, records: [record('s1'), record('s2', 3000)] }
     const b = { ...sample(), revision: 9, writer: 'b', records: [record('s1'), record('s4', 2000)] }

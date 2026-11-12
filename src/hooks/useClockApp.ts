@@ -11,7 +11,7 @@ import { applyAction, expiredSessionResult, resolveSessionResult, shouldChime, s
 import { feedbackFromTransition, type AppFeedbackEvent } from '../logic/feedback-host'
 import type { FeedbackEvent } from '../logic/feedback'
 import type { SettingsPatch } from '../logic/settings'
-import type { AppSnapshot, Phase, Thought } from '../logic/types'
+import type { AppSnapshot, Phase, RestMemory, Thought } from '../logic/types'
 import { datePendingDeletion } from '../logic/thoughts'
 import type { SavedQuote } from '../contracts/favorites'
 import { feedbackCatalog } from '../data/encouragement'
@@ -38,6 +38,7 @@ export interface ClockApp {
   snapshot: AppSnapshot
   savedRecordIds: ReadonlySet<string>
   durableThoughts: readonly Thought[]
+  durableRests: readonly RestMemory[]
   durableFavorites: readonly SavedQuote[]
   timerPending: boolean
   persistence: Persistence
@@ -73,6 +74,7 @@ interface PendingThought extends Thought {
   retirement?: { previous: string | null; next: string }
 }
 const EMPTY_THOUGHTS: readonly Thought[] = []
+const EMPTY_RESTS: readonly RestMemory[] = []
 const EMPTY_FAVORITES: readonly SavedQuote[] = []
 const TIMER_COMMANDS = new Set(['start', 'startFocus', 'startBreak', 'pause', 'resume', 'end', 'skipBreak', 'prepare'])
 
@@ -350,5 +352,6 @@ export function useClockApp(): ClockApp {
     timerPending: timerPendingCount > 0, durableFavorites: durable?.quoteFavorites ?? EMPTY_FAVORITES,
     hasPendingOperations: pending.current.size > 0 || unconfirmed.current.size > 0 || queuedOperations.current > 0 || timerPendingCount > 0,
     checkReload,
+    durableRests: durable?.restMemories ?? EMPTY_RESTS,
     durableThoughts: durable?.thoughts ?? EMPTY_THOUGHTS }
 }

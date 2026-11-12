@@ -281,12 +281,89 @@ describe('SnapshotStore across tabs', () => {
     const peer = tab(storage, 'z')
     storage.failWrites = true
     await act(local, { type: 'end', sessionId: 'rest' }, T0 + 600)
+    expect(local.snapshot.restMemories).toHaveLength(1)
+    expect(local.durableSnapshot?.restMemories).toEqual([])
     storage.failWrites = false
     await act(peer, { type: 'updateSettings', patch: { motionEnabled: false } }, T0 + 1000)
     local.receive(storage.getItem(KEY))
     await act(local, { type: 'reconcile' }, T0 + 30 * MIN)
     expect(stored(storage)).toMatchObject({ timer: { session: null }, settings: { motionEnabled: false },
+      restMemories: [{ sessionId: 'rest', elapsedMs: 600 }],
       lastRestEnd: { sessionId: 'rest', elapsedMs: 600 }, scenes: { lastEnded: { sessionId: 'rest', elapsedMs: 600 } } })
+  })
+
+  it('keeps the saved rest when another tab retries a different ending and does not resurrect an old memory across generations', async () => {
+    const storage = new MemoryStorage(), lock = sharedLock(), local = tab(storage, 'z', lock)
+    await act(local, { type: 'startBreak', sessionId: 'rest', timeZone: 'UTC' }, T0)
+    const other = tab(storage, 'a', lock)
+    storage.failWrites = true
+    await act(local, { type: 'end', sessionId: 'rest' }, T0 + 600)
+    storage.failWrites = false
+    await act(other, { type: 'reconcile' }, T0 + 5 * MIN)
+    await act(local, { type: 'reconcile' }, T0 + 6 * MIN)
+    expect(tab(storage, 'reopened').snapshot.restMemories).toMatchObject([{ sessionId: 'rest', endReason: 'deadline', elapsedMs: 5 * MIN }])
+    const old = stored(storage)
+    storage.data.set(KEY, JSON.stringify({ ...old, datasetGeneration: old.datasetGeneration + 1, restMemories: [], lastRestEnd: null }))
+    await act(local, { type: 'reconcile' }, T0 + 7 * MIN)
+    expect(local.durableSnapshot?.restMemories).toEqual([])
+    expect(local.snapshot.restMemories).toEqual([])
+  })
+
+  it.each(['paused', 'rescheduled'] as const)('rejects a deadline from a failed read after a peer %s the same rest', async position => {
+    const storage = new MemoryStorage(), lock = sharedLock(), local = tab(storage, 'a', lock)
+    await act(local, { type: 'startBreak', sessionId: 'rest', timeZone: 'UTC' }, T0)
+    const peer = tab(storage, 'b', lock)
+    await act(peer, { type: 'pause', sessionId: 'rest' }, T0 + MIN)
+    if (position === 'rescheduled') await act(peer, { type: 'resume', sessionId: 'rest' }, T0 + 4 * MIN)
+    storage.failReads = true
+    expect((await act(local, { type: 'reconcile' }, T0 + 5 * MIN)).saved).toBe(false)
+    expect(local.snapshot.restMemories).toHaveLength(1)
+    storage.failReads = false
+    await act(local, { type: 'reconcile' }, T0 + 6 * MIN)
+    expect(local.durableSnapshot?.restMemories).toEqual([])
+    expect(local.durableSnapshot?.lastRestEnd).toBeNull()
+    expect(local.durableSnapshot?.scenes.lastEnded).toBeNull()
+    expect(local.snapshot.timer.session).toMatchObject({ id: 'rest', status: position === 'paused' ? 'paused' : 'running' })
+    if (position === 'rescheduled') {
+      await act(local, { type: 'reconcile' }, T0 + 9 * MIN)
+      expect(local.snapshot.restMemories).toMatchObject([{ sessionId: 'rest', elapsedMs: 5 * MIN, endedAt: T0 + 8 * MIN }])
+    }
+  })
+
+  it('keeps the later local rest result when a peer saved only the shared first ending', async () => {
+    const storage = new MemoryStorage(), lock = sharedLock(), local = tab(storage, 'a', lock)
+    await act(local, { type: 'startBreak', sessionId: 'first', timeZone: 'UTC' }, T0)
+    const peer = tab(storage, 'b', lock)
+    storage.failWrites = true
+    await act(local, { type: 'end', sessionId: 'first' }, T0 + 100)
+    await act(local, { type: 'startBreak', sessionId: 'second', timeZone: 'UTC' }, T0 + 200)
+    await act(local, { type: 'end', sessionId: 'second' }, T0 + 700)
+    storage.failWrites = false
+    await act(peer, { type: 'end', sessionId: 'first' }, T0 + 125)
+    local.receive(storage.getItem(KEY))
+    await act(local, { type: 'reconcile' }, T0 + 1000)
+    expect(stored(storage).restMemories).toHaveLength(2)
+    expect(stored(storage).restMemories).toContainEqual(expect.objectContaining({ sessionId: 'first', elapsedMs: 125 }))
+    expect(stored(storage).lastRestEnd).toMatchObject({ sessionId: 'second', elapsedMs: 500 })
+    expect(stored(storage).scenes.lastEnded).toMatchObject({ sessionId: 'second', elapsedMs: 500 })
+  })
+
+  it.each([true, false])('rechecks a provisional manual ending against a saved pause (elapsed agrees: %s)', async agrees => {
+    const storage = new MemoryStorage(), lock = sharedLock(), local = tab(storage, 'a', lock)
+    await act(local, { type: 'startBreak', sessionId: 'rest', timeZone: 'UTC' }, T0)
+    const peer = tab(storage, 'b', lock)
+    await act(peer, { type: 'pause', sessionId: 'rest' }, T0 + MIN)
+    storage.failReads = true
+    await act(local, { type: 'end', sessionId: 'rest' }, T0 + (agrees ? MIN : 2 * MIN))
+    storage.failReads = false
+    await act(local, { type: 'reconcile' }, T0 + 3 * MIN)
+    if (agrees) {
+      expect(local.snapshot.timer.session).toBeNull()
+      expect(local.durableSnapshot?.restMemories).toMatchObject([{ sessionId: 'rest', elapsedMs: MIN, endReason: 'manual' }])
+    } else {
+      expect(local.snapshot.timer.session).toMatchObject({ id: 'rest', status: 'paused' })
+      expect(local.durableSnapshot?.restMemories).toEqual([])
+    }
   })
 
   it('keeps an already started rest while converging on the durable focus ending', async () => {

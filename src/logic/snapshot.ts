@@ -1,23 +1,23 @@
 import { defaultSettings, sanitizeSettings } from './settings'
-import { initialScenes, selectScene } from './scenes'
+import { initialScenes, isFocusSceneId, selectScene } from './scenes'
 import type { Spec } from './spec'
 import { initialTimer } from './timer'
 import type { AppSnapshot } from './types'
-import { isRecord, isCount, isInstant, isId } from './snapshot/guards'
+import { isRecord, isCount, isEpochMs, isId } from './snapshot/guards'
 import { MIGRATIONS, runMigrations, type Migration, type MigrationContext } from './snapshot/migrations'
-import { readTimer, readRestSuggestion, readRecords, readParticipations, readThoughts, readDraft, readFavorites, readLastFocus, readScenes } from './snapshot/read'
+import { readTimer, readRestSuggestion, readRecords, readRestMemories, readParticipations, readThoughts, readDraft, readFavorites, readLastFocus, readScenes } from './snapshot/read'
 
 // Stable entry point; consumers do not need to know the internal snapshot modules.
 export { MIGRATIONS, runMigrations, type Migration, type MigrationContext } from './snapshot/migrations'
 export { mergeSnapshots, hasMissingRecords } from './snapshot/merge'
 
-/** v9 distinguishes automatic break suggestions from explicitly prepared rest. */
-export const SNAPSHOT_VERSION = 9
+/** v10 keeps ended rest memories independently of the current timer or its artwork. */
+export const SNAPSHOT_VERSION = 10
 
 export function createSnapshot(spec: Spec): AppSnapshot {
   return {
     version: SNAPSHOT_VERSION, revision: 0, writer: '', datasetGeneration: 0, settings: defaultSettings(spec), timer: initialTimer(),
-    records: [], participations: [], restSuggestionSessionId: null, lastRestEnd: null, lastFocusMinutes: null, focusDefaultsRevision: 0, thoughts: [], thoughtDraft: null, draftStamp: null, scenes: initialScenes(), quoteFavorites: [],
+    records: [], restMemories: [], participations: [], restSuggestionSessionId: null, lastRestEnd: null, lastFocusMinutes: null, focusDefaultsRevision: 0, thoughts: [], thoughtDraft: null, draftStamp: null, scenes: initialScenes(), quoteFavorites: [],
   }
 }
 
@@ -38,7 +38,7 @@ export function decodeSnapshot(text: string, spec: Spec, context: MigrationConte
   const issues: string[] = []
   const records = readRecords(data.records, issues)
   const ending = data.lastRestEnd
-  const lastRestEnd = isRecord(ending) && isId(ending.sessionId) && isInstant(ending.endedAt) && isInstant(ending.elapsedMs)
+  const lastRestEnd = isRecord(ending) && isId(ending.sessionId) && isEpochMs(ending.endedAt) && isCount(ending.elapsedMs)
     ? { sessionId: ending.sessionId, endedAt: ending.endedAt, elapsedMs: ending.elapsedMs } : null
   if (ending !== null && !lastRestEnd) issues.push('lastRestEnd')
   const participations = readParticipations(data.participations, issues)
@@ -55,6 +55,17 @@ export function decodeSnapshot(text: string, spec: Spec, context: MigrationConte
   const focusDefaultsRevision = isCount(data.focusDefaultsRevision) ? data.focusDefaultsRevision : 0
   if (!isCount(data.focusDefaultsRevision)) issues.push('focusDefaultsRevision')
   let scenes = readScenes(data.scenes, issues)
+  const restMemories = readRestMemories(data.restMemories, issues)
+  if (raw.version < 10) {
+    const art = scenes.lastEnded?.phase === 'rest' ? scenes.lastEnded : null
+    const last = lastRestEnd ?? art
+    if (last) {
+      const id = art?.sessionId === last.sessionId && art.endedAt === last.endedAt && art.elapsedMs === last.elapsedMs
+        ? art.scene.sceneId : null
+      restMemories.push({ sessionId: last.sessionId, endedAt: last.endedAt, elapsedMs: last.elapsedMs,
+        sceneId: id && !isFocusSceneId(id) ? id : null, dateKey: null, phase: null, endReason: null })
+    }
+  }
   if (raw.version < 6) {
     // Only future selections change; keep ordinals and last IDs for repeat avoidance.
     scenes = { ...scenes, focus: { ...scenes.focus, remaining: [] }, rest: { ...scenes.rest, remaining: [] } }
@@ -70,7 +81,7 @@ export function decodeSnapshot(text: string, spec: Spec, context: MigrationConte
   return { kind: 'ok', issues, snapshot: {
     version: SNAPSHOT_VERSION, revision: isCount(data.revision) ? data.revision : 0,
     writer: typeof data.writer === 'string' ? data.writer : '', datasetGeneration: data.datasetGeneration,
-    settings, timer, restSuggestionSessionId, lastRestEnd, records, participations, lastFocusMinutes, focusDefaultsRevision, thoughts, thoughtDraft, draftStamp, scenes, quoteFavorites,
+    settings, timer, restSuggestionSessionId, lastRestEnd, records, restMemories, participations, lastFocusMinutes, focusDefaultsRevision, thoughts, thoughtDraft, draftStamp, scenes, quoteFavorites,
   } }
 }
 

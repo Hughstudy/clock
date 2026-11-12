@@ -45,7 +45,7 @@ export function App() {
   const running = app.snapshot.timer.session?.status === 'running'
   const { now, refresh } = useNow(running ? RUNNING_REFRESH_MS : IDLE_REFRESH_MS)
   const timerView = useTimerView(app.snapshot, now)
-  const statsView = useStatsView(app.snapshot, now, app.savedRecordIds, app.durableThoughts)
+  const statsView = useStatsView(app.snapshot, now, app.savedRecordIds, app.durableThoughts, app.durableRests)
   // Count default-length requests as they are made, so a slow save can't clear a newer pick on Focus.
   const [defaultsIntent, setDefaultsIntent] = useState(0)
   const appDispatch = app.dispatch

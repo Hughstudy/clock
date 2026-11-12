@@ -65,6 +65,9 @@ export const MIGRATIONS: Readonly<Record<number, Migration>> = {
   // Earlier snapshots cannot distinguish a suggestion from explicit rest preparation.
   // Preserve their exact timer mode without inventing an automatic suggestion.
   8: old => ({ ...old, version: 9, restSuggestionSessionId: null }),
+  // No old schema recorded a rest's original civil date, kind or ending reason.
+  // The validated last ending and its matching artwork are projected in decodeSnapshot.
+  9: old => ({ ...old, version: 10, restMemories: [] }),
 }
 
 export function runMigrations(data: Json, from: number, to: number, migrations: Readonly<Record<number, Migration>>, context: MigrationContext): Json | null {

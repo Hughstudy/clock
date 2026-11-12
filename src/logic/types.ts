@@ -82,6 +82,17 @@ export interface FocusRecord {
   scene?: SceneAssignment
 }
 
+/** An ended rest. v9 only retained the latest ending, without its date key, kind or reason. */
+export interface RestMemory {
+  sessionId: string
+  endedAt: number
+  elapsedMs: number
+  dateKey: DateKey | null
+  phase: 'shortBreak' | 'longBreak' | null
+  endReason: 'deadline' | 'manual' | null
+  sceneId: RestSceneId | null
+}
+
 /** One entry at start, independent of duration and full-completion cadence. */
 export interface ParticipationRecord {
   sessionId: string
@@ -138,6 +149,7 @@ export interface AppSnapshot {
   restSuggestionSessionId: string | null
   /** At most one factual rest ending for confirmation/retry, independent of artwork. */
   lastRestEnd: { sessionId: string; endedAt: number; elapsedMs: number } | null
+  restMemories: RestMemory[]
   records: FocusRecord[]
   participations: ParticipationRecord[]
   /** Last explicitly chosen one-off focus length. Separate from the configured default. */

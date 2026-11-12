@@ -4,8 +4,8 @@ import { initialScenes, isFocusSceneId, isSceneId } from '../scenes'
 import type { Spec } from '../spec'
 import { initialTimer } from '../timer'
 import { quoteKey, type SavedQuote } from '../../contracts/favorites'
-import { PHASES, type FocusRecord, type FocusSceneId, type ParticipationRecord, type Phase, type SceneAssignment, type SceneRotation, type SceneState, type SceneUnlock, type Session, type Thought, type ThoughtDraft, type TimerState } from '../types'
-import { isRecord, isCount, isInstant, isPositiveMs, isId, isTimeZone, isText, isStep } from './guards'
+import { PHASES, type FocusRecord, type FocusSceneId, type ParticipationRecord, type Phase, type RestMemory, type SceneAssignment, type SceneRotation, type SceneState, type SceneUnlock, type Session, type Thought, type ThoughtDraft, type TimerState } from '../types'
+import { isRecord, isCount, isEpochMs, isInstant, isPositiveMs, isId, isTimeZone, isText, isStep } from './guards'
 
 function readSceneAssignment(raw: unknown): SceneAssignment | null {
   return isRecord(raw) && isSceneId(raw.sceneId) && isCount(raw.ordinal) && raw.ordinal > 0 && (raw.selectionVersion === 1 || raw.selectionVersion === 2)
@@ -69,6 +69,26 @@ export function readRecords(raw: unknown, issues: string[]): FocusRecord[] {
   }
   if (dropped) issues.push(`records (${dropped} unreadable)`)
   return records
+}
+
+export function readRestMemories(raw: unknown, issues: string[]): RestMemory[] {
+  if (!Array.isArray(raw)) { issues.push('restMemories'); return [] }
+  const memories: RestMemory[] = []
+  const seen = new Set<string>()
+  for (const rest of raw) {
+    if (!isRecord(rest) || !isId(rest.sessionId) || seen.has(rest.sessionId) ||
+        !isEpochMs(rest.endedAt) || !isCount(rest.elapsedMs) ||
+        !(rest.dateKey === null || isDateKey(rest.dateKey)) ||
+        !(rest.phase === null || rest.phase === 'shortBreak' || rest.phase === 'longBreak') ||
+        !(rest.endReason === null || rest.endReason === 'manual' || (rest.endReason === 'deadline' && rest.elapsedMs > 0))) continue
+    const sceneId = isSceneId(rest.sceneId) && !isFocusSceneId(rest.sceneId) ? rest.sceneId : null
+    if (rest.sceneId !== sceneId) issues.push('restMemories.sceneId')
+    const { sessionId, endedAt, elapsedMs, dateKey, phase, endReason } = rest
+    memories.push({ sessionId, endedAt, elapsedMs, dateKey, phase, endReason, sceneId })
+    seen.add(sessionId)
+  }
+  if (memories.length !== raw.length) issues.push(`restMemories (${raw.length - memories.length} unreadable)`)
+  return memories
 }
 
 export function readParticipations(raw: unknown, issues: string[]): ParticipationRecord[] {
@@ -176,7 +196,8 @@ export function readScenes(raw: unknown, issues: string[]): SceneState {
     const end = raw.lastEnded
     const scene = isRecord(end) ? readSceneAssignment(end.scene) : null
     if (isRecord(end) && isId(end.sessionId) && (end.phase === 'focus' || end.phase === 'rest') &&
-        scene && isFocusSceneId(scene.sceneId) === (end.phase === 'focus') && isInstant(end.elapsedMs) && isInstant(end.endedAt)) {
+        scene && isFocusSceneId(scene.sceneId) === (end.phase === 'focus') && isInstant(end.elapsedMs) && isInstant(end.endedAt) &&
+        (end.phase !== 'rest' || (isCount(end.elapsedMs) && isEpochMs(end.endedAt)))) {
       lastEnded = { sessionId: end.sessionId, phase: end.phase, scene, elapsedMs: end.elapsedMs, endedAt: end.endedAt }
     } else issues.push('scenes.lastEnded')
   }

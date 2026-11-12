@@ -146,7 +146,7 @@
 | ACT-A11/start_rest | 明确开始或接受建议休息 | session.start | app_preferences, session_stories, sessions, story_items, story_rotation, world_state | 专注/休息模式守卫；首次受理先核对到期。休息不绑定专注故事、不贡献专注参与/时长；原会话重试不换身份 |
 | ACT-A12/pause_rest | 暂停休息 | session.pause | session_stories, sessions, world_state | 专注/休息模式守卫；首次受理先核对到期。休息不绑定专注故事、不贡献专注参与/时长；原会话重试不换身份 |
 | ACT-A12/resume_rest | 继续休息 | session.resume | session_stories, sessions | 专注/休息模式守卫；首次受理先核对到期。休息不绑定专注故事、不贡献专注参与/时长；原会话重试不换身份 |
-| ACT-A14/end_rest | 结束/跳过当前休息回准备 | session.end | session_stories, sessions, story_items, story_rotation, world_state | 专注/休息模式守卫；首次受理先核对到期。休息不绑定专注故事、不贡献专注参与/时长；原会话重试不换身份 |
+| ACT-A14/end_rest | 结束当前休息回准备 | session.end | sessions | 先核对到期，按原会话ID结算一次，确认保存后可回看休息与当时活动。仅略过尚未开始的休息建议时没有休息记录 |
 | ACT-A08/open | 打开结束确认 | none | 无业务写入 | 打开/取消不结束会话；运行计时在确认期间仍经过，提交前核对原ID/版本/截止点 |
 | ACT-A08/cancel | 取消结束确认 | none | 无业务写入 | 打开/取消不结束会话；运行计时在确认期间仍经过，提交前核对原ID/版本/截止点 |
 | ACT-A10/prepare_next | 准备下一段 | none | 无业务写入 | 只回准备，不创建会话、章或新参与 |
