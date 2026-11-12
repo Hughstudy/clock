@@ -96,11 +96,11 @@ body { background: var(--paper); }
 .app:not([data-screen='stats']) { max-width: none; padding: 0; min-height: 0; block-size: 100svh; display: flex; flex-direction: column; }
 .app:not([data-screen='stats']) .app-main { flex: 1; min-block-size: 0; display: flex; flex-direction: column; padding-block-end: 0; }
 .app:not([data-screen='stats']) .app-main > div:not([hidden]) { flex: 1; min-block-size: 0; display: flex; }
-/* The card floats over the scene's floor band, so growing for a reader or a ruler covers the
+/* The card floats over the scene's floor band, so growing for a reader covers the
    companion's feet instead of moving it. --art-clear is the band the art stays above. */
 .home { position: relative; flex: 1; min-block-size: 0; min-inline-size: 0; gap: 0; display: flex; flex-direction: column; align-items: stretch; text-align: center;
   --bar-clear: calc(var(--tab-height) + env(safe-area-inset-bottom) + 22px);
-  --voice-row: max(44px, 1.425rem); --control-row: max(50px, 3.125rem); --tools-row: max(52px, 3.25rem); --step-row: max(44px, 2.375rem);
+  --voice-row: max(44px, 1.425rem); --control-row: max(50px, 3.125rem); --tools-row: max(52px, 3.25rem); --step-row: 0px;
   /* Two rows only: timer controls and tools. The card grows upward over the feet while a note, a passing line,
      the reader or a rest choice needs another. */
   --console: calc(var(--control-row) + var(--tools-row) + 26px); --art-clear: calc(var(--console) + var(--bar-clear));
@@ -149,23 +149,10 @@ body { background: var(--paper); }
   font-variant-numeric: tabular-nums; color: var(--ink); }
 .fp-digits .fp-clock-trigger { pointer-events: auto; }
 /* The optional intention and its editor share the same place under the time. */
+.fp-scene:has(.fp-step) { --step-row: max(44px, 2.375rem); }
 .fp-step { position: absolute; z-index: 2; inset-inline: 12px; inset-block-start: calc(env(safe-area-inset-top) + var(--clock-top, 55px) + 1.25rem + max(44px, 2.55rem));
   block-size: var(--step-row); display: flex; align-items: center; justify-content: center; gap: 6px; pointer-events: none; }
-.fp-step > * { pointer-events: auto; }
-.home .fp-step .text-action { min-block-size: 44px; max-inline-size: 100%; padding-inline: 8px; color: inherit; font-size: .8125rem; font-weight: 550; }
-.fp-step:has(.fp-step-editor) { min-block-size: var(--step-row); block-size: auto; }
-.fp-step-open { display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
-.fp-step-open span { min-inline-size: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.fp-step-open svg { flex: none; }
-.fp-step-editor { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 2px 6px;
-  inline-size: min(100%, 270px); text-align: start; }
-.fp-step-editor label { grid-column: 1 / -1; font-size: .8125rem; line-height: 1.4; }
-.fp-step-editor .fp-step-input { inline-size: 100%; min-inline-size: 0; border-radius: 12px; text-align: start; }
-.fp-step-done { min-inline-size: 44px; min-block-size: 44px; padding-inline: 6px; border: 0; border-radius: 10px;
-  background: var(--paper); color: var(--whale-deep); font: inherit; font-size: .875rem; font-weight: 650; }
 .fp-step__current { margin: 0; max-inline-size: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #46546a; font-size: .8125rem; font-weight: 550; }
-.fp-step[data-step-details='true'] { block-size: auto; flex-direction: column; gap: 0; }
-.fp-step .fp-hint--error { padding: 2px 10px; border-radius: 999px; background: var(--cream); font-size: .75rem; }
 
 /* The result reads as what was done: big numbers, small units, a short fade and nothing more. */
 .fp-result { display: inline-flex; align-items: baseline; gap: .3em; animation: fp-result-in .24s ease-out both; }
@@ -193,12 +180,6 @@ body { background: var(--paper); }
   overflow: hidden; white-space: nowrap; }
 .fp-status:empty { display: none; }
 .fp-status > span:first-child { overflow: hidden; text-overflow: ellipsis; }
-.fp-status .text-action { font-size: .875rem; min-height: 22px; max-inline-size: 100%; overflow: hidden; text-overflow: ellipsis; }
-.fp-step-input { inline-size: min(260px, 100%); block-size: 36px; padding: 0 14px; border: 0; border-radius: 999px; background: #fff; box-shadow: inset 0 0 0 1.5px #c7d6f4;
-  color: var(--ink); font: inherit; font-size: max(1rem, 16px); text-align: center; }
-.home .fp-status[data-step-details='true'] { display: grid; grid-template-columns: minmax(0, 1fr); justify-items: center;
-  block-size: auto; gap: 2px; padding-block: 4px; white-space: normal; }
-.home .fp-status[data-step-details='true'] .text-action { display: block; white-space: nowrap; }
 .fp-primary { display: flex; justify-content: center; }
 /* One accent in every state. Paused, rest and done are named by the label and the button's words. */
 .home { --primary: var(--whale); --primary-deep: var(--whale-deep); --primary-glow: #2f74d040; }
@@ -212,8 +193,7 @@ body { background: var(--paper); }
 .fp-note[hidden] { display: none; }
 .fp-note .text-action { font-size: .8125rem; color: var(--whale); min-height: 24px; }
 
-/* The base of every task surface. The duration ruler uses it in the card's place; input, reading
-   and details override it as a bottom sheet (see focus-v35.css). */
+/* Shared task-surface styles. The clock popover and bottom sheets set their own position. */
 .focus-panel { position: absolute; z-index: 5; inset: auto 10px calc(var(--art-clear, 0px) + 8px); max-block-size: calc(100% - var(--art-clear, 0px) - 64px - env(safe-area-inset-top)); overflow-y: auto;
   padding: 12px 16px 14px; border-radius: var(--radius-card); background: #fff; box-shadow: 0 6px 22px #3c5a8229; text-align: start; overscroll-behavior: contain; }
 /* Panels rise in over 240 ms; they close at once so focus and controls never wait. */

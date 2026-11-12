@@ -45,12 +45,10 @@ try {
   await button(page, '开始专注').waitFor()
   await page.evaluate(() => { window.updateGuardToken = 'original-document' })
 
-  const stepLabel = '这次想做什么？（选填）'
-  const stepField = page.getByRole('textbox', { name: stepLabel, exact: true })
-  await button(page, stepLabel).click()
-  await stepField.fill('先整理一页')
-  await page.locator('.fp-primary button').focus()
-  check('Prepared step remains after leaving the field', await button(page, '编辑这一步：先整理一页').isVisible())
+  await button(page, '记下想法').click()
+  await page.locator('#thought-text').fill('更新前保留的想法')
+  await closePanel(page)
+  await page.waitForFunction(() => JSON.parse(localStorage.getItem('whale-focus:snapshot'))?.thoughtDraft?.text === '更新前保留的想法')
 
   // A real second worker is installed from changed bytes, using the same app
   // assets. Only this isolated verification build is modified.
@@ -62,18 +60,7 @@ try {
   await page.locator('.fp-note').getByText('新版本已准备好', { exact: true }).waitFor()
   await openStatus(page)
   await panel(page).getByText('新版本已准备好。请先保存或处理当前输入，再更新。', { exact: true }).waitFor()
-  check('A retained prepared step disables explicit update after blur', await button(panel(page), '更新并重载').isDisabled())
   check('A waiting worker does not force reload', await page.evaluate(() => window.updateGuardToken === 'original-document'))
-  await closePanel(page)
-
-  await button(page, '编辑这一步：先整理一页').click()
-  await stepField.fill('')
-  await button(page, '完成').click()
-  await button(page, '记下想法').click()
-  await page.locator('#thought-text').fill('更新前保留的想法')
-  await closePanel(page)
-  await page.waitForFunction(() => JSON.parse(localStorage.getItem('whale-focus:snapshot'))?.thoughtDraft?.text === '更新前保留的想法')
-  await openStatus(page)
   check('A recoverable thought draft blocks update after its editor closes', await button(panel(page), '更新并重载').isDisabled())
   await closePanel(page)
   await button(page, '继续草稿').click()

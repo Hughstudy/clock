@@ -4,9 +4,7 @@
 .home .fp-digits { block-size: max(44px, 2.55rem); min-block-size: 44px; line-height: max(44px, 2.55rem); }
 .home .fp-status { inline-size: min(100%, 400px); margin-inline: auto; block-size: max(44px, 2.3rem); min-block-size: max(44px, 2.3rem); overflow: visible; font-size: .8125rem; gap: 8px; }
 .home .fp-status > span:first-child { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; white-space: normal; line-height: 1.35; }
-.home .fp-status .text-action, .home .fp-step-input { min-block-size: 44px; }
 .home .fp-current-step { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.home .fp-status .text-action { color: var(--whale-deep); }
 /* While a session runs the label above the time says it all; the full line stays for screen readers. */
 .home:not([data-layout='readable']) .fp-status[data-running='true'] { position: absolute; inline-size: 1px; block-size: 1px; min-block-size: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 /* A result or a rest to choose: the words on one side, the length on the other. */
@@ -54,16 +52,6 @@
 .home .focus-panel { display: flex; flex-direction: column; overflow: hidden; padding: 12px; margin: 0; border: 0; color: var(--ink);
   inline-size: auto; max-inline-size: none; max-block-size: calc(100% - var(--art-clear, 0px) - 84px - env(safe-area-inset-top)); }
 .home .focus-panel:not([open]) { display: none; }
-.home .focus-panel[data-layout='viewport'] {
-  /* Only reserve the part of each safe inset that the visible viewport still includes. */
-  --panel-top: max(0px, env(safe-area-inset-top) - var(--visible-top, 0px));
-  --panel-bottom: max(0px, env(safe-area-inset-bottom) - var(--keyboard, 0px));
-  --panel-left: calc(env(safe-area-inset-left) + 12px);
-  --panel-right: calc(env(safe-area-inset-right) + 12px);
-  position: fixed; inset: calc(var(--visible-top, 0px) + var(--panel-top) + 8px) var(--panel-right) auto var(--panel-left);
-  inline-size: min(640px, 100vw - var(--panel-left) - var(--panel-right));
-  block-size: calc(var(--visible-height, 100dvh) - var(--panel-top) - var(--panel-bottom) - 16px);
-  max-block-size: none; margin-inline: auto; z-index: 30; }
 .home .focus-panel::backdrop { background: #24354c26; }
 /* A sheet rises from the bottom edge over the card and the tab bar, inset like the card it covers.
    Its body scrolls inside it, it rests on the soft keyboard, and its header drags it down to close. */
@@ -115,8 +103,8 @@
 .home[data-arriving='true'] :is(.fp-plate, .fp-top), .app:not([data-screen='stats']):has(.home[data-arriving='true']) .tab-bar { pointer-events: none; }
 .home[data-chrome] .fp-art { transition: transform .45s cubic-bezier(.2, .8, .2, 1), opacity .2s ease; }
 /* The time travels with the companion, on the same curve, so the two arrive as one group. */
-/* Large text gives the clock its own region at once; nothing glides into it. */
-.home:not([data-layout='readable']) .fp-scene[data-motion='on'] :is(.fp-clock-phase, .fp-digits, .fp-step) { transition: translate .45s cubic-bezier(.2, .8, .2, 1); }
+/* Keep the editable clock stationary while the room measures itself or its ruler opens. */
+.home:not([data-layout='readable'], [data-ready-focus='true']) .fp-scene[data-motion='on'] :is(.fp-clock-phase, .fp-digits, .fp-step) { transition: translate .45s cubic-bezier(.2, .8, .2, 1); }
 .home[data-chrome='away'] .fp-step { visibility: hidden; }
 /* The card has only been lowered: its top edge and grabber stay in reach, and bring it back. */
 .home .fp-handle { position: absolute; z-index: 6; inset: auto 12px 0; --handle-height: max(44px, env(safe-area-inset-bottom) + 30px); block-size: var(--handle-height);
@@ -144,7 +132,7 @@
   .home[data-chrome='away'] .fp-art { transform: translateY(calc(var(--art-clear) - var(--away-floor) - var(--away-art-lift, 0px))) scale(var(--away-scale)); }
   /* The floor follows the support edge up, so no strip of sky shows under a lifted room. */
   .home[data-chrome='away'] .fp-scene::after { block-size: max(var(--art-clear), var(--away-floor) + var(--away-art-lift, 0px) + 8px); }
-  /* The time, its label and the step sit one bubble above the head in every state (--time-drop), so
+  /* The time and its label sit one bubble above the head in every state (--time-drop), so
      no wide band of sky separates them from the companion and they barely move when the card leaves. */
   .home:not([data-layout='readable']) :is(.fp-clock-phase, .fp-digits, .fp-step) { translate: 0 var(--time-drop, 0px); }
   .home[data-chrome='away'] :is(.fp-clock-phase, .fp-digits) { translate: 0 var(--away-time-drop, 0px); }
@@ -165,7 +153,6 @@
   .home:not([data-layout='readable']) .fp-art [data-scenery] {
     transform: translate(calc(160px - 160px * var(--room-zoom, 1.27) + var(--room-shift, 0px)), calc(158px - 158px * var(--room-zoom, 1.27))) scale(var(--room-zoom, 1.27)); }
   /* Local panels keep to the space beside the card now that the scene runs beneath it. */
-  .home:not([data-layout='readable']) .focus-panel[data-layout='local']:not(.fp-duration-surface) { inset-inline-end: calc(var(--plate-w) + 10px); }
   /* While the card is out the scene moves over, and it takes the middle again when the card leaves. */
   .home[data-chrome='shown']:not([data-layout='readable']) .fp-art {
     transform: translateX(calc(-1 * var(--card-pan, 0px))) translateY(var(--fit-shift, 0px)) scale(var(--fit-scale, 1)); }
@@ -214,7 +201,7 @@
 .home[data-layout='readable'] .fp-thought-tools { grid-template-columns: 1fr; gap: 8px; }
 .home[data-layout='readable'] .fp-thought-tools > button { flex-direction: row; min-block-size: max(44px, 1.6rem); justify-content: flex-start; gap: 8px; padding-inline: 6px; font-size: .875rem; text-align: start; }
 .home[data-layout='readable'] .fp-thought-tools .fp-tools-label { grid-column: 1; }
-.home[data-layout='readable'] .fp-note { order: 3; flex-shrink: 0; min-block-size: 0; flex-wrap: wrap; justify-content: flex-start;
+.home[data-layout='readable'] .fp-note { order: 3; flex-shrink: 0; min-block-size: 44px; flex-wrap: wrap; justify-content: flex-start;
   gap: 8px; padding-block-start: 10px; border-top: 1px solid var(--cream-line); }
 .home[data-layout='readable'] .fp-note__text { flex: 1 0 100%; white-space: normal; overflow: visible; overflow-wrap: anywhere; }
 .home[data-layout='readable'] .fp-note > button { max-inline-size: 100%; }
@@ -246,8 +233,6 @@
    This also covers user-enlarged text without reducing their chosen font size. */
 @media (max-height: 650px) and (orientation: portrait) {
   .home .fp-plate { max-block-size: 100%; overflow-y: auto; overscroll-behavior: contain; }
-  /* The ruler grows above the card's own edge; a scrolling card would cut its header off. */
-  .home .fp-plate[data-panel='duration'] { overflow: visible; }
 }
 @media (max-width: 360px) {
   .home .fp-controls { gap: 8px; }

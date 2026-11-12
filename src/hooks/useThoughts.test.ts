@@ -14,7 +14,7 @@ afterEach(() => vi.restoreAllMocks())
 function project(memory: Thought[], durable: readonly Thought[], receipts = new Map<string, ThoughtResult>()): Thoughts {
   const snapshot = { ...createSnapshot(spec), thoughts: memory }
   const app: ClockApp = {
-    snapshot, savedRecordIds: new Set(), durableThoughts: durable, durableRests: [], durableFavorites: [], timerPending: false,
+    snapshot, savedRecordIds: new Set(), durableThoughts: durable, durableRests: [], durableFavorites: [], timerPending: false, savingMarker: false,
     persistence: 'saved', notice: null, saveError: null, saveState: 'saved', feedbackEvent: null,
     thoughtResult: null, thoughtReceipts: receipts, result: null, hasPendingOperations: false,
     submitThought: async () => true, submitFavorite: async () => ({ accepted: true, rejected: false }),

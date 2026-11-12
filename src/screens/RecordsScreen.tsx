@@ -1,214 +1,363 @@
-import { useId, useRef, useState, type MutableRefObject, type ReactNode } from 'react'
-import type { Persistence, StoreNotice } from '../adapters/storage'
-import { FocusTaskDialog } from '../components/FocusTaskDialog'
-import { formatMinutes, PHASE_LABELS } from '../components/format'
-import { RecordEntry } from '../components/RecordEntry'
-import { RecordsRoom } from '../components/RecordsRoom'
-import { WeekChart } from '../components/WeekChart'
-import { ThoughtNotebook } from '../components/records/ThoughtNotebook'
-import { ThoughtDetail, ThoughtEntry } from '../components/records/ThoughtEntry'
-import { MemoryChevron, MemoryDetailSheet, MemoryStamp } from '../components/records/MemoryPaper'
-import { WelcomeEnvelope } from '../components/records/WelcomeEnvelope'
-import { welcomeNote } from '../data/welcome'
-import { MemoryAlbum } from '../components/records/MemoryAlbum'
-import { RestMemoryEntry } from '../components/records/RestMemoryEntry'
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { flushSync } from 'react-dom'
+import { useFocusTaskBack } from '../hooks/useFocusTaskBack'
+import { readBook, useBookEntries, listWindow, listPageFor, matchesMonth, preferredPage, type Page } from '../hooks/records/book'
+import { monthLabel } from '../hooks/records/visit'
+import { ThoughtPanel } from '../components/ThoughtPanel'
 import { RecordsPagination } from '../components/records/RecordsPagination'
-import { RecordsFavorites } from '../components/records/RecordsFavorites'
-import type { QuoteFavoritesController } from '../contracts/favorites'
-import { sceneNames } from '../data/scene-copy'
-import type { Thoughts } from '../hooks/useThoughts'
-import { useHistoryRange, type RecordView, type StatsView } from '../hooks/useViews'
-import { useRecordsBrowser } from '../hooks/records/useRecordsBrowser'
-import { RECORDS_MODES as MODES, monthLabel, type RecordsVisit } from '../hooks/records/visit'
-import type { RecordsMode as Mode } from '../hooks/records/useRecordsQuery'
-import '../styles/records-art.css'
+import { BookTools } from '../components/records/book/BookTools'
+import { Picture, PagePicture, PageHead, Folio, DatedList, Row, Facts } from '../components/records/book/BookPaper'
+import { NoteLeaf, QuoteLeaf, WritingFeedback } from '../components/records/book/BookWriting'
+import { savedDay } from '../components/records/book/data'
+import { bookmarks, chapters, firstPage, initialVisit, controlKey, locateControl, locationKey,
+  type Direction, type Location, type Detail, type Chapter } from '../components/records/book/navigation'
+import { welcomeNote } from '../data/welcome'
+import { createBookMotion } from '../components/records/book/motion'
+import { formatMinutes } from '../components/format'
+import type { RecordsProps } from '../components/records/book/props'
+import '../components/records/book/book.css'
 
-interface Props {
-  view: StatsView
-  thoughts: Thoughts
-  canEdit: boolean
-  onEditThought?: (id: string) => void
-  onContinueDraft?: () => void
-  hasDraft?: boolean
-  favorites?: QuoteFavoritesController
-  systemNoticeSummary?: string | null
-  systemNotices?: ReactNode
-  onAnnounce?: (text: string) => void
-  persistence: Persistence
-  notice: StoreNotice | null
-  hasSaveError: boolean
-  showArt: boolean
-  visit: MutableRefObject<RecordsVisit | null>
-}
-
-export function RecordsScreen({ view, thoughts, canEdit, onEditThought, onContinueDraft, hasDraft, favorites, systemNoticeSummary, systemNotices, onAnnounce, persistence, notice, hasSaveError, showArt, visit }: Props) {
-  const incomplete = notice?.kind === 'unreadable' || notice?.kind === 'unavailable' ||
-    (notice?.kind === 'repaired' && notice.fields.some(field => field.startsWith('records')))
-  const restsIncomplete = notice?.kind === 'repaired' && notice.fields.some(field => field.startsWith('restMemories'))
-  const thoughtsIncomplete = notice?.kind === 'unreadable' || notice?.kind === 'unavailable' ||
-    (notice?.kind === 'repaired' && notice.fields.some(field => field.startsWith('thoughts')))
-  const {
-    reading, current, result, screen, list, activeSeen, sourceRecord, selectedOriginal, missingSource,
-    savedQuotes, quotesShown, favPage, favPageCount, monthPanel, statusPanel, year, setYear, composing,
-    patch, changeConditions, chooseMonth, changePage, toggle, selectMode, selectTag, returnToRoom, returnToTag,
-    openRoom, openOriginal, beforeUndo, closeWelcome, openMonth, openStatus, closeMonth, closeStatus,
-    toggleSummary, toggleTrend, setLength,
-  } = useRecordsBrowser({ view, favorites, visit, editing: thoughts.open, incomplete: incomplete || restsIncomplete, thoughtsIncomplete, onAnnounce })
-  const { mode, length, summaryOpen, trend } = reading
-  const { entryKey: entryId, isKnownDate: knownDate, hasUnknownDates: unknown } = result
-  const { totals } = useHistoryRange(view, length)
-  const statusDescriptionId = useId()
-  const [letterOpen, setLetterOpen] = useState(false)
-  const editedFromReader = useRef<string | null>(null)
-  const [deletedThoughtId, setDeletedThoughtId] = useState<string | null>(null)
-  const displayDate = (date: string) => knownDate(date) ? view.dayHeading(date) : '日期不详的记录'
-  const shortDate = (key: string | null) => key && knownDate(key) ? view.shortDate(key) : '日期不详'
-  const recordEntry = (record: RecordView, expanded: boolean, onToggle: () => void, inline = false) => <RecordEntry key={record.sessionId} record={record} expanded={expanded}
-    onToggle={onToggle} inline={inline} persistence={persistence} showArt={showArt} confirmedThoughtIds={view.confirmedThoughtIds} pendingThoughtIds={view.pendingThoughtIds}
-    editThought={canEdit ? onEditThought : undefined} formatDate={shortDate} />
-  const empty = mode === 'scenes' ? '还没有可回看的伙伴活动。' : current.search ? '没有找到匹配的想法。' : current.month && current.month !== 'unknown' ? '这个月还没有记录。' : current.month === 'unknown' ? '没有日期不详的记录。' : mode === 'thoughts' ? '还没有想法。' : '还没有记录。'
-  const stateLine = view.active ? `${PHASE_LABELS[view.active.phase]} · ${view.active.status === 'paused' ? '已暂停' : '正在计时'}（未计入汇总）`
-    : activeSeen ? '本段已结束，可继续阅读。' : ''
-  const pendingSave = hasSaveError || result.hasPendingRecords || view.pendingThoughtIds.size > 0 || !!favorites?.problems.length
-  const saveLine = pendingSave ? '有内容待保存，原内容仍在。' : ''
-  const historyIncomplete = incomplete || restsIncomplete || thoughtsIncomplete
-  const firstVisit = mode === 'all' && !current.month && !result.total && !view.thoughtDays.length && !savedQuotes.length
-    && !view.active && !historyIncomplete && !pendingSave
-  const phaseLabel = view.active?.phase === 'focus' ? '专注' : '休息'
-  const statusLabel = view.active
-    ? `${phaseLabel}${view.active.status === 'paused' ? '暂停' : '计时'}`
-    : pendingSave ? '有待保存' : systemNoticeSummary ? '状态提示' : activeSeen ? '计时结束' : '查看状态'
-  const secondaryStatusLabel = view.active ? pendingSave ? '有待保存' : systemNoticeSummary ? '状态提示' : '' : ''
-  const statusDescription = [stateLine, saveLine, systemNoticeSummary].filter(Boolean).join(' ')
-  const yearValue = Number(year)
-  const validYear = /^\d{1,4}$/.test(year) && yearValue >= 1 && yearValue <= 9999
-  // Keep the recovery action for the entry the person was reading within reach.
-  // Its eligibility and object version still come from the saved deletion.
-  const selectedUndo = thoughts.undos.find(undo => undo.id === deletedThoughtId && !current.expanded)
-  const undoButton = (undo: Thoughts['undos'][number]) => <button type="button" key={undo.id} className="link-button"
-    disabled={!canEdit} onClick={event => { beforeUndo(event, undo.id); undo.run() }}>{undo.label}</button>
-
-  const roomTag = mode === 'scenes' ? reading.roomTag : null
-  const selectedThought = (mode === 'all' || mode === 'thoughts') && current.expanded ? result.thoughtById.get(current.expanded) : undefined
-  const editSelectedThought = onEditThought ? (id: string) => {
-    editedFromReader.current = id
-    if (current.expanded !== `thought:${id}`) toggle(`thought:${id}`)
-    onEditThought(id)
-  } : undefined
-  const entries = <>
-      {roomTag && sourceRecord ? <>
-        <button data-return-activity type="button" className="link-button" onClick={returnToTag}>‹ 返回{sceneNames[roomTag]}</button>
-        {missingSource && <p>这段原记录目前无法读取。</p>}
-        {selectedOriginal && <ol className="focus-records">{selectedOriginal.kind === 'rest'
-          ? <RestMemoryEntry memory={selectedOriginal.memory} expanded onToggle={returnToTag} showArt={showArt} view={view} inline/>
-          : recordEntry(selectedOriginal.record, true, returnToTag, true)}</ol>}
-      </> : mode !== 'favorites' ? <>
-        {roomTag && <div className="room-source-heading">
-          <MemoryStamp id={roomTag}/><span>这张画签的来处 · {result.total} 段{roomTag.startsWith('R') ? '休息' : '专注'}</span>
-        </div>}
-        {!firstVisit && result.total === 0 && (mode !== 'scenes' || reading.roomTag) && <p className="records-empty">{historyIncomplete ? '目前没有可确认的条目。' : empty}</p>}
-        {result.days.map(day => <section className="record-day" key={day.dateKey} data-date={day.dateKey}>
-          <h3>{knownDate(day.dateKey) ? <time dateTime={day.dateKey}>{displayDate(day.dateKey)}</time> : displayDate(day.dateKey)}
-            {mode === 'all' && !incomplete && knownDate(day.dateKey) && view.totalsByDay.has(day.dateKey) && <small> · 专注 {formatMinutes(view.totalsByDay.get(day.dateKey)!.focusMs)}</small>}</h3>
-          <ol className="focus-records">{day.entries.map(entry => {
-            const id = entryId(entry)
-            if (entry.kind === 'thought') return <ThoughtEntry key={id} notebook={mode === 'thoughts'} illustrated={showArt} item={entry.thought} expanded={current.expanded === id} toggle={() => toggle(id)} view={view} persistence={persistence} canEdit={canEdit} edit={editSelectedThought} />
-            if (mode !== 'scenes') return entry.kind === 'rest'
-              ? <RestMemoryEntry key={id} memory={entry.memory} expanded={current.expanded === id} onToggle={() => toggle(id)} showArt={showArt} view={view}/>
-              : recordEntry(entry.record, current.expanded === id, () => toggle(id))
-            const timeLabel = entry.kind === 'rest' ? view.clockTime(entry.memory.endedAt) : entry.record.timeLabel
-            const elapsedMs = entry.kind === 'rest' ? entry.memory.elapsedMs : entry.record.elapsedMs
-            const phase = entry.kind === 'record' ? '专注' : entry.memory.phase ? PHASE_LABELS[entry.memory.phase] : '休息'
-            return <li key={id} data-entry-id={id} className="records-activity">
-              <button type="button" data-view-original className="record-summary" onClick={event => openOriginal(id, event.currentTarget)}>
-                <span className="record-identity"><strong>{entry.kind === 'record' && entry.record.step ? entry.record.step : phase}</strong>
-                  <span className="record-meta">{timeLabel} · {formatMinutes(elapsedMs)}</span></span>
-                <span className="sr-only">查看原记录</span><MemoryChevron/>
-              </button>
-            </li>
-          })}</ol>
-        </section>)}
-        {result.pageCount > 1 && <RecordsPagination label="记录分页" page={result.page} pageCount={result.pageCount} onChange={changePage} />}
-      </> : <RecordsFavorites quotes={quotesShown} total={savedQuotes.length} page={favPage} pageCount={favPageCount}
-        expandedId={current.expanded} canEdit={canEdit} favorites={favorites} onPage={changePage} onToggle={toggle} onCloseWelcome={closeWelcome} />}
-    </>
-
-  return <section ref={screen} className="screen stats records-v35" data-records-mode={mode} aria-labelledby="stats-title">
-    <div className="records-header">
-      <h1 id="stats-title" className="screen-title" tabIndex={-1}>记录</h1>
-      <button type="button" className="link-button records-status-button" aria-label={`查看状态${statusLabel === '查看状态' ? '' : `：${statusLabel}`}${secondaryStatusLabel ? `，${secondaryStatusLabel}` : ''}`}
-        aria-describedby={statusDescription ? statusDescriptionId : undefined} aria-haspopup="dialog" aria-expanded={statusPanel}
-        onClick={openStatus}><span>{statusLabel}</span>{secondaryStatusLabel && <span>{secondaryStatusLabel}</span>}</button>
-      <span id={statusDescriptionId} className="sr-only">{statusDescription}</span>
-    </div>
-    <div className="records-switch records-modes" role="group" aria-label="记录内容">
-      {(Object.keys(MODES) as Mode[]).map(value => <button type="button" key={value} aria-pressed={mode === value} onClick={() => selectMode(value)}>{MODES[value]}</button>)}
-    </div>
-    {mode === 'all' && <MemoryAlbum featured={result.featured} activities={result.roomActivities} page={result.page} band={reading.roomBand}
-      showArt={showArt} onRead={toggle} onRoom={openRoom}/>}
-    {firstVisit && <button type="button" className="memory-letter" aria-haspopup="dialog" onClick={event => {
-      event.currentTarget.focus({ preventScroll: true }); setLetterOpen(true)
-    }}>
-      <WelcomeEnvelope/><span><small>给你的信</small><strong>{welcomeNote.title}</strong></span><span aria-hidden="true">›</span>
-    </button>}
-    {letterOpen && <MemoryDetailSheet title={welcomeNote.title} onClose={() => setLetterOpen(false)}><p className="memory-letter-text">{welcomeNote.text}</p></MemoryDetailSheet>}
-    {mode === 'all' && !firstVisit && <section className="records-summary" aria-label="计时汇总">
-      <p><span>近{length}天专注</span>{incomplete ? '计时汇总暂不可确认' : <><strong>{formatMinutes(totals.focusMs)}</strong><span> · {totals.count} 段已结束专注</span></>}</p>
-      <button type="button" className="link-button" aria-expanded={summaryOpen} onClick={toggleSummary}>{summaryOpen ? '收起统计' : '查看统计'}</button>
-      {summaryOpen && <div className="records-summary-detail">
-        <div className="records-switch" role="group" aria-label="计时统计范围">{([7, 30] as const).map(days => <button type="button" key={days} aria-pressed={length === days} onClick={() => setLength(days)}>近{days}天</button>)}</div>
-        <p className="hint">{view.shortDate(totals.startKey)} – {view.shortDate(view.todayKey)} · 只统计已确认保存的专注，下面的历史另按月份查找。</p>
-        {!incomplete && <><button type="button" className="link-button" aria-expanded={trend} onClick={toggleTrend}>{trend ? '收起趋势' : '查看趋势'}</button>{trend && <WeekChart days={totals.days} todayKey={view.todayKey} />}</>}
+export function RecordsScreen(props: RecordsProps) {
+  const { view, favorites, showArt, thoughts } = props
+  const [place] = useState(() => props.visit.current ??= initialVisit())
+  const data = useMemo(() => readBook(view), [view])
+  const { notes, groups } = data
+  const phrases = favorites?.saved ?? []
+  const latest = useMemo(() => preferredPage(data.pages)?.id ?? '', [data.pages])
+  const [where,setWhere] = useState<Location>(() => {
+    const saved=place.location
+    const followLatest = !saved.story || saved.story===place.latest
+    return followLatest && latest!==place.latest ? {...saved,story:latest} : saved
+  })
+  const {chapter,detail,story,quote,query,month} = where
+  const [input,setInput] = useState(place.input)
+  const scroller = useRef<HTMLDivElement>(null)
+  const shell = useRef<HTMLElement>(null)
+  const motion = useRef<ReturnType<typeof createBookMotion>|null>(null)
+  const lastTap = useRef<HTMLElement|null>(null)
+  const landing = useRef<{top:number; key:string|null; focus:boolean; relativeTop?:number|null; reflow?:boolean}|null>(null)
+  const gesture = useRef<{id:number;x:number;y:number}|null>(null)
+  const {pages,matches,timeline}=useBookEntries(data,view,month,query)
+  const page = useMemo(() => pages.find(p=>p.id===story) ?? preferredPage(pages), [pages,story])
+  const pageIndex = page ? pages.indexOf(page) : -1
+  const phrase = phrases.find(p=>p.id===quote) ?? phrases[0]
+  const phraseIndex = phrase ? phrases.indexOf(phrase) : -1
+  const offsetKey = locationKey(where)
+  const composing = useRef(false)
+  const announceResults = useRef(false)
+  useLayoutEffect(()=>{
+    const root = shell.current!
+    const api = createBookMotion({book:root.querySelector<HTMLElement>('.rj-book')!,canvas:root.querySelector<HTMLElement>('.rj-canvas')!,cover:root.querySelector<HTMLElement>('.rj-cover')!})
+    motion.current=api
+    api.open()
+    return ()=>{api.dispose();motion.current=null}
+  },[])
+  useLayoutEffect(()=>{
+    const arriving=landing.current
+    landing.current=null
+    const body=scroller.current
+    if(!body)return
+    const top=arriving?.top ?? place.offsets.get(offsetKey) ?? 0
+    body.scrollTop=top
+    if(arriving?.focus){
+      const target=locateControl(arriving.key,shell.current!) ?? body
+      target.focus({preventScroll:true})
+      if(arriving.relativeTop!=null && target!==body && body.contains(target)){
+        const delta=target.getBoundingClientRect().top-body.getBoundingClientRect().top-arriving.relativeTop
+        const desired=body.scrollTop+delta
+        // A peer insert can move this formerly last row to the beginning of another
+        // page. Keep the tapped line in place even when that page has less to scroll.
+        if(arriving.reflow && desired<0) {
+          body.style.paddingBlockStart=(parseFloat(getComputedStyle(body).paddingBlockStart)-desired)+'px'
+        } else if(arriving.reflow && desired>body.scrollHeight-body.clientHeight){
+          body.style.paddingBlockEnd=(parseFloat(getComputedStyle(body).paddingBlockEnd)+desired-body.scrollHeight+body.clientHeight)+'px'
+        }
+        body.scrollTop=Math.max(0,desired)
+      } else body.scrollTop=top
+    }
+    Object.assign(place,{location:where})
+    if(!where.detail || where.detail.kind==='results')place.chapters[chapter]=where
+  },[where,place,offsetKey,chapter])
+  useLayoutEffect(()=>{place.latest=latest},[place,latest])
+  useLayoutEffect(()=>{place.input=input},[input,place])
+  const recordOffset = () => {if(scroller.current)place.offsets.set(offsetKey,scroller.current.scrollTop)}
+  function animate(direction:Direction, mutate:()=>void, ribbon?:[Chapter,Chapter]) {
+    const commit=()=>flushSync(mutate)
+    if (!motion.current) {commit();return}
+    if(ribbon)motion.current.switchSection(ribbon[0],ribbon[1],commit)
+    else motion.current.turnPage(direction,commit)
+  }
+  function navigate(next:Location, direction:Direction='forward', options:{ribbon?:[Chapter,Chapter]|undefined; focus?:string; top?:number; input?:string}={}) {
+    const root=shell.current
+    if(!root)return
+    const origin=lastTap.current?.isConnected ? lastTap.current : document.activeElement
+    lastTap.current=null
+    const key=origin ? controlKey(origin,root) : null
+    const top=scroller.current?.scrollTop ?? 0
+    place.offsets.set(offsetKey,top)
+    const sourceLocation = {...where,story:page?.id ?? where.story,quote:phrase?.id ?? where.quote}
+    const element = origin instanceof HTMLElement ? origin : null
+    const rowId = element?.dataset.jlNote || element?.dataset.jlSourcePage || element?.dataset.jlPage || null
+    const relativeTop = element && scroller.current?.contains(element) ? element.getBoundingClientRect().top-scroller.current.getBoundingClientRect().top : null
+    place.trail.push({location:sourceLocation,top,anchor:key,rowId,relativeTop,input,direction})
+    landing.current={top:options.top ?? place.offsets.get(locationKey(next)) ?? 0,key:options.focus ?? null,focus:true}
+    animate(direction,()=>{setWhere(next);if(options.input!==undefined)setInput(options.input)},options.ribbon)
+  }
+  function back() {
+    if(detail?.kind==='editor' && thoughts.open)thoughts.setOpen(false)
+    const previous=place.trail.pop()
+    if(!previous)return
+    lastTap.current=null
+    recordOffset()
+    const prior=previous.location
+    // Item → detail keeps the same filter, so these rows are the current, full
+    // result for the source list even if it changed while the detail was open.
+    const sourceRows = prior.detail?.kind==='linked' ? view.recordBySession.get(prior.detail.id)?.thoughts : prior.detail?.kind==='room' ? data.groups.get(prior.detail.scene) :
+      prior.detail?.kind==='contents' ? timeline : prior.chapter==='thoughts' && (!prior.detail || prior.detail.kind==='results') ? matches : null
+    const rowIndex=previous.rowId && sourceRows ? sourceRows.findIndex(row=>row.id===previous.rowId) : -1
+    const nextPage=rowIndex>=0 ? listPageFor(rowIndex) : prior.listPage
+    const restored={...prior,listPage:nextPage}
+    landing.current={top:previous.top,key:previous.anchor,focus:true,relativeTop:previous.relativeTop,reflow:prior.listPage!==nextPage}
+    const inverse=previous.direction==='forward'?'back':'forward'
+    const priorChapter=previous.location.chapter
+    animate(inverse,()=>{setWhere(restored);setInput(previous.input)},chapter===priorChapter?undefined:[chapter,priorChapter])
+  }
+  useFocusTaskBack(place.trail.length>0, back, offsetKey)
+  const backRef=useRef(back)
+  backRef.current=back
+  useLayoutEffect(()=>{
+    const close=(e:KeyboardEvent)=>{
+      if(e.defaultPrevented||e.isComposing||e.key!=='Escape'||!place.trail.length)return
+      e.preventDefault();backRef.current()
+    }
+    window.addEventListener('keydown',close)
+    return ()=>window.removeEventListener('keydown',close)
+  },[place])
+  const openDetail=(next:Detail)=>navigate({...where,detail:next,listPage:1},'forward',{top:0})
+  function switchChapter(next:Chapter) {
+    if(chapter===next && !detail)return
+    if(detail?.kind==='editor' && thoughts.open)thoughts.setOpen(false)
+    const target=place.chapters[next] ?? firstPage(next)
+    const nextRoot=chapter===next ? {...target,detail:null,query:next==='thoughts'?'':target.query} : target
+    const direction=chapters.indexOf(next)>chapters.indexOf(chapter)?'forward':'back'
+    const nextLocation = {...nextRoot}
+    if(next==='favorites' && !nextLocation.quote)nextLocation.quote=phrases[0]?.id ?? ''
+    if(next==='story' && !nextLocation.story && !nextLocation.month)nextLocation.story=latest
+    navigate(nextLocation,direction,{ribbon:chapter===next?undefined:[chapter,next],focus:'[data-section="'+next+'"]'})
+  }
+  function turn(i:number) {
+    if(!pages[i] || (i===pageIndex&&!detail))return
+    navigate({...where,detail:null,story:pages[i].id},i>=pageIndex?'forward':'back')
+  }
+  function applySearch(value:string) {
+    announceResults.current=true
+    const q=value.trim()
+    navigate({...where,query:q,listPage:1,detail:{kind:'results'}},'forward',{top:0,input:q})
+  }
+  const roomPages = detail?.kind==='room' ? groups.get(detail.scene) ?? [] : []
+  const roomPage = detail?.kind==='room' ? roomPages.find(p=>p.id===detail.source) ?? (!detail.source && roomPages.length===1 ? roomPages[0] : undefined) : undefined
+  const selectedNote = detail?.kind==='note' ? notes.find(n=>n.id===detail.id) : undefined
+  const selectedQuote = detail?.kind==='quote' ? phrases.find(q=>q.id===detail.id) : undefined
+  const incomplete = props.notice?.kind==='unavailable' || props.notice?.kind==='unreadable' || props.notice?.kind==='repaired'
+  const pending = props.hasSaveError || !!view.pendingThoughtIds.size || !!favorites?.problems.length || data.pages.some(p=>p.record && !p.record.saved)
+  const realIssue = props.systemNoticeSummary ?? (pending ? '有待保存' : props.persistence==='memory-only' ? '仅在此页' : props.persistence==='read-only' ? '当前只读' : null)
+  const undoAnchor = useRef<string|null>(null)
+  function restoreUndo(id: string) {
+    undoAnchor.current = id
+    if (chapter === 'thoughts' && (!detail || detail.kind === 'results')) return
+    const origin = place.trail.at(-1)?.location
+    if (origin?.chapter === 'thoughts' && (!origin.detail || origin.detail.kind === 'results')) back()
+    else navigate(firstPage('thoughts'), 'back', {top: 0, input: ''})
+  }
+  useLayoutEffect(()=>{
+    const id=undoAnchor.current
+    if(!id || !notes.some(n=>n.id===id))return
+    const element=scroller.current?.querySelector<HTMLElement>('[data-jl-note="'+CSS.escape(id)+'"]')
+    if(element){
+      undoAnchor.current=null
+      element.focus({preventScroll:true});element.scrollIntoView({block:'nearest'})
+    } else if (chapter === 'thoughts' && (!detail || detail.kind === 'results')) {
+      const index = matches.findIndex(n => n.id === id)
+      if (index >= 0 && where.listPage !== listPageFor(index)) {
+        setWhere(current => ({...current, listPage:listPageFor(index)}))
+      } else if (index < 0 && (month || query)) {
+        setWhere(firstPage('thoughts'))
+        setInput('')
+      }
+    }
+  },[notes,matches,where.listPage,chapter,detail,month,query])
+  const usedEditor = useRef(false)
+  useEffect(() => {
+    if (detail?.kind==='editor') {
+      if (thoughts.open) usedEditor.current=true
+      else if (usedEditor.current) {
+        const id=requestAnimationFrame(()=>backRef.current())
+        return ()=>cancelAnimationFrame(id)
+      }
+    } else usedEditor.current=false
+  }, [thoughts.open,detail])
+  // Deletion/cancel-favorite takes effect only after the durable view loses that ID.
+  useEffect(()=>{
+    if ((detail?.kind==='note' && !selectedNote) || (detail?.kind==='quote' && !selectedQuote)) {
+      const frame=requestAnimationFrame(()=>backRef.current())
+      return ()=>cancelAnimationFrame(frame)
+    }
+  },[detail,selectedNote,selectedQuote])
+  function editNote(id?: string) {
+    if(id)thoughts.edit(id)
+    else thoughts.setOpen(true)
+    navigate({...where,detail:{kind:'editor'}},'forward',{focus:'#thought-text',top:0})
+  }
+  function setMonth(value:string|null) {
+    announceResults.current=true
+    navigate({...where,month:value,listPage:1,story:'',detail:chapter==='story' ? {kind:'contents'} : query ? {kind:'results'} : null},'back',{top:0})
+  }
+  const linkedNotes = detail?.kind==='linked' ? view.recordBySession.get(detail.id)?.thoughts ?? [] : []
+  const listItems = detail?.kind==='contents' ? timeline : detail?.kind==='room' ? roomPages : detail?.kind==='linked' ? linkedNotes : matches
+  const {page:listPage,count:listCount}=listWindow<unknown>(listItems,where.listPage)
+  useEffect(() => {
+    if (!announceResults.current) return
+    announceResults.current=false
+    props.onAnnounce?.(bookmarks[chapter]+'，'+monthLabel(month)+'，'+(incomplete ? '当前可读取' : '共')+listItems.length+'条，第'+listPage+'页。')
+  }, [where, props.onAnnounce, chapter, month, listItems.length, listPage, incomplete])
+  const visible = <T,>(items:readonly T[]) => listWindow(items,where.listPage).items
+  function pagination() {
+    return listCount>1 && <RecordsPagination label="记录分页" page={listPage} pageCount={listCount}
+      onChange={next=>{announceResults.current=true;navigate({...where,listPage:next},next>listPage?'forward':'back',{top:0})}}/>
+  }
+  const tools = <div className="jl-actions">
+    <button type="button" data-jl-month onClick={()=>openDetail({kind:'month'})}>选择月份</button>
+    {month && <button type="button" onClick={()=>setMonth(null)}>查看全部日期</button>}
+    {chapter==='story' && <button type="button" data-jl-stats onClick={()=>openDetail({kind:'stats'})}>查看统计</button>}
+  </div>
+  function storyBody(p:Page) {
+    return <article className="jl-memory-leaf" data-record-id={p.record?.sessionId} data-rest-id={p.record ? undefined : p.id.slice(5)} data-saved={p.record?.saved ?? true}>
+      <header className="jl-date"><span>{p.day}</span><span className="jl-day-rule"/><span className="jl-day-time">{p.time}</span></header>
+      <PagePicture p={p} showArt={showArt}/>
+      <div className="jl-story-words"><h2 className="jl-story-title">{p.title}</h2>{p.caption && <p className="jl-caption">{p.caption}</p>}</div>
+      <Facts p={p} showArt={showArt}/>
+      {p.record && <div className="jl-record-metadata">
+        {p.record.step && <p>这一小步：{p.record.step}</p>}
+        <p>目标 {formatMinutes(p.record.targetMs)} · {p.record.saved ? '已保存' : props.persistence==='memory-only' ? '仅在此页' : '待保存'}</p>
+        {listWindow(p.record.thoughts,1).items.map(n=><button type="button" className="jl-row" data-jl-note={n.id} key={n.id} onClick={()=>openDetail({kind:'note',id:n.id})}>
+          <span>{n.text || '留过标记'}</span><span aria-hidden="true">›</span></button>)}
+        {listWindow(p.record.thoughts,1).count>1 && <button type="button" className="link-button" data-jl-linked onClick={()=>openDetail({kind:'linked',id:p.record!.sessionId})}>查看全部 {p.record.thoughts.length} 条想法</button>}
       </div>}
-    </section>}
-    {historyIncomplete && <p className="hint">历史数据未能完整读取。这里只展示当前能确认的内容。</p>}
-    {((mode === 'all' && !firstVisit) || mode === 'thoughts') && <div className="records-tools">
-      {mode === 'thoughts' && <ThoughtNotebook empty={!thoughtsIncomplete && !view.thoughtDays.length} showArt={showArt}>
-        <form className="records-search" onSubmit={event => { event.preventDefault(); if (!composing.current) changeConditions({ search: current.draft.trim() }) }}>
-          <label htmlFor="thought-search">搜索想法</label>
-          <div><input id="thought-search" type="search" value={current.draft} placeholder="搜索想法" onChange={event => patch({ draft: event.target.value })}
-            onCompositionStart={() => { composing.current = true }} onCompositionEnd={() => { composing.current = false }}
-            onKeyDown={event => { if (event.key === 'Enter' && (event.nativeEvent.isComposing || composing.current)) event.preventDefault() }} />
-            <button type="submit" className="pill">搜索</button></div>
-        </form>
-        {(hasDraft || thoughts.hasDraft) && <button type="button" className="link-button thought-draft" onClick={onContinueDraft ?? thoughts.openNew}>继续草稿 <span aria-hidden="true">›</span></button>}
-      </ThoughtNotebook>}
-      <div className="records-filter-row"><h2>{mode === 'all' ? '时光足迹' : '按日翻阅'}</h2><span>{monthLabel(current.month)}{current.search && ` · 搜索“${current.search}”`}</span>
-        <button type="button" className="link-button" onClick={openMonth}>选择月份</button>
-        {current.month && <button type="button" className="link-button" onClick={() => changeConditions({ month: null })}>查看全部日期</button>}
-        {current.search && <button type="button" className="link-button" onClick={() => changeConditions({ search: '', draft: '' })}>清除搜索</button>}
-        {unknown && current.month !== 'unknown' && <button type="button" className="link-button" onClick={() => changeConditions({ month: 'unknown' })}>日期不详的记录</button>}
-      </div>
-    </div>}
-    {mode === 'scenes' && <RecordsRoom band={reading.roomBand} activities={result.roomActivities} selected={reading.roomTag} onSelect={selectTag} incomplete={incomplete || restsIncomplete}/>}
-    <div className="records-list" ref={list} data-result-count={mode === 'favorites' ? savedQuotes.length : result.total}>
-      {roomTag ? !thoughts.open && <FocusTaskDialog title={sourceRecord ? '原记录' : sceneNames[roomTag]}
-        closeLabel="返回小屋" onClose={returnToRoom} onBack={sourceRecord ? returnToTag : returnToRoom}>{entries}</FocusTaskDialog> : entries}
-    </div>
-    {selectedThought && !thoughts.open && <ThoughtDetail item={selectedThought} view={view} persistence={persistence} canEdit={canEdit}
-      thoughts={thoughts} edit={editSelectedThought} returningFromEdit={editedFromReader.current === selectedThought.id}
-      detached={mode === 'thoughts' && !result.all.some(entry => entryId(entry) === current.expanded)}
-      onRemove={() => { setDeletedThoughtId(selectedThought.id); thoughts.remove(selectedThought.id) }}
-      onClose={() => { editedFromReader.current = null; toggle(`thought:${selectedThought.id}`) }}/>}
-    {mode !== 'favorites' && selectedUndo && <div className="records-feedback records-undo" data-status-actions>
-      {undoButton(selectedUndo)}
-    </div>}
-    {mode !== 'favorites' && <div className="records-feedback" data-status-actions>
-      {thoughts.status?.text}
-      {thoughts.status?.kind === 'error' && <button type="button" className="link-button" onClick={thoughts.retry}>重试保存</button>}
-      {thoughts.undos.filter(undo => undo !== selectedUndo).map(undoButton)}
-    </div>}
-    {monthPanel && <FocusTaskDialog title="选择月份" closeLabel="返回记录" onClose={closeMonth}>
-      <label className="records-year">年份<input data-initial-focus inputMode="numeric" type="number" min="1" max="9999" value={year} onChange={event => setYear(event.target.value)} aria-invalid={!validYear} /></label>
-      {!validYear && <p className="field-error">请输入1到9999之间的年份。</p>}
-      <div className="records-month-grid">{Array.from({ length: 12 }, (_, index) => <button type="button" className="pill pill--ghost" key={index} disabled={!validYear} onClick={() => chooseMonth(`${String(yearValue).padStart(4, '0')}-${String(index + 1).padStart(2, '0')}`)}>{index + 1}月</button>)}</div>
-      <button type="button" className="link-button" onClick={() => chooseMonth(null)}>查看全部日期</button>
-    </FocusTaskDialog>}
-    {statusPanel && <FocusTaskDialog title="应用状态" closeLabel="返回记录" onClose={closeStatus}>
-      {stateLine && <p>{stateLine}</p>}
-      {saveLine && <p>{saveLine}</p>}
-      {systemNotices ?? (systemNoticeSummary && <p>{systemNoticeSummary}</p>)}
-      {!stateLine && !saveLine && !systemNoticeSummary && <p>目前没有需要处理的应用状态。</p>}
-    </FocusTaskDialog>}
+    </article>
+  }
+  function chapterBody() {
+    if (chapter==='story') return page ? storyBody(page) : <>
+      <PageHead kicker="手记" title="窗边的第一张纸" stamp={showArt?'notebook':undefined}/>
+      <p className="jl-caption">{incomplete?'目前没有可确认的手记。':month?'这个月还没有记录。':'下一段专注或休息结束并保存后，可以在这里重读。'}</p>
+      <Row title="欢迎笺" detail="给你的信" stamp={showArt?'envelope':undefined} attr={{'data-jl-letter':''}} onClick={()=>openDetail({kind:'letter'})}/>
+    </>
+    if (chapter==='thoughts') return <>
+      <PageHead kicker={monthLabel(month)} title={query?'搜索结果':'随手便笺'} stamp={showArt?'notebook':undefined}/>
+      <form className="jl-search" onSubmit={e=>{e.preventDefault();if(!composing.current)applySearch(input)}}>
+        <input aria-label="搜索想法" type="search" enterKeyHint="search" placeholder="搜索便笺里的文字" value={input}
+          onChange={e=>setInput(e.target.value)} onCompositionStart={()=>{composing.current=true}} onCompositionEnd={()=>{composing.current=false}}
+          onKeyDown={e=>{if(e.key==='Enter' && (e.nativeEvent.isComposing || composing.current))e.preventDefault()}}/>
+        <button type="submit" data-jl-search>搜索</button>
+      </form>
+      {tools}
+      {thoughts.hasDraft && <button type="button" className="link-button" onClick={()=>editNote()}>继续草稿</button>}
+      <div className="jl-note-stack"><DatedList items={visible(matches)} render={n=><button type="button" data-jl-note={n.id} data-thought-id={n.id} className="jl-note-line" onClick={()=>openDetail({kind:'note',id:n.id})}>
+        <small>{n.time} · {n.text?'想法':'标记'}{n.source.status==='putAway' && ' · 已收起'}{!view.confirmedThoughtIds.has(n.id) ? ' · 待保存' : view.pendingThoughtIds.has(n.id) ? ' · 有更改待保存' : ''}</small>
+        <span className="jl-note-entry">{n.text||'留过标记'}</span></button>}/></div>
+      {!matches.length && <p className="jl-empty">{query?'没有找到相符的便笺。':month?'这个月还没有想法。':incomplete?'目前没有可确认的想法。':'专注或休息时写下的想法，会夹在这里。'}</p>}
+      {pagination()}
+    </>
+    if (chapter==='room') return <><PageHead kicker="生活场景" title="窗边的小屋"/>{showArt && <figure className="jl-room-photo"><Picture id="room" alt="蓝伙伴坐在窗边的小屋里。"/></figure>}
+      <div className="jl-stamp-shelf"><h3 className="jl-subtitle">架上的画签</h3>{!groups.size && <p className="jl-empty">{incomplete?'目前没有可确认的画签。':'有了带画签的手记，就能在这里找到它的来处。'}</p>}
+      <div className="jl-stamp-grid">{Array.from(groups,([id,items])=><button key={id} type="button" data-jl-source={id} className="jl-stamp-cell" aria-label={items[0]!.activity+'，查看'+items.length+'段手记'} onClick={()=>openDetail({kind:'room',scene:id})}>{showArt && <Picture id={'stamp-'+id}/>}<span>{items[0]!.activity}</span></button>)}</div></div></>
+    return <><PageHead kicker="我的收藏" title="喜欢的句子" stamp={showArt?'bookmark':undefined}/>
+      {phrase ? <><button type="button" className="jl-quotation jl-quotation-button" data-jl-quote-detail={phrase.id} onClick={()=>openDetail({kind:'quote',id:phrase.id})}><span className="jl-quote-mark" aria-hidden="true">“</span><span className="jl-quote-text">{phrase.text}</span><span className="jl-attribution">伙伴的话 · {savedDay(phrase.savedAt)}收藏</span></button>
+      {phrases.length>1 && <button className="jl-next-quote" type="button" data-jl-quote onClick={()=>navigate({...where,quote:phrases[(phraseIndex+1)%phrases.length]!.id},'forward',{focus:'[data-jl-quote]'})}>读另一句 <span aria-hidden="true">›</span></button>}</> : <p className="jl-empty">{incomplete ? '目前没有可确认的收藏。' : '喜欢伙伴的哪句话，可以把它夹在这里。'}</p>}
+      <Row title="欢迎笺" detail="给你的信" stamp={showArt?'envelope':undefined} attr={{'data-jl-letter':''}} onClick={()=>openDetail({kind:'letter'})}/>
+    </>
+  }
+  function parentLabel() {
+    const parent=place.trail.at(-1)?.location
+    if (parent?.detail?.kind==='room') return '画签来处'
+    if (parent?.detail?.kind==='note') return '想法'
+    if (parent?.detail?.kind==='linked') return '这一段的想法'
+    if (parent?.detail?.kind==='results') return '搜索结果'
+    if (parent?.detail?.kind==='contents') return '目录'
+    return bookmarks[parent?.chapter ?? chapter]
+  }
+
+  function detailBody() {
+    if (!detail || detail.kind==='results') return chapterBody()
+    if (detail.kind==='room') {
+      if (roomPage) return <div data-jl-detail="room" data-jl-source-detail={roomPage.id}>{storyBody(roomPage)}</div>
+      return <div data-jl-detail="room"><PageHead kicker="小屋 · 画签的来处" title={roomPages[0]?.activity ?? '来源记录'} stamp={showArt?'stamp-'+detail.scene:undefined}/>
+        {detail.source && <p>这段原记录目前无法读取。</p>}
+        <DatedList items={visible(roomPages)} render={p=><Row title={p.record?.step || p.title} detail={p.time+' · '+p.kind+' '+p.duration}
+          attr={{'data-jl-source-page':p.id}} onClick={()=>openDetail({...detail,source:p.id})}/>}/>{pagination()}</div>
+    }
+    if (detail.kind==='linked') return <section data-jl-detail="linked"><PageHead kicker="随手便笺" title="这一段的想法"/>
+      {visible(linkedNotes).map(n=><Row key={n.id} title={n.text || '留过标记'} detail={view.shortDate(n.dateKey)+' · '+view.clockTime(n.createdAt)}
+        attr={{'data-jl-note':n.id}} onClick={()=>openDetail({kind:'note',id:n.id})}/>)}{pagination()}</section>
+    if (detail.kind==='contents') return <section data-jl-detail="contents"><PageHead kicker={monthLabel(month)} title="手记目录"/>{tools}
+      <DatedList items={visible(timeline)} render={item=><Row title={item.title} stamp={showArt && item.art?'stamp-'+item.art:undefined} detail={item.info}
+        attr={{'data-jl-page':item.id}} onClick={()=>item.note ? openDetail({kind:'note',id:item.id}) : turn(pages.findIndex(p=>p.id===item.id))}/>}/>
+      {!timeline.length && <p>{incomplete?'目前没有可确认的条目。':month?'这个月还没有记录。':'还没有记录。'}</p>}
+      {pagination()}</section>
+    if (detail.kind==='note') return <NoteLeaf note={selectedNote} props={props} onEdit={editNote}/>
+    if (detail.kind==='quote') return <QuoteLeaf quote={selectedQuote} props={props}/>
+    if (detail.kind==='editor') return <section data-jl-detail="editor"><PageHead kicker="随手便笺" title="编辑想法"/>
+      <ThoughtPanel thoughts={thoughts} canEdit={props.canEdit}/>
+      {(props.hasSaveError || thoughts.status?.kind==='error') && <p className="panel-save-error">最新更改尚未保存。
+        <button type="button" className="link-button" onClick={thoughts.retry}>重试保存</button></p>}</section>
+    if (detail.kind==='letter') return <section data-jl-detail="letter"><PageHead kicker="给你的信" title="欢迎笺" stamp={showArt?'envelope':undefined}/>
+      <div className="jl-letter-text"><p>{welcomeNote.text}</p></div></section>
+    const hasUnknownDates = detail.kind==='month' && (chapter==='thoughts' ? notes.some(n=>matchesMonth(n.source.dateKey,'unknown')) :
+      data.pages.some(p=>matchesMonth(p.dateKey,'unknown')) || notes.some(n=>!n.source.sessionId && matchesMonth(n.source.dateKey,'unknown')))
+    return <BookTools hasUnknownDates={hasUnknownDates} kind={detail.kind} {...props} month={month} onMonth={setMonth} hasSaveError={pending} onTurn={update=>animate('forward',update)}/>
+  }
+
+  const footerInfo = (text:string) => <><span className="jl-foot-info">{text}</span><span className="jl-endmark" aria-hidden="true">✦</span></>
+  function chapterFoot() {
+    if (detail && detail.kind!=='results') return <><button type="button" data-jl-back className="jl-wide-action" onClick={back}>‹ 返回{parentLabel()}</button><span className="jl-endmark" aria-hidden="true">✦</span></>
+    if (chapter==='story') return <>{page && <button type="button" data-jl-prev className="jl-turn" disabled={pageIndex===0} onClick={()=>turn(pageIndex-1)}>‹ 上一页</button>}
+      <button type="button" data-jl-contents className="jl-open-index" onClick={()=>place.trail.at(-1)?.location.detail?.kind==='contents' ? back() : openDetail({kind:'contents'})}>目录 {page && <Folio index={pageIndex} total={pages.length}/>}</button>
+      {page && <button type="button" data-jl-next className="jl-turn" disabled={pageIndex+1===pages.length} onClick={()=>turn(pageIndex+1)}>下一页 ›</button>}</>
+    if (chapter==='thoughts' && detail?.kind==='results') return <><span className="jl-foot-info">找到 {matches.length} 条</span><button type="button" data-jl-clear-search className="jl-foot-action" onClick={()=>navigate({...where,query:'',detail:null,listPage:1},'back',{input:'',top:0,focus:'[aria-label="搜索想法"]'})}>清除搜索</button></>
+    if (chapter==='favorites' && phrase) return <><span className="jl-foot-info">收藏的句子</span><Folio index={phraseIndex} total={phrases.length}/></>
+    return footerInfo(chapter==='room' && groups.size?'点画签，翻到它的那一页':chapter==='thoughts'?'共 '+matches.length+' 则':'窗边手记')
+  }
+  function swipe(direction:number) {
+    if(detail && detail.kind!=='results'){
+      if(direction<0 && place.trail.length){back();return true}
+      return false
+    }
+    if(chapter==='story' && pages[pageIndex+direction]){turn(pageIndex+direction);return true}
+    if(direction<0 && detail?.kind==='results'){back();return true}
+    return false
+  }
+  function accessibleTitle() {
+    if(!detail)return chapter==='story' ? page?.title ?? '手记' : bookmarks[chapter]
+    if(detail.kind==='room')return roomPage?.title ?? '画签的来处'
+    if(detail.kind==='note')return '想法'
+    if(detail.kind==='linked')return '这一段的想法'
+    if(detail.kind==='quote')return '收藏的句子'
+    return {letter:'欢迎笺', contents:'手记目录', editor:'编辑想法', month:'选择月份', stats:'专注时光', status:'应用状态', results:'搜索结果'}[detail.kind]
+  }
+  return <section ref={shell} id="ribbon-journal" aria-labelledby="stats-title"
+    onClickCapture={e=>{lastTap.current=(e.target as Element).closest<HTMLElement>('button,input')}}>
+    <header className="rj-top"><h1 id="stats-title" className="screen-title" tabIndex={-1}>记录</h1>{(realIssue || view.active || props.notice) &&
+      <button type="button" className="link-button records-status-button" data-jl-status onClick={()=>openDetail({kind:'status'})}>{realIssue || (view.active ? '计时状态' : '查看状态')}</button>}</header>
+    <div className="rj-records"><div className="rj-book"><div className="rj-textblock">
+      <nav className="rj-ribbons" role="tablist" aria-label="手记书签">{chapters.map((c,i)=><button key={c} type="button" role="tab" id={'rj-tab-'+c} data-section={c} aria-controls="rj-leaf" aria-selected={chapter===c} tabIndex={chapter===c?0:-1} onClick={()=>switchChapter(c)}
+        onKeyDown={e=>{const to=e.key==='Home'?0:e.key==='End'?3:e.key==='ArrowRight'?(i+1)%4:e.key==='ArrowLeft'?(i+3)%4:null;if(to!==null){e.preventDefault();lastTap.current=e.currentTarget;switchChapter(chapters[to]!)}}}><span>{bookmarks[c]}</span></button>)}</nav>
+      <div className="rj-running-head"><span>窗边手记</span></div>
+      <div className="rj-canvas" id="rj-leaf" role="tabpanel" aria-labelledby={'rj-tab-'+chapter}><div data-leaves="" data-jl-section={chapter} className="jl-book-content">
+        <div key={offsetKey} className={'jl-body jl-'+(detail && detail.kind!=='results'?'inner':chapter)+'-page'} ref={scroller}
+          role="region" aria-label={accessibleTitle()} tabIndex={0} onScroll={recordOffset}
+          onKeyDown={e=>{if(e.target!==e.currentTarget||e.altKey||e.metaKey||e.ctrlKey)return;const step=e.key==='ArrowRight'?1:e.key==='ArrowLeft'?-1:0;if(step&&swipe(step))e.preventDefault()}}
+          onPointerDown={e=>{gesture.current=null;const el=e.target as Element;const rect=e.currentTarget.getBoundingClientRect();if(e.isPrimary&&e.button===0&&!el.closest('button,input,textarea')&&e.clientX>rect.left+20&&e.clientX<rect.right-20)gesture.current={id:e.pointerId,x:e.clientX,y:e.clientY}}}
+          onPointerCancel={()=>{gesture.current=null}} onPointerUp={e=>{const g=gesture.current;gesture.current=null;if(!g||g.id!==e.pointerId)return;const dx=e.clientX-g.x,dy=e.clientY-g.y;if(Math.abs(dx)>46&&Math.abs(dx)>Math.abs(dy)*1.5)swipe(dx<0?1:-1)}}>
+          {detailBody()}{(chapter==='thoughts' || chapter==='favorites' || detail?.kind==='note' || detail?.kind==='status') && detail?.kind!=='editor' && (detail?.kind!=='note' || selectedNote) && <WritingFeedback props={props} onUndo={restoreUndo}/>}</div><div className="jl-footer-slot"><footer className="jl-page-foot">{chapterFoot()}</footer></div></div></div>
+    </div><div className="rj-cover" aria-hidden="true" hidden/></div></div>
   </section>
 }

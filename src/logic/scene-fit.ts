@@ -125,7 +125,7 @@ export function awayGroup({ sceneHeight, timeBottom, bubbleHeight, artWidth, awa
 }
 
 /** While the card is on screen the companion stands on it, so only the time can move: it comes
- * down until its block (the label, the digits and the step's slot) ends a bubble above the head.
+ * down until its block (the label, digits and any saved step) ends a bubble above the head.
  * `blockBottom` is that block's bottom edge where it rests under the top controls. */
 export function shownTimeDrop(input: { sceneHeight: number; artWidth: number; scale: number; bubbleHeight: number; blockBottom: number }): number {
   const { sceneHeight, artWidth, scale, bubbleHeight, blockBottom } = input

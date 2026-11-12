@@ -1,6 +1,4 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
-import { FocusTaskDialog } from './components/FocusTaskDialog'
-import { ThoughtPanel } from './components/ThoughtPanel'
 import { formatClock, PHASE_LABELS } from './components/format'
 import { Notices } from './components/Notices'
 import { TabBar, type Screen } from './components/TabBar'
@@ -10,7 +8,6 @@ import { useFeedback } from './hooks/useFeedback'
 import { useMotionPreference } from './hooks/companion/useMotionPreference'
 import { useClockApp, type UserAction } from './hooks/useClockApp'
 import { useDocumentTitle } from './hooks/useDocumentTitle'
-import { useFocusTaskBack } from './hooks/useFocusTaskBack'
 import { useNow } from './hooks/useNow'
 import { usePwaUpdate } from './hooks/usePwaUpdate'
 import { useSettingsForm } from './hooks/useSettingsForm'
@@ -22,7 +19,7 @@ import { useStatsView, useTimerView } from './hooks/useViews'
 import { HomeScreen } from './screens/HomeScreen'
 import { SettingsScreen } from './screens/SettingsScreen'
 import { RecordsScreen } from './screens/RecordsScreen'
-import type { RecordsVisit } from './hooks/records/visit'
+import type { BookVisit } from './components/records/book/navigation'
 
 // Fast refresh only while a countdown is visible; otherwise often enough to roll over at midnight.
 const RUNNING_REFRESH_MS = 250
@@ -36,7 +33,7 @@ function changesFocusDefault(action: UserAction): boolean {
 export function App() {
   const app = useClockApp()
   const { screen, navigate, back } = useScreenNavigation()
-  const recordsVisit = useRef<RecordsVisit | null>(null)
+  const recordsVisit = useRef<BookVisit | null>(null)
   const visitGeneration = useRef(app.snapshot.datasetGeneration)
   if (visitGeneration.current !== app.snapshot.datasetGeneration) {
     recordsVisit.current = null
@@ -59,7 +56,6 @@ export function App() {
   const [focusTaskOpen, setFocusTaskOpen] = useState(false)
   const [checkingUpdate, setCheckingUpdate] = useState(false)
   const [updateConflict, setUpdateConflict] = useState(false)
-  useFocusTaskBack(screen === 'stats' && thoughts.open, () => thoughts.setOpen(false))
   // The companion consumes hidden events silently. Announce a Records edit or
   // undo in the same app-level live region, only on a fresh object receipt.
   const receipt = app.thoughtResult
@@ -203,17 +199,11 @@ export function App() {
                 saveState={app.saveState} canEdit={canEdit} dispatch={app.dispatch} onSettings={() => openScreen('settings')} />
             </div>
             {screen === 'stats' && <RecordsScreen key={app.snapshot.datasetGeneration} view={statsView} thoughts={thoughts} canEdit={canEdit} visit={recordsVisit}
-              onEditThought={thoughts.edit}
-              favorites={favorites} hasDraft={thoughts.hasDraft} onContinueDraft={() => thoughts.setOpen(true)}
+              favorites={favorites}
               onAnnounce={announce}
               systemNoticeSummary={systemNoticeSummary} systemNotices={notices}
               persistence={app.persistence} notice={app.notice} hasSaveError={!!app.saveError}
               showArt={app.snapshot.settings.sceneVarietyEnabled} />}
-            {screen === 'stats' && thoughts.open && <FocusTaskDialog title="编辑想法" onClose={() => thoughts.setOpen(false)}>
-              <ThoughtPanel thoughts={thoughts} canEdit={canEdit} />
-              {app.saveState === 'pending' && <p className="panel-save-error">有更改尚未保存。
-                <button type="button" className="link-button" onClick={() => app.dispatch({ type: 'retrySave' })}>重试保存</button></p>}
-            </FocusTaskDialog>}
             {screen === 'settings' && <SettingsScreen form={form} canEdit={canEdit} onBack={() => openScreen('home', '.home .fp-top .pill--icon', true)}
               systemNoticeSummary={settingsNoticeSummary} systemNotices={notices} />}
           </>

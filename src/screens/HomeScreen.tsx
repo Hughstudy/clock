@@ -63,20 +63,14 @@ export function HomeScreen({ active, view, result, linkedThoughts, defaultsInten
   const [task, setTask] = useState<Panel>(null)
   const choice = useDurationChoice(defaultsIntent)
   const [restChoice, setRestChoice] = useState<RestPhase | null>(null)
-  const [step, setStep] = useState('')
-  const [editingStep, setEditingStep] = useState(false)
   const [draft, setDraft] = useState('')
   const [message, setMessage] = useState('')
   const confirming = useRef<string | null>(null)
-  const submittedStep = useRef<string | null>(null)
   const sceneBox = useRef<HTMLDivElement>(null)
   const voiceBox = useRef<HTMLDivElement>(null)
   const voiceButton = useRef<HTMLButtonElement>(null)
   const primaryRef = useRef<HTMLDivElement>(null)
   const markButton = useRef<HTMLButtonElement>(null)
-  const returnToStepButton = useRef(false)
-  const stepBeforeEdit = useRef('')
-  const composingStep = useRef(false)
   const opener = useRef<HTMLElement | null>(null)
   const previousPanel = useRef<Panel>(null)
 
@@ -97,25 +91,18 @@ export function HomeScreen({ active, view, result, linkedThoughts, defaultsInten
   // exact phrase until it is explicitly dismissed, so returning never draws another quote.
   const panel = active ? (thoughts.open ? 'thought' : task ?? (requested ? 'encouragement' : null)) : null
   const reading = panel === 'encouragement'
-  const stepTooLong = Array.from(step).length > view.stepMaxLength
   const scene = panel && companion.scene?.allowBeats ? { ...companion.scene, allowBeats: false } : companion.scene
   const confirmExpired = task === 'end' && confirming.current !== view.sessionId
-  useEffect(() => { onTaskChange?.((!!panel && panel !== 'status') || thoughts.open || editingStep || !!step.trim()) }, [panel, thoughts.open, editingStep, step, onTaskChange])
+  useEffect(() => { onTaskChange?.((!!panel && panel !== 'status') || thoughts.open) }, [panel, thoughts.open, onTaskChange])
   useEffect(() => () => onTaskChange?.(false), [onTaskChange])
 
   useEffect(() => {
     if (!view.sessionId) return
     choice.clear()
     setRestChoice(null)
-    setEditingStep(false)
     if (task === 'duration') setTask(null)
   }, [view.sessionId])
   useEffect(() => { setRestChoice(null) }, [focusResult?.sessionId])
-  useEffect(() => {
-    if (submittedStep.current === null || saveState !== 'saved' || !view.sessionId || view.isBreak) return
-    if (view.step === submittedStep.current) setStep('')
-    submittedStep.current = null
-  }, [view.sessionId, view.isBreak, view.step, saveState])
 
   useLayoutEffect(() => {
     const returning = previousPanel.current !== panel && (!panel || panel === 'encouragement')
@@ -171,11 +158,6 @@ export function HomeScreen({ active, view, result, linkedThoughts, defaultsInten
     if (event.detail === 0) event.currentTarget.closest('.focus-panel')?.querySelector<HTMLElement>('.focus-panel__header button')?.focus({ preventScroll: true })
   }
   const pick = choice.pick
-  const startFocus = (minutes: number) => {
-    if (stepTooLong) return
-    submittedStep.current = step.trim() ? step : null
-    dispatch({ type: 'startFocus', step, durationMinutes: minutes })
-  }
   const startRest = () => dispatch({ type: 'startBreak', phase: restPhase })
   const toggle = () => dispatch({ type: paused ? 'resume' : 'pause' })
   const edit = (id: string, target?: HTMLElement) => {
@@ -190,7 +172,7 @@ export function HomeScreen({ active, view, result, linkedThoughts, defaultsInten
     ? { label: paused ? (view.isBreak ? copy.resumeRest : copy.resumeFocus) : (view.isBreak ? copy.pauseRest : copy.pauseFocus), run: toggle }
     : focusResult ? { label: copy.startRest, run: startRest }
     : preparingRest ? { label: copy.startRest, run: startRest }
-    : { label: copy.startFocus, run: () => startFocus(focusMinutes) }
+    : { label: copy.startFocus, run: () => dispatch({ type: 'startFocus', durationMinutes: focusMinutes }) }
 
   // A finished session reads as what was done (25 分钟), never as a timer waiting to start (25:00).
   const digits: ReactNode = focusResult
@@ -254,62 +236,21 @@ export function HomeScreen({ active, view, result, linkedThoughts, defaultsInten
         </div>
   )
   const voiceRow = <div key="voice" ref={voiceBox} className="fp-voice-slot" />
-  const stepLabel = uiText('UI10')
-  const finishStep = () => {
-    returnToStepButton.current = true
-    setEditingStep(false)
-  }
-  const stepControl = editingStep
-    ? <form className="fp-step-editor"
-        onSubmit={event => { event.preventDefault(); if (!stepTooLong && !composingStep.current) finishStep() }}
-        onBlur={event => { if (!stepTooLong && !event.currentTarget.contains(event.relatedTarget)) setEditingStep(false) }}
-        onKeyDown={event => {
-          if (event.nativeEvent.isComposing || event.nativeEvent.keyCode === 229) return
-          if (event.key === 'Escape') {
-            event.preventDefault()
-            event.stopPropagation()
-            setStep(stepBeforeEdit.current)
-            finishStep()
-          }
-        }}>
-        <label htmlFor="fp-step-input">{stepLabel}</label>
-        <input id="fp-step-input" className="fp-step-input" value={step} autoFocus enterKeyHint="done"
-          aria-invalid={stepTooLong} aria-describedby={stepTooLong ? 'step-error' : undefined} disabled={!canEdit}
-          onChange={event => setStep(event.target.value)}
-          onCompositionStart={() => { composingStep.current = true }}
-          onCompositionEnd={() => { composingStep.current = false }} />
-        <button type="submit" className="fp-step-done" disabled={!canEdit || stepTooLong}>{copy.stepDone}</button>
-      </form>
-    : <button type="button" className="text-action fp-step-open" disabled={!canEdit} aria-describedby={stepTooLong ? 'step-error' : undefined}
-        aria-label={step.trim() ? `编辑这一步：${step.trim()}` : undefined}
-        ref={button => {
-          if (button && returnToStepButton.current) {
-            returnToStepButton.current = false
-            button.focus({ preventScroll: true })
-          }
-        }} onClick={() => { stepBeforeEdit.current = step; composingStep.current = false; setEditingStep(true) }}>
-        <span>{step.trim() || stepLabel}</span>
-        <svg width="13" height="13" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="1.6"
-          strokeLinecap="round" strokeLinejoin="round"><path d="m5 15-1 5 5-1L20 8l-4-4zM14 6l4 4"/></svg>
-      </button>
-  const stepError = readyFocus && stepTooLong && <span id="step-error" className="fp-hint--error">请缩短到 {view.stepMaxLength} 字以内</span>
   const statusRow = (
-    <div key="status" className="fp-status" data-step-details={readyFocus && (!!restEnded || (readableLayout && stepTooLong))} data-running={!ready}>
+    <div key="status" className="fp-status" data-running={!ready}>
           {readyFocus && restEnded && <span>{copy.restElapsed} {formatMinutes(restEnded.elapsedMs)}</span>}
-          {readyFocus ? readableLayout && stepControl
-            : <span>{statusLine}{!ready && !view.isBreak && view.step && <span className="fp-current-step" title={view.step}> · {copy.stepPrefix}{view.step}</span>}</span>}
+          {!readyFocus && <span>{statusLine}{!ready && !view.isBreak && view.step && <span className="fp-current-step" title={view.step}> · {copy.stepPrefix}{view.step}</span>}</span>}
           {(preparingRest || focusResult) && <select className="fp-rest-choice" aria-label="休息时长" value={restPhase}
             disabled={!canEdit || timerPending} onChange={e => setRestChoice(e.target.value === 'longBreak' ? 'longBreak' : 'shortBreak')}>
             {(['shortBreak', 'longBreak'] as const).map(phase => <option key={phase} value={phase}>
               {PHASE_LABELS[phase]} {phase === 'shortBreak' ? view.shortBreakMinutes : view.longBreakMinutes} 分钟</option>)}
           </select>}
-          {readableLayout && stepError}
         </div>
   )
   const controlsRow = (
     <div key="controls" className="fp-controls" role="group" aria-label="计时控制">
           <div className="fp-primary" ref={primaryRef}>
-            <TimerActionButton identity={readyFocus ? identity + '/' + focusMinutes : identity} primary disabled={!canEdit || (readyFocus && stepTooLong)} busy={timerPending} onActivate={primary.run}>
+            <TimerActionButton identity={readyFocus ? identity + '/' + focusMinutes : identity} primary disabled={!canEdit} busy={timerPending} onActivate={primary.run}>
               {timerPending ? '正在处理…' : primary.label}</TimerActionButton>
           </div>
           <div className="fp-control-secondary">
@@ -372,10 +313,16 @@ export function HomeScreen({ active, view, result, linkedThoughts, defaultsInten
             onClick={event => { if (panel !== 'duration') show('duration', event.currentTarget) }}>{panel === 'duration' && duration.ok ? formatClock(duration.minutes * 60000) : digits}
               {panel !== 'duration' && <svg className="fp-clock-edit" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="m5 15-1 5 5-1L20 8l-4-4zM14 6l4 4"/></svg>}</button> : digits}
         </p>
-        {!readableLayout && <div className="fp-step" data-step-details={readyFocus && (editingStep || stepTooLong)}>
-          {readyFocus ? <>{stepControl}{stepError}</>
-            : !ready && !view.isBreak && view.step && <p aria-hidden="true" className="fp-step__current" title={view.step}>{copy.stepPrefix}{view.step}</p>}
+        {!readableLayout && !ready && !view.isBreak && view.step && <div className="fp-step">
+          <p aria-hidden="true" className="fp-step__current" title={view.step}>{copy.stepPrefix}{view.step}</p>
         </div>}
+        {panel === 'duration' && pickerAvailable && <FocusPanel title={titles.duration} anchor={opener.current}
+          onClose={close} closeLabel={copy.cancel}>
+          <DurationRuler draft={draft} minutes={focusMinutes} {...view.focusMinutesRange}
+            onChange={setDraft} onApply={value => { pick(value); close() }} />
+          {pending && <p className="fp-hint fp-hint--error">{copy.pending}
+            <button type="button" className="text-action" onClick={() => dispatch({ type: 'retrySave' })}>{copy.retry}</button></p>}
+        </FocusPanel>}
         {panel && panel !== 'duration' && panel !== 'encouragement' && panel !== 'end' && <FocusPanel key={panel} title={titles[panel]} onClose={close} timerSummary={timerSummary}
           closeLabel={!ready && !view.isBreak ? uiText(view.step ? 'UI16' : 'UI17') : '返回'}>
           {panel === 'message' && <p className="fp-full-message" tabIndex={-1} data-initial-focus>{message}</p>}
@@ -416,13 +363,6 @@ export function HomeScreen({ active, view, result, linkedThoughts, defaultsInten
           <button type="button" className="text-action" onClick={() => dispatch({ type: 'retrySave' })}>{copy.retry}</button></p>}
       </ConfirmPopover>}
       <div className="fp-plate" data-panel={panel ?? ''} data-attention={needsAttention} {...awayAttrs}>
-        {panel === 'duration' && pickerAvailable && <FocusPanel title={titles.duration} placement="plate" timerSummary={timerSummary}
-          onClose={close} closeLabel={copy.cancel}>
-          <DurationRuler draft={draft} minutes={focusMinutes} {...view.focusMinutesRange}
-            onChange={setDraft} onApply={value => { pick(value); close() }} />
-          {pending && <p className="fp-hint fp-hint--error">{copy.pending}
-            <button type="button" className="text-action" onClick={() => dispatch({ type: 'retrySave' })}>{copy.retry}</button></p>}
-        </FocusPanel>}
         {readableLayout ? [statusRow, controlsRow, toolsRow, noteRow, voiceRow] : [noteRow, voiceRow, statusRow, controlsRow, toolsRow]}
 
       </div>

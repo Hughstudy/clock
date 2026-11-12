@@ -30,6 +30,7 @@ export function ThoughtPanel({ thoughts, canEdit }: Props) {
         {thoughts.isExisting ? copy.existingText : copy.newText}
       </label>
       <textarea id="thought-text" rows={3} data-initial-focus value={thoughts.text}
+        placeholder={thoughts.isExisting ? undefined : copy.thoughtPlaceholder}
         readOnly={!canEdit} aria-describedby="thought-length" aria-invalid={tooLong}
         onCompositionStart={() => { composing.current = true }}
         onCompositionEnd={() => { composing.current = false }}

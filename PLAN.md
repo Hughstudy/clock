@@ -50,6 +50,8 @@ The layout follows Apple’s guidance to put the most meaningful content first a
 
 **Combined Focus and Records design, 2026-11-12.** Requested encouragement opens above the companion with direct next-quote, favorite and category controls. The timer, optional intention, three tools and navigation retain their positions as the reader opens and closes. Records keeps the source item in place while its reading sheet is open. Room sources and their original records share that sheet. See the [implementation checks](docs/verification/focus-and-records-interactions.md).
 
+**Focus writing, duration and Records book, 2026-11-12.** The approved iPhone book opens when entering Records. Four ribbons lead to memories, thoughts, cottage pictures and saved quotations. Details and their return journeys turn within the current chapter. The contents of the memories chapter provide date browsing and secondary statistics. Focus has a single writing entry for intentions and thoughts. The duration ruler opens at the clock and applying it returns to the same position. Existing timer, draft and record identities are retained.
+
 ## 1. Sources and current baseline
 
 - Use the [v37 product map](docs/prd/README.md): A/B remain behavior/UI identifiers and D remains acceptance. The v36 single-file source and v35/v26/v5/v3 handoffs are historical references. Subsequent explicitly approved UI decisions in the reports below are retained; do not infer new story or data implementation from them.

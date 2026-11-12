@@ -21,7 +21,6 @@ export interface TimerView {
   longBreakMinutes: number
   /** What a plain focus start captures: the last one-off choice, else the default. */
   nextFocusMinutes: number
-  stepMaxLength: number
   /** The active session's small step, if one was named. */
   step: string | null
   phase: Phase
@@ -51,7 +50,6 @@ export function useTimerView(snapshot: AppSnapshot, now: number): TimerView {
     shortBreakMinutes: settings.durationsMinutes.shortBreak,
     longBreakMinutes: settings.durationsMinutes.longBreak,
     nextFocusMinutes: next,
-    stepMaxLength: spec.timer.stepMaxLength,
     step: timer.session?.step ?? null,
     phase: timer.phase,
     isBreak: isBreak(timer.phase),

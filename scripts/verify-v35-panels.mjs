@@ -43,7 +43,7 @@ async function tabTo(page, target) {
 }
 
 function focusBounds(page) {
-  return page.evaluate(() => [...document.querySelectorAll('.fp-digits, .fp-step-open, .fp-controls button, .fp-thought-tools button, .tab-bar button')].map(element => {
+  return page.evaluate(() => [...document.querySelectorAll('.fp-digits, .fp-controls button, .fp-thought-tools button, .tab-bar button')].map(element => {
     const { x, y, width, height } = element.getBoundingClientRect()
     return [x, y, width, height]
   }).flat())
@@ -68,17 +68,30 @@ try {
     page.on('pageerror', error => errors.push(`${name}: ${error.message}`))
     await page.goto(url)
     await page.evaluate(size => { document.documentElement.style.fontSize = `${size}px` }, font)
-    if (font < 32) {
-      const clock = await page.getByRole('button', { name: /^调整专注时长/ }).boundingBox()
-      const step = await button(page, '这次想做什么？（选填）').boundingBox()
-      check(`${name}: duration and optional task keep separate 44px touch targets`, clock && step &&
-        clock.width >= 44 && clock.height >= 44 && step.width >= 44 && step.height >= 44 && clock.y + clock.height <= step.y + 1)
-    }
-    await page.getByRole('button', { name: /^调整专注时长/ }).click()
+    await page.evaluate(async () => {
+      await document.fonts.ready
+      for (let i = 0; i < 3; i++) await new Promise(requestAnimationFrame)
+    })
+    const clock = page.getByRole('button', { name: /^调整专注时长/ })
+    const clockBefore = await clock.boundingBox()
+    const scroll = () => page.evaluate(() => [scrollX, scrollY, document.querySelector('.fp-plate').scrollTop])
+    const originalScroll = await scroll()
+    const art = page.locator('.fp-art')
+    const artBefore = await art.boundingBox()
+    check(`${name}: the time and pencil share an accessible 44px target`, clockBefore.width >= 44 && clockBefore.height >= 44)
+    await clock.click()
     const duration = page.getByRole('dialog', { name: '调专注时长' })
-    if (font === 32) {
-      await page.waitForFunction(() => document.querySelector('.fp-duration-surface')?.matches(':modal'))
-      check(`${name}: the duration panel escapes the large-text console scrollport`, await duration.getAttribute('data-layout') === 'viewport')
+    const pop = await duration.boundingBox()
+    if (artBefore) {
+      const artDuring = await art.boundingBox()
+      check(`${name}: opening the ruler preserves the visible companion and room`, artDuring &&
+        sameBounds(Object.values(artBefore), Object.values(artDuring)))
+    }
+    check(`${name}: the picker opens in the top layer without moving the Focus screen`, await duration.evaluate(el => el.matches(':modal')) &&
+      sameBounds(originalScroll, await scroll()))
+    if (height > width && font < 32) {
+      check(`${name}: the ruler opens directly below the clock`, pop.y >= clockBefore.y + clockBefore.height - 1 &&
+        pop.y - clockBefore.y - clockBefore.height <= 8 && Math.abs(pop.x + pop.width / 2 - clockBefore.x - clockBefore.width / 2) <= 1)
     }
     await page.screenshot({ path: path.join(output, `${name}-duration.png`) })
     check(`${name}: the duration cancel control is visible and hit-testable`, await inViewAndHit(button(duration, '取消')))
@@ -87,6 +100,10 @@ try {
     check(`${name}: keyboard reaches a hit-testable duration apply control`, await tabTo(page, applyDuration) && await inViewAndHit(applyDuration))
     await page.keyboard.press('Enter')
     await duration.waitFor({ state: 'detached' })
+    const after = await clock.boundingBox()
+    check(`${name}: applying restores the clock target and scroll position`, Math.abs(clockBefore.y - after.y) < 1 &&
+      Math.abs(clockBefore.x + clockBefore.width / 2 - after.x - after.width / 2) < 1 && sameBounds(originalScroll, await scroll()) &&
+      await clock.evaluate(el => el === document.activeElement))
     check(`${name}: applying the duration closes the panel without starting`, await page.getByRole('button', { name: '调整专注时长，当前 31 分钟' }).isVisible() &&
       await page.evaluate(() => !JSON.parse(localStorage.getItem('whale-focus:snapshot'))?.timer.session))
     await button(page, '记下想法').click()
@@ -127,11 +144,11 @@ try {
     check(`${name}: the interrupted quote is readable in full without clipping`, await quote.innerText() === interruptedLine && await quote.evaluate(el => el.scrollWidth <= el.clientWidth + 1 && el.scrollHeight <= el.clientHeight + 1))
     if (font < 32 && height >= 667) {
       await speech.waitFor()
-      check(`${name}: opening and changing a request preserves the timer, optional task, tool and tab targets`, sameBounds(before, await focusBounds(page)))
+      check(`${name}: opening and changing a request preserves the timer, tool and tab targets`, sameBounds(before, await focusBounds(page)))
       check(`${name}: the speech bubble sits immediately above the drawn head`, await speechAtHead(page, speech))
-      const step = await page.locator('.fp-step').boundingBox()
+      const digits = await page.locator('.fp-digits').boundingBox()
       const bubble = await speech.boundingBox()
-      check(`${name}: the entire bubble clears the optional task`, bubble.y >= step.y + step.height - 1)
+      check(`${name}: the entire bubble clears the clock`, bubble.y >= digits.y + digits.height - 1)
       const wordBox = await quote.boundingBox()
       for (const control of [next, favorite, category]) {
         const box = await control.boundingBox()
@@ -164,12 +181,12 @@ try {
   await durationInput.fill('37')
   await durationInput.evaluate(element => { window.originalDurationInput = element; element.setSelectionRange(0, 1) })
   await page.evaluate(() => { document.documentElement.style.fontSize = '32px' })
-  await page.waitForFunction(() => document.querySelector('.fp-duration-surface')?.matches(':modal'))
-  check('Enlarging text keeps the duration input, value, caret and focus through modal promotion', await durationInput.evaluate(element =>
+  await page.locator('.home[data-layout="readable"]').waitFor()
+  check('Enlarging text keeps the duration input, value, caret and focus in the anchored picker', await durationInput.evaluate(element =>
     element === window.originalDurationInput && element.value === '37' && element.selectionStart === 0 && element.selectionEnd === 1 && document.activeElement === element))
   await page.evaluate(() => { document.documentElement.style.fontSize = '16px' })
-  await page.waitForFunction(() => document.querySelector('.fp-duration-surface')?.dataset.layout === 'local')
-  check('Returning to the local duration panel preserves its input and reachable cancel', await durationInput.evaluate(element => element === window.originalDurationInput && element.value === '37') && await inViewAndHit(button(dialog(page), '取消')))
+  await page.locator('.home[data-layout="scene"]').waitFor()
+  check('Returning to the original text size preserves its input and reachable cancel', await durationInput.evaluate(element => element === window.originalDurationInput && element.value === '37') && await inViewAndHit(button(dialog(page), '取消')))
   await button(dialog(page), '取消').click()
   await button(page, '记下想法').click()
   await page.locator('#thought-text').fill('缩放和键盘变化期间保留的文字')

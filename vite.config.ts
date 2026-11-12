@@ -42,7 +42,7 @@ export default defineConfig({
       workbox: {
         // Must match APP_ID in src/adapters/app-id.ts. Cache cleanup never touches localStorage.
         cacheId: 'whale-focus',
-        globPatterns: ['**/*.{js,css,html,svg,png,ico,woff2,webmanifest}'],
+        globPatterns: ['**/*.{js,css,html,svg,png,webp,ico,woff2,webmanifest}'],
         cleanupOutdatedCaches: true,
         navigateFallback: 'index.html',
       },

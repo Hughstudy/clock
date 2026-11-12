@@ -15,9 +15,9 @@ Screens and components render read-only views and dispatch intent. Hooks coordin
 | Timing and session settlement | `logic/timer.ts`, `logic/app.ts`, `hooks/useClockApp.ts` | Deadline-based accounting; one transaction coordinator; stable session IDs |
 | Thought editor and recovery | `hooks/useThoughts.ts`, `logic/thoughts.ts`, `components/ThoughtPanel.tsx` | Preserve ownership, drafts, revisions and pending-save truth |
 | Encouragement policy and quote favorites | `hooks/useFeedback.ts`, `logic/feedback-host.ts`, `logic/feedback.ts`, `hooks/useQuoteFavorites.ts` | Main logic decides eligibility and save truth; animation consumes permitted cues |
-| Records layout | `screens/RecordsScreen.tsx`, `components/records/` | Featured session keepsake, date-grouped focus/rest memories, thought entries and secondary focus totals |
-| Records browsing and return position | `hooks/records/useRecordsBrowser.ts`, `hooks/records/visit.ts` | Mode, page, expanded object, scroll anchor and focus restoration stay coordinated |
-| Records query and saved-only totals | `hooks/records/useRecordsQuery.ts`, `logic/records-query.ts`, `hooks/useViews.ts`, `logic/stats.ts` | Combined focus/rest history, full-list thought search and 20-item pages. Totals use confirmed focus records |
+| Records layout | `screens/RecordsScreen.tsx`, `components/records/book/` | Pages for memories, thoughts, room stamps and favorites, with secondary statistics and status |
+| Records browsing and return position | `components/records/book/navigation.ts`, `screens/RecordsScreen.tsx` | Each breadcrumb carries its chapter, item and reading position for the return page turn |
+| Records query and saved-only totals | `hooks/records/book.ts`, `logic/records-query.ts`, `hooks/useViews.ts`, `logic/stats.ts` | Combined focus/rest history, full-list thought search and 20-item pages. Totals use confirmed focus records |
 | Settings | `screens/SettingsScreen.tsx`, `hooks/useSettingsForm.ts`, `logic/settings.ts` | New settings apply to future sessions |
 | Snapshot format and compatibility | `logic/snapshot.ts`, `logic/snapshot/` | Keep the stable entry point; protect old and newer raw data |
 | Storage and concurrency | `adapters/storage.ts`, `adapters/browser-store.ts`, `adapters/locks.ts` | Read latest, transition, write under one short lock |
@@ -46,9 +46,7 @@ Snapshot v10 adds durable ended rests keyed by session ID. A v9 snapshot can sup
 
 ## Records modules
 
-`RecordsScreen` owns composition, status copy and the visible month selector. `useRecordsBrowser` owns the stateful reading session and its DOM restoration. Those responsibilities are intentionally different: moving all position effects into individual rows would make cross-page inserts, removals and returning from a source record harder to coordinate.
-
-`ThoughtEntry` renders one thought, `RecordsFavorites` renders saved quotes and the welcome note, and `RecordsPagination` provides identical controls for history and favorites. `RecordEntry`, `RecordsRoom` and `WeekChart` remain the established reusable components. The hook dispatches existing edit callbacks; it does not write user data.
+`RecordsScreen` composes the current book page and retains the reading position across navigation. `BookPaper` draws its shared page elements, `BookWriting` presents thoughts and saved quotes, and `BookTools` presents the month picker, statistics and status. Edits go through the app's existing writing controllers. `motion.ts` animates an inert copy of a page while its destination already accepts input.
 
 ## Cleanup decisions
 

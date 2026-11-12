@@ -109,15 +109,18 @@ export async function checkDurationRuler(browser, url, check) {
     check('Enlarged text keeps the same length, with no sideways page scroll', await value.inputValue() === '26' && await offset() === 250
       && await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth))
     await page.evaluate(() => { document.documentElement.style.fontSize = '' })
+    await page.emulateMedia({ reducedMotion: 'no-preference' })
     for (const size of [{ width: 375, height: 812 }, { width: 430, height: 932 }, { width: 1280, height: 800 }, { width: 850, height: 320 }, { width: 568, height: 320 }]) {
       await page.setViewportSize(size)
       await page.waitForTimeout(250)
       const placed = await page.evaluate(() => {
         const panel = document.querySelector('.fp-duration-surface'), apply = panel.querySelector('button[type=submit]')
         const digits = document.querySelector('.fp-digits').getBoundingClientRect(), box = panel.getBoundingClientRect()
-        // The time reads above the companion; beside the scene, the ruler sits in its own column.
+        // Where the page has room, the ruler stays just below or above the digits.
         const overlapsTime = box.top < digits.bottom - 1 && box.bottom > digits.top + 1 && box.left < digits.right - 1 && box.right > digits.left + 1
-        if (panel.dataset.layout === 'local' && overlapsTime) return 'covers the time'
+        const room = Math.max(innerHeight - digits.bottom, digits.top)
+        if (room > box.height + 16 && overlapsTime) return 'covers the time'
+        if (!overlapsTime && Math.min(Math.abs(box.top - digits.bottom), Math.abs(digits.top - box.bottom)) > 10) return 'detached from the clock'
         apply.scrollIntoView({ block: 'nearest' })
         const button = apply.getBoundingClientRect(), hit = document.elementFromPoint(button.x + button.width / 2, button.y + button.height / 2)
         return hit === apply || apply.contains(hit) ? 'ok' : 'apply is covered'

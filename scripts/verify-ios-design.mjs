@@ -42,7 +42,11 @@ try {
       await p.waitForFunction(() => document.querySelector('.blue-companion').dataset.touch === 'pat')
     }
     check(`${name}: no horizontal overflow`, await p.evaluate(() => document.documentElement.scrollWidth <= innerWidth))
-    await p.getByRole('button', { name: /^调整专注时长/ }).click()
+    const clock = p.getByRole('button', { name: /^调整专注时长/ })
+    const clockBefore = await clock.boundingBox()
+    const scroll = () => p.evaluate(() => [scrollX, scrollY, document.querySelector('.fp-plate').scrollTop])
+    const initialScroll = await scroll()
+    await clock.click()
     const picker = p.getByRole('dialog')
     const cancel = picker.locator('.focus-panel__header button')
     check(`${name}: duration Cancel is visible and hit-testable`, await cancel.evaluate(e => {
@@ -50,6 +54,13 @@ try {
       return r.top >= 0 && r.bottom <= innerHeight && e.contains(hit)
     }))
     await cancel.click(); await picker.waitFor({ state: 'hidden' })
+    await clock.click()
+    await picker.getByRole('textbox', { name: '专注分钟数' }).fill('31')
+    await button(picker, '用这个时长').click()
+    await picker.waitFor({ state: 'hidden' })
+    check(`${name}: applying a new time returns to the stationary clock in preparation`, await clock.innerText() === '31:00' &&
+      stable(clockBefore, await clock.boundingBox()) && JSON.stringify(initialScroll) === JSON.stringify(await scroll()) &&
+      await clock.evaluate(e => e === document.activeElement) && !(await snapshot(p))?.timer.session)
     const primary = button(p, '开始专注')
     await primary.scrollIntoViewIfNeeded()
     const up = await primary.boundingBox()
@@ -111,7 +122,7 @@ try {
       Object.defineProperties(visualViewport, { height: { configurable: true, value: 300 }, offsetTop: { configurable: true, value: 80 } })
       visualViewport.dispatchEvent(new Event('resize'))
     })
-    check('Panned keyboard viewport retains its available height and keeps Cancel clear', await fits(80, 380) && (await dialog.boundingBox()).height >= 280)
+    check('Panned keyboard viewport keeps Cancel visible and the entered value editable', await fits(80, 380) && await page.locator('#custom-minutes').inputValue() === '37')
     await button(dialog, '用这个时长').tap()
     check('Applying from the keyboard viewport prepares the entered duration', await page.getByRole('button', { name: '调整专注时长，当前 37 分钟' }).isVisible())
     await page.evaluate(() => { delete visualViewport.offsetTop; delete visualViewport.height })

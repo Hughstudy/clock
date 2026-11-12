@@ -41,6 +41,7 @@ export interface ClockApp {
   durableRests: readonly RestMemory[]
   durableFavorites: readonly SavedQuote[]
   timerPending: boolean
+  savingMarker: boolean
   persistence: Persistence
   notice: StoreNotice | null
   saveError: string | null
@@ -349,6 +350,7 @@ export function useClockApp(): ClockApp {
 
   const durable = store.durableSnapshot?.datasetGeneration === view.snapshot.datasetGeneration ? store.durableSnapshot : null
   return { ...view, saveState, feedbackEvent, thoughtResult, thoughtReceipts, submitThought, submitFavorite, dispatch, result,
+    savingMarker: saveState === 'saving' && lastMark.current?.inFlight === true,
     timerPending: timerPendingCount > 0, durableFavorites: durable?.quoteFavorites ?? EMPTY_FAVORITES,
     hasPendingOperations: pending.current.size > 0 || unconfirmed.current.size > 0 || queuedOperations.current > 0 || timerPendingCount > 0,
     checkReload,

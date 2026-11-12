@@ -1,5 +1,15 @@
 # Focus and rest memories in Records
 
+## Book navigation and Focus controls
+
+The November 12 book review used the production app in desktop Chrome 157 and WebKit 26.5 with phone-size viewports. Entering Records opened the cover. Selecting a ribbon or opening an item turned the page. Opening a cottage picture and turning back kept the cottage ribbon selected and restored the original picture's keyboard focus and scroll position. Reduced motion presented the same destinations immediately.
+
+In Chrome, a second tab added a thought while the reader was on a detail page. Turning back found the original thought on its new list page at the same screen position. A newly saved quotation likewise preserved the quotation being read. Fresh profiles showed an empty collection and a welcome letter. The month, search and recovery flows also passed with 1,000 and 10,000 saved records.
+
+The duration ruler opened beside the clock, and applying a change kept the screen at the clock with the next focus ready to start. The same writing control accepted a thought before starting and a thought linked to a running focus. Layout checks covered 320, 375 and 430 CSS pixels and 200% text. Physical iPhone and VoiceOver testing remain open.
+
+## Earlier album review
+
 Verified November 12, 2026 on macOS 26.6.2. The production build used the `/clock/` base. The Records checks used desktop Chrome 157.0.8103.51 and isolated local profiles.
 
 ## Reading and navigation

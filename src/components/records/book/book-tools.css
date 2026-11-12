@@ -1,0 +1,10 @@
+#ribbon-journal .book-tools { display: grid; align-content: start; gap: 1rem; overflow-wrap: anywhere; }
+#ribbon-journal .book-tools h2 { font: 600 1.55rem/1.4 var(--serif); }
+#ribbon-journal .book-tools .book-year { display: flex; align-items: center; gap: .75rem; }
+#ribbon-journal .book-year input { min-height: 44px; width: 6ch; box-sizing: content-box; padding-inline: .5em; border: 1px solid var(--jl-rule); border-radius: 6px; background: var(--jl-print); }
+#ribbon-journal .book-months { display: grid; grid-template-columns: repeat(auto-fit, minmax(max(44px, 3.5em), 1fr)); gap: 4px; }
+#ribbon-journal .book-range { display: flex; flex-wrap: wrap; gap: .5rem; }
+#ribbon-journal .book-months button, #ribbon-journal .book-range button { border: 1px solid var(--jl-rule); padding-inline: .4em; border-radius: 6px; }
+#ribbon-journal .book-tools [aria-pressed=true] { background: var(--sage); color: var(--ink); }
+#ribbon-journal .book-tools .link-button { justify-self: start; color: var(--teal); text-align: start; }
+#ribbon-journal .book-tools .book-elapsed { font: 600 1.85rem/1.35 var(--serif); }

@@ -3,6 +3,7 @@ import { currentTimeZone, dateKeyInZone, nowMs } from '../adapters/calendar'
 import { newId } from '../adapters/ids'
 import { onAppHide } from '../adapters/lifecycle'
 import { spec } from '../data/spec'
+import { focusCopy } from '../data/focus-copy'
 import { uiText } from '../data/ui-copy'
 import type { ClockApp, ThoughtResult } from './useClockApp'
 import type { AppSnapshot, Thought, ThoughtDraft } from '../logic/types'
@@ -344,6 +345,7 @@ export function useThoughts(app: ClockApp): Thoughts {
     reopen: id => manage('reopenThought', id), remove: id => manage('deleteThought', id), undo, undos, pendingIds,
     retry: () => dispatch({ type: 'retrySave' }),
     status: !validText ? errorStatus('文字中有无法保存的字符，请修正后重试。此页输入仍保留。') : stale ? errorStatus('另一窗口修改了草稿或编辑对象。此页输入仍在，可查看最新内容或另存为新想法。')
+      : app.savingMarker ? { text: focusCopy.savePending, kind: 'status' }
       : newerInput ? { text: '上一版已保存，当前修改仍是草稿。', kind: 'status' } : recent && showRecent ? statusOf(recent) : null,
   }
 }

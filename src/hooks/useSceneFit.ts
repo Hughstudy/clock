@@ -20,8 +20,9 @@ export function useSceneFit(scene: RefObject<HTMLElement>, framed: boolean): voi
       const artBox = root.querySelector<HTMLElement>('.fp-art')
       const top = root.querySelector<HTMLElement>('.fp-top')
       const time = root.querySelector<HTMLElement>('.fp-digits')
-      const panel = root.querySelector<HTMLElement>('.focus-panel')
-      // The step slot under the time keeps its height whether or not a step is set.
+      // Only a sheet covers the floor. The clock's popover floats over a stationary room.
+      const panel = root.querySelector<HTMLElement>('.focus-panel[data-layout="sheet"]')
+      // Older in-progress sessions can still carry a step beneath the time.
       const step = root.querySelector<HTMLElement>('.fp-step')
       const speechSpace = root.querySelector<HTMLElement>('.fp-speech-reserve')
       for (const element of [time, step, panel, speechSpace]) if (element) resize.observe(element)
