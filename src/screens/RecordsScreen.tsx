@@ -1,4 +1,4 @@
-import { useId, useState, type MutableRefObject, type ReactNode } from 'react'
+import { useId, useRef, useState, type MutableRefObject, type ReactNode } from 'react'
 import type { Persistence, StoreNotice } from '../adapters/storage'
 import { FocusTaskDialog } from '../components/FocusTaskDialog'
 import { formatMinutes, PHASE_LABELS } from '../components/format'
@@ -6,7 +6,7 @@ import { RecordEntry } from '../components/RecordEntry'
 import { RecordsRoom } from '../components/RecordsRoom'
 import { WeekChart } from '../components/WeekChart'
 import { ThoughtNotebook } from '../components/records/ThoughtNotebook'
-import { ThoughtEntry } from '../components/records/ThoughtEntry'
+import { ThoughtDetail, ThoughtEntry } from '../components/records/ThoughtEntry'
 import { MemoryChevron, MemoryDetailSheet, MemoryStamp } from '../components/records/MemoryPaper'
 import { WelcomeEnvelope } from '../components/records/WelcomeEnvelope'
 import { welcomeNote } from '../data/welcome'
@@ -48,17 +48,19 @@ export function RecordsScreen({ view, thoughts, canEdit, onEditThought, onContin
   const thoughtsIncomplete = notice?.kind === 'unreadable' || notice?.kind === 'unavailable' ||
     (notice?.kind === 'repaired' && notice.fields.some(field => field.startsWith('thoughts')))
   const {
-    reading, current, result, screen, list, activeSeen, sourceRecord, selectedOriginal, missingSource, detachedThought,
+    reading, current, result, screen, list, activeSeen, sourceRecord, selectedOriginal, missingSource,
     savedQuotes, quotesShown, favPage, favPageCount, monthPanel, statusPanel, year, setYear, composing,
     patch, changeConditions, chooseMonth, changePage, toggle, selectMode, selectTag, returnToRoom, returnToTag,
     openRoom, openOriginal, beforeUndo, closeWelcome, openMonth, openStatus, closeMonth, closeStatus,
     toggleSummary, toggleTrend, setLength,
-  } = useRecordsBrowser({ view, favorites, visit, incomplete: incomplete || restsIncomplete, thoughtsIncomplete, onAnnounce })
+  } = useRecordsBrowser({ view, favorites, visit, editing: thoughts.open, incomplete: incomplete || restsIncomplete, thoughtsIncomplete, onAnnounce })
   const { mode, length, summaryOpen, trend } = reading
   const { entryKey: entryId, isKnownDate: knownDate, hasUnknownDates: unknown } = result
   const { totals } = useHistoryRange(view, length)
   const statusDescriptionId = useId()
   const [letterOpen, setLetterOpen] = useState(false)
+  const editedFromReader = useRef<string | null>(null)
+  const [deletedThoughtId, setDeletedThoughtId] = useState<string | null>(null)
   const displayDate = (date: string) => knownDate(date) ? view.dayHeading(date) : '日期不详的记录'
   const shortDate = (key: string | null) => key && knownDate(key) ? view.shortDate(key) : '日期不详'
   const recordEntry = (record: RecordView, expanded: boolean, onToggle: () => void, inline = false) => <RecordEntry key={record.sessionId} record={record} expanded={expanded}
@@ -82,9 +84,54 @@ export function RecordsScreen({ view, thoughts, canEdit, onEditThought, onContin
   const validYear = /^\d{1,4}$/.test(year) && yearValue >= 1 && yearValue <= 9999
   // Keep the recovery action for the entry the person was reading within reach.
   // Its eligibility and object version still come from the saved deletion.
-  const selectedUndo = thoughts.undos.find(undo => current.expanded === `thought:${undo.id}`)
+  const selectedUndo = thoughts.undos.find(undo => undo.id === deletedThoughtId && !current.expanded)
   const undoButton = (undo: Thoughts['undos'][number]) => <button type="button" key={undo.id} className="link-button"
     disabled={!canEdit} onClick={event => { beforeUndo(event, undo.id); undo.run() }}>{undo.label}</button>
+
+  const roomTag = mode === 'scenes' ? reading.roomTag : null
+  const selectedThought = (mode === 'all' || mode === 'thoughts') && current.expanded ? result.thoughtById.get(current.expanded) : undefined
+  const editSelectedThought = onEditThought ? (id: string) => {
+    editedFromReader.current = id
+    if (current.expanded !== `thought:${id}`) toggle(`thought:${id}`)
+    onEditThought(id)
+  } : undefined
+  const entries = <>
+      {roomTag && sourceRecord ? <>
+        <button data-return-activity type="button" className="link-button" onClick={returnToTag}>‹ 返回{sceneNames[roomTag]}</button>
+        {missingSource && <p>这段原记录目前无法读取。</p>}
+        {selectedOriginal && <ol className="focus-records">{selectedOriginal.kind === 'rest'
+          ? <RestMemoryEntry memory={selectedOriginal.memory} expanded onToggle={returnToTag} showArt={showArt} view={view} inline/>
+          : recordEntry(selectedOriginal.record, true, returnToTag, true)}</ol>}
+      </> : mode !== 'favorites' ? <>
+        {roomTag && <div className="room-source-heading">
+          <MemoryStamp id={roomTag}/><span>这张画签的来处 · {result.total} 段{roomTag.startsWith('R') ? '休息' : '专注'}</span>
+        </div>}
+        {!firstVisit && result.total === 0 && (mode !== 'scenes' || reading.roomTag) && <p className="records-empty">{historyIncomplete ? '目前没有可确认的条目。' : empty}</p>}
+        {result.days.map(day => <section className="record-day" key={day.dateKey} data-date={day.dateKey}>
+          <h3>{knownDate(day.dateKey) ? <time dateTime={day.dateKey}>{displayDate(day.dateKey)}</time> : displayDate(day.dateKey)}
+            {mode === 'all' && !incomplete && knownDate(day.dateKey) && view.totalsByDay.has(day.dateKey) && <small> · 专注 {formatMinutes(view.totalsByDay.get(day.dateKey)!.focusMs)}</small>}</h3>
+          <ol className="focus-records">{day.entries.map(entry => {
+            const id = entryId(entry)
+            if (entry.kind === 'thought') return <ThoughtEntry key={id} notebook={mode === 'thoughts'} illustrated={showArt} item={entry.thought} expanded={current.expanded === id} toggle={() => toggle(id)} view={view} persistence={persistence} canEdit={canEdit} edit={editSelectedThought} />
+            if (mode !== 'scenes') return entry.kind === 'rest'
+              ? <RestMemoryEntry key={id} memory={entry.memory} expanded={current.expanded === id} onToggle={() => toggle(id)} showArt={showArt} view={view}/>
+              : recordEntry(entry.record, current.expanded === id, () => toggle(id))
+            const timeLabel = entry.kind === 'rest' ? view.clockTime(entry.memory.endedAt) : entry.record.timeLabel
+            const elapsedMs = entry.kind === 'rest' ? entry.memory.elapsedMs : entry.record.elapsedMs
+            const phase = entry.kind === 'record' ? '专注' : entry.memory.phase ? PHASE_LABELS[entry.memory.phase] : '休息'
+            return <li key={id} data-entry-id={id} className="records-activity">
+              <button type="button" data-view-original className="record-summary" onClick={event => openOriginal(id, event.currentTarget)}>
+                <span className="record-identity"><strong>{entry.kind === 'record' && entry.record.step ? entry.record.step : phase}</strong>
+                  <span className="record-meta">{timeLabel} · {formatMinutes(elapsedMs)}</span></span>
+                <span className="sr-only">查看原记录</span><MemoryChevron/>
+              </button>
+            </li>
+          })}</ol>
+        </section>)}
+        {result.pageCount > 1 && <RecordsPagination label="记录分页" page={result.page} pageCount={result.pageCount} onChange={changePage} />}
+      </> : <RecordsFavorites quotes={quotesShown} total={savedQuotes.length} page={favPage} pageCount={favPageCount}
+        expandedId={current.expanded} canEdit={canEdit} favorites={favorites} onPage={changePage} onToggle={toggle} onCloseWelcome={closeWelcome} />}
+    </>
 
   return <section ref={screen} className="screen stats records-v35" data-records-mode={mode} aria-labelledby="stats-title">
     <div className="records-header">
@@ -135,47 +182,14 @@ export function RecordsScreen({ view, thoughts, canEdit, onEditThought, onContin
     </div>}
     {mode === 'scenes' && <RecordsRoom band={reading.roomBand} activities={result.roomActivities} selected={reading.roomTag} onSelect={selectTag} incomplete={incomplete || restsIncomplete}/>}
     <div className="records-list" ref={list} data-result-count={mode === 'favorites' ? savedQuotes.length : result.total}>
-      {mode !== 'favorites' ? <>
-        {mode === 'scenes' && reading.roomTag && <div className="room-source-heading album-paper album-paper-surface">
-          <div><span className="memory-kicker">这张画签的来处</span><h2 tabIndex={-1}>{sceneNames[reading.roomTag]}</h2></div>
-          <MemoryStamp id={reading.roomTag}/>
-          <button type="button" className="link-button" onClick={returnToRoom}><span aria-hidden="true">‹</span>返回小屋</button>
-        </div>}
-        {mode === 'scenes' && missingSource && <p>这段原记录目前无法读取。<button type="button" className="link-button" onClick={returnToTag}>返回小屋画签</button></p>}
-        {detachedThought && <section className="records-detached"><p className="hint">这条想法已不符合当前查找条件，关闭后返回原结果。</p><ol className="focus-records"><ThoughtEntry notebook illustrated={showArt} item={detachedThought} expanded toggle={() => patch({ expanded: null })} view={view} persistence={persistence} canEdit={canEdit} thoughts={thoughts} edit={onEditThought} /></ol></section>}
-        {!firstVisit && result.total === 0 && (mode !== 'scenes' || reading.roomTag) && <p className="records-empty">{historyIncomplete ? '目前没有可确认的条目。' : empty}</p>}
-        {result.days.map(day => <section className="record-day" key={day.dateKey} data-date={day.dateKey}>
-          <h3>{knownDate(day.dateKey) ? <time dateTime={day.dateKey}>{displayDate(day.dateKey)}</time> : displayDate(day.dateKey)}
-            {mode === 'all' && !incomplete && knownDate(day.dateKey) && view.totalsByDay.has(day.dateKey) && <small> · 专注 {formatMinutes(view.totalsByDay.get(day.dateKey)!.focusMs)}</small>}</h3>
-          <ol className="focus-records">{day.entries.map(entry => {
-            const id = entryId(entry)
-            if (entry.kind === 'thought') return <ThoughtEntry key={id} notebook={mode === 'thoughts'} illustrated={showArt} item={entry.thought} expanded={current.expanded === id} toggle={() => toggle(id)} view={view} persistence={persistence} canEdit={canEdit} thoughts={thoughts} edit={onEditThought} />
-            if (mode !== 'scenes') return entry.kind === 'rest'
-              ? <RestMemoryEntry key={id} memory={entry.memory} expanded={current.expanded === id} onToggle={() => toggle(id)} showArt={showArt} view={view}/>
-              : recordEntry(entry.record, current.expanded === id, () => toggle(id))
-            const timeLabel = entry.kind === 'rest' ? view.clockTime(entry.memory.endedAt) : entry.record.timeLabel
-            const elapsedMs = entry.kind === 'rest' ? entry.memory.elapsedMs : entry.record.elapsedMs
-            const phase = entry.kind === 'record' ? '专注' : entry.memory.phase ? PHASE_LABELS[entry.memory.phase] : '休息'
-            const isOriginalOpen = sourceRecord === id
-            return <li key={id} data-entry-id={id} className="records-activity">
-              <button type="button" data-view-original className="record-summary" aria-expanded={isOriginalOpen} onClick={event => openOriginal(id, event.currentTarget)}>
-                <span className="record-identity"><strong>{entry.kind === 'record' && entry.record.step ? entry.record.step : phase}</strong>
-                  <span className="record-meta">{timeLabel} · {formatMinutes(elapsedMs)}</span></span>
-                <span className="sr-only">{isOriginalOpen ? '收起原记录' : '查看原记录'}</span><MemoryChevron/>
-              </button>
-              {isOriginalOpen && selectedOriginal && <div className="record-detail">
-                <button data-return-activity type="button" className="link-button" onClick={returnToTag}>返回{sceneNames[reading.roomTag!]}</button>
-                <ol className="focus-records">{selectedOriginal.kind === 'rest'
-                  ? <RestMemoryEntry memory={selectedOriginal.memory} expanded onToggle={returnToTag} showArt={showArt} view={view} inline/>
-                  : recordEntry(selectedOriginal.record, true, returnToTag, true)}</ol>
-              </div>}
-            </li>
-          })}</ol>
-        </section>)}
-        {result.pageCount > 1 && <RecordsPagination label="记录分页" page={result.page} pageCount={result.pageCount} onChange={changePage} />}
-      </> : <RecordsFavorites quotes={quotesShown} total={savedQuotes.length} page={favPage} pageCount={favPageCount}
-        expandedId={current.expanded} canEdit={canEdit} favorites={favorites} onPage={changePage} onToggle={toggle} onCloseWelcome={closeWelcome} />}
+      {roomTag ? !thoughts.open && <FocusTaskDialog title={sourceRecord ? '原记录' : sceneNames[roomTag]}
+        closeLabel="返回小屋" onClose={returnToRoom} onBack={sourceRecord ? returnToTag : returnToRoom}>{entries}</FocusTaskDialog> : entries}
     </div>
+    {selectedThought && !thoughts.open && <ThoughtDetail item={selectedThought} view={view} persistence={persistence} canEdit={canEdit}
+      thoughts={thoughts} edit={editSelectedThought} returningFromEdit={editedFromReader.current === selectedThought.id}
+      detached={mode === 'thoughts' && !result.all.some(entry => entryId(entry) === current.expanded)}
+      onRemove={() => { setDeletedThoughtId(selectedThought.id); thoughts.remove(selectedThought.id) }}
+      onClose={() => { editedFromReader.current = null; toggle(`thought:${selectedThought.id}`) }}/>}
     {mode !== 'favorites' && selectedUndo && <div className="records-feedback records-undo" data-status-actions>
       {undoButton(selectedUndo)}
     </div>}

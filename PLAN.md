@@ -48,6 +48,8 @@ The other three Records views use the same paper and illustration style. Thought
 
 The layout follows Apple’s guidance to put the most meaningful content first and group details that belong together. Journal provides a reference for attaching recognizable details to a particular moment. The paper illustrations come from this prototype’s companion activities. [Apple HIG on layout](https://developer.apple.com/design/human-interface-guidelines/layout) · [Apple Journal guide](https://support.apple.com/guide/iphone/write-in-your-journal-iph9824e83ce/ios)
 
+**Combined Focus and Records design, 2026-11-12.** Requested encouragement opens above the companion with direct next-quote, favorite and category controls. The timer, optional intention, three tools and navigation retain their positions as the reader opens and closes. Records keeps the source item in place while its reading sheet is open. Room sources and their original records share that sheet. See the [implementation checks](docs/verification/focus-and-records-interactions.md).
+
 ## 1. Sources and current baseline
 
 - Use the [v37 product map](docs/prd/README.md): A/B remain behavior/UI identifiers and D remains acceptance. The v36 single-file source and v35/v26/v5/v3 handoffs are historical references. Subsequent explicitly approved UI decisions in the reports below are retained; do not infer new story or data implementation from them.

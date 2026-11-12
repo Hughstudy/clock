@@ -46,9 +46,10 @@ export function RecordEntry({ record, expanded, onToggle, inline, persistence, s
       </li>)}
     </ul>}
   </div>
+  if (inline) return <li data-record-id={record.sessionId}>{detail}</li>
   return <li data-record-id={record.sessionId} data-entry-id={`record:${record.sessionId}`} data-saved={record.saved}>
     <button className="record-summary" type="button" aria-expanded={expanded} aria-controls={expanded ? detailId : undefined}
-      aria-haspopup={inline ? undefined : 'dialog'} onClick={event => { event.currentTarget.focus({ preventScroll: true }); onToggle() }}>
+      aria-haspopup="dialog" onClick={event => { event.currentTarget.focus({ preventScroll: true }); onToggle() }}>
       {showArt && scene && <MemoryStamp id={scene.sceneId}/>}
       <span className="record-identity">
         <strong>{record.step || name}</strong>
@@ -57,6 +58,6 @@ export function RecordEntry({ record, expanded, onToggle, inline, persistence, s
         {record.thoughts.length > 0 && <span className="record-meta">{record.thoughts.some(t => t.text) ? '留有想法' : '留过标记'}</span>}
       </span><MemoryChevron/>
     </button>
-    {expanded && (inline ? detail : <MemoryDetailSheet title="专注手记" onClose={onToggle}>{detail}</MemoryDetailSheet>)}
+    {expanded && <MemoryDetailSheet title="专注手记" onClose={onToggle}>{detail}</MemoryDetailSheet>}
   </li>
 }

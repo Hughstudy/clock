@@ -45,10 +45,12 @@ try {
   await button(page, '开始专注').waitFor()
   await page.evaluate(() => { window.updateGuardToken = 'original-document' })
 
-  await button(page, '＋ 这一小步').click()
-  await page.getByRole('textbox', { name: '这一小步', exact: true }).fill('先整理一页')
-  await page.keyboard.press('Tab')
-  check('Prepared step remains after leaving the field', await button(page, '这一小步：先整理一页').isVisible())
+  const stepLabel = '这次想做什么？（选填）'
+  const stepField = page.getByRole('textbox', { name: stepLabel, exact: true })
+  await button(page, stepLabel).click()
+  await stepField.fill('先整理一页')
+  await page.locator('.fp-primary button').focus()
+  check('Prepared step remains after leaving the field', await button(page, '编辑这一步：先整理一页').isVisible())
 
   // A real second worker is installed from changed bytes, using the same app
   // assets. Only this isolated verification build is modified.
@@ -64,9 +66,9 @@ try {
   check('A waiting worker does not force reload', await page.evaluate(() => window.updateGuardToken === 'original-document'))
   await closePanel(page)
 
-  await button(page, '这一小步：先整理一页').click()
-  await page.getByRole('textbox', { name: '这一小步', exact: true }).fill('')
-  await page.keyboard.press('Tab')
+  await button(page, '编辑这一步：先整理一页').click()
+  await stepField.fill('')
+  await button(page, '完成').click()
   await button(page, '记下想法').click()
   await page.locator('#thought-text').fill('更新前保留的想法')
   await closePanel(page)

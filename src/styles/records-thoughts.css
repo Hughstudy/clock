@@ -28,7 +28,7 @@
 .records-v35[data-records-mode='thoughts'] .records-tools { gap: .65rem; }
 .records-v35[data-records-mode='thoughts'] .record-identity { display: flex; flex-direction: column; }
 .records-v35[data-records-mode='thoughts'] .record-identity .record-meta { order: 1; }
-.records-v35[data-records-mode='thoughts'] .record-summary .record-chevron { rotate: 90deg; }
+.records-v35 [data-thought-id] .record-summary[aria-expanded='true'] .record-chevron { transform: none; }
 .records-v35[data-records-mode='thoughts'] .records-empty { margin: .25rem 0; }
 @container (min-width: 18rem) {
   .notebook-marker-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; }

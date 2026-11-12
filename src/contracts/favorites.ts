@@ -19,6 +19,8 @@ export interface QuoteFavoritesController {
   toggle: (quote: FavoriteQuote) => void
   status: string | null
   statusFor: (quote: FavoriteQuote) => string | null
+  /** A visible explanation for a conflict or an unsuccessful write; normal progress is on the button. */
+  detailFor: (quote: FavoriteQuote) => string | null
   problems: readonly { quote: FavoriteQuote; message: string }[]
   retry: () => void
 }

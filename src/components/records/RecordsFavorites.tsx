@@ -1,4 +1,3 @@
-import { useId } from 'react'
 import { quoteKey, type QuoteFavoritesController, type SavedQuote } from '../../contracts/favorites'
 import { welcomeNote } from '../../data/welcome'
 import { useFocusTaskBack } from '../../hooks/useFocusTaskBack'
@@ -68,34 +67,28 @@ function WelcomeLetter({ compact, open, onOpen, onClose }: {
   </section>
 }
 
-function FavoriteEntry({ quote, featured, expanded, canEdit, favorites, onToggle }: {
-  quote: SavedQuote; featured: boolean; expanded: boolean; canEdit: boolean
-  favorites: QuoteFavoritesController | undefined; onToggle: (id: string) => void
+function FavoriteEntry({ quote, featured, expanded, onToggle }: {
+  quote: SavedQuote; featured: boolean; expanded: boolean; onToggle: (id: string) => void
 }) {
-  const detailId = useId()
   const id = `favorite:${quoteKey(quote)}`
   const savedAt = new Date(quote.savedAt)
   const date = Number.isFinite(savedAt.getTime()) ? savedDay.format(savedAt) : null
   return <li data-entry-id={id} className={featured ? 'favorite-featured album-paper' : undefined}>
     <button type="button" className={`record-summary favorite-summary${featured ? ' favorite-feature album-paper-surface' : ''}`}
-      aria-expanded={expanded} aria-controls={expanded ? detailId : undefined}
+      aria-expanded={expanded} aria-haspopup="dialog"
       onClick={event => { event.currentTarget.focus({ preventScroll: true }); onToggle(id) }}>
       {!featured && <QuoteBookmark/>}
       <span className="record-identity">
         {featured && <span className="memory-kicker">最近收藏</span>}
         <span className="thought-preview favorite-text">{quote.text}</span>
         {date && <span className="record-meta">{date} 收藏</span>}
-        {featured && <span className="memory-read">{expanded ? '收起句子' : '重读句子'} <MemoryChevron/></span>}
+        {featured && <span className="memory-read">重读句子 <MemoryChevron/></span>}
       </span>
       {featured ? <span className="favorites-letter-print" aria-hidden="true">
         <span className="memory-stamp"><span className="memory-stamp-print"><QuoteBookmark/></span></span>
         <span className="postmark"/>
       </span> : <MemoryChevron/>}
     </button>
-    {expanded && <div className="record-detail favorite-actions" id={detailId}>
-      <button type="button" className="link-button" disabled={!canEdit || favorites?.isPending(quote)} onClick={() => favorites?.toggle(quote)}>
-        {favorites?.isPending(quote) ? '正在保存' : '取消收藏'}</button>
-    </div>}
   </li>
 }
 
@@ -104,7 +97,12 @@ export function RecordsFavorites({ quotes, total, page, pageCount, expandedId, c
   const featured = page === 1 ? quotes[0] : undefined
   const otherQuotes = featured ? quotes.slice(1) : quotes
   const entry = (quote: SavedQuote, cover: boolean) => <FavoriteEntry key={quoteKey(quote)} quote={quote} featured={cover}
-    expanded={expandedId === `favorite:${quoteKey(quote)}`} canEdit={canEdit} favorites={favorites} onToggle={onToggle}/>
+    expanded={expandedId === `favorite:${quoteKey(quote)}`} onToggle={onToggle}/>
+  // The sheet stays mounted when another tab moves the quote across a page boundary.
+  const selected = favorites?.saved.find(quote => expandedId === `favorite:${quoteKey(quote)}`)
+  const closeQuote = () => { if (expandedId) onToggle(expandedId) }
+  useFocusTaskBack(!!selected, closeQuote)
+  const pending = selected && favorites?.isPending(selected)
   return <div className="favorites-stationery">
     {total === 0 && letter}
     <section className="records-favorites" aria-label="收藏的句子">
@@ -118,6 +116,13 @@ export function RecordsFavorites({ quotes, total, page, pageCount, expandedId, c
       </div>}
       {otherQuotes.length > 0 && <ol className="focus-records" start={featured ? 2 : undefined}>{otherQuotes.map(quote => entry(quote, false))}</ol>}
       {pageCount > 1 && <RecordsPagination label="收藏分页" page={page} pageCount={pageCount} onChange={onPage} />}
+      {selected && <FocusTaskDialog title="收藏的句子" closeLabel="返回收藏" onClose={closeQuote}>
+        <p className="favorites-letter-body">{selected.text}</p>
+        <button type="button" className="link-button" disabled={!canEdit || pending} onClick={() => favorites?.toggle(selected)}>
+          {pending ? '正在保存' : '取消收藏'}</button>
+        {pending && <div className="records-feedback">{favorites?.statusFor(selected)}
+          <button type="button" className="link-button" onClick={favorites?.retry}>重试保存</button></div>}
+      </FocusTaskDialog>}
       <div className="records-feedback">{favorites?.status}{!!favorites?.problems.length && <button type="button" className="link-button" onClick={favorites.retry}>重试保存</button>}</div>
     </section>
     {total > 0 && letter}

@@ -20,7 +20,7 @@ export const focusCopy = {
   focusElapsed: '本段计时', restElapsed: '休息计时已结束 · 本次休息',
   savedRecord: '已保存', unsavedRecord: '尚未保存',
   viewResult: '查看结果', backToFocus: '回到专注', gotIt: '知道了', focusEndedTitle: '专注结束', restEndedTitle: '休息结束',
-  stepAdd: '＋ 这一小步', stepPrefix: '这一小步：', stepDone: '好了',
+  stepPrefix: '这一小步：', stepDone: '完成',
   mark: '留个标记', write: '记下想法', resumeDraft: '继续草稿', supplement: '补充文字',
   edit: '编辑文字', readSession: '本段想法', sessionThoughts: '本段想法', saveThought: '保存想法',
   existingText: '这条想法的文字', newText: '想法先放这里', savePending: '正在保存…',
@@ -30,7 +30,7 @@ export const focusCopy = {
   keepDraft: '继续当前草稿', discardAndSwitch: '放弃草稿并切换', writeAnother: '另写一条',
   saveAsNew: '另存为新想法', reloadLatest: '查看最新版本',
   pending: '有更改尚未保存。', retry: '重试保存', memoryOnly: '仅在此页',
-  askCategories: '换一种鼓励', dismiss: '收到鼓励了', chooseEncouragement: '选择鼓励类型', returnEncouragement: '返回鼓励',
+  nextEncouragement: '换一句鼓励', dismiss: '收到鼓励了', chooseEncouragement: '鼓励类型',
   encouragementTitle: '一句鼓励', fullText: '查看全文', statusTitle: '保存与撤销', statusDetails: '查看状态',
   askOptions: [
     { pool: 'ASKG', label: '日常鼓励' }, { pool: 'ASKS', label: '开始有点难' },

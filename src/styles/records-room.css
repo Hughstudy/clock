@@ -1,4 +1,3 @@
-.records-room[hidden] { display: none; }
 .records-room .room-album-card { padding: 1rem 1rem .9rem; }
 .records-room .room-album-header {
   display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: .25rem .75rem;

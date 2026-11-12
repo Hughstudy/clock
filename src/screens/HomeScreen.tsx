@@ -66,7 +66,6 @@ export function HomeScreen({ active, view, result, linkedThoughts, defaultsInten
   const [step, setStep] = useState('')
   const [editingStep, setEditingStep] = useState(false)
   const [draft, setDraft] = useState('')
-  const [askOpen, setAskOpen] = useState(false)
   const [message, setMessage] = useState('')
   const confirming = useRef<string | null>(null)
   const submittedStep = useRef<string | null>(null)
@@ -76,6 +75,8 @@ export function HomeScreen({ active, view, result, linkedThoughts, defaultsInten
   const primaryRef = useRef<HTMLDivElement>(null)
   const markButton = useRef<HTMLButtonElement>(null)
   const returnToStepButton = useRef(false)
+  const stepBeforeEdit = useRef('')
+  const composingStep = useRef(false)
   const opener = useRef<HTMLElement | null>(null)
   const previousPanel = useRef<Panel>(null)
 
@@ -90,12 +91,16 @@ export function HomeScreen({ active, view, result, linkedThoughts, defaultsInten
   const restPhase: RestPhase = restChoice ?? (view.phase === 'longBreak' ? 'longBreak' : 'shortBreak')
   const restMinutes = restPhase === 'longBreak' ? view.longBreakMinutes : view.shortBreakMinutes
   const focusMinutes = choice.picked ?? view.nextFocusMinutes
-  const panel = active ? (thoughts.open ? 'thought' : task) : null
+  const frame = companion.feedback.frame
+  const requested = frame.placement === 'requested' ? frame.encouragement : null
+  // A temporary editor or confirmation covers requested speech. The feedback owner keeps its
+  // exact phrase until it is explicitly dismissed, so returning never draws another quote.
+  const panel = active ? (thoughts.open ? 'thought' : task ?? (requested ? 'encouragement' : null)) : null
   const reading = panel === 'encouragement'
   const stepTooLong = Array.from(step).length > view.stepMaxLength
   const scene = panel && companion.scene?.allowBeats ? { ...companion.scene, allowBeats: false } : companion.scene
   const confirmExpired = task === 'end' && confirming.current !== view.sessionId
-  useEffect(() => { onTaskChange?.((!!task && task !== 'status') || thoughts.open || editingStep || !!step.trim()) }, [task, thoughts.open, editingStep, step, onTaskChange])
+  useEffect(() => { onTaskChange?.((!!panel && panel !== 'status') || thoughts.open || editingStep || !!step.trim()) }, [panel, thoughts.open, editingStep, step, onTaskChange])
   useEffect(() => () => onTaskChange?.(false), [onTaskChange])
 
   useEffect(() => {
@@ -113,8 +118,9 @@ export function HomeScreen({ active, view, result, linkedThoughts, defaultsInten
   }, [view.sessionId, view.isBreak, view.step, saveState])
 
   useLayoutEffect(() => {
-    if (active && previousPanel.current && !panel) {
-      const prior = opener.current
+    const returning = previousPanel.current !== panel && (!panel || panel === 'encouragement')
+    if (active && previousPanel.current && returning) {
+      const prior = previousPanel.current === 'encouragement' ? voiceButton.current : opener.current
       const speechTask = previousPanel.current === 'message' || previousPanel.current === 'encouragement'
       const fallback = speechTask ? voiceButton.current : null
       const target = prior?.isConnected && !prior.matches(':disabled') && prior.getClientRects().length
@@ -130,7 +136,7 @@ export function HomeScreen({ active, view, result, linkedThoughts, defaultsInten
       thoughts.setOpen(false)
     }
     opener.current = target
-    if (next !== 'encouragement') { companion.dismiss(); setAskOpen(false) }
+    if (next !== 'encouragement' && !requested) companion.dismiss()
     if (next === 'thought') {
       setTask(null)
       if (thoughts.hasDraft) thoughts.writeAnother()
@@ -139,20 +145,15 @@ export function HomeScreen({ active, view, result, linkedThoughts, defaultsInten
     }
     if (next === 'end') confirming.current = view.sessionId
     if (next === 'duration') setDraft(String(focusMinutes))
-    if (next === 'encouragement') { setAskOpen(false); companion.request() }
-    setTask(next)
+    if (next === 'encouragement') companion.request()
+    setTask(next === 'encouragement' ? null : next)
   }
   const close = () => {
     if (panel === 'thought') thoughts.setOpen(false)
     if (panel === 'encouragement') companion.dismiss()
-    setAskOpen(false)
     setTask(null)
   }
-  const back = () => {
-    if (panel === 'encouragement' && askOpen) setAskOpen(false)
-    else close()
-  }
-  useFocusTaskBack(!!panel, back, panel === 'encouragement' && askOpen ? 'categories' : panel ?? '')
+  useFocusTaskBack(!!panel, close, panel ?? '')
   const readableLayout = useFocusLayout(sceneBox)
   useSceneFit(sceneBox, companion.sceneryEnabled)
   useLayoutEffect(() => {
@@ -180,7 +181,7 @@ export function HomeScreen({ active, view, result, linkedThoughts, defaultsInten
   const edit = (id: string, target?: HTMLElement) => {
     if (target) opener.current = target
     setTask(null)
-    companion.dismiss()
+    if (!requested) companion.dismiss()
     thoughts.edit(id)
   }
 
@@ -202,11 +203,8 @@ export function HomeScreen({ active, view, result, linkedThoughts, defaultsInten
   const pickerAvailable = active && readyFocus && canEdit && !timerPending
   useEffect(() => { if (!pickerAvailable && task === 'duration') setTask(null) }, [task, pickerAvailable])
 
-  const frame = companion.feedback.frame
-  const requested = frame.placement === 'requested' ? frame.encouragement : null
   // The companion's passing line steps aside while a local panel has the space.
   const spoken = frame.placement !== 'requested' && !panel ? frame.encouragement : null
-  useEffect(() => { if (!requested) setAskOpen(false) }, [requested])
   const noteStatus = thoughts.status
   const pending = saveState === 'pending'
   const needsAttention = pending || noteStatus?.kind === 'error' || !!systemNoticeSummary || saveState === 'memory-only' || saveState === 'read-only'
@@ -238,7 +236,10 @@ export function HomeScreen({ active, view, result, linkedThoughts, defaultsInten
           hidden={!noteText && !thoughts.hasDraft && !thoughts.latestMarkerId && !thoughts.undo && !needsAttention}>
           <span className="fp-note__text">{noteText}</span>
           {thoughts.hasDraft && <button type="button" className="text-action" onClick={event => {
-            opener.current = event.currentTarget; companion.dismiss(); setTask(null); thoughts.openNew()
+            opener.current = event.currentTarget
+            if (!requested) companion.dismiss()
+            setTask(null)
+            thoughts.openNew()
           }}>{copy.resumeDraft}</button>}
           {thoughts.latestMarkerId && <button type="button" className="text-action" disabled={!canEdit}
             onClick={event => edit(thoughts.latestMarkerId!, event.currentTarget)}>{copy.supplement}</button>}
@@ -252,33 +253,45 @@ export function HomeScreen({ active, view, result, linkedThoughts, defaultsInten
             aria-label={copy.statusDetails} onClick={event => show('status', event.currentTarget)}>详情</button>}
         </div>
   )
-  const voiceRow = (
-    <div key="voice" ref={voiceBox} className="fp-voice-slot">
-          {reading && requested && <EncouragementReader quote={requested} choosing={askOpen} canEdit={canEdit}
-            sceneRef={sceneBox} onBack={back} onClose={close} timerSummary={timerSummary}
-            {...(favorites ? { favorites } : {})} onNext={companion.next} onChooseMode={() => setAskOpen(true)} onReturn={() => setAskOpen(false)}
-            onChoose={pool => { if (pool !== requested.pool) companion.request(pool); setAskOpen(false) }} />}
-        </div>
-  )
-  // The step belongs with the time it describes. Large text keeps it in the card's reading order.
+  const voiceRow = <div key="voice" ref={voiceBox} className="fp-voice-slot" />
+  const stepLabel = uiText('UI10')
+  const finishStep = () => {
+    returnToStepButton.current = true
+    setEditingStep(false)
+  }
   const stepControl = editingStep
-    ? <input className="fp-step-input" aria-label={uiText('UI10')} placeholder={uiText('UI11')} value={step} autoFocus
-        enterKeyHint="done" aria-invalid={stepTooLong} aria-describedby={stepTooLong ? 'step-error' : undefined} disabled={!canEdit}
-        onChange={e => setStep(e.target.value)} onBlur={() => { if (!stepTooLong) setEditingStep(false) }}
-        onKeyDown={e => {
-          if ((e.key !== 'Enter' && e.key !== 'Escape') || e.nativeEvent.isComposing || e.nativeEvent.keyCode === 229 || stepTooLong) return
-          e.preventDefault()
-          returnToStepButton.current = true
-          setEditingStep(false)
-        }} />
-    : <button type="button" className="text-action" disabled={!canEdit} aria-describedby={stepTooLong ? 'step-error' : undefined}
+    ? <form className="fp-step-editor"
+        onSubmit={event => { event.preventDefault(); if (!stepTooLong && !composingStep.current) finishStep() }}
+        onBlur={event => { if (!stepTooLong && !event.currentTarget.contains(event.relatedTarget)) setEditingStep(false) }}
+        onKeyDown={event => {
+          if (event.nativeEvent.isComposing || event.nativeEvent.keyCode === 229) return
+          if (event.key === 'Escape') {
+            event.preventDefault()
+            event.stopPropagation()
+            setStep(stepBeforeEdit.current)
+            finishStep()
+          }
+        }}>
+        <label htmlFor="fp-step-input">{stepLabel}</label>
+        <input id="fp-step-input" className="fp-step-input" value={step} autoFocus enterKeyHint="done"
+          aria-invalid={stepTooLong} aria-describedby={stepTooLong ? 'step-error' : undefined} disabled={!canEdit}
+          onChange={event => setStep(event.target.value)}
+          onCompositionStart={() => { composingStep.current = true }}
+          onCompositionEnd={() => { composingStep.current = false }} />
+        <button type="submit" className="fp-step-done" disabled={!canEdit || stepTooLong}>{copy.stepDone}</button>
+      </form>
+    : <button type="button" className="text-action fp-step-open" disabled={!canEdit} aria-describedby={stepTooLong ? 'step-error' : undefined}
+        aria-label={step.trim() ? `编辑这一步：${step.trim()}` : undefined}
         ref={button => {
           if (button && returnToStepButton.current) {
             returnToStepButton.current = false
             button.focus({ preventScroll: true })
           }
-        }} onClick={() => setEditingStep(true)}>
-      {step.trim() ? `${copy.stepPrefix}${step.trim()}` : copy.stepAdd}</button>
+        }} onClick={() => { stepBeforeEdit.current = step; composingStep.current = false; setEditingStep(true) }}>
+        <span>{step.trim() || stepLabel}</span>
+        <svg width="13" height="13" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="1.6"
+          strokeLinecap="round" strokeLinejoin="round"><path d="m5 15-1 5 5-1L20 8l-4-4zM14 6l4 4"/></svg>
+      </button>
   const stepError = readyFocus && stepTooLong && <span id="step-error" className="fp-hint--error">请缩短到 {view.stepMaxLength} 字以内</span>
   const statusRow = (
     <div key="status" className="fp-status" data-step-details={readyFocus && (!!restEnded || (readableLayout && stepTooLong))} data-running={!ready}>
@@ -314,7 +327,8 @@ export function HomeScreen({ active, view, result, linkedThoughts, defaultsInten
   const toolsRow = (
     <div key="tools" className="fp-tools-slot">
           <div className="fp-thought-tools" role="group" aria-label="鼓励与想法工具">
-            <button ref={voiceButton} type="button" className="text-action fp-voice-open" aria-expanded={reading}
+            <button ref={voiceButton} type="button" className="text-action fp-voice-open" aria-pressed={reading}
+              aria-controls={reading ? 'focus-requested-quote' : undefined} aria-description={reading ? '再次轻点收起鼓励' : undefined}
               onClick={event => { if (reading) close(); else show('encouragement', event.currentTarget) }}>
               <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="1.6"><path d="M20 11a8 8 0 0 1-8 8c-1.4 0-2.7-.3-3.8-.9L4 20l1.3-4A8 8 0 1 1 20 11Z"/></svg>{uiText('UI19')}</button>
             <button ref={markButton} type="button" className="text-action" disabled={!canEdit}
@@ -341,6 +355,9 @@ export function HomeScreen({ active, view, result, linkedThoughts, defaultsInten
             <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><path d="M5 4v16M12 4v16M19 4v16"/><path d="M2 8h6M9 15h6M16 9h6" strokeWidth="3.4"/></svg>
           </button>
         </div>
+        <div className="fp-speech-reserve" aria-hidden="true" />
+        {reading && requested && <EncouragementReader quote={requested} canEdit={canEdit} readable={readableLayout}
+          voiceRef={voiceBox} {...(favorites ? { favorites } : {})} onNext={companion.next} onChoose={companion.request} onClose={close} />}
         {spoken && <ShortCompanionMessage voiceRef={voiceBox} text={spoken.text} onRead={target => { setMessage(spoken.text); show('message', target) }} />}
         <div className="fp-art">
           <CompanionFeedback feedback={companion.feedback} reducedMotion={reducedMotion} renderCharacter={(presentation, keyboardPat) =>
@@ -355,11 +372,11 @@ export function HomeScreen({ active, view, result, linkedThoughts, defaultsInten
             onClick={event => { if (panel !== 'duration') show('duration', event.currentTarget) }}>{panel === 'duration' && duration.ok ? formatClock(duration.minutes * 60000) : digits}
               {panel !== 'duration' && <svg className="fp-clock-edit" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="m5 15-1 5 5-1L20 8l-4-4zM14 6l4 4"/></svg>}</button> : digits}
         </p>
-        {!readableLayout && <div className="fp-step" data-step-details={readyFocus && stepTooLong}>
+        {!readableLayout && <div className="fp-step" data-step-details={readyFocus && (editingStep || stepTooLong)}>
           {readyFocus ? <>{stepControl}{stepError}</>
             : !ready && !view.isBreak && view.step && <p aria-hidden="true" className="fp-step__current" title={view.step}>{copy.stepPrefix}{view.step}</p>}
         </div>}
-        {panel && panel !== 'duration' && panel !== 'encouragement' && panel !== 'end' && <FocusPanel key={panel} title={titles[panel]} onClose={close} onBack={back} timerSummary={timerSummary}
+        {panel && panel !== 'duration' && panel !== 'encouragement' && panel !== 'end' && <FocusPanel key={panel} title={titles[panel]} onClose={close} timerSummary={timerSummary}
           closeLabel={!ready && !view.isBreak ? uiText(view.step ? 'UI16' : 'UI17') : '返回'}>
           {panel === 'message' && <p className="fp-full-message" tabIndex={-1} data-initial-focus>{message}</p>}
           {panel === 'thoughts' && <ul className="fp-session-list">{linkedThoughts.map((note, index) => <li key={note.id} data-thought-id={note.id}>

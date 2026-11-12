@@ -37,7 +37,7 @@ function RoomPicture({ band, activities, selected, onSelect }: PictureProps) {
     {ids.length > 0 && <span className="room-shelf">{shelves.map(row =>
       <span className="room-shelf-row" key={row[0]}>{row.map(id => onSelect
       ? <button key={id} type="button" data-room-spot={id} aria-label={`${sceneNames[id]}，查看 ${activities.get(id)!.length} 段${id.startsWith('R') ? '休息' : '专注'}`}
-          aria-pressed={selected === id} onClick={event => onSelect(id, event.currentTarget)}><MemoryStamp id={id}/></button>
+          aria-haspopup="dialog" aria-expanded={selected === id} onClick={event => onSelect(id, event.currentTarget)}><MemoryStamp id={id}/></button>
       : <span key={id} className="room-sample"><span className="room-ticket"><MemorySketch id={id}/></span></span>)}
         <BookLedge/>
       </span>)}</span>}
@@ -53,7 +53,7 @@ export function RoomPreview({ band, activities, showArt, onOpen }: RoomInfo & { 
 }
 
 export function RecordsRoom({ band, activities, selected, onSelect, incomplete }: Required<PictureProps> & { incomplete: boolean }) {
-  return <section className="records-room" aria-label="窗边的小屋" hidden={!!selected}>
+  return <section className="records-room" aria-label="窗边的小屋">
     <div className="room-album-card album-paper album-paper-surface">
       <header className="room-album-header">
         <h3 tabIndex={-1}>窗边的小屋</h3>
@@ -74,7 +74,7 @@ export function RecordsRoom({ band, activities, selected, onSelect, incomplete }
         return <section className="room-index-group" key={prefix} aria-label={label + '画签'}>
           <h4>{label}画签</h4>
           <ul className="room-index-list">{ids.map(id => <li key={id}>
-            <button type="button" data-room-label={id} onClick={event => onSelect(id, event.currentTarget)}>
+            <button type="button" data-room-label={id} aria-haspopup="dialog" aria-expanded={selected === id} onClick={event => onSelect(id, event.currentTarget)}>
               <MemoryStamp id={id}/><strong>{sceneNames[id]}</strong>
               <span className="room-entry-count">{activities.get(id)!.length} 段</span><MemoryChevron/>
             </button>

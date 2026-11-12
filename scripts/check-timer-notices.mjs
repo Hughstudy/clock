@@ -75,7 +75,7 @@ export async function checkTimerNotices(browser, url, check) {
     check('After a rest deadline, the clock names the next focus and the receipt gives the actual rest time',
       await page.locator('.fp-clock-phase').innerText() === '准备专注' &&
       (await page.locator('.fp-status').innerText()).includes('本次休息 5 分钟') && !await session())
-    await button('＋ 这一小步').click()
+    await button('这次想做什么？（选填）').click()
     const oversized = '字'.repeat(81)
     const stepInput = page.locator('.fp-step-input')
     await stepInput.fill(oversized)
@@ -84,7 +84,7 @@ export async function checkTimerNotices(browser, url, check) {
     await button('结束休息').waitFor()
     await page.clock.runFor(1000)
     await button('结束休息').click()
-    const draftButton = button('这一小步：' + oversized)
+    const draftButton = button('编辑这一步：' + oversized)
     await draftButton.waitFor()
     check('A manual rest ending keeps the invalid focus step available for correction',
       await button('开始专注').isDisabled() && await draftButton.isVisible() &&
@@ -94,7 +94,11 @@ export async function checkTimerNotices(browser, url, check) {
     await stepInput.fill('读一页')
     await stepInput.press('Enter')
     check('Finishing the edit returns keyboard focus and enables Start',
-      await button('这一小步：读一页').evaluate(el => el === document.activeElement) && await button('开始专注').isEnabled())
+      await button('编辑这一步：读一页').evaluate(el => el === document.activeElement) && await button('开始专注').isEnabled())
+    await button('编辑这一步：读一页').click()
+    await stepInput.fill('临时改动')
+    await stepInput.press('Escape')
+    check('Cancelling the edit restores the prepared step and returns focus', await button('编辑这一步：读一页').evaluate(el => el === document.activeElement))
 
     const note = page.locator('.fp-note')
     const details = button('查看状态')
@@ -134,8 +138,9 @@ export async function checkTimerNotices(browser, url, check) {
 
     await tab('记录').click()
     await button('只看想法').click()
+    const thoughtDetail = page.getByRole('dialog', { name: /^(想法|标记)$/ })
     await page.locator('.record-summary').first().click()
-    await button('删除这条想法').click()
+    await button('删除这条想法', thoughtDetail).click()
     await page.locator('.records-feedback').getByRole('button', { name: /^撤销删除/ }).waitFor()
     await tab('专注').click()
     check('A deletion made on Records offers no restore on Focus', !await note.getByRole('button', { name: /^撤销删除/ }).count())
@@ -144,7 +149,7 @@ export async function checkTimerNotices(browser, url, check) {
     const feedback = page.locator('.records-feedback')
     const undoButtons = feedback.getByRole('button', { name: /^撤销删除/ })
     await page.locator('.record-summary').first().click()
-    await button('删除这条想法').click()
+    await button('删除这条想法', thoughtDetail).click()
     await undoButtons.nth(1).waitFor()
     const focusIsOnEntry = () => page.evaluate(() => !!document.activeElement.closest('[data-entry-id]'))
     await undoButtons.first().focus()
@@ -152,9 +157,8 @@ export async function checkTimerNotices(browser, url, check) {
     await page.waitForFunction(() => document.querySelectorAll('.records-feedback button').length === 1)
     await page.waitForFunction(() => !!document.activeElement.closest('[data-entry-id]')).catch(() => {})
     check('Restoring by keyboard returns focus to the restored thought', await focusIsOnEntry())
-    const first = page.locator('.record-summary').first()
-    if (await first.getAttribute('aria-expanded') !== 'true') await first.click()
-    await button('删除这条想法').click()
+    await page.locator('.record-summary').first().click()
+    await button('删除这条想法', thoughtDetail).click()
     await undoButtons.nth(1).waitFor()
     await undoButtons.nth(1).focus()
     await page.keyboard.press('Enter')

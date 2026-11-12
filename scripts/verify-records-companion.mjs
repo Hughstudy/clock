@@ -5,14 +5,15 @@ import { holdFocusCard, launchChromium } from './lib/browser.mjs'
 import { build, preview } from 'vite'
 
 const output = path.resolve(process.env.RECORDS_REVIEW_OUTPUT || '.preview/records-v35')
-const outDir = path.resolve('.preview/records-v35-build')
+const outDir = path.join(output, 'build')
 const key = 'whale-focus:snapshot'
-const url = 'http://127.0.0.1:4387/clock/'
 const checks = [], errors = [], scaleResults = []
 const widths = [320, 375, 430]
 const t0 = Date.parse('2026-11-02T21:15:00+08:00')
 const row = (page, id) => page.locator(`.records-list li[data-record-id="${id}"]`)
 const press = (page, name) => page.getByRole('button', { name, exact: true }).click()
+const position = locator => locator.evaluate(el => [window.scrollY, el.getBoundingClientRect().top])
+const stayedPut = async (locator, before) => (await position(locator)).every((value, i) => Math.abs(value - before[i]) <= 1)
 const snapshot = page => page.evaluate(k => JSON.parse(localStorage.getItem(k)), key)
 const check = (description, value) => { assert.ok(value, description); checks.push(description) }
 const observe = page => {
@@ -77,7 +78,8 @@ function makeSample(base, count) {
 await mkdir(output, { recursive: true })
 process.env.BASE_PATH = '/clock/'
 await build({ build: { outDir } })
-const app = await preview({ build: { outDir }, preview: { host: '127.0.0.1', port: 4387, strictPort: true } })
+const app = await preview({ build: { outDir }, preview: { host: '127.0.0.1', port: 0 } })
+const url = `http://127.0.0.1:${app.httpServer.address().port}/clock/`
 let browser
 try {
   browser = holdFocusCard(await launchChromium())
@@ -92,8 +94,14 @@ try {
     await page.locator('.memory-postcard, .records-summary').count() === 0)
   await page.evaluate(() => document.fonts.ready)
   await page.screenshot({ path: path.join(output, 'records-first-375.png'), animations: 'disabled' })
-  await page.locator('.memory-letter').click()
+  const firstLetter = page.locator('.memory-letter')
+  await firstLetter.scrollIntoViewIfNeeded()
+  const firstLetterPosition = await position(firstLetter)
+  await firstLetter.click()
+  check('The first-visit letter holds the underlying album in place', await stayedPut(firstLetter, firstLetterPosition))
   await page.getByRole('dialog', { name: '欢迎笺' }).getByRole('button', { name: '返回记录' }).click()
+  check('The first-visit letter returns to its stationery at the same position', await stayedPut(firstLetter, firstLetterPosition) &&
+    await firstLetter.evaluate(el => document.activeElement === el))
   await page.locator('.room-preview').click()
   check('An empty dataset shows the furnished room and no picture tags or fabricated activity', await page.locator('.records-room .records-art').isVisible() && await page.locator('[data-room-spot]').count() === 0 && await page.locator('.records-activity').count() === 0)
   await press(page, '只看想法')
@@ -188,14 +196,18 @@ try {
   const spot = page.locator(`[data-room-spot="${activityId}"]`)
   check('The panorama only shows tags for saved focus assignments with no month filter', await page.locator('[data-room-spot]').count() === new Set(base.records.map(record => record.scene.sceneId)).size &&
     await spot.isVisible() && await page.locator('.records-filter-row').count() === 0 && await page.locator('.records-activity').count() === 0)
-  await spot.focus(); await page.keyboard.press('Enter')
-  check('Selecting a shelf picture focuses its source heading and makes room for its dated records',
-    await page.locator('.room-source-heading h2').evaluate(el => document.activeElement === el) && await page.locator('.records-room').isHidden())
+  await spot.focus()
+  const spotPosition = await position(spot)
+  await page.keyboard.press('Enter')
+  check('Selecting a shelf picture keeps the room at its scroll position beneath one source sheet',
+    await page.locator('.room-source-heading').evaluate(el => el.closest('dialog').matches(':modal')) && await page.locator('.records-room').isVisible() &&
+    await stayedPut(spot, spotPosition))
   const sourceButton = page.locator(`.records-activity[data-entry-id="record:${first}"] > button`)
   await sourceButton.click()
-  check('A tag opens the correct saved record and activity illustration', await page.locator('[data-return-activity]').isVisible() && await page.locator(`.records-activity [data-record-id="${first}"] .record-story`).getAttribute('data-scene-id') === activityId)
-  await press(page, '全部记录'); await press(page, '生活场景')
-  check('Changing mode retains original-record depth and its activity source', await page.locator('[data-return-activity]').isVisible())
+  check('A tag opens the correct saved record and activity illustration', await page.locator('[data-return-activity]').isVisible() && await page.locator(`dialog [data-record-id="${first}"] .record-story`).getAttribute('data-scene-id') === activityId)
+  check('The original replaces the source list inside the same modal; the room stays inert',
+    await page.locator('dialog:modal').count() === 1 && await page.locator('.records-activity').count() === 0 &&
+    await page.locator('.records-modes button').first().evaluate(el => { el.focus(); return !!document.activeElement?.closest('dialog') }))
   await page.locator('[data-return-activity]').click()
   check('Returning from original record restores source action focus', await sourceButton.evaluate(el => el === document.activeElement))
   await press(page, '返回小屋')
@@ -268,12 +280,15 @@ try {
     (await restPage.locator('.records-summary').innerText()).includes('40 秒') &&
     afterRests.records.length === base.records.length && afterRests.timer.completedFocusCount === base.timer.completedFocusCount)
   const featuredRest = restPage.locator(`.memory-postcard[data-featured-id="rest:${fullRest.id}"]`)
+  await featuredRest.scrollIntoViewIfNeeded()
+  const postcardPosition = await position(featuredRest)
   await featuredRest.click()
+  check('Tapping a featured postcard leaves the Records page in position', await stayedPut(featuredRest, postcardPosition))
   check('The latest rest postcard opens the saved activity from that exact rest', await restReader.locator('[data-scene-id]').getAttribute('data-scene-id') === fullRest.scene.sceneId)
   await restPage.waitForFunction(() => history.state?.clockFocusTask === true)
   await restPage.evaluate(() => history.back())
   await restReader.waitFor({ state: 'hidden' })
-  check('System Back returns keyboard focus to the featured postcard', await featuredRest.evaluate(el => document.activeElement === el))
+  check('System Back restores the position and keyboard focus of the featured postcard', await stayedPut(featuredRest, postcardPosition) && await featuredRest.evaluate(el => document.activeElement === el))
   const revisionAfterRests = afterRests.revision
   await press(restPage, '生活场景')
   const restSpot = restPage.locator(`[data-room-spot="${manualRest.scene.sceneId}"]`)
@@ -281,8 +296,8 @@ try {
   const restSource = restPage.locator(`.records-activity[data-entry-id="rest:${manualRest.id}"]`)
   await restSource.locator('[data-view-original]').click()
   check('A rest picture opens the matching original rest, with no focus record substitution',
-    await restSource.locator(`li[data-rest-id="${manualRest.id}"]`).isVisible() && await restSource.locator('[data-record-id]').count() === 0)
-  await restSource.locator('[data-return-activity]').click()
+    await restPage.locator(`dialog li[data-rest-id="${manualRest.id}"]`).isVisible() && await restPage.locator('dialog [data-record-id]').count() === 0)
+  await restPage.locator('[data-return-activity]').click()
   await press(restPage, '返回小屋')
   check('Returning from a rest original restores the same picture without writing', await restSpot.evaluate(el => document.activeElement === el) &&
     (await snapshot(restPage)).revision === revisionAfterRests)
@@ -316,7 +331,12 @@ try {
   }
   await catalog.setViewportSize({ width: 320, height: 568 })
   await catalog.addStyleTag({ content: 'html { font-size: 200% !important; }' })
-  await catalog.locator('[data-room-label="F6"]').click()
+  const label = catalog.locator('[data-room-label="F6"]')
+  await label.scrollIntoViewIfNeeded()
+  const labelPosition = await position(label)
+  await label.click()
+  await catalog.mouse.move(8, 10); await catalog.mouse.wheel(0, 280)
+  check('A background wheel cannot move the shelf or its scrolled source label at 200% text', await stayedPut(label, labelPosition))
   check('Large text on a short phone finds both paper-boat records through the text entry', await catalog.locator('.records-activity').count() === 2 && await catalog.evaluate(() => document.documentElement.scrollWidth <= innerWidth))
   const paperRow = catalog.locator('.records-activity').first()
   await paperRow.locator('[data-view-original]').click()
@@ -327,7 +347,15 @@ try {
   await catalog.evaluate(() => history.back())
   await catalog.locator('.room-source-heading').waitFor({ state: 'hidden' })
   check('Two Back actions return through the paper-boat sources to the exact text entry',
-    await catalog.locator('[data-room-label="F6"]').evaluate(el => el === document.activeElement))
+    await label.evaluate(el => el === document.activeElement) && await stayedPut(label, labelPosition))
+  const lastLabel = catalog.locator('[data-room-label]').last()
+  await catalog.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight))
+  const bottomPosition = await position(lastLabel)
+  await lastLabel.evaluate(el => { el.focus({ preventScroll: true }); el.click() })
+  check('Opening the last named picture keeps the full room height at the document scroll limit',
+    await catalog.locator('dialog:modal').isVisible() && await stayedPut(lastLabel, bottomPosition))
+  await press(catalog, '返回小屋')
+  check('Closing the sheet at the end of the room index keeps that exact position', await stayedPut(lastLabel, bottomPosition))
   await catalogContext.close()
 
   for (const count of [1000, 10000]) {
@@ -362,37 +390,43 @@ try {
     const pickedSource = scale.locator('.records-activity').first()
     const pickedId = await pickedSource.getAttribute('data-entry-id')
     await pickedSource.locator('[data-view-original]').click()
-    check(`${count} records page two leads to the correct source and back to the same page`, (await pickedSource.locator('[data-record-id]').getAttribute('data-record-id')) === pickedId.slice(7))
+    check(`${count} records page two leads to the correct source and back to the same page`, (await scale.locator('dialog [data-record-id]').getAttribute('data-record-id')) === pickedId.slice(7))
     await scale.locator('[data-return-activity]').click()
     check(`${count} records preserve focus and page in the selected tag`, (await scale.locator('.records-pagination').innerText()).includes('第2页') &&
       await pickedSource.locator('[data-view-original]').evaluate(el => el === document.activeElement))
     const boundaryId = await scale.locator('.records-activity').last().getAttribute('data-entry-id')
-    if (count === 1000) await scale.locator('.records-activity').last().locator('[data-view-original]').click()
-    await press(scale, '全部记录')
     if (count === 1000) {
-      const anchor = scale.locator(`[data-entry-id="${monthAnchor}"]`).first()
-      const top = (await anchor.boundingBox()).y
-      const beforeCount = Number(await scale.locator('.records-list').getAttribute('data-result-count'))
+      await scale.locator('.records-activity').last().locator('[data-view-original]').click()
       const peer = await scaleContext.newPage()
       await peer.goto(url)
-      await peer.evaluate(k => {
+      const insertRecord = id => peer.evaluate(({ k, id }) => {
         const data = JSON.parse(localStorage.getItem(k))
         const endedAt = Date.parse('2026-10-31T23:59:00+08:00')
-        const incoming = { ...data.records[0], sessionId: 'incoming-peer', dateKey: '2026-10-31', endedAt, startedAt: endedAt - 60_000 }
+        const incoming = { ...data.records[0], sessionId: id, dateKey: '2026-10-31', endedAt, startedAt: endedAt - 60_000 }
         data.records.push(incoming)
         data.participations.push({ sessionId: incoming.sessionId, participatedAt: incoming.startedAt, dateKey: incoming.dateKey, source: 'native' })
         data.revision += 1; data.writer = 'records-qa-peer'
         localStorage.setItem(k, JSON.stringify(data))
-      }, key)
+      }, { k: key, id })
+      await insertRecord('incoming-peer')
+      await scale.waitForFunction(count => Number(document.querySelector('.records-list').dataset.resultCount) === count, count / 5 + 1)
+      await scale.waitForFunction(id => document.querySelector('dialog [data-record-id]')?.dataset.recordId === id.slice(7), boundaryId)
+      await scale.locator('[data-return-activity]').click()
+      const movedSource = scale.locator(`.records-activity[data-entry-id="${boundaryId}"]`)
+      await scale.waitForFunction(() => document.querySelector('.records-pagination')?.textContent.includes('第3页'))
+      check('An open source follows a page boundary after a peer insert and Back restores its row',
+        await movedSource.locator('[data-view-original]').evaluate(el => el === document.activeElement))
+      await press(scale, '返回小屋')
+      await press(scale, '全部记录')
+      const anchor = scale.locator(`[data-entry-id="${monthAnchor}"]`).first()
+      await anchor.scrollIntoViewIfNeeded()
+      const top = (await anchor.boundingBox()).y
+      const beforeCount = Number(await scale.locator('.records-list').getAttribute('data-result-count'))
+      await insertRecord('incoming-month-peer')
       await scale.waitForFunction(expected => Number(document.querySelector('.records-list').dataset.resultCount) === expected, beforeCount + 1)
       check('A committed second-tab insertion preserves the current month object and pixel anchor', Math.abs((await anchor.boundingBox()).y - top) <= 2)
       await peer.close()
-      await press(scale, '生活场景')
-      const movedSource = scale.locator(`.records-activity[data-entry-id="${boundaryId}"]`)
-      check('Returning to the cottage follows an open source across a page boundary after a peer insert',
-        (await scale.locator('.records-pagination').innerText()).includes('第3页') && await movedSource.locator('[data-return-activity]').isVisible())
-      await movedSource.locator('[data-return-activity]').click()
-    }
+    } else await press(scale, '返回小屋')
     await press(scale, '只看想法')
     check(`${count} thought mode has its own all-date scope, no timer summary, and a draft entry`, (await scale.locator('.records-filter-row').innerText()).includes('全部日期') && await scale.locator('.records-summary').count() === 0 && await scale.getByRole('button', { name: '继续草稿', exact: true }).isVisible())
     const search = scale.getByRole('searchbox', { name: '搜索想法' })
@@ -406,8 +440,10 @@ try {
     await matched.waitFor()
     check(`${count} full-history literal search finds archived note beyond the loaded pages`, await scale.locator('.records-list [data-thought-id]').count() === 1 && (await matched.innerText()).includes('已收起'))
     await matched.locator('.record-summary').click()
-    await matched.getByRole('button', { name: '编辑文字', exact: true }).click()
+    const thoughtReader = scale.getByRole('dialog', { name: '想法', exact: true })
+    await thoughtReader.getByRole('button', { name: '编辑文字', exact: true }).click()
     const editor = scale.getByRole('dialog', { name: '编辑想法' })
+    check(`${count} editing a reading replaces the sheet and has one active dialog`, await editor.isVisible() && await scale.locator('dialog:modal').count() === 1)
     // The existing independent draft must be protected before opening another item.
     const discard = editor.getByRole('button', { name: /放弃.*|丢弃.*/ }).first()
     if (await discard.isVisible()) await discard.click()
@@ -419,6 +455,8 @@ try {
       await editor.waitFor({ state: 'hidden' })
       check(`${count} a saved edit leaving search stays readable until explicitly closed`, await scale.locator('.records-detached').isVisible() && (await scale.locator('.records-detached').innerText()).includes('保存后不再匹配'))
     }
+    await thoughtReader.getByRole('button', { name: '返回记录', exact: true }).click()
+    check(`${count} dismissing a thought outside the search returns focus to the same search`, await search.evaluate(el => el === document.activeElement) && await search.inputValue() === 'A+B.')
     await press(scale, '全部记录')
     check(`${count} mode return keeps the month, page and original reading position`, (await scale.locator('.records-filter-row').innerText()).includes('2026年10月') && (await scale.locator('.records-pagination').innerText()).includes('第2页') && await scale.locator(`[data-entry-id="${monthAnchor}"]`).isVisible() && await scale.locator(`[data-entry-id="${monthAnchor}"] .record-summary`).getAttribute('aria-expanded') === String(!readInSheet))
     await press(scale, '专注'); await openRecords(scale)
@@ -439,10 +477,38 @@ try {
   }
 
   const { context: deletionContext, page: deletion } = await seedPage(browser, makeSample(base, 30))
-  await openRecords(deletion); await press(deletion, '只看想法')
+  await openRecords(deletion)
   const target = deletion.locator('[data-thought-id="thought-0"]')
+  const thoughtSheet = deletion.getByRole('dialog', { name: '想法', exact: true })
+  await target.scrollIntoViewIfNeeded()
+  const historyNotePosition = await position(target)
   await target.locator('.record-summary').click()
-  await failWrites(deletion); await target.getByRole('button', { name: '删除这条想法', exact: true }).click()
+  check('Opening a standalone All Records thought keeps its row and the page stationary',
+    await thoughtSheet.isVisible() && await stayedPut(target, historyNotePosition))
+  await deletion.keyboard.press('Escape')
+  check('All Records returns keyboard focus to the stationary thought row',
+    await target.locator('.record-summary').evaluate(el => el === document.activeElement) && await stayedPut(target, historyNotePosition))
+  await press(deletion, '只看想法')
+  const marker = deletion.locator('[data-thought-id="thought-2"]')
+  await marker.scrollIntoViewIfNeeded()
+  const markerPosition = await position(marker)
+  await marker.locator('.record-summary').click()
+  const markerSheet = deletion.getByRole('dialog', { name: '标记', exact: true })
+  check('An empty notebook marker opens its reading above a stationary row and offers add-text',
+    await markerSheet.getByRole('button', { name: '补充文字', exact: true }).isVisible() && await stayedPut(marker, markerPosition))
+  await markerSheet.getByRole('button', { name: '补充文字', exact: true }).click()
+  await deletion.getByRole('dialog', { name: '编辑想法' }).waitFor()
+  check('Marker editing replaces the reader and holds the underlying notebook position',
+    await deletion.locator('dialog:modal').count() === 1 && await stayedPut(marker, markerPosition))
+  await deletion.keyboard.press('Escape')
+  await markerSheet.waitFor()
+  check('Returning from the editor restores its reading action and the notebook position',
+    await markerSheet.getByRole('button', { name: '补充文字', exact: true }).evaluate(el => el === document.activeElement) && await stayedPut(marker, markerPosition))
+  await markerSheet.getByRole('button', { name: '返回记录', exact: true }).click()
+  check('Closing the marker restores its row and leaves the list at the same pixel',
+    await marker.locator('.record-summary').evaluate(el => el === document.activeElement) && await stayedPut(marker, markerPosition))
+  await target.locator('.record-summary').click()
+  await failWrites(deletion); await thoughtSheet.getByRole('button', { name: '删除这条想法', exact: true }).click()
   await deletion.getByRole('button', { name: '重试保存', exact: true }).first().waitFor()
   check('Failed thought deletion retains formal text and exposes retry without inventing success', await target.isVisible() && (await target.innerText()).includes('正式想法 0') && (await snapshot(deletion)).thoughts.find(note => note.id === 'thought-0').deletedAt === null)
   await deletion.evaluate(() => window.restoreRecordWrites())
@@ -474,9 +540,14 @@ try {
   await favoritePage.setViewportSize({ width: 375, height: 450 })
   await openRecords(favoritePage); await press(favoritePage, '我的收藏'); await press(favoritePage, '下一页')
   const boundaryQuote = favoritePage.locator('.records-favorites li').filter({ hasText: '值得保留的第39句话。' })
-  await boundaryQuote.locator('.record-summary').click()
   await boundaryQuote.evaluate(element => window.scrollTo(0, window.scrollY + element.getBoundingClientRect().top - 120))
   const favoriteTop = (await boundaryQuote.boundingBox()).y
+  const favoriteY = await favoritePage.evaluate(() => scrollY)
+  await boundaryQuote.locator('.record-summary').click()
+  const quoteReader = favoritePage.getByRole('dialog', { name: '收藏的句子' })
+  check('A saved quote opens its full text without moving the tapped row or page',
+    await quoteReader.getByText('值得保留的第39句话。', { exact: true }).isVisible() &&
+    Math.abs((await boundaryQuote.boundingBox()).y - favoriteTop) <= 1 && await favoritePage.evaluate(() => scrollY) === favoriteY)
   const favoritePeer = await favoriteContext.newPage()
   await favoritePeer.goto(url)
   await favoritePeer.evaluate(k => {
@@ -489,6 +560,7 @@ try {
   await favoritePage.waitForFunction(() => document.querySelector('.records-pagination')?.textContent.includes('第3页'))
   check('A new favorite in another tab retains the open quote across the20-item page boundary',
     await boundaryQuote.locator('.record-summary').getAttribute('aria-expanded') === 'true' && (await favoritePage.locator('.records-pagination').innerText()).includes('第3页'))
+  await press(quoteReader, '返回收藏')
   check('Favorite insertion preserves its pixel anchor and restores the recreated reading trigger focus',
     Math.abs((await boundaryQuote.boundingBox()).y - favoriteTop) <= 2 && await boundaryQuote.locator('.record-summary').evaluate(element => element === document.activeElement))
   await favoriteContext.close()
@@ -509,7 +581,7 @@ try {
     if (await dismiss.isVisible()) await dismiss.click()
     await statusDialog.getByRole('button', { name: '返回记录', exact: true }).click()
     const quote = statusPage.locator('.records-favorites .record-summary')
-    await quote.click()
+    await quote.focus()
     await statusPage.evaluate(() => window.scrollTo(0, 0))
     const measure = () => statusPage.evaluate(() => {
       const rect = selector => { const { x, y, width, height } = document.querySelector(selector).getBoundingClientRect(); return { x, y, width, height } }
@@ -546,11 +618,16 @@ try {
     await press(peer, '继续专注')
     await statusPage.waitForFunction(() => document.querySelector('.records-status-button').textContent.includes('专注计时'))
     await failWrites(statusPage)
-    await press(statusPage, '取消收藏')
+    // The cover can exceed a phone viewport at 200% text. Tap its already-visible part.
+    const tapPoint = await quote.evaluate(el => {
+      const box = el.getBoundingClientRect(), tabs = document.querySelector('.records-modes').getBoundingClientRect()
+      return { x: box.left + box.width / 2, y: Math.max(box.top, tabs.bottom) + 18 }
+    })
+    await statusPage.mouse.click(tapPoint.x, tapPoint.y); await press(statusPage, '取消收藏')
     await statusPage.waitForFunction(() => document.querySelector('.records-status-button').textContent.includes('有待保存'))
     check(`${width}px/${textScale}% save failure stays visible alongside the timer without pushing content`,
       (await statusButton.innerText()).includes('专注计时') && await stable() && await quote.isVisible())
-    await statusButton.click()
+    await press(statusPage, '返回收藏'); await statusButton.click()
     check(`${width}px/${textScale}% save failure has complete status details and retry`,
       (await statusDialog.innerText()).includes('尚未保存') && await statusDialog.getByRole('button', { name: '重试保存', exact: true }).isVisible())
     await statusDialog.getByRole('button', { name: '返回记录', exact: true }).click()

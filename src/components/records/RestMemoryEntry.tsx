@@ -28,14 +28,15 @@ export function RestMemoryEntry({ memory, expanded, onToggle, inline, showArt, v
     <p>{date} · {view.clockTime(memory.endedAt)} 结束</p>
     <p>{phase} · {length}{memory.endReason && (memory.endReason === 'manual' ? ' · 手动结束' : ' · 到时结束')} · 已保存</p>
   </div>
+  if (inline) return <li data-rest-id={memory.sessionId}>{detail}</li>
   return <li data-rest-id={memory.sessionId} data-entry-id={`rest:${memory.sessionId}`}>
-    <button className="record-summary" type="button" aria-expanded={expanded} aria-haspopup={inline ? undefined : 'dialog'}
+    <button className="record-summary" type="button" aria-expanded={expanded} aria-haspopup="dialog"
       aria-controls={expanded ? detailId : undefined} onClick={event => { event.currentTarget.focus({ preventScroll: true }); onToggle() }}>
       {showArt && memory.sceneId && <MemoryStamp id={memory.sceneId}/>}
       <span className="record-identity"><strong>{title}</strong>
         <span className="record-meta">{phase} · {length} · {view.clockTime(memory.endedAt)} 结束</span></span>
       <MemoryChevron/>
     </button>
-    {expanded && (inline ? detail : <MemoryDetailSheet title="休息手记" onClose={onToggle}>{detail}</MemoryDetailSheet>)}
+    {expanded && <MemoryDetailSheet title="休息手记" onClose={onToggle}>{detail}</MemoryDetailSheet>}
   </li>
 }

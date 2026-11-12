@@ -74,10 +74,6 @@ async function inspectSpeech(page, id) {
   await ask.click()
   const reader = page.getByRole('region', { name: '一句鼓励' })
   await reader.waitFor()
-  // Long quotes have their own reading view. Find a short one for the tail check.
-  for (let n = 0; n < 14 && await reader.getAttribute('data-location') !== 'scene'; n++) {
-    await reader.getByRole('button', { name: '换一句', exact: true }).click()
-  }
   await page.clock.runFor(220)
   const geometry = await page.evaluate(() => {
     const speech = document.querySelector('.fp-companion-speech[data-visible="true"]')
@@ -94,10 +90,10 @@ async function inspectSpeech(page, id) {
   check(`${id}: the speech tail points at this companion and the quote clears its hands and clock`,
     geometry && Math.abs(geometry.tailX - geometry.headX) < 3 && geometry.gap >= 0 && geometry.gap < 11 && geometry.belowClock && geometry.clear)
   await page.screenshot({ path: path.join(output, `reading-${id}.png`), animations: 'disabled' })
-  await page.getByRole('button', { name: '收到鼓励了', exact: true }).click()
+  await ask.click()
   const after = (await readSaved(page)).data.timer.session
   check(`${id}: reading leaves the same running session and returns to the plate`,
-    session.id === after?.id && after.status === 'running' && await ask.evaluate(el => el === document.activeElement))
+    session.id === after?.id && after.status === 'running' && session.deadline === after.deadline && await ask.evaluate(el => el === document.activeElement))
   for (const viewport of [{width:320,height:568},{width:430,height:932},{width:375,height:850}]) {
     await page.setViewportSize(viewport)
     await page.clock.runFor(400)
@@ -199,7 +195,7 @@ try {
 
   // Start from a local input panel: its closure must not consume the entrance.
   await focusReady(page)
-  await page.getByRole('button', { name: /这一小步/ }).click()
+  await page.getByRole('button', { name: '这次想做什么？（选填）', exact: true }).click()
   await page.locator('.fp-step-input').fill('A small test step')
   await page.locator('.fp-step-input').press('Enter')
   await primary.click()

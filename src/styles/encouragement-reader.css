@@ -1,6 +1,4 @@
-/* The request is the first tool of the card. Reading, or a passing line's link, adds rows above
-   the timer controls, growing the card upward over the companion's feet while the controls below
-   stay where they are. Nothing is kept for it while there is nothing to read. */
+/* A passing line's link and the compact reader use the card's existing voice slot. */
 .home .fp-voice-slot { position: relative; flex: none; inline-size: min(100%, 400px); margin-inline: auto; display: grid; place-items: center; }
 .home .fp-voice-slot:empty { display: none; }
 .home .fp-node-text { min-height: 44px; color: var(--muted); font-size: .8125rem; }
@@ -19,22 +17,36 @@
 @keyframes fp-speak { from { opacity: 0; transform: translateY(3px) scale(.985); } to { opacity: 1; transform: none; } }
 @media (prefers-reduced-motion: reduce) { .home .fp-head-speech[data-visible='true'] { animation: none; } }
 .home .fp-head-speech p, .home .fp-encouragement p { margin: 0; }
-.home .fp-encouragement { inline-size: 100%; min-inline-size: 0; text-align: start; color: var(--ink); }
-.home .fp-reader-heading { display: flex; align-items: center; justify-content: space-between; min-block-size: var(--voice-row); gap: .4rem; }
-.home .fp-reader-actions { display: flex; align-items: stretch; gap: 6px; }
-.home .fp-reader-actions button { flex: 1 1 auto; display: inline-flex; align-items: center; justify-content: center; gap: .2rem; }
-.home .fp-encouragement button { min-block-size: 44px; min-inline-size: 44px; max-inline-size: 100%; white-space: normal; }
-.home .fp-reader-actions button, .home .fp-reader-heading .text-action { color: var(--ink); padding-inline: 3px; font-size: .8125rem; }
-.home .fp-reader-actions button { border-radius: 999px; background: #ede5d6; }
-.home .fp-reader-actions button[data-speech-control='next'], .home .fp-reader-actions button[aria-pressed='true'] {
-  color: var(--whale-deep); background: var(--whale-soft); }
-.home .fp-voice-slot button:focus-visible { outline-offset: -3px; border-radius: 12px; }
-.home .fp-reader-category, .home .fp-reader-feedback { font-size: .8125rem; line-height: 1.4; color: var(--muted); }
-.home .fp-reader-feedback { overflow-wrap: anywhere; }
-.home .fp-reader-categories { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: 4px; }
-.home .fp-reader-categories button { padding-inline: 3px; line-height: 1.25; font-size: .8125rem; }
-.home .fp-reader-categories [aria-pressed='true'] { background: var(--whale-soft); color: var(--ink); box-shadow: inset 0 0 0 1px var(--whale); }
-.home .fp-encouragement .fp-full-speech { margin: 0 0 .6rem; padding: .65rem .8rem; border-radius: 16px; background: var(--paper);
-  font-size: 1rem; line-height: 1.5; color: var(--ink); overflow-wrap: anywhere; }
-.home .fp-encouragement[data-location='viewport'] .fp-reader-categories { grid-template-columns: repeat(2,minmax(0,1fr)); }
-.home .fp-encouragement[data-location='viewport'] .fp-reader-actions { flex-wrap: wrap; }
+/* Normal phone widths fit every authored request in three lines. Keep this allowance even while
+   closed; the visible bubble hugs its current line(s) and the actions stay above the same crown. */
+.home { --request-quote-size: 1.0625rem; --request-line-height: 1.48; --request-action: 44px; }
+.home .fp-speech-reserve { position: absolute; visibility: hidden; pointer-events: none; inline-size: 0;
+  font-size: var(--request-quote-size); line-height: var(--request-line-height);
+  /* top/bottom padding + border (16), footer gap and divider (6), tail and head clearance (17) */
+  block-size: calc(3lh + var(--request-action) + 39px); }
+.home .fp-companion-speech { inline-size: min(336px, calc(100% - 24px)); padding: 12px 15px 2px; border: 1px solid #c7bba7;
+  border-radius: 23px 23px 22px 14px; background: #fffcf5; filter: drop-shadow(0 2px 5px #68563718); pointer-events: auto; }
+.home .fp-companion-speech::after { background: #fffcf5; }
+.home .fp-encouragement { min-inline-size: 0; text-align: start; color: var(--ink); }
+.home .fp-encouragement .fp-reader-quote { font-size: var(--request-quote-size); font-weight: 450; line-height: var(--request-line-height); text-wrap: pretty; overflow-wrap: anywhere; }
+.home .fp-reader-actions { display: flex; align-items: stretch; gap: 3px; margin: 5px -4px 0; border-top: 1px solid #e7dfd0; }
+.home .fp-reader-actions :is(button, label) { display: inline-flex; align-items: center; justify-content: center; gap: 4px;
+  min-inline-size: 44px; min-block-size: var(--request-action); max-inline-size: 100%; padding: 4px; border: 0; border-radius: 9px; background: none;
+  color: #475e73; font-family: inherit; font-size: .8125rem; font-weight: 550; line-height: 1.35; white-space: normal; cursor: pointer; }
+.home .fp-reader-actions svg { pointer-events: none; }
+.home .fp-reader-actions [data-speech-control='next'] { margin-inline-end: auto; color: #225f97; font-size: .875rem; font-weight: 650; }
+.home .fp-reader-actions [aria-pressed='true'] { color: #165a92; }
+.home .fp-reader-actions [aria-pressed='true'] svg { fill: #d7eafa; }
+.home .fp-reader-actions button:active:not(:disabled) { background: #f1ebde; }
+.home .fp-reader-actions .fp-reader-category { position: relative; gap: 2px; }
+.home .fp-reader-category svg { inline-size: .75rem; block-size: .75rem; }
+.home .fp-reader-category select { position: absolute; inset: 0; inline-size: 100%; block-size: 100%; opacity: 0; cursor: pointer; font-size: max(16px, 1rem); }
+.home .fp-reader-category:focus-within, .home .fp-reader-actions button:focus-visible { outline: 2px solid var(--whale-deep); outline-offset: -2px; }
+.home .fp-reader-feedback { font-size: .8125rem; line-height: 1.4; overflow-wrap: anywhere; }
+.home .fp-reader-feedback p { margin: 0; }
+.home .fp-voice-slot > .fp-reader-feedback { inline-size: 100%; padding-inline: 4px; text-align: start; }
+.home .fp-reader-feedback .text-action, .home .fp-reader-close { min-block-size: 44px; }
+.home .fp-encouragement[data-location='plate'] { inline-size: 100%; padding: 10px 12px 2px; border: 1px solid #c7bba7; border-radius: 18px; background: #fffcf5; }
+.home .fp-encouragement[data-location='plate'] .fp-reader-actions { flex-wrap: wrap; }
+.home .fp-reader-close { display: block; margin-inline-start: auto; }
+.home .fp-thought-tools .fp-voice-open[aria-pressed='true'] { background: var(--whale-soft); color: var(--whale-deep); }

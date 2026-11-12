@@ -1,5 +1,5 @@
 import { useLayoutEffect, type RefObject } from 'react'
-import { awayGroup, fitSceneArt, shownTimeDrop, TIME_GAP, wideRoomFit } from '../logic/scene-fit'
+import { ART_CARD_SIDES, ART_HEAD, BUBBLE_GAP, MIN_ART_SCALE, TIME_GAP, awayGroup, fitSceneArt, shownTimeDrop, wideRoomFit } from '../logic/scene-fit'
 
 // Matches the stylesheet's tall-landscape rule, where the room fills the screen beneath the card.
 const WIDE_ROOM = '(orientation: landscape) and (min-aspect-ratio: 6/5) and (min-height: 600px)'
@@ -23,44 +23,55 @@ export function useSceneFit(scene: RefObject<HTMLElement>, framed: boolean): voi
       const panel = root.querySelector<HTMLElement>('.focus-panel')
       // The step slot under the time keeps its height whether or not a step is set.
       const step = root.querySelector<HTMLElement>('.fp-step')
-      for (const element of [time, panel]) if (element) resize.observe(element)
+      const speechSpace = root.querySelector<HTMLElement>('.fp-speech-reserve')
+      for (const element of [time, step, panel, speechSpace]) if (element) resize.observe(element)
       const box = root.getBoundingClientRect()
       const font = parseFloat(getComputedStyle(root).fontSize) || 16
-      // Keep room for two lines and their tail even when nobody is speaking.
-      // A request may open or close without moving the clock or the artwork.
-      const bubbleHeight = Math.ceil(2 * font * 1.45 + 34)
-      const phaseHeight = root.querySelector<HTMLElement>('.fp-clock-phase')?.offsetHeight ?? 0
+      const passingHeight = Math.ceil(2 * font * 1.45 + 34)
+      const topLimit = top ? top.offsetTop + top.offsetHeight + 6 : 0
+      const timeBottom = time ? time.offsetTop + time.offsetHeight : 0
+      const blockBottom = step ? step.offsetTop + step.offsetHeight : timeBottom
+      const timeHeight = time ? Math.max(0, blockBottom - topLimit) + TIME_GAP : 0
+      const sceneHeight = artBox?.offsetHeight || box.height
       const artWidth = art ? parseFloat(getComputedStyle(art).width) : 0
+      // Reserve the same space while reading and at rest. On genuinely short screens
+      // the card hosts the reader, leaving room for both the clock and the companion.
+      const requestedHeight = Math.max(passingHeight, speechSpace?.offsetHeight ?? 0)
+      const available = sceneHeight - topLimit - timeHeight - ART_HEAD * artWidth * MIN_ART_SCALE - BUBBLE_GAP
+      const bubbleHeight = requestedHeight <= available ? requestedHeight : passingHeight
       const wideRoom = window.matchMedia(WIDE_ROOM).matches && root.closest<HTMLElement>('.home')?.dataset.layout !== 'readable'
-      if (wideRoom) {
-        // The plate's visible card starts one inset inside its box.
-        const plateLeft = root.closest<HTMLElement>('.home')?.querySelector('.fp-plate')?.getBoundingClientRect().left ?? box.right
-        const room = wideRoomFit(box.width, artWidth, plateLeft + 12 - box.left)
-        root.style.setProperty('--room-zoom', room.zoom.toFixed(4))
-        root.style.setProperty('--card-pan', `${room.cardPan.toFixed(1)}px`)
-        root.style.setProperty('--room-shift', `${room.roomShift.toFixed(2)}px`)
-      }
       const fit = fitSceneArt({
-        sceneWidth: box.width, sceneHeight: artBox?.offsetHeight || box.height,
+        sceneWidth: box.width, sceneHeight,
         artWidth,
-        topLimit: top ? top.getBoundingClientRect().bottom - box.top + 6 : 0,
+        topLimit,
         bubbleHeight,
-        timeHeight: time ? time.offsetHeight + phaseHeight + (step?.offsetHeight ?? 0) + TIME_GAP : 0,
+        timeHeight,
         // Where the sheet rests, not where its entry or a drag has it for the moment.
         panelTop: panel ? panel.offsetTop - box.top : null,
-        timeFloor: (step ? step.offsetTop + step.offsetHeight : time ? time.offsetTop + time.offsetHeight : 0) + timeDrop + TIME_GAP,
+        timeFloor: blockBottom + timeDrop + TIME_GAP,
         framed: framed && !wideRoom,
       })
       root.style.setProperty('--fit-scale', String(fit.scale))
       root.style.setProperty('--fit-shift', `${fit.shift}px`)
       root.dataset.fit = fit.hidden ? 'hidden' : fit.scale < 1 || fit.shift < 0 ? 'moved' : 'rest'
+      const drawnWidth = artWidth * fit.scale
+      if (wideRoom) {
+        // The plate's visible card starts one inset inside its box.
+        const plateLeft = root.closest<HTMLElement>('.home')?.querySelector('.fp-plate')?.getBoundingClientRect().left ?? box.right
+        const room = wideRoomFit(box.width, drawnWidth, plateLeft + 12 - box.left)
+        root.style.setProperty('--room-zoom', room.zoom.toFixed(4))
+        root.style.setProperty('--card-pan', `${room.cardPan.toFixed(1)}px`)
+        root.style.setProperty('--room-shift', `${room.roomShift.toFixed(2)}px`)
+      } else if (drawnWidth > 0) {
+        // The companion can shrink to fit under its words; the painted room still reaches both sides.
+        root.style.setProperty('--room-zoom', Math.max(1, box.width / (ART_CARD_SIDES * drawnWidth)).toFixed(4))
+      }
       // While the card is away, the time sits just above the companion and the spare height is shared.
       // The stylesheet names the scale and the floor kept for the handle; elsewhere both are absent.
       const awayStyle = artBox ? getComputedStyle(artBox) : null
       const awayScale = parseFloat(awayStyle?.getPropertyValue('--away-scale') ?? '') || 0
-      const timeBottom = time ? time.offsetTop + time.offsetHeight : 0
       const away = awayGroup({
-        sceneHeight: box.height, artWidth, bubbleHeight, timeBottom, awayScale,
+        sceneHeight: box.height, artWidth, bubbleHeight: passingHeight, timeBottom, awayScale,
         awayFloor: parseFloat(awayStyle?.getPropertyValue('--away-floor') ?? '') || 0,
       })
       root.style.setProperty('--away-time-drop', `${away.timeDrop}px`)
@@ -69,8 +80,7 @@ export function useSceneFit(scene: RefObject<HTMLElement>, framed: boolean): voi
       // while a sheet has lifted the companion or sent it out, so the readout never follows a task.
       if (!panel && !fit.hidden) {
         const drop = awayScale > 0 ? shownTimeDrop({
-          sceneHeight: artBox?.offsetHeight || box.height, artWidth, scale: fit.scale, bubbleHeight,
-          blockBottom: step ? step.offsetTop + step.offsetHeight : timeBottom,
+          sceneHeight, artWidth, scale: fit.scale, bubbleHeight, blockBottom,
         }) : 0
         timeDrop = drop
         root.style.setProperty('--time-drop', `${drop}px`)

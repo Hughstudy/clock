@@ -74,7 +74,6 @@
 .room-shelf-row > :nth-child(2n) .room-ticket { --tilt: 3deg; }
 .room-ticket::before { content: ''; position: absolute; inset: 0; background: linear-gradient(145deg, #fff8dd, #f9eac4); clip-path: polygon(0 3%, 79% 0, 100% 17%, 97% 100%, 2% 97%); }
 .room-ticket::after { content: ''; position: absolute; right: 0; top: 0; width: 22%; height: 18%; background: #d8c399; clip-path: polygon(0 0, 100% 100%, 0 93%); }
-.room-shelf-row [aria-pressed='true'] .room-ticket::before { background: linear-gradient(-5deg, #6888aa 0 10%, #f5eed8 11%, #fff8dd); }
 .room-sketch { position: relative; display: block; width: 84%; height: 76%; }
 .room-ledge { position: absolute; inset: auto 0 -3px; width: 100%; height: 16px; pointer-events: none; }
 .ledge-shadow { fill: #655044; opacity: .22; }
@@ -86,12 +85,8 @@
 .room-thumbnail .room-ticket { width: 8px; height: 8px; }
 .room-thumbnail .room-ledge { height: 3px; bottom: 0; }
 .room-directions { margin: .55rem 0; font-size: .875rem; color: var(--muted); }
-.room-source-heading { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: .5rem 1rem; padding: 1rem 1.1rem 0; overflow: hidden; }
-.room-source-heading h2 { margin: .2rem 0 0; font: 700 1.6rem/1.3 var(--album-serif); overflow-wrap: anywhere; }
-.room-source-heading .memory-stamp { width: 52px; transform: rotate(5deg); }
-.room-source-heading .link-button { grid-column: 1 / -1; margin: 0 -1.1rem; padding: 0 1.1rem; text-align: start; color: var(--album-action); background: var(--album-sheet); border-top: 1px solid var(--album-edge); }
-.room-source-heading .link-button > span { margin-inline-end: .45em; }
-.room-source-heading h2:focus { outline: none; }
+.room-source-heading { display: flex; align-items: center; gap: .75rem; color: var(--album-action); font-size: .875rem; }
+.room-source-heading .memory-stamp { width: 38px; transform: rotate(5deg); }
 .records-activity > button .record-identity { overflow-wrap: anywhere; }
 .records-activity > button .record-meta { color: var(--muted); }
 .records-room button:focus-visible, .room-preview:focus-visible { outline: 3px solid var(--whale-deep); outline-offset: -3px; }
@@ -194,3 +189,15 @@
   .records-v35 .focus-records .record-summary { padding-inline: .55rem; }
   .memory-page { flex-wrap: wrap; }
 }
+
+/* A Records sheet owns the scroll gesture while its source keeps its viewport position. */
+html:has(.app[data-screen='stats']) { scrollbar-gutter: stable; }
+html:has(.app[data-screen='stats'] .focus-task:modal) { overflow: hidden; }
+.app[data-screen='stats'] .focus-task:modal {
+  display: flex; flex-direction: column; overflow: hidden; padding-block-start: 0;
+  translate: 0 var(--drag, 0px);
+}
+.app[data-screen='stats'] .focus-task::before { pointer-events: none; }
+.app[data-screen='stats'] .focus-task[data-dragging='true'] { transition: none; }
+.app[data-screen='stats'] .focus-task__header { flex: none; padding-block-start: 22px; touch-action: none; }
+.app[data-screen='stats'] .focus-task__content { min-block-size: 0; overflow-y: auto; overscroll-behavior: contain; }

@@ -33,12 +33,6 @@
 .favorites-empty p { min-width: 0; margin: 0; color: var(--muted); font-size: .9375rem; line-height: 1.65; }
 .favorites-empty .quote-bookmark, .records-favorites .favorite-summary > .quote-bookmark { width: 38px; height: 44px; flex: none; }
 .records-v35 .favorites-stationery .favorite-text { color: var(--ink); font-family: var(--album-serif); font-weight: 600; line-height: 1.55; }
-.records-v35 .favorites-stationery .favorite-summary[aria-expanded='true'] .favorite-text {
-  display: block; overflow: visible; white-space: pre-wrap;
-}
-.records-v35 .favorites-stationery .favorite-summary[aria-expanded='true'] .record-chevron { transform: rotate(90deg); }
-.records-v35 .favorites-stationery .favorite-actions { padding: 0 1rem .5rem; text-align: end; }
-.favorites-stationery .favorite-actions .link-button { color: var(--album-action); }
 @container (max-width: 18rem) {
   .favorites-cover-face { padding: .85rem; gap: .4rem; }
   .favorites-letter-print { width: 56px; }
@@ -55,7 +49,6 @@
 .favorite-feature .favorites-letter-print .memory-stamp { --stamp-field: #c8dace; }
 .favorite-feature .memory-read { margin-top: .12rem; }
 .favorite-feature .memory-read .record-chevron { width: 12px; color: var(--album-action); }
-.records-v35 .favorite-featured .favorite-actions { padding: 0 .8rem; border-top: 1px solid var(--album-edge); }
 .favorites-feature-list + .favorites-heading { margin-block-start: 1.15rem; }
 .favorites-compact-letter {
   display: flex; align-items: center; gap: .8rem; width: 100%; border: 0; padding: .65rem 1rem;

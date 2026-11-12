@@ -14,7 +14,6 @@ export interface RecordsVisit {
   roomTag: SceneId | null
   roomBand: RecordsBand
   roomOpener: 'spot' | 'label'
-  roomOpenerTop: number
   sourceTop: number | null
   browse: Record<Mode, Browse>
   positions: Record<Mode, Position>
@@ -23,7 +22,7 @@ export interface RecordsVisit {
 export function initialVisit(roomBand: RecordsBand): RecordsVisit {
   const browse = () => ({ month: null, search: '', draft: '', page: 1, expanded: null, sourceRecord: null })
   const position = () => ({ offset: 0, anchor: null, relative: 0, focus: null })
-  return { mode: 'all', length: 7, summaryOpen: false, trend: false, roomTag: null, roomBand, roomOpener: 'label', roomOpenerTop: 0, sourceTop: null,
+  return { mode: 'all', length: 7, summaryOpen: false, trend: false, roomTag: null, roomBand, roomOpener: 'label', sourceTop: null,
     browse: { all: browse(), thoughts: browse(), scenes: browse(), favorites: browse() },
     positions: { all: position(), thoughts: position(), scenes: position(), favorites: position() } }
 }

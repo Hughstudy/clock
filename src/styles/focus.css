@@ -70,9 +70,11 @@ body { background: var(--paper); }
 .text-action { min-height: 44px; min-width: 44px; padding: 0 6px; background: none; font-size: .875rem; font-weight: 500; color: var(--whale); white-space: nowrap; }
 .text-action:hover:not(:disabled) { color: var(--whale-deep); }
 
-/* Tab bar: a floating capsule of two destinations over the content, never over it in the way. */
-.tab-bar { position: fixed; z-index: 10; inset: auto 16px calc(env(safe-area-inset-bottom) + 10px); display: flex; justify-content: center; gap: 2px;
-  inline-size: auto; max-inline-size: 320px; margin-inline: auto; padding: 4px; border: 0; border-radius: 999px;
+/* Anchor to the same viewport coordinates on Focus and on a scrolling Records page. */
+.tab-bar { --tab-center: 50vw; --bar-width: min(320px, 100vw - 32px);
+  position: fixed; z-index: 10; inset: auto auto calc(env(safe-area-inset-bottom) + 10px) calc(var(--tab-center) - var(--bar-width) / 2);
+  display: flex; justify-content: center; gap: 2px;
+  inline-size: var(--bar-width); margin-inline: 0; padding: 4px; border: 0; border-radius: 999px;
   background: color-mix(in srgb, var(--cream) 80%, transparent); backdrop-filter: blur(16px) saturate(1.2); -webkit-backdrop-filter: blur(16px) saturate(1.2);
   box-shadow: 0 6px 20px #3a2a1424, inset 0 0 0 1px #ffffff80; transform: none; }
 .tab { flex: 1 1 0; max-width: 200px; min-height: 44px; display: flex; flex-direction: column; gap: 2px; align-items: center; justify-content: center;
@@ -98,7 +100,7 @@ body { background: var(--paper); }
    companion's feet instead of moving it. --art-clear is the band the art stays above. */
 .home { position: relative; flex: 1; min-block-size: 0; min-inline-size: 0; gap: 0; display: flex; flex-direction: column; align-items: stretch; text-align: center;
   --bar-clear: calc(var(--tab-height) + env(safe-area-inset-bottom) + 22px);
-  --voice-row: max(44px, 1.425rem); --control-row: max(50px, 3.125rem); --tools-row: max(52px, 3.25rem); --step-row: max(38px, 2.375rem);
+  --voice-row: max(44px, 1.425rem); --control-row: max(50px, 3.125rem); --tools-row: max(52px, 3.25rem); --step-row: max(44px, 2.375rem);
   /* Two rows only: timer controls and tools. The card grows upward over the feet while a note, a passing line,
      the reader or a rest choice needs another. */
   --console: calc(var(--control-row) + var(--tools-row) + 26px); --art-clear: calc(var(--console) + var(--bar-clear));
@@ -138,24 +140,29 @@ body { background: var(--paper); }
 
 /* The clock keeps a stable position above the speech area as the scene or phrase changes. */
 .fp-top h1 { flex: 1; margin: 0; padding-inline-start: 4px; align-self: center; text-align: start; font-size: 1.125rem; color: var(--ink); }
-.fp-clock-phase { position: absolute; z-index: 2; inset: calc(env(safe-area-inset-top) + 55px) 0 auto;
+.fp-clock-phase { position: absolute; z-index: 2; inset: calc(env(safe-area-inset-top) + var(--clock-top, 55px)) 0 auto;
   color: #46546a; font-size: .8125rem; line-height: 1.25rem; font-weight: 550; }
 .fp-clock-phase::before { content: ''; display: inline-block; width: .4rem; height: .4rem; margin-inline-end: .375rem; border-radius: 50%; background: currentColor; }
 .fp-digits { position: absolute; z-index: 2; inset-inline: 0; margin: 0; pointer-events: none;
-  inset-block-start: calc(env(safe-area-inset-top) + 55px + 1.25rem);
+  inset-block-start: calc(env(safe-area-inset-top) + var(--clock-top, 55px) + 1.25rem);
   min-block-size: 44px; font-size: 2.125rem; line-height: max(44px, 1.2em); font-weight: 800; letter-spacing: .02em;
   font-variant-numeric: tabular-nums; color: var(--ink); }
 .fp-digits .fp-clock-trigger { pointer-events: auto; }
-/* The step belongs to the time: a quiet chip under the digits while preparing, plain text while it runs.
-   The slot keeps its height in every state, so the companion never resizes when a step comes or goes. */
-.fp-step { position: absolute; z-index: 2; inset-inline: 12px; inset-block-start: calc(env(safe-area-inset-top) + 55px + 1.25rem + max(44px, 2.55rem));
+/* The optional intention and its editor share the same place under the time. */
+.fp-step { position: absolute; z-index: 2; inset-inline: 12px; inset-block-start: calc(env(safe-area-inset-top) + var(--clock-top, 55px) + 1.25rem + max(44px, 2.55rem));
   block-size: var(--step-row); display: flex; align-items: center; justify-content: center; gap: 6px; pointer-events: none; }
 .fp-step > * { pointer-events: auto; }
-.home .fp-step .text-action { min-block-size: 44px; max-inline-size: 100%; padding: 0 6px; overflow: hidden; text-overflow: ellipsis; color: var(--ink); font-size: .8125rem; font-weight: 600; }
-/* Drawn 32px tall inside the 44px target. */
-.home .fp-step .text-action::before { content: ''; position: absolute; z-index: -1; inset: 6px 0; border-radius: 999px;
-  background: color-mix(in srgb, var(--cream) 62%, transparent); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); }
-.home .fp-step .text-action { padding-inline: 14px; isolation: isolate; border-radius: 999px; }
+.home .fp-step .text-action { min-block-size: 44px; max-inline-size: 100%; padding-inline: 8px; color: inherit; font-size: .8125rem; font-weight: 550; }
+.fp-step:has(.fp-step-editor) { min-block-size: var(--step-row); block-size: auto; }
+.fp-step-open { display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
+.fp-step-open span { min-inline-size: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.fp-step-open svg { flex: none; }
+.fp-step-editor { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 2px 6px;
+  inline-size: min(100%, 270px); text-align: start; }
+.fp-step-editor label { grid-column: 1 / -1; font-size: .8125rem; line-height: 1.4; }
+.fp-step-editor .fp-step-input { inline-size: 100%; min-inline-size: 0; border-radius: 12px; text-align: start; }
+.fp-step-done { min-inline-size: 44px; min-block-size: 44px; padding-inline: 6px; border: 0; border-radius: 10px;
+  background: var(--paper); color: var(--whale-deep); font: inherit; font-size: .875rem; font-weight: 650; }
 .fp-step__current { margin: 0; max-inline-size: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #46546a; font-size: .8125rem; font-weight: 550; }
 .fp-step[data-step-details='true'] { block-size: auto; flex-direction: column; gap: 0; }
 .fp-step .fp-hint--error { padding: 2px 10px; border-radius: 999px; background: var(--cream); font-size: .75rem; }
@@ -166,8 +173,14 @@ body { background: var(--paper); }
 @keyframes fp-result-in { from { opacity: 0; } to { opacity: 1; } }
 @media (prefers-reduced-motion: reduce) { .fp-result { animation: none; } }
 /* The sky follows the device clock; this text is drawn straight onto it, so its color follows too. */
-.home[data-sky-ink='deep'] :is(.fp-top h1, .fp-clock-phase, .fp-digits, .fp-step__current) { color: #0a1120; }
-.home[data-sky-ink='light'] :is(.fp-top h1, .fp-clock-phase, .fp-digits, .fp-step__current) { color: #fff; }
+.home[data-sky-ink='deep'] :is(.fp-top h1, .fp-clock-phase, .fp-digits, .fp-step, .fp-step__current) { color: #0a1120; }
+.home[data-sky-ink='light'] :is(.fp-top h1, .fp-clock-phase, .fp-digits, .fp-step, .fp-step__current) { color: #fff; }
+@media (orientation: portrait) and (max-height: 730px) {
+  /* The phase fits between the title and Settings, freeing the middle for the dialogue. */
+  .home:not([data-layout='readable']) .fp-scene { --clock-top: 20px; }
+  .home:not([data-layout='readable']) .fp-top { pointer-events: none; }
+  .home:not([data-layout='readable']) .fp-top button { pointer-events: auto; }
+}
 /* The plate: one translucent card floating at the bottom of the scene; its bottom padding is
    the floating tab bar's room. The blur lives on a pseudo-element so a fixed panel inside is
    not trapped by it. Tracks are fixed so feedback never moves the primary action. */
@@ -257,7 +270,15 @@ body { background: var(--paper); }
 /* Short screens: smaller numbers and gaps first; the companion keeps its share. */
 @media (max-height: 700px) {
   .fp-digits { font-size: 1.875rem; }
-  .home { --control-row: max(46px, 2.875rem); --tools-row: max(50px, 3.125rem); --step-row: max(34px, 2.125rem); }
+  .home { --control-row: max(46px, 2.875rem); --tools-row: max(50px, 3.125rem); }
+}
+@media (orientation: portrait) and (max-width: 340px) and (max-height: 650px) {
+  .home:not([data-layout='readable']) {
+    --control-row: max(44px, 2.65rem); --tools-row: max(44px, 2.65rem);
+    --bar-clear: calc(var(--tab-height) + env(safe-area-inset-bottom) + 16px);
+    --console: calc(var(--control-row) + var(--tools-row) + 18px); }
+  .home:not([data-layout='readable']) .fp-scene { --clock-top: 10px; }
+  .home:not([data-layout='readable']) .fp-plate { padding-block-start: 8px; }
 }
 /* Landscape (phones and iPads): scene beside the plate. On short screens the plate takes the width
    the scene cannot fill: the art (at most 1.752 × the height below the reserve) must stay 1.25 × as
@@ -274,7 +295,7 @@ body { background: var(--paper); }
     overflow-y: auto; overscroll-behavior: contain; }
   .fp-plate::before { inset: 0; }
   /* Center the capped bar between the console edges on every destination. */
-  .tab-bar { inset-inline: calc(100% - var(--plate-w) - var(--plate-end)) var(--plate-end); inline-size: calc(var(--plate-w) - 32px); }
+  .tab-bar { --tab-center: calc(100vw - var(--plate-end) - var(--plate-w) / 2); --bar-width: min(320px, var(--plate-w) - 32px); }
 }
 
 /* ---------- Settings: a sheet over Focus ---------- */

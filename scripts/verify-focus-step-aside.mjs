@@ -128,6 +128,14 @@ async function behaviour(browser, url, label, viewport) {
   await page.clock.fastForward(400)
   check(`${label} ${name}: a double tap on the handle presses nothing else`, await running(page) === 'running' && await page.locator('.app[data-screen="home"]').count() === 1)
 
+  const ask = button(page, '给我一句鼓励')
+  await ask.click()
+  await page.clock.fastForward(9000)
+  const reader = page.getByRole('region', { name: '一句鼓励' })
+  check(`${label} ${name}: reading keeps the speech and timer controls available`, await reader.isVisible() &&
+    await button(page, '暂停专注').isVisible() && await button(page, '结束专注').isVisible() && await ask.getAttribute('aria-pressed') === 'true')
+  await ask.click()
+  await reader.waitFor({ state: 'detached' })
   await tap(page, '记下想法')
   await button(page, '回到计时').waitFor()
   await page.clock.fastForward(30000)

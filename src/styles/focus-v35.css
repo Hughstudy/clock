@@ -28,13 +28,12 @@
    place is always kept, so a first note never moves a tool. */
 .home .fp-tools-slot { display: flex; flex-direction: column; inline-size: min(100%, 400px); min-block-size: var(--tools-row); margin: 0 auto; padding: 0; border: 0; }
 .home .fp-thought-tools { display: grid; flex: none; grid-template-columns: repeat(3, minmax(0, 1fr)) 44px; align-items: stretch; gap: 2px; margin: 0; padding: 0; }
+.home[data-ready-focus='true']:not([data-layout='readable']) .fp-thought-tools { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 .home .fp-thought-tools .text-action { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; min-inline-size: 0;
   min-block-size: var(--tools-row); padding: 4px 2px; border-radius: 16px; background: transparent; color: var(--ink);
   font-size: .75rem; font-weight: 600; line-height: 1.2; white-space: normal; text-align: center; }
 .home .fp-thought-tools .text-action svg { flex: none; inline-size: 1.375rem; block-size: 1.375rem; color: var(--whale-deep); }
 .home .fp-thought-tools .text-action:active:not(:disabled) { background: #ede5d6; filter: none; }
-/* The encouragement tool stays put and reads as pressed while its reader is open. */
-.home .fp-thought-tools .fp-voice-open[aria-expanded='true'] { background: var(--whale-soft); color: var(--whale-deep); }
 .home .fp-thought-tools .fp-tools-label { grid-column: 4; min-inline-size: 44px; padding-inline: 0; }
 .home .fp-tools-count { font-variant-numeric: tabular-nums; font-weight: 700; }
 /* Feedback takes a row at the top of the card only while there is something to say. The card
@@ -138,6 +137,8 @@
    room kept under the support edge for the handle and its hint. */
 @media (orientation: portrait) {
   .home:not([data-layout='readable']) .fp-scene { --away-scale: 1.11; --away-floor: 132px; }
+  .home[data-chrome='shown']:not([data-layout='readable']) .fp-art [data-scenery] {
+    transform: translate(160px, 224px) scale(var(--room-zoom, 1)) translate(-160px, -224px); }
   /* Plant, Tea, Bubbles, Boat and Blocks reach toward the edges: they settle lower without growing, so nothing is cut off. */
   .home:not([data-layout='readable']) .fp-scene:has(.blue-companion:is([data-scene='F2'], [data-scene='F4'], [data-scene='F5'], [data-scene='F6'], [data-scene='F7'])) { --away-scale: var(--fit-scale, 1); }
   .home[data-chrome='away'] .fp-art { transform: translateY(calc(var(--art-clear) - var(--away-floor) - var(--away-art-lift, 0px))) scale(var(--away-scale)); }
@@ -218,11 +219,13 @@
 .home[data-layout='readable'] .fp-note__text { flex: 1 0 100%; white-space: normal; overflow: visible; overflow-wrap: anywhere; }
 .home[data-layout='readable'] .fp-note > button { max-inline-size: 100%; }
 .home[data-layout='readable'] .fp-voice-slot { order: 4; flex-shrink: 0; }
-.app:has(.home[data-layout='readable']) .tab-bar { inset-inline: 16px; inline-size: auto; }
+.app:has(.home[data-layout='readable']) .tab-bar { --tab-center: 50vw; --bar-width: min(320px, 100vw - 32px); }
 .app:not([data-screen='stats']):has(.home[data-layout='readable']) .tab-bar { background: var(--cream); }
 @media (orientation: landscape) and (min-width: 560px) {
-  .app { --readable-scene-width: 40%; }
-  .app:has(.home[data-layout='readable']) .tab-bar { inset-inline: var(--readable-scene-width) 0; }
+  .app { --readable-scene-width: 40vw; }
+  .app:has(.home[data-layout='readable']) .tab-bar {
+    --tab-center: calc((100vw + var(--readable-scene-width)) / 2);
+    --bar-width: min(320px, 100vw - var(--readable-scene-width)); }
   .home[data-layout='readable'] .fp-scene { position: absolute; inset: 0 auto env(safe-area-inset-bottom) 0;
     inline-size: var(--readable-scene-width); block-size: auto;
     --compact-art-height: min(34svh, 240px); }
