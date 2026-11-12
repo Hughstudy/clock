@@ -46,6 +46,7 @@ export function useRecordsBrowser({ view, favorites, visit, incomplete, thoughts
   const sourceRecord = reading.browse.scenes.sourceRecord
   const roomReturn = useRef<SceneId | null>(null)
   const fromRoomPreview = useRef(false)
+  const fromRoomTag = useRef(false)
   const [activeSeen, setActiveSeen] = useState(!!view.active)
   const result = useRecordsQuery(view, mode, current, reading.roomTag)
   const { entryKey: entryId } = result
@@ -187,11 +188,23 @@ export function useRecordsBrowser({ view, favorites, visit, incomplete, thoughts
       fromRoomPreview.current = false
       screen.current?.querySelector<HTMLElement>('.records-room h3')?.focus({ preventScroll: true })
     }
+    if (fromRoomTag.current && mode === 'scenes' && reading.roomTag) {
+      fromRoomTag.current = false
+      window.scrollTo(0, 0)
+      screen.current?.querySelector<HTMLElement>('.room-source-heading h2')?.focus({ preventScroll: true })
+    }
     if (roomReturn.current && mode === 'scenes' && !reading.roomTag) {
       const id = roomReturn.current
       roomReturn.current = null
       const opener = screen.current?.querySelector<HTMLElement>(`[data-room-${reading.roomOpener}="${id}"]`)
-      ;(opener ?? screen.current?.querySelector<HTMLElement>('.records-modes [aria-pressed="true"]'))?.focus()
+      if (opener) {
+        opener.focus({ preventScroll: true })
+        const box = opener.getBoundingClientRect()
+        const tabTop = document.querySelector('.tab-bar')?.getBoundingClientRect().top ?? window.innerHeight
+        const visibleTop = screen.current?.querySelector('.records-modes')?.getBoundingClientRect().height ?? 0
+        const targetTop = Math.max(visibleTop + 6, Math.min(reading.roomOpenerTop, tabTop - box.height - 6))
+        window.scrollTo(0, window.scrollY + box.top - targetTop)
+      } else screen.current?.querySelector<HTMLElement>('.records-modes [aria-pressed="true"]')?.focus()
     }
     const target = localFocus.current
     if (!target) return
@@ -220,9 +233,10 @@ export function useRecordsBrowser({ view, favorites, visit, incomplete, thoughts
   }
   const selectTag = (id: SceneId, opener: HTMLButtonElement) => {
     positions.current.scenes.anchor = null
-    pageFocus.current = true
+    fromRoomTag.current = true
     announceQuery.current = true
-    setReading(value => ({ ...value, roomTag: id, roomOpener: opener.dataset.roomSpot ? 'spot' : 'label', sourceTop: null,
+    const roomOpenerTop = opener.getBoundingClientRect().top
+    setReading(value => ({ ...value, roomTag: id, roomOpener: opener.dataset.roomSpot ? 'spot' : 'label', roomOpenerTop, sourceTop: null,
       browse: { ...value.browse, scenes: { ...value.browse.scenes, page: 1, expanded: null, sourceRecord: null } } }))
   }
   const returnToRoom = () => {

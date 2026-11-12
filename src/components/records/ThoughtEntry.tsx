@@ -1,11 +1,14 @@
 import { useId } from 'react'
 import type { Persistence } from '../../adapters/storage'
+import { ThoughtPaper } from './ThoughtNotebook'
+import { MemoryChevron } from './MemoryPaper'
 import { formatMinutes } from '../format'
 import type { Thoughts } from '../../hooks/useThoughts'
 import type { StatsView } from '../../hooks/useViews'
 import type { Thought } from '../../logic/types'
 
-export function ThoughtEntry({ item, expanded, toggle, view, persistence, canEdit, thoughts, edit }: {
+export function ThoughtEntry({ item, expanded, toggle, view, persistence, canEdit, thoughts, edit, notebook = false, illustrated = true }: {
+  notebook?: boolean; illustrated?: boolean
   item: Thought; expanded: boolean; toggle: () => void; view: StatsView; persistence: Persistence
   canEdit: boolean; thoughts: Thoughts; edit: ((id: string) => void) | undefined
 }) {
@@ -13,15 +16,17 @@ export function ThoughtEntry({ item, expanded, toggle, view, persistence, canEdi
   const linkedRecord = item.sessionId ? view.recordBySession.get(item.sessionId) : undefined
   const pending = view.pendingThoughtIds.has(item.id)
   const originalPending = !view.confirmedThoughtIds.has(item.id)
-  return <li data-thought-id={item.id} data-entry-id={`thought:${item.id}`}>
+  const showAddText = !item.text && !!edit && !expanded
+  return <li className={notebook && showAddText ? 'notebook-marker-row' : undefined} data-thought-id={item.id} data-entry-id={`thought:${item.id}`}>
     <button type="button" className="record-summary" aria-expanded={expanded} aria-controls={detailId} onClick={toggle}>
+      {notebook && illustrated && <ThoughtPaper kind={item.text ? 'note' : 'marker'}/>}
       <span className="record-identity">
         <span className="record-meta">{view.clockTime(item.createdAt)} · {item.text ? '想法' : '标记'}{item.status === 'putAway' ? ' · 已收起' : ''}
           {originalPending ? persistence === 'memory-only' ? ' · 仅在此页' : ' · 待保存' : pending ? ' · 有更改待保存' : ''}</span>
         <strong className="thought-preview">{item.text || '留过标记'}</strong>
-      </span><span aria-hidden="true">{expanded ? '−' : '＋'}</span>
+      </span>{notebook ? <MemoryChevron/> : <span aria-hidden="true">{expanded ? '−' : '＋'}</span>}
     </button>
-    {!item.text && edit && !expanded && <button type="button" className="link-button records-add-text" disabled={!canEdit || pending} onClick={() => edit(item.id)}>补充文字</button>}
+    {showAddText && edit && <button type="button" className="link-button records-add-text" disabled={!canEdit || pending} onClick={() => edit(item.id)}>补充文字</button>}
     <div id={detailId} className="record-detail" hidden={!expanded}>
       {expanded && <>
         {item.text && <p className="thought-body">{item.text}</p>}

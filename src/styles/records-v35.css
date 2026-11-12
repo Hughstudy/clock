@@ -20,7 +20,7 @@
 .records-v35 .records-summary-detail .hint { margin: .6rem 0 .25rem; font-size: .8125rem; }
 .records-v35 .records-tools { display: grid; grid-template-columns: minmax(0, 1fr); gap: .3rem; }
 .records-v35 .records-filter-row { display: flex; align-items: center; flex-wrap: wrap; gap: .2rem .5rem; padding-inline: 4px; font-size: .8125rem; color: var(--muted); }
-.records-v35 .records-filter-row > span { margin-inline-end: auto; }
+.records-v35 .records-filter-row > span { margin-inline-end: auto; min-width: 0; max-width: 100%; overflow-wrap: anywhere; }
 .records-v35 .records-filter-row .link-button { margin: 0; padding: 0 14px; border-radius: 999px; background: #efe8da; color: var(--ink); font-weight: 600; }
 .records-v35 .records-search { display: grid; grid-template-columns: minmax(0, 1fr); gap: .3rem; }
 .records-v35 .records-search > div { display: flex; gap: .4rem; }
@@ -56,7 +56,7 @@
 .records-v35 .records-scene-preview { display: block; width: min(100%, 240px); height: auto; margin-inline: auto; }
 .records-v35 .records-activity .record-detail .focus-records { border: 1px solid var(--line); border-radius: 12px; padding: .3rem; }
 .records-v35 { container-type: inline-size; }
-.records-v35 .room-preview { display: flex; align-items: center; gap: .55rem; inline-size: 100%; min-height: 48px; padding: .25rem 1.1rem; border: 0; border-top: 1px solid #dbcdb7; background: #fff9ec; color: var(--album-action); font-size: .875rem; font-weight: 650; text-align: start; }
+.records-v35 .room-preview { display: flex; align-items: center; gap: .55rem; inline-size: 100%; min-height: 48px; padding: .25rem 1.1rem; border: 0; border-top: 1px solid #dbcdb7; background: var(--album-sheet); color: var(--album-action); font-size: .875rem; font-weight: 650; text-align: start; }
 .room-preview .room-thumbnail { display: block; width: 42px; height: 27px; border-radius: 4px; overflow: hidden; flex: none; }
 .room-preview-chevron { margin-inline-start: auto; font-size: 1.2em; }
 .room-thumbnail .room-picture { height: 100%; width: 100%; border-radius: 0; }
@@ -85,17 +85,18 @@
 .room-thumbnail .room-shelf-row { padding-bottom: 1px; }
 .room-thumbnail .room-ticket { width: 8px; height: 8px; }
 .room-thumbnail .room-ledge { height: 3px; bottom: 0; }
-.records-room h3, .room-source-heading h3 { margin: .3rem 0 .5rem; font-size: 1rem; }
 .room-directions { margin: .55rem 0; font-size: .875rem; color: var(--muted); }
-.room-tag-list { display: flex; flex-wrap: wrap; gap: .25rem .5rem; }
-.room-tag-list button { min-height: 44px; max-width: 100%; padding: .2rem .45rem; border: 1px solid var(--line); color: var(--ink); background: var(--card); border-radius: 12px; font: inherit; font-size: .875rem; }
-.room-tag-list button[aria-pressed='true'] { border-color: var(--whale-deep); }
-.room-source-heading { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .4rem; border-top: 1px solid var(--line); padding-top: .5rem; }
+.room-source-heading { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: .5rem 1rem; padding: 1rem 1.1rem 0; overflow: hidden; }
+.room-source-heading h2 { margin: .2rem 0 0; font: 700 1.6rem/1.3 var(--album-serif); overflow-wrap: anywhere; }
+.room-source-heading .memory-stamp { width: 52px; transform: rotate(5deg); }
+.room-source-heading .link-button { grid-column: 1 / -1; margin: 0 -1.1rem; padding: 0 1.1rem; text-align: start; color: var(--album-action); background: var(--album-sheet); border-top: 1px solid var(--album-edge); }
+.room-source-heading .link-button > span { margin-inline-end: .45em; }
+.room-source-heading h2:focus { outline: none; }
+.records-activity > button .record-identity { overflow-wrap: anywhere; }
+.records-activity > button .record-meta { color: var(--muted); }
 .records-room button:focus-visible, .room-preview:focus-visible { outline: 3px solid var(--whale-deep); outline-offset: -3px; }
 @container (max-width: 20rem) { .room-preview .room-thumbnail { display: none; } }
 @media (max-height: 660px) { .room-preview .room-thumbnail { display: none; } }
-.records-v35 .records-welcome { margin-top: .8rem; padding: .875rem 1rem; border: 0; border-radius: 22px; background: #fff; box-shadow: 0 1px 2px #3a2a140f; }
-.records-v35 .records-welcome h3, .records-v35 .records-favorites h3 { margin: .4rem 0; font-size: 1rem; }
 .records-year { display: flex; flex-wrap: wrap; align-items: center; gap: .6rem; }
 .records-year input { min-height: 44px; max-width: 100%; width: 8rem; padding: .5rem; font: inherit; border: 1px solid var(--line); border-radius: 12px; color: var(--ink); background: var(--card); }
 .records-month-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .5rem; margin-block: .8rem; }
@@ -107,21 +108,25 @@
   --ink: #443c38;
   --muted: #70665c;
   --album-action: #365c6d;
+  --album-edge: #dacbb4;
+  --album-wash: #fbf0da;
+  --album-sheet: #fff9ec;
+  --album-texture: radial-gradient(ellipse at 95% 10%, #e5c49569, transparent 68%),
+    repeating-linear-gradient(0deg, #97754407 0 1px, transparent 1px 4px);
   --album-serif: 'Songti SC', 'STSong', 'Noto Serif CJK SC', Georgia, serif;
   color: var(--ink);
 }
 .records-v35 .screen-title { font-family: var(--album-serif); font-weight: 700; }
-.memory-album {
-  overflow: hidden; border: 1px solid #dacbb4; border-radius: 17px; background: #f9efdc;
+.memory-album { overflow: hidden; background: #f9efdc; }
+.album-paper {
+  border: 1px solid var(--album-edge); border-radius: 17px;
   box-shadow: 0 3px 8px #65462511, 0 1px 1px #6546250d;
 }
 .memory-postcard, .memory-intro {
   position: relative; isolation: isolate; display: flex; align-items: center; justify-content: space-between;
   gap: .65rem; width: 100%; min-width: 0; padding: 1.2rem 1.35rem; border: 0; color: var(--ink); text-align: start;
-  background-color: #fbf0da;
-  background-image: radial-gradient(ellipse at 95% 10%, #e5c49569, transparent 68%),
-    repeating-linear-gradient(0deg, #97754407 0 1px, transparent 1px 4px);
 }
+.album-paper-surface { background-color: var(--album-wash); background-image: var(--album-texture); }
 .memory-postcard:focus-visible { outline-offset: -4px; }
 .memory-postcard-copy { min-width: 0; display: grid; justify-items: start; gap: .25rem; }
 .memory-kicker, .memory-caption, .memory-letter small { color: #786348; font-size: .8125rem; line-height: 1.5; }

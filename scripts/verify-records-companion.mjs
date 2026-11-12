@@ -96,6 +96,12 @@ try {
   await page.getByRole('dialog', { name: '欢迎笺' }).getByRole('button', { name: '返回记录' }).click()
   await page.locator('.room-preview').click()
   check('An empty dataset shows the furnished room and no picture tags or fabricated activity', await page.locator('.records-room .records-art').isVisible() && await page.locator('[data-room-spot]').count() === 0 && await page.locator('.records-activity').count() === 0)
+  await press(page, '只看想法')
+  check('The empty notebook has search and no invented thought or draft', await page.getByRole('searchbox', { name: '搜索想法' }).isVisible() &&
+    await page.locator('[data-thought-id]').count() === 0 && await page.getByRole('button', { name: '继续草稿' }).count() === 0)
+  await press(page, '我的收藏')
+  check('An empty collection offers the letter without adding a saved quote', await page.getByRole('button', { name: '欢迎笺', exact: true }).isVisible() &&
+    await page.locator('.records-favorites [data-entry-id]').count() === 0)
   await press(page, '全部记录')
   await press(page, '专注')
   const zero = await start(page)
@@ -163,6 +169,14 @@ try {
       return document.documentElement.scrollWidth <= innerWidth && field.width > 0 && field.right <= submit.left && submit.right <= innerWidth
     }))
   }
+  await page.setViewportSize({ width: 320, height: 900 })
+  const longQuery = 'notebook'.repeat(15)
+  await page.getByRole('searchbox', { name: '搜索想法' }).fill(longQuery)
+  await press(page, '搜索')
+  check('Long unbroken search text wraps in the applied filter at 320px and 200% text',
+    (await page.locator('.records-filter-row').innerText()).includes(longQuery) &&
+    await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth))
+  await press(page, '清除搜索')
   await press(page, '全部记录')
   await larger.evaluate(node => node.remove())
   await page.setViewportSize({ width: 375, height: 900 })
@@ -175,6 +189,8 @@ try {
   check('The panorama only shows tags for saved focus assignments with no month filter', await page.locator('[data-room-spot]').count() === new Set(base.records.map(record => record.scene.sceneId)).size &&
     await spot.isVisible() && await page.locator('.records-filter-row').count() === 0 && await page.locator('.records-activity').count() === 0)
   await spot.focus(); await page.keyboard.press('Enter')
+  check('Selecting a shelf picture focuses its source heading and makes room for its dated records',
+    await page.locator('.room-source-heading h2').evaluate(el => document.activeElement === el) && await page.locator('.records-room').isHidden())
   const sourceButton = page.locator(`.records-activity[data-entry-id="record:${first}"] > button`)
   await sourceButton.click()
   check('A tag opens the correct saved record and activity illustration', await page.locator('[data-return-activity]').isVisible() && await page.locator(`.records-activity [data-record-id="${first}"] .record-story`).getAttribute('data-scene-id') === activityId)
@@ -184,7 +200,14 @@ try {
   check('Returning from original record restores source action focus', await sourceButton.evaluate(el => el === document.activeElement))
   await press(page, '返回小屋')
   check('Returning to the room restores the invoked picture tag and hides its source list', await spot.evaluate(el => el === document.activeElement) && await page.locator('.records-activity').count() === 0)
-  await press(page, '我的收藏'); await press(page, '欢迎笺'); await press(page, '关闭欢迎笺')
+  await press(page, '我的收藏'); await press(page, '欢迎笺')
+  const welcomeReader = page.getByRole('dialog', { name: '欢迎笺', exact: true })
+  check('The envelope opens one letter sheet', await welcomeReader.isVisible() && await page.locator('dialog:modal').count() === 1)
+  await page.waitForFunction(() => history.state?.clockFocusTask === true)
+  await page.goBack()
+  await welcomeReader.waitFor({ state: 'hidden' })
+  check('Back from a letter returns to the envelope', await page.getByRole('button', { name: '欢迎笺', exact: true }).evaluate(el => el === document.activeElement))
+  await press(page, '欢迎笺'); await press(page, '关闭欢迎笺')
   check('Welcome is read-only and close returns focus; browsing never creates writes', await page.getByRole('button', { name: '欢迎笺', exact: true }).evaluate(el => el === document.activeElement) && (await snapshot(page)).revision === revisionBefore)
   await context.close()
 

@@ -1,0 +1,44 @@
+.records-v35 .thought-notebook { overflow: hidden; background: var(--album-sheet); }
+.thought-notebook-cover {
+  display: flex; align-items: center; justify-content: space-between; gap: .75rem;
+  padding: 1rem 1.25rem; min-width: 0;
+}
+.thought-notebook-heading { min-width: 0; }
+.thought-notebook-heading h2 {
+  margin: 0; color: var(--ink); font-family: var(--album-serif);
+  font-size: clamp(1.5rem, 7vw, 1.95rem); line-height: 1.3;
+}
+.thought-notebook-heading p { margin: .4rem 0 0; color: #705c46; font-size: .875rem; line-height: 1.6; }
+.thought-notebook .postcard-art { min-height: 4.8rem; width: clamp(70px, 23vw, 108px); }
+.memory-stamp.thought-paper { --stamp-field: #ccdbcd; }
+.thought-paper[data-stationery='marker'] { --stamp-field: #f5ddb7; }
+.thought-paper svg { width: 90%; height: 88%; }
+.records-v35 .thought-notebook .records-search {
+  border-top: 1px solid var(--album-edge); padding: .5rem .65rem; background: var(--album-sheet);
+}
+.records-v35 .thought-notebook .records-search input {
+  background: #fffcf5; border: 1px solid #d9cbb7; border-radius: .75rem; padding-inline: .8rem;
+}
+.thought-notebook .records-search input::placeholder { color: #746b61; opacity: 1; }
+.records-v35 .thought-notebook .records-search button { color: var(--album-action); background: #e1e9e4; border-radius: .75rem; }
+.records-v35 .thought-notebook .thought-draft {
+  display: flex; align-items: center; justify-content: space-between; width: 100%;
+  margin: 0; padding-inline: .95rem; border-top: 1px solid var(--album-edge); color: var(--album-action); text-align: start;
+}
+.records-v35[data-records-mode='thoughts'] .records-tools { gap: .65rem; }
+.records-v35[data-records-mode='thoughts'] .record-identity { display: flex; flex-direction: column; }
+.records-v35[data-records-mode='thoughts'] .record-identity .record-meta { order: 1; }
+.records-v35[data-records-mode='thoughts'] .record-summary .record-chevron { rotate: 90deg; }
+.records-v35[data-records-mode='thoughts'] .records-empty { margin: .25rem 0; }
+@container (min-width: 18rem) {
+  .notebook-marker-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; }
+  .records-v35 .notebook-marker-row .record-summary { padding-inline-end: .25rem; }
+  .records-v35 .notebook-marker-row .records-add-text { margin: 0 .55rem 0 0; color: var(--album-action); }
+}
+@container (max-width: 18rem) {
+  .thought-notebook-cover { padding: .8rem; }
+  .thought-notebook .postcard-art { min-height: 58px; width: 58px; }
+  .records-v35 .thought-notebook .records-search { padding-inline: .35rem; }
+  .records-v35 .thought-notebook .records-search input,
+  .records-v35 .thought-notebook .records-search button { padding-inline: .35rem; }
+}

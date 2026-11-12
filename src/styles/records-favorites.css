@@ -1,0 +1,76 @@
+.favorites-stationery { display: grid; gap: 1.3rem; min-width: 0; }
+.records-v35 .favorites-stationery .records-welcome { padding: 0; margin: 0; overflow: hidden; }
+.favorites-cover {
+  display: grid; width: 100%; min-width: 0; border: 0; padding: 0; color: var(--ink); text-align: start;
+}
+.favorites-cover:focus-visible { outline-offset: -3px; }
+.favorites-cover-face {
+  display: flex; align-items: center; justify-content: space-between; gap: .75rem;
+  min-height: 132px; padding: 1.15rem 1.3rem;
+}
+.favorites-cover .memory-postcard-copy { flex: 1 1 auto; }
+.favorites-cover .memory-caption { margin-block-start: .15rem; }
+.favorites-letter-print {
+  position: relative; display: grid; place-items: center; flex: none;
+  width: clamp(70px, 24vw, 116px); filter: drop-shadow(1px 2px 2px #70533042);
+}
+.favorites-letter-print .memory-stamp { --stamp-field: #e9c6b1; width: 86%; padding: 7px; transform: rotate(6deg); }
+.favorites-letter-print svg { width: 81%; height: auto; }
+.favorites-cover-action {
+  display: flex; justify-content: space-between; align-items: center; gap: .4rem; min-height: 46px;
+  padding: .4rem 1.15rem; border-top: 1px solid var(--album-edge); background: var(--album-sheet);
+  color: var(--album-action); font-size: .875rem; font-weight: 650;
+}
+.favorites-stationery .favorites-letter-body {
+  margin: .5rem 0 .25rem; padding: 1.1rem; border: 1px solid var(--album-edge);
+  border-radius: 12px; background: var(--album-sheet); font-family: var(--album-serif); font-size: 1.125rem;
+  color: var(--ink); line-height: 1.85; white-space: pre-line; overflow-wrap: anywhere;
+}
+.favorites-heading { display: flex; gap: .65rem; align-items: baseline; justify-content: space-between; padding: 0 .25rem .6rem; }
+.favorites-heading h2 { margin: 0; color: var(--ink); font-family: var(--album-serif); font-size: 1.25rem; line-height: 1.4; }
+.favorites-heading > span { color: var(--muted); font-size: .8125rem; }
+.favorites-empty { display: flex; align-items: center; gap: .8rem; padding: 1rem; border: 1px solid #e5d9c7; border-radius: 17px; background: #fffcf6; }
+.favorites-empty p { min-width: 0; margin: 0; color: var(--muted); font-size: .9375rem; line-height: 1.65; }
+.favorites-empty .quote-bookmark, .records-favorites .favorite-summary > .quote-bookmark { width: 38px; height: 44px; flex: none; }
+.records-v35 .favorites-stationery .favorite-text { color: var(--ink); font-family: var(--album-serif); font-weight: 600; line-height: 1.55; }
+.records-v35 .favorites-stationery .favorite-summary[aria-expanded='true'] .favorite-text {
+  display: block; overflow: visible; white-space: pre-wrap;
+}
+.records-v35 .favorites-stationery .favorite-summary[aria-expanded='true'] .record-chevron { transform: rotate(90deg); }
+.records-v35 .favorites-stationery .favorite-actions { padding: 0 1rem .5rem; text-align: end; }
+.favorites-stationery .favorite-actions .link-button { color: var(--album-action); }
+@container (max-width: 18rem) {
+  .favorites-cover-face { padding: .85rem; gap: .4rem; }
+  .favorites-letter-print { width: 56px; }
+  .favorites-letter-print .memory-stamp { width: 100%; padding: 5px; }
+  .favorites-empty { align-items: start; padding: .7rem; gap: .45rem; }
+}
+.records-v35 .records-favorites .favorites-feature-list { overflow: visible; border-radius: 0; background: none; box-shadow: none; }
+.records-v35 .favorites-feature-list > .favorite-featured { overflow: hidden; border: 1px solid var(--album-edge); background: var(--album-sheet); }
+.records-v35 .favorites-feature-list .record-summary.favorite-feature {
+  min-height: 146px; gap: .75rem; padding: 1.15rem 1.25rem; background-color: var(--album-wash); background-image: var(--album-texture);
+}
+.records-v35 .favorites-feature-list .record-identity { gap: .35rem; }
+.records-v35 .favorites-feature-list .favorite-feature .favorite-text { font-size: 1.25rem; font-weight: 650; line-height: 1.45; -webkit-line-clamp: 3; }
+.favorite-feature .favorites-letter-print .memory-stamp { --stamp-field: #c8dace; }
+.favorite-feature .memory-read { margin-top: .12rem; }
+.favorite-feature .memory-read .record-chevron { width: 12px; color: var(--album-action); }
+.records-v35 .favorite-featured .favorite-actions { padding: 0 .8rem; border-top: 1px solid var(--album-edge); }
+.favorites-feature-list + .favorites-heading { margin-block-start: 1.15rem; }
+.favorites-compact-letter {
+  display: flex; align-items: center; gap: .8rem; width: 100%; border: 0; padding: .65rem 1rem;
+  background: var(--album-sheet); color: var(--ink); text-align: start;
+}
+.favorites-compact-letter > svg:first-child { width: 38px; height: 42px; flex: none; }
+.favorites-compact-letter:focus-visible { outline-offset: -3px; }
+@container (max-width: 18rem) {
+  .records-v35 .favorites-feature-list .record-summary.favorite-feature { padding: .75rem; gap: .35rem; }
+  .favorite-feature .favorites-letter-print { align-self: start; width: 44px; }
+}
+/* At large text the stamp shares the label line so the sentence gets the whole sheet. */
+@container (max-width: 16rem) {
+  .records-v35 .favorites-feature-list .record-summary.favorite-feature { position: relative; padding: .55rem .65rem; }
+  .favorite-feature .favorites-letter-print { position: absolute; top: .45rem; right: .6rem; width: 38px; pointer-events: none; }
+  .favorite-feature .memory-kicker { min-height: 42px; padding-inline-end: 44px; }
+  .records-v35 .favorites-feature-list .favorite-feature .favorite-text { font-size: 1.125rem; }
+}

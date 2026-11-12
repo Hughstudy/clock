@@ -1,15 +1,8 @@
 import type { ReactNode } from 'react'
 import { useFocusTaskBack } from '../../hooks/useFocusTaskBack'
-import type { SceneId } from '../../logic/types'
 import { FocusTaskDialog } from '../FocusTaskDialog'
-import { MemorySketch } from '../RecordsRoom'
 
-/** The same picture identifies a saved activity on the postcard, timeline and shelf. */
-export function MemoryStamp({ id }: { id: SceneId }) {
-  return <span className="memory-stamp" data-picture={id} aria-hidden="true">
-    <span className="memory-stamp-print"><MemorySketch id={id}/></span>
-  </span>
-}
+export { MemoryStamp } from './MemoryStamp'
 
 export function MemoryDetailSheet({ title, onClose, children }: { title: string; onClose: () => void; children: ReactNode }) {
   useFocusTaskBack(true, onClose)

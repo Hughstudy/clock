@@ -5,8 +5,10 @@ import { formatMinutes, PHASE_LABELS } from '../components/format'
 import { RecordEntry } from '../components/RecordEntry'
 import { RecordsRoom } from '../components/RecordsRoom'
 import { WeekChart } from '../components/WeekChart'
+import { ThoughtNotebook } from '../components/records/ThoughtNotebook'
 import { ThoughtEntry } from '../components/records/ThoughtEntry'
-import { MemoryDetailSheet } from '../components/records/MemoryPaper'
+import { MemoryChevron, MemoryDetailSheet, MemoryStamp } from '../components/records/MemoryPaper'
+import { WelcomeEnvelope } from '../components/records/WelcomeEnvelope'
 import { welcomeNote } from '../data/welcome'
 import { MemoryAlbum } from '../components/records/MemoryAlbum'
 import { RestMemoryEntry } from '../components/records/RestMemoryEntry'
@@ -84,7 +86,7 @@ export function RecordsScreen({ view, thoughts, canEdit, onEditThought, onContin
   const undoButton = (undo: Thoughts['undos'][number]) => <button type="button" key={undo.id} className="link-button"
     disabled={!canEdit} onClick={event => { beforeUndo(event, undo.id); undo.run() }}>{undo.label}</button>
 
-  return <section ref={screen} className="screen stats records-v35" aria-labelledby="stats-title">
+  return <section ref={screen} className="screen stats records-v35" data-records-mode={mode} aria-labelledby="stats-title">
     <div className="records-header">
       <h1 id="stats-title" className="screen-title" tabIndex={-1}>记录</h1>
       <button type="button" className="link-button records-status-button" aria-label={`查看状态${statusLabel === '查看状态' ? '' : `：${statusLabel}`}${secondaryStatusLabel ? `，${secondaryStatusLabel}` : ''}`}
@@ -100,11 +102,7 @@ export function RecordsScreen({ view, thoughts, canEdit, onEditThought, onContin
     {firstVisit && <button type="button" className="memory-letter" aria-haspopup="dialog" onClick={event => {
       event.currentTarget.focus({ preventScroll: true }); setLetterOpen(true)
     }}>
-      <svg aria-hidden="true" viewBox="0 0 52 46"><g transform="rotate(-7 25 24)" strokeWidth="1.6" strokeLinejoin="round">
-        <path fill="#e9d9ab" stroke="#af8f64" d="M5 14 26 3l20 12v24H5Z"/>
-        <path fill="#fffaf0" stroke="#ad9775" d="M10 6h31v26H10Z"/><path stroke="#c8aa7a" d="M15 13h18m-18 5h15"/>
-        <path fill="#efdbad" stroke="#af8f64" d="m5 15 20 14 21-14v24H5Z"/><path fill="none" stroke="#af8f64" d="m5 39 15-14m26 14L31 25"/>
-      </g></svg><span><small>给你的信</small><strong>{welcomeNote.title}</strong></span><span aria-hidden="true">›</span>
+      <WelcomeEnvelope/><span><small>给你的信</small><strong>{welcomeNote.title}</strong></span><span aria-hidden="true">›</span>
     </button>}
     {letterOpen && <MemoryDetailSheet title={welcomeNote.title} onClose={() => setLetterOpen(false)}><p className="memory-letter-text">{welcomeNote.text}</p></MemoryDetailSheet>}
     {mode === 'all' && !firstVisit && <section className="records-summary" aria-label="计时汇总">
@@ -118,7 +116,7 @@ export function RecordsScreen({ view, thoughts, canEdit, onEditThought, onContin
     </section>}
     {historyIncomplete && <p className="hint">历史数据未能完整读取。这里只展示当前能确认的内容。</p>}
     {((mode === 'all' && !firstVisit) || mode === 'thoughts') && <div className="records-tools">
-      {mode === 'thoughts' && <>
+      {mode === 'thoughts' && <ThoughtNotebook empty={!thoughtsIncomplete && !view.thoughtDays.length} showArt={showArt}>
         <form className="records-search" onSubmit={event => { event.preventDefault(); if (!composing.current) changeConditions({ search: current.draft.trim() }) }}>
           <label htmlFor="thought-search">搜索想法</label>
           <div><input id="thought-search" type="search" value={current.draft} placeholder="搜索想法" onChange={event => patch({ draft: event.target.value })}
@@ -126,9 +124,9 @@ export function RecordsScreen({ view, thoughts, canEdit, onEditThought, onContin
             onKeyDown={event => { if (event.key === 'Enter' && (event.nativeEvent.isComposing || composing.current)) event.preventDefault() }} />
             <button type="submit" className="pill">搜索</button></div>
         </form>
-        {(hasDraft || thoughts.hasDraft) && <button type="button" className="link-button" onClick={onContinueDraft ?? thoughts.openNew}>继续草稿</button>}
-      </>}
-      <div className="records-filter-row">{mode === 'all' && <h2>时光足迹</h2>}<span>{monthLabel(current.month)}{current.search && ` · 搜索“${current.search}”`}</span>
+        {(hasDraft || thoughts.hasDraft) && <button type="button" className="link-button thought-draft" onClick={onContinueDraft ?? thoughts.openNew}>继续草稿 <span aria-hidden="true">›</span></button>}
+      </ThoughtNotebook>}
+      <div className="records-filter-row"><h2>{mode === 'all' ? '时光足迹' : '按日翻阅'}</h2><span>{monthLabel(current.month)}{current.search && ` · 搜索“${current.search}”`}</span>
         <button type="button" className="link-button" onClick={openMonth}>选择月份</button>
         {current.month && <button type="button" className="link-button" onClick={() => changeConditions({ month: null })}>查看全部日期</button>}
         {current.search && <button type="button" className="link-button" onClick={() => changeConditions({ search: '', draft: '' })}>清除搜索</button>}
@@ -138,28 +136,32 @@ export function RecordsScreen({ view, thoughts, canEdit, onEditThought, onContin
     {mode === 'scenes' && <RecordsRoom band={reading.roomBand} activities={result.roomActivities} selected={reading.roomTag} onSelect={selectTag} incomplete={incomplete || restsIncomplete}/>}
     <div className="records-list" ref={list} data-result-count={mode === 'favorites' ? savedQuotes.length : result.total}>
       {mode !== 'favorites' ? <>
-        {mode === 'scenes' && reading.roomTag && <div className="room-source-heading">
-          <h3>{sceneNames[reading.roomTag]}出现过的{reading.roomTag.startsWith('R') ? '休息' : '专注'}</h3>
-          <button type="button" className="link-button" onClick={returnToRoom}>返回小屋</button>
+        {mode === 'scenes' && reading.roomTag && <div className="room-source-heading album-paper album-paper-surface">
+          <div><span className="memory-kicker">这张画签的来处</span><h2 tabIndex={-1}>{sceneNames[reading.roomTag]}</h2></div>
+          <MemoryStamp id={reading.roomTag}/>
+          <button type="button" className="link-button" onClick={returnToRoom}><span aria-hidden="true">‹</span>返回小屋</button>
         </div>}
         {mode === 'scenes' && missingSource && <p>这段原记录目前无法读取。<button type="button" className="link-button" onClick={returnToTag}>返回小屋画签</button></p>}
-        {detachedThought && <section className="records-detached"><p className="hint">这条想法已不符合当前查找条件，关闭后返回原结果。</p><ol className="focus-records"><ThoughtEntry item={detachedThought} expanded toggle={() => patch({ expanded: null })} view={view} persistence={persistence} canEdit={canEdit} thoughts={thoughts} edit={onEditThought} /></ol></section>}
+        {detachedThought && <section className="records-detached"><p className="hint">这条想法已不符合当前查找条件，关闭后返回原结果。</p><ol className="focus-records"><ThoughtEntry notebook illustrated={showArt} item={detachedThought} expanded toggle={() => patch({ expanded: null })} view={view} persistence={persistence} canEdit={canEdit} thoughts={thoughts} edit={onEditThought} /></ol></section>}
         {!firstVisit && result.total === 0 && (mode !== 'scenes' || reading.roomTag) && <p className="records-empty">{historyIncomplete ? '目前没有可确认的条目。' : empty}</p>}
         {result.days.map(day => <section className="record-day" key={day.dateKey} data-date={day.dateKey}>
           <h3>{knownDate(day.dateKey) ? <time dateTime={day.dateKey}>{displayDate(day.dateKey)}</time> : displayDate(day.dateKey)}
             {mode === 'all' && !incomplete && knownDate(day.dateKey) && view.totalsByDay.has(day.dateKey) && <small> · 专注 {formatMinutes(view.totalsByDay.get(day.dateKey)!.focusMs)}</small>}</h3>
           <ol className="focus-records">{day.entries.map(entry => {
             const id = entryId(entry)
-            if (entry.kind === 'thought') return <ThoughtEntry key={id} item={entry.thought} expanded={current.expanded === id} toggle={() => toggle(id)} view={view} persistence={persistence} canEdit={canEdit} thoughts={thoughts} edit={onEditThought} />
+            if (entry.kind === 'thought') return <ThoughtEntry key={id} notebook={mode === 'thoughts'} illustrated={showArt} item={entry.thought} expanded={current.expanded === id} toggle={() => toggle(id)} view={view} persistence={persistence} canEdit={canEdit} thoughts={thoughts} edit={onEditThought} />
             if (mode !== 'scenes') return entry.kind === 'rest'
               ? <RestMemoryEntry key={id} memory={entry.memory} expanded={current.expanded === id} onToggle={() => toggle(id)} showArt={showArt} view={view}/>
               : recordEntry(entry.record, current.expanded === id, () => toggle(id))
             const timeLabel = entry.kind === 'rest' ? view.clockTime(entry.memory.endedAt) : entry.record.timeLabel
             const elapsedMs = entry.kind === 'rest' ? entry.memory.elapsedMs : entry.record.elapsedMs
+            const phase = entry.kind === 'record' ? '专注' : entry.memory.phase ? PHASE_LABELS[entry.memory.phase] : '休息'
             const isOriginalOpen = sourceRecord === id
             return <li key={id} data-entry-id={id} className="records-activity">
               <button type="button" data-view-original className="record-summary" aria-expanded={isOriginalOpen} onClick={event => openOriginal(id, event.currentTarget)}>
-                <span className="record-identity"><span className="record-meta">{timeLabel}</span><strong>{formatMinutes(elapsedMs)}</strong></span><span className="record-meta">{isOriginalOpen ? '收起原记录' : '查看原记录'}</span>
+                <span className="record-identity"><strong>{entry.kind === 'record' && entry.record.step ? entry.record.step : phase}</strong>
+                  <span className="record-meta">{timeLabel} · {formatMinutes(elapsedMs)}</span></span>
+                <span className="sr-only">{isOriginalOpen ? '收起原记录' : '查看原记录'}</span><MemoryChevron/>
               </button>
               {isOriginalOpen && selectedOriginal && <div className="record-detail">
                 <button data-return-activity type="button" className="link-button" onClick={returnToTag}>返回{sceneNames[reading.roomTag!]}</button>

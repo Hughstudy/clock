@@ -1,30 +1,15 @@
 import { sceneNames } from '../data/scene-copy'
 import type { RecordsBand } from '../logic/record-stories'
 import type { SceneId } from '../logic/types'
-import { ScenePart } from './companion/CompanionSceneArt'
+import { MemorySketch, MemoryStamp } from './records/MemoryStamp'
+import { MemoryChevron } from './records/MemoryPaper'
 import { RecordsGreetingArt } from './companion/RecordsArt'
+import '../styles/records-room.css'
 
-/** Each sketch uses the same props as its activity. The room and its furniture are initial scenery. */
-const sketches: Record<SceneId, { box: string; parts: string[] }> = {
-  F1: { box: '-10 -13 69 56', parts: ['pot', 'potHandles', 'potLid', 'lidKnob'] },
-  F2: { box: '-3 -49 42 79', parts: ['stem', 'leaves', 'plantPot', 'plantRim'] },
-  F3: { box: '-5 -7 82 49', parts: ['bookLeft', 'bookRight', 'bookCover', 'bookLines', 'bookmark'] },
-  F4: { box: '-8 -9 54 43', parts: ['saucer', 'cup', 'cupTea'] },
-  F5: { box: '-15 -14 31 30', parts: ['bubble', 'bubbleShine'] },
-  F6: { box: '-4 -28 76 53', parts: ['boat', 'boatStripe'] },
-  F7: { box: '-4 -7 32 33', parts: ['blockGold'] },
-  F8: { box: '-14 -15 28 29', parts: ['star'] },
-  R1: { box: '33 14 174 165', parts: ['footLeft', 'footRight', 'tuft', 'body', 'shine', 'belly', 'armLeftHappy', 'armRightHappy', 'cheekLeft', 'cheekRight', 'eyesResting', 'mouth'] },
-  R2: { box: '-10 -28 92 54', parts: ['cloud'] },
-  R3: { box: '-6 -26 54 57', parts: ['saucer', 'cup', 'cupTea', 'steam'] },
-}
-const tagIds = Object.keys(sketches) as SceneId[]
-export function MemorySketch({ id }: { id: SceneId }) {
-  const { box, parts } = sketches[id]
-  return <svg viewBox={box} className="room-sketch" aria-hidden="true" focusable="false">
-    {parts.map(name => <ScenePart key={name} name={name}/>)}
-  </svg>
-}
+export { MemorySketch } from './records/MemoryStamp'
+
+const tagIds = Object.keys(sceneNames) as SceneId[]
+const lightLabels: Record<RecordsBand, string> = { morning: '晨光', afternoon: '午后', evening: '夕照', night: '夜色' }
 
 /** A shallow ledge in the same wood as the table. Its front lip overlaps the paper. */
 function BookLedge() {
@@ -52,7 +37,7 @@ function RoomPicture({ band, activities, selected, onSelect }: PictureProps) {
     {ids.length > 0 && <span className="room-shelf">{shelves.map(row =>
       <span className="room-shelf-row" key={row[0]}>{row.map(id => onSelect
       ? <button key={id} type="button" data-room-spot={id} aria-label={`${sceneNames[id]}，查看 ${activities.get(id)!.length} 段${id.startsWith('R') ? '休息' : '专注'}`}
-          aria-pressed={selected === id} onClick={event => onSelect(id, event.currentTarget)}><span className="room-ticket"><MemorySketch id={id}/></span></button>
+          aria-pressed={selected === id} onClick={event => onSelect(id, event.currentTarget)}><MemoryStamp id={id}/></button>
       : <span key={id} className="room-sample"><span className="room-ticket"><MemorySketch id={id}/></span></span>)}
         <BookLedge/>
       </span>)}</span>}
@@ -68,15 +53,34 @@ export function RoomPreview({ band, activities, showArt, onOpen }: RoomInfo & { 
 }
 
 export function RecordsRoom({ band, activities, selected, onSelect, incomplete }: Required<PictureProps> & { incomplete: boolean }) {
-  return <section className="records-room" aria-label="窗边的小屋">
-    <h3 tabIndex={-1}>窗边的小屋</h3>
-    <RoomPicture band={band} activities={activities} selected={selected} onSelect={onSelect}/>
-    <p className="room-directions">{activities.size
-      ? '挑一张画签，看看它出现在哪些日子。'
-      : incomplete ? '目前没有能确认来源的画签。' : '架子还空着。以后在专注或休息时遇见的小片刻，会在这里留下画签。'}</p>
-    {activities.size > 0 && <div className="room-tag-list" role="group" aria-label="按活动找记录">
-      {tagIds.filter(id => activities.has(id)).map(id => <button type="button" key={id} data-room-label={id}
-        aria-pressed={selected === id} onClick={event => onSelect(id, event.currentTarget)}>{sceneNames[id]} · {activities.get(id)!.length} 段</button>)}
+  return <section className="records-room" aria-label="窗边的小屋" hidden={!!selected}>
+    <div className="room-album-card album-paper album-paper-surface">
+      <header className="room-album-header">
+        <h3 tabIndex={-1}>窗边的小屋</h3>
+        <span>{lightLabels[band]}</span>
+      </header>
+      <div className="room-photo-mount">
+        <RoomPicture band={band} activities={activities} selected={selected} onSelect={onSelect}/>
+      </div>
+      <p className="room-directions">{activities.size
+        ? '点一张画签，翻看它出现过的日子。'
+        : incomplete ? '目前没有能确认来源的画签。' : '专注和休息时的画签，会收在窗边。'}</p>
+    </div>
+    {activities.size > 0 && <div className="room-index" role="group" aria-label="按活动找记录">
+      {(['F', 'R'] as const).map(prefix => {
+        const ids = tagIds.filter(id => id.startsWith(prefix) && activities.has(id))
+        if (!ids.length) return null
+        const label = prefix === 'F' ? '专注' : '休息'
+        return <section className="room-index-group" key={prefix} aria-label={label + '画签'}>
+          <h4>{label}画签</h4>
+          <ul className="room-index-list">{ids.map(id => <li key={id}>
+            <button type="button" data-room-label={id} onClick={event => onSelect(id, event.currentTarget)}>
+              <MemoryStamp id={id}/><strong>{sceneNames[id]}</strong>
+              <span className="room-entry-count">{activities.get(id)!.length} 段</span><MemoryChevron/>
+            </button>
+          </li>)}</ul>
+        </section>
+      })}
     </div>}
   </section>
 }

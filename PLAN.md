@@ -44,6 +44,8 @@ Earlier approved work remains documented in the [v26 plan](docs/plans/INTERACTIO
 
 **Memories in Records, 2026-11-12.** The owner asked for a warmer Records page centered on the items and memories of focus and rest. The prototype leads with an illustrated keepsake tied to an actual saved session, respects the month being browsed, and groups both kinds of memory by date. Near-term focus totals have secondary placement. A manual end and a natural expiry can each supply a keepsake. The room pictures index the underlying activities, including rest, while [story collection](docs/prd/02-features.md#rule-collect) retains its own eligibility. Snapshot v10 preserves ended rests across later sessions. See the [browser and storage verification](docs/verification/records-memories.md).
 
+The other three Records views use the same paper and illustration style. Thoughts opens a searchable notebook. Scenes mounts the cottage picture above a named index of focus and rest activities. Favorites features the most recently saved quote and keeps the welcome letter in a separate envelope. See the [three-tab checks](docs/verification/records-memories.md#the-other-three-records-views).
+
 The layout follows Apple’s guidance to put the most meaningful content first and group details that belong together. Journal provides a reference for attaching recognizable details to a particular moment. The paper illustrations come from this prototype’s companion activities. [Apple HIG on layout](https://developer.apple.com/design/human-interface-guidelines/layout) · [Apple Journal guide](https://support.apple.com/guide/iphone/write-in-your-journal-iph9824e83ce/ios)
 
 ## 1. Sources and current baseline
