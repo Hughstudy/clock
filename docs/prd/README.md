@@ -8,12 +8,15 @@
 
 **本轮人物讨论：** 新增[人物弧光讨论稿](15-character-arc-proposal.md)与[研究复盘](16-character-research.md)。保留已经确认的主性格，提出小矛盾、长期相处方式与六张试写卡；新建议尚待讨论，不替换正式规则或现有章稿。
 
+**2026-11-14 背景故事创作。** 按用户要求先查阅互联网来源，再核对现有蓝色伙伴、果园小屋与十一项活动，完成[背景故事《把小小的远方带回家》](17-character-background.md)和[研究与交叉核对](18-character-background-research.md)。新增身世供评阅，为以后动画提供人物依据；本轮只写背景，不修改应用或启动动画制作。
+
 ## 先看什么
 
 | 你要做的事 | 建议阅读顺序 | 看完应能回答 |
 | --- | --- | --- |
 | 讨论这个产品是否成立 | [产品全貌](01-product.md) → [伙伴性格](10-character.md) → 产品全貌的[待决事项](01-product.md#mechanism-decisions) | 产品是什么、为什么值得用、哪些已定、哪些仍待验证 |
 | 打磨人物与弧光 | [已确认的性格](10-character.md) → [弧光讨论稿](15-character-arc-proposal.md) → [研究与反例](16-character-research.md) | 推荐哪种人物矛盾、怎样适应碎片使用、哪些要用样稿验证 |
+| 了解伙伴的背景、准备以后表演 | [背景故事](17-character-background.md) → [研究及现状核对](18-character-background-research.md) → [已确认性格](10-character.md) | 它为什么住在这里、怎样形成个人偏好、哪些是新创作而非已实现事实 |
 | 写角色台词 | [性格与说话方式](10-character.md#character-basis) → [语气和触发](08-voice.md) → [物件与日常台词](11-dialogue.md) | 这是谁说的、为什么此刻说、简单画面能否承接 |
 | 设计一个故事 | [故事规则](02-features.md#story-rewards) → [角色](10-character.md) → [章稿模板](12-stories.md#chapter-brief) → [故事验收](07-acceptance.md#causal-longterm-tests) | 起因、尝试、结果、各个结束落点与收集条件是否完整 |
 | 改页面和按钮 | [功能规格](02-features.md) → [UI规范与固定文案](03-ui.md) → [动作索引](13-actions.md) → [验收](07-acceptance.md) | 一次点击改变什么、控件怎么协作、布局是否稳定 |
@@ -40,6 +43,8 @@
 | [14-code-bridge.md](14-code-bridge.md) | 理念到代码的对应、差异、建议与证据边界 | 桥接文档；代码状态须看核对提交 |
 | [15-character-arc-proposal.md](15-character-arc-proposal.md) | 人物矛盾、三个尺度的弧光、六张试写卡与产品适配 | 讨论提案；不作为已经批准的剧情或开发任务 |
 | [16-character-research.md](16-character-research.md) | 六轮研究与文稿自检、一手来源、否决方向及证据边界 | 研究记录；未做用户试验，不宣称已验证吸引力 |
+| [17-character-background.md](17-character-background.md) | 背景故事正文、现在的愿望、个人偏好及以后表演的创作依据 | 新身世创作稿；供评阅，不是上线剧情或动画任务 |
+| [18-character-background-research.md](18-character-background-research.md) | 十一项互联网来源、现有形象与活动核对、方向比较及反向检查 | 2026-11-14研究记录；区分来源、推论与实现，不宣称用户验证 |
 
 ## 不要混淆的几件事
 
