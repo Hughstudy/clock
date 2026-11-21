@@ -6,19 +6,21 @@
 
 **2026-11-12 记录页更新。** 专注与休息都可留下当时活动的纪念小画，在同一条时间流回看，专注时长与段数作为补充。见[记录页](02-features.md#records-modes)、[保存依据](04-data.md#data-objects)与[回忆验收](07-acceptance.md#t-rec42)。
 
-**本轮人物讨论：** 新增[人物弧光讨论稿](15-character-arc-proposal.md)与[研究复盘](16-character-research.md)。保留已经确认的主性格，提出小矛盾、长期相处方式与六张试写卡；新建议尚待讨论，不替换正式规则或现有章稿。
+**2026-11-06 人物讨论：** [早期人物弧光稿](15-character-arc-proposal.md)与[研究复盘](16-character-research.md)保留当时的小矛盾、长期相处方式与六张试写卡。它们是提案历史，不作为当前制作清单。
 
 **2026-11-14 背景故事创作与二次审阅。** 按用户要求先查阅互联网来源，再核对现有蓝色伙伴、果园小屋与十一项活动，完成[背景故事《把小小的远方带回家》](17-character-background.md)和[研究与交叉核对](18-character-background-research.md)。用户随后要求改得更好，现稿v2以“想给自己的兴趣找一张桌子”为起因，补出具体经历、住处选择与延续的偏好。新增身世供评阅；本阶段只写背景，不修改应用或启动动画制作。
+
+**2026-11-21 人物讨论从 App 表达重新出发。** 用户明确要求：先列可用交互，表达不出的设定退出设计；人物简单鲜明，故事简单有趣，并继续具体化创作框架。[交互、性格取舍与四张场景提案](19-character-in-app.md)是当前讨论入口，[人物创作框架与原则](20-character-framework.md)负责稳定动机、选择习惯、相处方式与审稿。早期长弧光和传记保留为参考，不承担当前角色辨识度。本轮核对代码与复盘文稿，没有修改应用或完成新画面验证。
 
 ## 先看什么
 
 | 你要做的事 | 建议阅读顺序 | 看完应能回答 |
 | --- | --- | --- |
 | 讨论这个产品是否成立 | [产品全貌](01-product.md) → [伙伴性格](10-character.md) → 产品全貌的[待决事项](01-product.md#mechanism-decisions) | 产品是什么、为什么值得用、哪些已定、哪些仍待验证 |
-| 打磨人物与弧光 | [已确认的性格](10-character.md) → [弧光讨论稿](15-character-arc-proposal.md) → [研究与反例](16-character-research.md) | 推荐哪种人物矛盾、怎样适应碎片使用、哪些要用样稿验证 |
-| 了解伙伴的背景、准备以后表演 | [背景故事](17-character-background.md) → [研究及现状核对](18-character-background-research.md) → [已确认性格](10-character.md) | 它为什么住在这里、怎样形成个人偏好、哪些是新创作而非已实现事实 |
+| 打磨人物与弧光 | [已确认的性格](10-character.md) → [App 交互与取舍](19-character-in-app.md) → [创作框架与原则](20-character-framework.md) | 什么能被感受到、哪些设定放下、少量场景如何表现自己的趣味与亲近 |
+| 了解伙伴的背景 | [背景故事](17-character-background.md) → [研究及现状核对](18-character-background-research.md) → [当前表达边界](19-character-in-app.md) | 作者可借鉴哪些往事；为什么它们不自动成为 App 剧情或制作任务 |
 | 写角色台词 | [性格与说话方式](10-character.md#character-basis) → [语气和触发](08-voice.md) → [物件与日常台词](11-dialogue.md) | 这是谁说的、为什么此刻说、简单画面能否承接 |
-| 设计一个故事 | [故事规则](02-features.md#story-rewards) → [角色](10-character.md) → [章稿模板](12-stories.md#chapter-brief) → [故事验收](07-acceptance.md#causal-longterm-tests) | 起因、尝试、结果、各个结束落点与收集条件是否完整 |
+| 设计一个故事 | [场景创作方法](20-character-framework.md#character-scene-method) → [故事规则](02-features.md#story-rewards) → [章稿模板](12-stories.md#chapter-brief) → [故事验收](07-acceptance.md#causal-longterm-tests) | 人物选择是否可见，起因、结果、各个结束落点与收集条件是否完整 |
 | 改页面和按钮 | [功能规格](02-features.md) → [UI规范与固定文案](03-ui.md) → [动作索引](13-actions.md) → [验收](07-acceptance.md) | 一次点击改变什么、控件怎么协作、布局是否稳定 |
 | 实现保存和数据迁移 | [数据原则](04-data.md) → [字段](05-data-fields.md) → [命令映射](06-data-commands.md) → [数据验收](07-acceptance.md#data-contract-tests) | 谁拥有事实、何时提交、失败或旧数据怎样处理 |
 | 判断开发进度和差异 | [PRD与代码桥接](14-code-bridge.md) → [工程计划](../../PLAN.md) → [验证报告目录](../verification/) | 什么已实现、证据对应哪个提交、哪些仍是缺口 |
@@ -41,16 +43,19 @@
 | [12-stories.md](12-stories.md) | 单章模板、首批内容、成本、暂停与结束样例 | E.12—E.15；章稿与制作交接 |
 | [13-actions.md](13-actions.md) | 用户动作与系统事件的ACT索引 | F；供定位，不另定义一套规则 |
 | [14-code-bridge.md](14-code-bridge.md) | 理念到代码的对应、差异、建议与证据边界 | 桥接文档；代码状态须看核对提交 |
-| [15-character-arc-proposal.md](15-character-arc-proposal.md) | 人物矛盾、三个尺度的弧光、六张试写卡与产品适配 | 讨论提案；不作为已经批准的剧情或开发任务 |
+| [15-character-arc-proposal.md](15-character-arc-proposal.md) | 早期人物矛盾、三个尺度的弧光、六张试写卡 | 2026-11-06提案历史；当前讨论先看19与20，不直接作为制作清单 |
 | [16-character-research.md](16-character-research.md) | 六轮研究与文稿自检、一手来源、否决方向及证据边界 | 研究记录；未做用户试验，不宣称已验证吸引力 |
 | [17-character-background.md](17-character-background.md) | 背景故事正文、现在的愿望、个人偏好及以后表演的创作依据 | 新身世创作稿；供评阅，不是上线剧情或动画任务 |
 | [18-character-background-research.md](18-character-background-research.md) | 十一项互联网来源、现有形象与活动核对、方向比较及反向检查 | 2026-11-14研究记录；区分来源、推论与实现，不宣称用户验证 |
+| [19-character-in-app.md](19-character-in-app.md) | 实际交互与表达通道、性格取舍、四张简单场景卡与能力边界 | 2026-11-21当前人物讨论入口；前三张优先试稿，物件点击后置，均未实施 |
+| [20-character-framework.md](20-character-framework.md) | 动机、选择、相处方式、情绪、场景写法、制作原则与再次复盘 | 创作工作稿；供评稿与筛选，不是新增运行时人格系统 |
 
 ## 不要混淆的几件事
 
 - **事实记录与收集不同。** 手动结束保留短章小记，自然到期保留完整章页。只有自然到期、故事完整且保存成功，才按[收集规则](02-features.md#rule-collect)进入生活积累。
 - **暂停与已结束不同。** 原会话暂停可以继续；结束后不保留未完事项，新会话不继承旧段进度。
 - **已确认性格与内容候选不同。** 好奇、有自己的小主意、认真但不较劲，加轻微笨拙已经确认；具体台词、偏好和桥段仍按各自状态使用。
+- **人物设定要有表达依据。** 当前以19和20中的交互与制作条件筛选新内容；背景、早期弧光和心理描述不能替代用户看得见的选择。
 - **台词不附带动画义务。** 在已有简单画面里自然成立；不能为让一句话有趣，默认增加细微表情、手指动作或连续分镜。
 - **规则、实现、验证分别记录。** 有需求或字段不等于已有功能；报告通过也只证明对应提交与测试范围。
 

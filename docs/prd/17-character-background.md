@@ -3,6 +3,8 @@
 > [返回文档地图](README.md) · [已确认性格](10-character.md) · [研究与现状核对](18-character-background-research.md)
 > 2026-11-14，创作稿 v2。按用户“再审阅、改得更好”的要求重写。当前阶段只建立背景；新增往事与偏好仍是供评阅的创作，不是已上线剧情或动画任务。
 
+**2026-11-21 使用范围收紧：** 本稿保留为可选作者资料。当前人物先按[App 交互与场景](19-character-in-app.md)及[创作框架](20-character-framework.md)表达；用户不读传记也应感受到角色。木箱、地图、旅途和住处往事不自动增加素材、前情或制作范围。
+
 <a id="character-background-story"></a>
 
 ## 1. 故事正文
