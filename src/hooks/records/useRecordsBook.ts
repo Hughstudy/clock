@@ -112,7 +112,7 @@ export function useRecordsBook(props: RecordsBookInput) {
   function editNote(id?: string) {
     if (id) thoughts.edit(id)
     else thoughts.setOpen(true)
-    navigate({ ...where, detail: { kind: 'editor' } }, 'forward', { focus: '#thought-text', top: 0 })
+    navigate({ ...where, detail: { kind: 'editor' } }, 'forward', { focus: '[data-initial-focus]', top: 0 })
   }
   function setMonth(value: string | null) {
     announceResults.current = true

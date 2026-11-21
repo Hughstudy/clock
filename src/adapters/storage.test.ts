@@ -330,6 +330,49 @@ describe('SnapshotStore across tabs', () => {
     }
   })
 
+  it.each(['paused', 'rescheduled'] as const)('rejects an unconfirmed focus deadline after a peer %s its clock', async position => {
+    const storage = new MemoryStorage(), lock = sharedLock(), local = tab(storage, 'a', lock)
+    await act(local, { type: 'startFocus', sessionId: 'focus-race', timeZone: 'UTC', durationMinutes: 5 }, T0)
+    const peer = tab(storage, 'b', lock)
+    await act(peer, { type: 'pause', sessionId: 'focus-race' }, T0 + MIN)
+    if (position === 'rescheduled') await act(peer, { type: 'resume', sessionId: 'focus-race' }, T0 + 4 * MIN)
+    storage.failReads = true
+    expect((await act(local, { type: 'reconcile' }, T0 + 5 * MIN)).saved).toBe(false)
+    expect(local.snapshot.records).toHaveLength(1)
+    storage.failReads = false
+    await act(local, { type: 'reconcile' }, T0 + 6 * MIN)
+    expect(local.durableSnapshot?.records).toEqual([])
+    expect(local.snapshot.timer).toMatchObject({ completedFocusCount: 0, session: { id: 'focus-race', status: position === 'paused' ? 'paused' : 'running' } })
+    expect(local.snapshot.restSuggestionSessionId).toBeNull()
+    expect(local.snapshot.scenes.lastEnded).toBeNull()
+    expect(local.savedRecordIds.size).toBe(0)
+    if (position === 'rescheduled') {
+      await act(local, { type: 'reconcile' }, T0 + 9 * MIN)
+      expect(local.snapshot.records).toMatchObject([{ sessionId: 'focus-race', elapsedMs: 5 * MIN, endedAt: T0 + 8 * MIN }])
+      expect(local.snapshot.timer.completedFocusCount).toBe(1)
+    }
+  })
+
+  it.each([true, false])('rechecks an unconfirmed focus manual end against a peer pause (elapsed agrees: %s)', async agrees => {
+    const storage = new MemoryStorage(), lock = sharedLock(), local = tab(storage, 'a', lock)
+    await act(local, { type: 'startFocus', sessionId: 'manual-race', timeZone: 'UTC' }, T0)
+    const peer = tab(storage, 'b', lock)
+    await act(peer, { type: 'pause', sessionId: 'manual-race' }, T0 + MIN)
+    storage.failReads = true
+    await act(local, { type: 'end', sessionId: 'manual-race' }, T0 + (agrees ? MIN : 2 * MIN))
+    storage.failReads = false
+    local.receive(storage.getItem(KEY))
+    await act(local, { type: 'reconcile' }, T0 + 3 * MIN)
+    expect(local.snapshot.timer.completedFocusCount).toBe(0)
+    if (agrees) {
+      expect(local.snapshot.timer.session).toBeNull()
+      expect(local.durableSnapshot?.records).toMatchObject([{ sessionId: 'manual-race', elapsedMs: MIN, endReason: 'manual' }])
+    } else {
+      expect(local.snapshot.timer.session).toMatchObject({ id: 'manual-race', status: 'paused' })
+      expect(local.durableSnapshot?.records).toEqual([])
+    }
+  })
+
   it('keeps the later local rest result when a peer saved only the shared first ending', async () => {
     const storage = new MemoryStorage(), lock = sharedLock(), local = tab(storage, 'a', lock)
     await act(local, { type: 'startBreak', sessionId: 'first', timeZone: 'UTC' }, T0)

@@ -1,6 +1,6 @@
 # Code map
 
-Read the [product map](prd/README.md) for requirements, this file for implementation entry points, and [PLAN.md](../PLAN.md) for unfinished work. The [Records structure verification](verification/records-structure.md) records the latest refactor; the [November 6 report](verification/code-structure.md) preserves the earlier snapshot and runtime cleanup. This is a code map, not another task or ownership board.
+Read the [product map](prd/README.md) for requirements, this file for implementation entry points, and [PLAN.md](../PLAN.md) for unfinished work. The [interaction bug review](verification/interaction-bug-review.md) covers the latest corrections. The [Records structure verification](verification/records-structure.md) records the latest refactor; the [November 6 report](verification/code-structure.md) preserves the earlier snapshot and runtime cleanup. This is a code map, not another task or ownership board.
 
 ## Dependency direction
 
@@ -13,13 +13,13 @@ Screens and components render read-only views and dispatch intent. Hooks coordin
 | Focus card stepping aside and full-screen room | `hooks/useFocusChrome.ts`, `logic/focus-chrome.ts`, `hooks/useSceneFit.ts`, `logic/scene-fit.ts` (`wideRoomFit`, `shownTimeDrop`, `awayGroup`), `styles/focus-v35.css` | Presentation only: never reads or writes timer state; a pat never calls the card; scale the room, never the creature; in portrait the time sits one bubble above the head in every state, and while the card is away the spare height is shared between sky and floor |
 | Bottom sheets and confirmations | `components/FocusPanel.tsx`, `components/ConfirmPopover.tsx`, `hooks/useSheetDrag.ts`, `screens/SettingsScreen.tsx`, `logic/scene-fit.ts` (`fitSceneArt`) | One modal surface at a time over an inert page; closing keeps drafts; a stray tap on the dimmed page closes nothing; the companion looks over a sheet at its own size or steps out |
 | Timing and session settlement | `logic/timer.ts`, `logic/app.ts`, `hooks/useClockApp.ts` | Deadline-based accounting; one transaction coordinator; stable session IDs |
-| Thought editor and recovery | `hooks/useThoughts.ts`, `logic/thoughts.ts`, `components/ThoughtPanel.tsx` | Preserve ownership, drafts, revisions and pending-save truth |
+| Thought editor and recovery | `hooks/useThoughts.ts`, `logic/thoughts.ts`, `components/ThoughtPanel.tsx`, `styles/thoughts.css` | Preserve ownership, drafts, revisions and pending-save truth; draft switches keep usable controls and input focus |
 | Encouragement policy and quote favorites | `hooks/useFeedback.ts`, `logic/feedback-host.ts`, `logic/feedback.ts`, `hooks/useQuoteFavorites.ts` | Main logic decides eligibility and save truth; animation consumes permitted cues |
 | Records layout | `screens/RecordsScreen.tsx`, `components/records/book/` | Screen shell, chapter roots, detail routing, shared memory leaf and footer compose the existing book |
 | Records browsing and return position | `hooks/records/useBookNavigation.ts`, `hooks/records/book-navigation.ts` | Each breadcrumb carries its chapter, item, search input and reading position; browser effects stay in the hook |
 | Records editing and page intents | `hooks/records/useRecordsBook.ts`, `hooks/records/types.ts` | One coordinator connects reading to existing thought/favorite controllers; it never persists independently |
 | Records query and saved-only totals | `hooks/records/book-data.ts`, `logic/records-query.ts`, `hooks/useViews.ts`, `logic/stats.ts` | Combined focus/rest history, full-list thought search and 20-item pages. Totals use confirmed focus records |
-| Settings | `screens/SettingsScreen.tsx`, `hooks/useSettingsForm.ts`, `logic/settings.ts`, `styles/settings.css` | New settings apply to future sessions |
+| Settings | `screens/SettingsScreen.tsx`, `hooks/useSettingsForm.ts`, `logic/settings.ts`, `styles/settings.css` | New settings apply to future sessions; one queue receipt retires only its own optimistic form patch |
 | Shared stylesheet entry | `styles/app.css`, `styles/thoughts.css` | App and Focus preview import the same ordered cascade; the book imports its own scoped CSS |
 | Snapshot format and compatibility | `logic/snapshot.ts`, `logic/snapshot/` | Keep the stable entry point; protect old and newer raw data |
 | Storage and concurrency | `adapters/storage.ts`, `adapters/browser-store.ts`, `adapters/locks.ts` | Read latest, transition, write under one short lock |

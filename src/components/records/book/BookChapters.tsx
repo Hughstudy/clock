@@ -75,7 +75,7 @@ export function BookChapters({ props, book }: BookViewProps) {
               composing.current = false
             }}
             onKeyDown={(e) => {
-              if (e.key === 'Enter' && (e.nativeEvent.isComposing || composing.current)) e.preventDefault()
+              if (e.key === 'Enter' && (e.nativeEvent.isComposing || e.nativeEvent.keyCode === 229 || composing.current)) e.preventDefault()
             }}
           />
           <button type="submit" data-jl-search>

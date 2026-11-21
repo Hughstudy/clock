@@ -48,7 +48,7 @@ export function App() {
   const appDispatch = app.dispatch
   const settingsDispatch = useCallback((action: UserAction) => {
     if (changesFocusDefault(action)) setDefaultsIntent(n => n + 1)
-    appDispatch(action)
+    return appDispatch(action)
   }, [appDispatch])
   const form = useSettingsForm(app.snapshot.settings, settingsDispatch)
   const thoughts = useThoughts(app)

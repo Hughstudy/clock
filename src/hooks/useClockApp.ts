@@ -53,7 +53,7 @@ export interface ClockApp {
   submitFavorite: (action: FavoriteAction, operationId: string, generation: number) => Promise<{ accepted: boolean; rejected: boolean }>
   hasPendingOperations: boolean
   checkReload: () => Promise<boolean>
-  dispatch: (action: UserAction) => void
+  dispatch: (action: UserAction) => void | Promise<boolean>
   result: SessionResult | null
 }
 
@@ -340,11 +340,11 @@ export function useClockApp(): ClockApp {
           .finally(() => { if (lastMark.current === mark) mark.inFlight = false })
       }
       case 'resetDurations':
-        return void commit({ type: 'resetDurations', generation: datasetGeneration })
+        return commit({ type: 'resetDurations', generation: datasetGeneration })
       case 'prepare':
         return void commit({ type: 'prepare', phase: action.phase, expectedPhase: timer.phase, generation: datasetGeneration })
       case 'updateSettings':
-        return void commit({ ...action, generation: datasetGeneration })
+        return commit({ ...action, generation: datasetGeneration })
     }
   }, [store, commit, chime, view.snapshot, recover])
 

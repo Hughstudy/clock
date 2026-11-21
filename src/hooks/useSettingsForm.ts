@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { spec } from '../data/spec'
 import { applySettingsPatch, checkDuration, defaultSettings, type SettingsPatch } from '../logic/settings'
 import { PHASES, type Phase, type Settings } from '../logic/types'
@@ -39,16 +39,17 @@ export interface SettingsForm {
  * Saves are asynchronous, so the form shows edits optimistically until the saved settings
  * arrive; quick repeated taps then build on what is on screen instead of a stale value.
  */
-export function useSettingsForm(saved: Settings, dispatch: (action: UserAction) => void): SettingsForm {
+export function useSettingsForm(saved: Settings, dispatch: (action: UserAction) => void | Promise<boolean>): SettingsForm {
   const [drafts, setDrafts] = useState<Partial<Record<Phase, string>>>({})
   const [pending, setPending] = useState<SettingsPatch[]>([])
-  // Each committed save produces new settings; drop the optimistic layer then.
-  useEffect(() => setPending([]), [saved])
   const settings = pending.reduce<Settings>((acc, patch) => applySettingsPatch(acc, patch, spec), saved)
 
-  const save = (patch: SettingsPatch) => {
+  const save = (patch: SettingsPatch, action: UserAction = { type: 'updateSettings', patch }) => {
     setPending((p) => [...p, patch])
-    dispatch({ type: 'updateSettings', patch })
+    // One receipt retires only its own optimistic change. Earlier writes and
+    // peer updates must not roll back choices still waiting in the command queue.
+    const retire = () => setPending(p => p.filter(item => item !== patch))
+    void Promise.resolve(dispatch(action)).then(retire, retire)
   }
   const saveMinutes = (phase: Phase, minutes: number) => save({ durationsMinutes: { [phase]: minutes } })
   const clearDraft = (phase: Phase) =>
@@ -99,8 +100,7 @@ export function useSettingsForm(saved: Settings, dispatch: (action: UserAction) 
     setSceneVarietyEnabled: (on) => save({ sceneVarietyEnabled: on }),
     restoreDefaults: () => {
       setDrafts({})
-      setPending(p => [...p, { durationsMinutes: defaults.durationsMinutes }])
-      dispatch({ type: 'resetDurations' })
+      save({ durationsMinutes: defaults.durationsMinutes }, { type: 'resetDurations' })
     },
   }
 }

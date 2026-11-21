@@ -3,3 +3,8 @@
 .thought-title { font-size: .875rem; font-weight: 700; }
 .thought-form textarea { resize: vertical; }
 .thought-form-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 4px; }.panel-save-error { margin: .5rem 0 0; color: #71400c; }
+
+/* This confirmation is shared by Focus sheets and the Records editor. */
+.thought-switch { display: grid; gap: 8px; inline-size: 100%; padding-block: .5rem; }
+.thought-switch p { margin: 0; }
+.thought-switch .btn { inline-size: 100%; min-inline-size: 0; min-block-size: 44px; white-space: normal; overflow-wrap: anywhere; }

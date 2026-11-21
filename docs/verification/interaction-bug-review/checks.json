@@ -1,0 +1,236 @@
+{
+  "baseline": "6835f5b54433967aee8ff671184acb8ce8bf5672",
+  "node": "24.22.3",
+  "unit": {
+    "files": 41,
+    "tests": 495,
+    "storageTests": 66,
+    "result": "pass"
+  },
+  "build": {
+    "base": "/clock/",
+    "result": "pass"
+  },
+  "e2e": {
+    "command": "npm run test:e2e",
+    "result": "pass",
+    "suites": {
+      "verify-focus-interactions.mjs": {
+        "result": "pass",
+        "checks": 110,
+        "errors": []
+      },
+      "verify-records-companion.mjs": {
+        "result": "pass",
+        "checks": 13,
+        "errors": []
+      },
+      "verify-v35-persistence.mjs": {
+        "result": "pass",
+        "checks": 21,
+        "errors": []
+      },
+      "verify-v35-update.mjs": {
+        "result": "pass",
+        "checks": 13,
+        "errors": []
+      },
+      "verify-v35-panels.mjs": {
+        "result": "pass",
+        "checks": 292,
+        "errors": []
+      },
+      "verify-ios-design.mjs": {
+        "result": "pass",
+        "checks": 194,
+        "errors": []
+      },
+      "verify-ios-navigation.mjs": {
+        "result": "pass",
+        "checks": 41,
+        "errors": []
+      },
+      "verify-focus-step-aside.mjs": {
+        "result": "pass",
+        "checks": 141,
+        "errors": []
+      },
+      "scene-e2e.mjs": {
+        "result": "pass",
+        "checks": 134,
+        "fixtures": [
+          "30/30 checks passed",
+          "67/67 scene checks passed"
+        ],
+        "errors": []
+      },
+      "verify-records-pages.mjs": {
+        "result": "pass",
+        "coverage": [
+          "cover",
+          "bookmarks",
+          "source-preserving return",
+          "focus",
+          "large text",
+          "reduced motion"
+        ]
+      }
+    },
+    "interactionRegressions": {
+      "browser": "153.0.8010.0",
+      "checks": [
+        "Three queued increments immediately show 28",
+        "The first save does not roll back the two later choices",
+        "A fourth increment while saves settle persists 29",
+        "Reset acknowledgement preserves later choices in both fields",
+        "IME Escape does not dismiss Settings",
+        "Ordinary Escape still returns from Settings",
+        "An unsavable draft focuses Continue instead of its disabled Save choice",
+        "Continuing an unsavable draft preserves its exact text and input focus",
+        "320px/100%: IME Escape keeps the Focus editor and its text",
+        "320px/100% Focus: confirmation takes keyboard focus",
+        "320px/100% Focus: the focused choice is fully visible inside its reading surface",
+        "320px/100% Focus: choices have separated rows, usable targets and no horizontal overflow",
+        "320px/100% Focus: keyboard reaches and reveals the last choice",
+        "320px/100%: continuing a draft restores typing focus and the same text",
+        "320px/100% Records: confirmation takes keyboard focus",
+        "320px/100% Records: the focused choice is fully visible inside its reading surface",
+        "320px/100% Records: choices have separated rows, usable targets and no horizontal overflow",
+        "320px/100% Records: keyboard reaches and reveals the last choice",
+        "320px/100%: discard-and-switch opens the selected note with typing focus",
+        "320px/100%: IME Escape keeps the Records editor in its chapter",
+        "320px/100%: save-and-switch opens one blank draft and retains the saved note once",
+        "320px/100%: ordinary Escape returns to the source note",
+        "320px/100%: legacy IME Enter does not submit a search",
+        "320px/100%: ordinary search still finds the saved note",
+        "320px/100%: writing and navigation never start a timer",
+        "320px/200%: IME Escape keeps the Focus editor and its text",
+        "320px/200% Focus: confirmation takes keyboard focus",
+        "320px/200% Focus: the focused choice is fully visible inside its reading surface",
+        "320px/200% Focus: choices have separated rows, usable targets and no horizontal overflow",
+        "320px/200% Focus: keyboard reaches and reveals the last choice",
+        "320px/200%: continuing a draft restores typing focus and the same text",
+        "320px/200% Records: confirmation takes keyboard focus",
+        "320px/200% Records: the focused choice is fully visible inside its reading surface",
+        "320px/200% Records: choices have separated rows, usable targets and no horizontal overflow",
+        "320px/200% Records: keyboard reaches and reveals the last choice",
+        "320px/200%: discard-and-switch opens the selected note with typing focus",
+        "320px/200%: IME Escape keeps the Records editor in its chapter",
+        "320px/200%: save-and-switch opens one blank draft and retains the saved note once",
+        "320px/200%: ordinary Escape returns to the source note",
+        "320px/200%: legacy IME Enter does not submit a search",
+        "320px/200%: ordinary search still finds the saved note",
+        "320px/200%: writing and navigation never start a timer",
+        "375px/100%: IME Escape keeps the Focus editor and its text",
+        "375px/100% Focus: confirmation takes keyboard focus",
+        "375px/100% Focus: the focused choice is fully visible inside its reading surface",
+        "375px/100% Focus: choices have separated rows, usable targets and no horizontal overflow",
+        "375px/100% Focus: keyboard reaches and reveals the last choice",
+        "375px/100%: continuing a draft restores typing focus and the same text",
+        "375px/100% Records: confirmation takes keyboard focus",
+        "375px/100% Records: the focused choice is fully visible inside its reading surface",
+        "375px/100% Records: choices have separated rows, usable targets and no horizontal overflow",
+        "375px/100% Records: keyboard reaches and reveals the last choice",
+        "375px/100%: discard-and-switch opens the selected note with typing focus",
+        "375px/100%: IME Escape keeps the Records editor in its chapter",
+        "375px/100%: save-and-switch opens one blank draft and retains the saved note once",
+        "375px/100%: ordinary Escape returns to the source note",
+        "375px/100%: legacy IME Enter does not submit a search",
+        "375px/100%: ordinary search still finds the saved note",
+        "375px/100%: writing and navigation never start a timer",
+        "375px/200%: IME Escape keeps the Focus editor and its text",
+        "375px/200% Focus: confirmation takes keyboard focus",
+        "375px/200% Focus: the focused choice is fully visible inside its reading surface",
+        "375px/200% Focus: choices have separated rows, usable targets and no horizontal overflow",
+        "375px/200% Focus: keyboard reaches and reveals the last choice",
+        "375px/200%: continuing a draft restores typing focus and the same text",
+        "375px/200% Records: confirmation takes keyboard focus",
+        "375px/200% Records: the focused choice is fully visible inside its reading surface",
+        "375px/200% Records: choices have separated rows, usable targets and no horizontal overflow",
+        "375px/200% Records: keyboard reaches and reveals the last choice",
+        "375px/200%: discard-and-switch opens the selected note with typing focus",
+        "375px/200%: IME Escape keeps the Records editor in its chapter",
+        "375px/200%: save-and-switch opens one blank draft and retains the saved note once",
+        "375px/200%: ordinary Escape returns to the source note",
+        "375px/200%: legacy IME Enter does not submit a search",
+        "375px/200%: ordinary search still finds the saved note",
+        "375px/200%: writing and navigation never start a timer",
+        "430px/100%: IME Escape keeps the Focus editor and its text",
+        "430px/100% Focus: confirmation takes keyboard focus",
+        "430px/100% Focus: the focused choice is fully visible inside its reading surface",
+        "430px/100% Focus: choices have separated rows, usable targets and no horizontal overflow",
+        "430px/100% Focus: keyboard reaches and reveals the last choice",
+        "430px/100%: continuing a draft restores typing focus and the same text",
+        "430px/100% Records: confirmation takes keyboard focus",
+        "430px/100% Records: the focused choice is fully visible inside its reading surface",
+        "430px/100% Records: choices have separated rows, usable targets and no horizontal overflow",
+        "430px/100% Records: keyboard reaches and reveals the last choice",
+        "430px/100%: discard-and-switch opens the selected note with typing focus",
+        "430px/100%: IME Escape keeps the Records editor in its chapter",
+        "430px/100%: save-and-switch opens one blank draft and retains the saved note once",
+        "430px/100%: ordinary Escape returns to the source note",
+        "430px/100%: legacy IME Enter does not submit a search",
+        "430px/100%: ordinary search still finds the saved note",
+        "430px/100%: writing and navigation never start a timer",
+        "430px/200%: IME Escape keeps the Focus editor and its text",
+        "430px/200% Focus: confirmation takes keyboard focus",
+        "430px/200% Focus: the focused choice is fully visible inside its reading surface",
+        "430px/200% Focus: choices have separated rows, usable targets and no horizontal overflow",
+        "430px/200% Focus: keyboard reaches and reveals the last choice",
+        "430px/200%: continuing a draft restores typing focus and the same text",
+        "430px/200% Records: confirmation takes keyboard focus",
+        "430px/200% Records: the focused choice is fully visible inside its reading surface",
+        "430px/200% Records: choices have separated rows, usable targets and no horizontal overflow",
+        "430px/200% Records: keyboard reaches and reveals the last choice",
+        "430px/200%: discard-and-switch opens the selected note with typing focus",
+        "430px/200%: IME Escape keeps the Records editor in its chapter",
+        "430px/200%: save-and-switch opens one blank draft and retains the saved note once",
+        "430px/200%: ordinary Escape returns to the source note",
+        "430px/200%: legacy IME Enter does not submit a search",
+        "430px/200%: ordinary search still finds the saved note",
+        "430px/200%: writing and navigation never start a timer",
+        "Interaction regression flows have no runtime or console errors"
+      ],
+      "errors": [],
+      "physicalDevice": false,
+      "ime": "Synthetic composing/keyCode events; physical IME acceptance remains separate"
+    }
+  },
+  "v5Compatibility": {
+    "archivedCommit": "5119d1a863d89cf1201358d2e4a8addfc6b8e841",
+    "currentVersion": 10,
+    "checks": [
+      "v5 active timer and assignment preserved",
+      "v10 migration committed",
+      "real v5 decoder rejects v10",
+      "received update blocks old writer",
+      "missed storage event still blocks old writer under transaction",
+      "cold v5 load read-only"
+    ],
+    "result": "pass"
+  },
+  "beforeFix": {
+    "slowSettings": {
+      "initial": 28,
+      "afterFirstReceipt": 26,
+      "finalSaved": 27,
+      "expected": 29
+    },
+    "draftSwitch": {
+      "display": "block",
+      "gap": "normal",
+      "focusAfterContinue": "document.body"
+    },
+    "imeEscape": {
+      "keptFocusEditor": false
+    },
+    "storage": {
+      "newFailingCases": 3,
+      "cases": [
+        "peer pause vs provisional deadline",
+        "peer resumed deadline vs provisional deadline",
+        "peer pause vs conflicting manual elapsed time"
+      ]
+    }
+  }
+}

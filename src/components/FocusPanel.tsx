@@ -112,6 +112,7 @@ export function FocusPanel({ title, onClose, onBack = onClose, timerSummary, chi
       onCancel={event => { event.preventDefault(); onBack() }}
       onFocus={event => revealInPanel(event.currentTarget, event.target)}
       onKeyDown={event => {
+        if (event.defaultPrevented || event.nativeEvent.isComposing || event.nativeEvent.keyCode === 229) return
         if (event.key === 'Escape') { event.preventDefault(); event.stopPropagation(); onBack(); return }
         if (event.key !== 'Tab') return
         const items = [...event.currentTarget.querySelectorAll<HTMLElement>('button:not(:disabled), input:not(:disabled), textarea:not(:disabled), select:not(:disabled), a[href], [tabindex]:not([tabindex="-1"])')]

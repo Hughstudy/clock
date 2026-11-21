@@ -25,7 +25,7 @@ export function SettingsScreen({ form, canEdit, onBack, systemNoticeSummary, sys
   const drag = useSheetDrag(sheet, onBack)
   return (
     <section ref={sheet} className="screen settings" aria-labelledby="settings-title"
-      onKeyDown={event => { if (event.key === 'Escape' && !event.defaultPrevented) { event.preventDefault(); onBack() } }}>
+      onKeyDown={event => { if (event.key === 'Escape' && !event.defaultPrevented && !event.nativeEvent.isComposing && event.nativeEvent.keyCode !== 229) { event.preventDefault(); onBack() } }}>
       <header className="settings-header" {...drag}>
         <button type="button" className="pill pill--ghost settings-close" aria-label="回到专注" onClick={onBack}>
           <svg viewBox="0 0 16 16" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="m4 4 8 8m0-8-8 8"/></svg>

@@ -92,7 +92,16 @@ export function useBookNavigation(props: Pick<RecordsBookInput, 'view' | 'favori
             parseFloat(getComputedStyle(body).paddingBlockEnd) + desired - body.scrollHeight + body.clientHeight + 'px'
         }
         body.scrollTop = Math.max(0, desired)
-      } else body.scrollTop = top
+      } else {
+        body.scrollTop = top
+        // A large-text editor or draft prompt can place its first control below
+        // the fold. Keep explicit entry focus visible without moving an anchored return.
+        if (target !== body && body.contains(target)) {
+          const bounds = body.getBoundingClientRect(), item = target.getBoundingClientRect()
+          if (item.bottom > bounds.bottom) body.scrollTop += item.bottom - bounds.bottom
+          else if (item.top < bounds.top) body.scrollTop += item.top - bounds.top
+        }
+      }
     }
     Object.assign(place, { location: where })
     if (!where.detail || where.detail.kind === 'results') place.chapters[chapter] = where
@@ -194,7 +203,7 @@ export function useBookNavigation(props: Pick<RecordsBookInput, 'view' | 'favori
   backRef.current = back
   useLayoutEffect(() => {
     const close = (e: KeyboardEvent) => {
-      if (e.defaultPrevented || e.isComposing || e.key !== 'Escape' || !place.trail.length) return
+      if (e.defaultPrevented || e.isComposing || e.keyCode === 229 || e.key !== 'Escape' || !place.trail.length) return
       e.preventDefault()
       backRef.current()
     }

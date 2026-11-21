@@ -119,7 +119,7 @@ One-time setup: in the repository's **Settings → Pages**, set **Source** to
 
 ## Current verification
 
-See the [Records structure verification](docs/verification/records-structure.md) for the latest refactor and the [November 6 structure report](docs/verification/code-structure.md) for the earlier cleanup and the [phone layout and room verification](docs/verification/companion-first.md) for the November 3 changes and the [v35 interaction report](docs/verification/interaction-v35.md) for the earlier increment. Physical-phone and screen-reader acceptance remain open.
+See the [interaction bug review](docs/verification/interaction-bug-review.md) for the latest corrections, the [Records structure verification](docs/verification/records-structure.md) for the latest refactor and the [November 6 structure report](docs/verification/code-structure.md) for the earlier cleanup and the [phone layout and room verification](docs/verification/companion-first.md) for the November 3 changes and the [v35 interaction report](docs/verification/interaction-v35.md) for the earlier increment. Physical-phone and screen-reader acceptance remain open.
 
 ## Credits
 

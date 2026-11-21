@@ -82,12 +82,12 @@ function sameTimerPosition(a: TimerState, b: TimerState): boolean {
 }
 
 /** A pending end can follow a competing pause or resume only if the saved clock agrees. */
-function matchesRestPosition(rest: RestMemory, disk: AppSnapshot): boolean {
+function matchesEndingPosition(ending: Pick<RestMemory, 'sessionId' | 'endReason' | 'endedAt' | 'elapsedMs'>, disk: AppSnapshot): boolean {
   const session = disk.timer.session
-  if (session?.id !== rest.sessionId) return false
-  if (rest.endReason === 'deadline') return session.status === 'running' && session.deadline === rest.endedAt
-  if (rest.endReason !== 'manual' || (session.status === 'running' && session.deadline <= rest.endedAt)) return false
-  return rest.elapsedMs === session.durationMs - remainingMs(disk.timer, disk.settings, rest.endedAt)
+  if (session?.id !== ending.sessionId) return false
+  if (ending.endReason === 'deadline') return session.status === 'running' && session.deadline === ending.endedAt
+  if (ending.endReason !== 'manual' || (session.status === 'running' && session.deadline <= ending.endedAt)) return false
+  return ending.elapsedMs === session.durationMs - remainingMs(disk.timer, disk.settings, ending.endedAt)
 }
 
 /**
@@ -223,11 +223,7 @@ export class SnapshotStore {
     if (!base || disk.datasetGeneration !== base.datasetGeneration || local.datasetGeneration !== base.datasetGeneration) return merged
     const draftOwner = disk.draftStamp === base.draftStamp ? local : disk
     const durableRecords = new Map(disk.records.map(record => [record.sessionId, record]))
-    const records = merged.records.map(record => durableRecords.get(record.sessionId) ?? record)
     const durableRests = new Map(disk.restMemories.map(rest => [rest.sessionId, rest]))
-    const disputedCompletions = local.records.filter(r => r.endReason === 'deadline' && durableRecords.get(r.sessionId)?.endReason === 'manual').length
-    const completed = Math.max(local.timer.completedFocusCount - disputedCompletions, disk.timer.completedFocusCount,
-      records.filter(r => r.endReason === 'deadline').length)
 
     // Phase, session identity and its deadline/paused amount form one position.
     // Even an ended zero-second session advances the corresponding scene cursor.
@@ -235,12 +231,22 @@ export class SnapshotStore {
     const positionChanged = !sameTimerPosition(base.timer, disk.timer)
     const diskMoved = positionChanged || disk.restSuggestionSessionId !== base.restSuggestionSessionId || diskStartedAnother
     const diskActive = disk.timer.session
-    // A failed read may have settled a rest from its old clock. If the saved
+    // A failed read may have settled a session from its old clock. If the saved
     // timer has since paused or resumed on a different timeline, that ending
     // cannot establish elapsed time. Reconcile the saved position on retry.
-    const contested = diskActive && positionChanged && disk.timer.phase !== 'focus' && base.timer.session?.id === diskActive.id
-      ? local.restMemories.find(rest => rest.sessionId === diskActive.id && !durableRests.has(rest.sessionId)) : null
-    const staleRestId = contested && !matchesRestPosition(contested, disk) ? contested.sessionId : null
+    const contested = diskActive && positionChanged && base.timer.session?.id === diskActive.id
+      ? disk.timer.phase === 'focus'
+        ? local.records.find(record => record.sessionId === diskActive.id && !durableRecords.has(record.sessionId))
+        : local.restMemories.find(rest => rest.sessionId === diskActive.id && !durableRests.has(rest.sessionId))
+      : null
+    const staleEndId = contested && !matchesEndingPosition(contested, disk) ? contested.sessionId : null
+    const staleFocusId = disk.timer.phase === 'focus' ? staleEndId : null
+    const staleRestId = disk.timer.phase !== 'focus' ? staleEndId : null
+    const records = merged.records.filter(record => record.sessionId !== staleFocusId).map(record => durableRecords.get(record.sessionId) ?? record)
+    const disputedCompletions = local.records.filter(r => r.endReason === 'deadline' &&
+      (r.sessionId === staleFocusId || durableRecords.get(r.sessionId)?.endReason === 'manual')).length
+    const completed = Math.max(local.timer.completedFocusCount - disputedCompletions, disk.timer.completedFocusCount,
+      records.filter(r => r.endReason === 'deadline').length)
     const restMemories = merged.restMemories.filter(rest => rest.sessionId !== staleRestId).map(rest => durableRests.get(rest.sessionId) ?? rest)
     const localEndedDiskSession = !!diskActive && (disk.timer.phase === 'focus'
       ? records.some(r => r.sessionId === diskActive.id)

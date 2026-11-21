@@ -1,5 +1,5 @@
 import { focusCopy as copy } from '../data/focus-copy'
-import { useRef } from 'react'
+import { useLayoutEffect, useRef } from 'react'
 import type { Thoughts } from '../hooks/useThoughts'
 
 interface Props {
@@ -10,14 +10,24 @@ interface Props {
 /** The host owns the task surface. Editing text never dispatches a timer command. */
 export function ThoughtPanel({ thoughts, canEdit }: Props) {
   const composing = useRef(false)
+  const switchPrompt = useRef<HTMLDivElement>(null)
+  const textInput = useRef<HTMLTextAreaElement>(null)
+  const switching = useRef(thoughts.pendingEdit)
+  useLayoutEffect(() => {
+    const wasSwitching = switching.current
+    switching.current = thoughts.pendingEdit
+    if (thoughts.pendingEdit) switchPrompt.current?.querySelector<HTMLButtonElement>('button:not(:disabled)')?.focus()
+    else if (wasSwitching) textInput.current?.focus()
+  }, [thoughts.pendingEdit])
   const tooLong = thoughts.length > thoughts.maxLength
   const clearing = thoughts.clearingExistingText
+  const canSaveCurrent = canEdit && thoughts.canSave && !thoughts.saving
   if (thoughts.pendingEdit) return (
-    <div className="focus-task__body">
+    <div ref={switchPrompt} className="thought-switch">
       <p>{copy.switchDraft}</p>
-      <button type="button" className="btn btn-primary" disabled={!canEdit || !thoughts.canSave || thoughts.saving}
+      <button type="button" className="btn btn-primary" data-initial-focus={canSaveCurrent || undefined} disabled={!canSaveCurrent}
         onClick={thoughts.saveAndSwitch}>保存当前想法后继续</button>
-      <button type="button" className="btn btn-secondary" onClick={thoughts.cancelSwitch}>{copy.keepDraft}</button>
+      <button type="button" className="btn btn-secondary" data-initial-focus={!canSaveCurrent || undefined} onClick={thoughts.cancelSwitch}>{copy.keepDraft}</button>
       <button type="button" className="btn btn-secondary" onClick={thoughts.discardAndSwitch}>{copy.discardAndSwitch}</button>
     </div>
   )
@@ -29,7 +39,7 @@ export function ThoughtPanel({ thoughts, canEdit }: Props) {
       <label htmlFor="thought-text" className="thought-title">
         {thoughts.isExisting ? copy.existingText : copy.newText}
       </label>
-      <textarea id="thought-text" rows={3} data-initial-focus value={thoughts.text}
+      <textarea ref={textInput} id="thought-text" rows={3} data-initial-focus value={thoughts.text}
         placeholder={thoughts.isExisting ? undefined : copy.thoughtPlaceholder}
         readOnly={!canEdit} aria-describedby="thought-length" aria-invalid={tooLong}
         onCompositionStart={() => { composing.current = true }}
