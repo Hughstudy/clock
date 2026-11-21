@@ -19,7 +19,7 @@ import { useStatsView, useTimerView } from './hooks/useViews'
 import { HomeScreen } from './screens/HomeScreen'
 import { SettingsScreen } from './screens/SettingsScreen'
 import { RecordsScreen } from './screens/RecordsScreen'
-import type { BookVisit } from './components/records/book/navigation'
+import type { BookVisit } from './hooks/records/book-navigation'
 
 // Fast refresh only while a countdown is visible; otherwise often enough to roll over at midnight.
 const RUNNING_REFRESH_MS = 250

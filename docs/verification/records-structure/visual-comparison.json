@@ -1,0 +1,326 @@
+{
+  "browser": "153.0.8010.0",
+  "errors": [],
+  "comparisons": [
+    {
+      "name": "1024-768-1-favorites",
+      "identical": true,
+      "changedPixels": 0,
+      "bounds": null,
+      "textIdentical": true,
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "name": "1024-768-1-focus",
+      "identical": true,
+      "changedPixels": 0,
+      "bounds": null,
+      "textIdentical": true,
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "name": "1024-768-1-room",
+      "identical": true,
+      "changedPixels": 0,
+      "bounds": null,
+      "textIdentical": true,
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "name": "1024-768-1-settings",
+      "identical": true,
+      "changedPixels": 0,
+      "bounds": null,
+      "textIdentical": true,
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "name": "1024-768-1-story",
+      "identical": true,
+      "changedPixels": 0,
+      "bounds": null,
+      "textIdentical": true,
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "name": "1024-768-1-thoughts",
+      "identical": true,
+      "changedPixels": 0,
+      "bounds": null,
+      "textIdentical": true,
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "name": "1024-768-1-writing",
+      "identical": true,
+      "changedPixels": 0,
+      "bounds": null,
+      "textIdentical": true,
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "name": "320-568-1-favorites",
+      "identical": false,
+      "changedPixels": 1,
+      "bounds": [
+        274,
+        68,
+        275,
+        69
+      ],
+      "textIdentical": true,
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "name": "320-568-1-focus",
+      "identical": true,
+      "changedPixels": 0,
+      "bounds": null,
+      "textIdentical": true,
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "name": "320-568-1-room",
+      "identical": true,
+      "changedPixels": 0,
+      "bounds": null,
+      "textIdentical": true,
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "name": "320-568-1-settings",
+      "identical": true,
+      "changedPixels": 0,
+      "bounds": null,
+      "textIdentical": true,
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "name": "320-568-1-story",
+      "identical": true,
+      "changedPixels": 0,
+      "bounds": null,
+      "textIdentical": true,
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "name": "320-568-1-thoughts",
+      "identical": true,
+      "changedPixels": 0,
+      "bounds": null,
+      "textIdentical": true,
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "name": "320-568-1-writing",
+      "identical": true,
+      "changedPixels": 0,
+      "bounds": null,
+      "textIdentical": true,
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "name": "375-812-1-favorites",
+      "identical": true,
+      "changedPixels": 0,
+      "bounds": null,
+      "textIdentical": true,
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "name": "375-812-1-focus",
+      "identical": true,
+      "changedPixels": 0,
+      "bounds": null,
+      "textIdentical": true,
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "name": "375-812-1-room",
+      "identical": true,
+      "changedPixels": 0,
+      "bounds": null,
+      "textIdentical": true,
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "name": "375-812-1-settings",
+      "identical": true,
+      "changedPixels": 0,
+      "bounds": null,
+      "textIdentical": true,
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "name": "375-812-1-story",
+      "identical": true,
+      "changedPixels": 0,
+      "bounds": null,
+      "textIdentical": true,
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "name": "375-812-1-thoughts",
+      "identical": true,
+      "changedPixels": 0,
+      "bounds": null,
+      "textIdentical": true,
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "name": "375-812-1-writing",
+      "identical": true,
+      "changedPixels": 0,
+      "bounds": null,
+      "textIdentical": true,
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "name": "375-812-2-favorites",
+      "identical": true,
+      "changedPixels": 0,
+      "bounds": null,
+      "textIdentical": true,
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "name": "375-812-2-focus",
+      "identical": true,
+      "changedPixels": 0,
+      "bounds": null,
+      "textIdentical": true,
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "name": "375-812-2-room",
+      "identical": true,
+      "changedPixels": 0,
+      "bounds": null,
+      "textIdentical": true,
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "name": "375-812-2-settings",
+      "identical": true,
+      "changedPixels": 0,
+      "bounds": null,
+      "textIdentical": true,
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "name": "375-812-2-story",
+      "identical": true,
+      "changedPixels": 0,
+      "bounds": null,
+      "textIdentical": true,
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "name": "375-812-2-thoughts",
+      "identical": true,
+      "changedPixels": 0,
+      "bounds": null,
+      "textIdentical": true,
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "name": "375-812-2-writing",
+      "identical": true,
+      "changedPixels": 0,
+      "bounds": null,
+      "textIdentical": true,
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "name": "430-932-1-favorites",
+      "identical": true,
+      "changedPixels": 0,
+      "bounds": null,
+      "textIdentical": true,
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "name": "430-932-1-focus",
+      "identical": true,
+      "changedPixels": 0,
+      "bounds": null,
+      "textIdentical": true,
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "name": "430-932-1-room",
+      "identical": true,
+      "changedPixels": 0,
+      "bounds": null,
+      "textIdentical": true,
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "name": "430-932-1-settings",
+      "identical": true,
+      "changedPixels": 0,
+      "bounds": null,
+      "textIdentical": true,
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "name": "430-932-1-story",
+      "identical": true,
+      "changedPixels": 0,
+      "bounds": null,
+      "textIdentical": true,
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "name": "430-932-1-thoughts",
+      "identical": true,
+      "changedPixels": 0,
+      "bounds": null,
+      "textIdentical": true,
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "name": "430-932-1-writing",
+      "identical": true,
+      "changedPixels": 0,
+      "bounds": null,
+      "textIdentical": true,
+      "overflowBefore": false,
+      "overflowAfter": false
+    }
+  ]
+}

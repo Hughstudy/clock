@@ -1,5 +1,5 @@
 import type { RecordsProps } from './props'
-import type { Note } from '../../../hooks/records/book'
+import type { Note } from '../../../hooks/records/book-data'
 import { savedDay } from './data'
 import { PageHead } from './BookPaper'
 import { formatMinutes } from '../../format'

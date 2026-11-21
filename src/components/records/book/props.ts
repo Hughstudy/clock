@@ -1,21 +1,14 @@
-import type {MutableRefObject, ReactNode} from 'react'
-import type {Persistence,StoreNotice} from '../../../adapters/storage'
-import type {QuoteFavoritesController} from '../../../contracts/favorites'
-import type {Thoughts} from '../../../hooks/useThoughts'
-import type {StatsView} from '../../../hooks/useViews'
-import type {BookVisit} from './navigation'
+import type { ReactNode } from 'react'
+import type { RecordsBookInput } from '../../../hooks/records/types'
+import type { RecordsBook } from '../../../hooks/records/useRecordsBook'
 
-export interface RecordsProps {
-  view: StatsView
-  thoughts: Thoughts
+export interface RecordsProps extends RecordsBookInput {
   canEdit: boolean
-  favorites?: QuoteFavoritesController
-  systemNoticeSummary?: string | null
-  systemNotices?: ReactNode
-  onAnnounce?: (text: string) => void
-  persistence: Persistence
-  notice: StoreNotice | null
-  hasSaveError: boolean
   showArt: boolean
-  visit: MutableRefObject<BookVisit | null>
+  systemNotices?: ReactNode
+}
+
+export interface BookViewProps {
+  props: RecordsProps
+  book: RecordsBook
 }

@@ -1,6 +1,6 @@
 # Code map
 
-Read the [product map](prd/README.md) for requirements, this file for implementation entry points, and [PLAN.md](../PLAN.md) for unfinished work. The [structure verification](verification/code-structure.md) records this refactor's evidence. This is a code map, not another task or ownership board.
+Read the [product map](prd/README.md) for requirements, this file for implementation entry points, and [PLAN.md](../PLAN.md) for unfinished work. The [Records structure verification](verification/records-structure.md) records the latest refactor; the [November 6 report](verification/code-structure.md) preserves the earlier snapshot and runtime cleanup. This is a code map, not another task or ownership board.
 
 ## Dependency direction
 
@@ -11,14 +11,16 @@ Screens and components render read-only views and dispatch intent. Hooks coordin
 | Root navigation, announcements, update protection | `src/App.tsx`, `hooks/useScreenNavigation.ts`, `hooks/useFocusTaskBack.ts` | One browser-history owner and one app-level live region; input and pending writes block updates |
 | Focus preparation and timer controls | `screens/HomeScreen.tsx`, `hooks/useDurationChoice.ts`, `components/FocusPanel.tsx` | Choosing a duration does not start it |
 | Focus card stepping aside and full-screen room | `hooks/useFocusChrome.ts`, `logic/focus-chrome.ts`, `hooks/useSceneFit.ts`, `logic/scene-fit.ts` (`wideRoomFit`, `shownTimeDrop`, `awayGroup`), `styles/focus-v35.css` | Presentation only: never reads or writes timer state; a pat never calls the card; scale the room, never the creature; in portrait the time sits one bubble above the head in every state, and while the card is away the spare height is shared between sky and floor |
-| Bottom sheets and confirmations | `components/FocusPanel.tsx`, `components/FocusTaskDialog.tsx`, `components/ConfirmPopover.tsx`, `hooks/useSheetDrag.ts`, `screens/SettingsScreen.tsx`, `logic/scene-fit.ts` (`fitSceneArt`) | One modal surface at a time over an inert page; closing keeps drafts; a stray tap on the dimmed page closes nothing; the companion looks over a sheet at its own size or steps out |
+| Bottom sheets and confirmations | `components/FocusPanel.tsx`, `components/ConfirmPopover.tsx`, `hooks/useSheetDrag.ts`, `screens/SettingsScreen.tsx`, `logic/scene-fit.ts` (`fitSceneArt`) | One modal surface at a time over an inert page; closing keeps drafts; a stray tap on the dimmed page closes nothing; the companion looks over a sheet at its own size or steps out |
 | Timing and session settlement | `logic/timer.ts`, `logic/app.ts`, `hooks/useClockApp.ts` | Deadline-based accounting; one transaction coordinator; stable session IDs |
 | Thought editor and recovery | `hooks/useThoughts.ts`, `logic/thoughts.ts`, `components/ThoughtPanel.tsx` | Preserve ownership, drafts, revisions and pending-save truth |
 | Encouragement policy and quote favorites | `hooks/useFeedback.ts`, `logic/feedback-host.ts`, `logic/feedback.ts`, `hooks/useQuoteFavorites.ts` | Main logic decides eligibility and save truth; animation consumes permitted cues |
-| Records layout | `screens/RecordsScreen.tsx`, `components/records/book/` | Pages for memories, thoughts, room stamps and favorites, with secondary statistics and status |
-| Records browsing and return position | `components/records/book/navigation.ts`, `screens/RecordsScreen.tsx` | Each breadcrumb carries its chapter, item and reading position for the return page turn |
-| Records query and saved-only totals | `hooks/records/book.ts`, `logic/records-query.ts`, `hooks/useViews.ts`, `logic/stats.ts` | Combined focus/rest history, full-list thought search and 20-item pages. Totals use confirmed focus records |
-| Settings | `screens/SettingsScreen.tsx`, `hooks/useSettingsForm.ts`, `logic/settings.ts` | New settings apply to future sessions |
+| Records layout | `screens/RecordsScreen.tsx`, `components/records/book/` | Screen shell, chapter roots, detail routing, shared memory leaf and footer compose the existing book |
+| Records browsing and return position | `hooks/records/useBookNavigation.ts`, `hooks/records/book-navigation.ts` | Each breadcrumb carries its chapter, item, search input and reading position; browser effects stay in the hook |
+| Records editing and page intents | `hooks/records/useRecordsBook.ts`, `hooks/records/types.ts` | One coordinator connects reading to existing thought/favorite controllers; it never persists independently |
+| Records query and saved-only totals | `hooks/records/book-data.ts`, `logic/records-query.ts`, `hooks/useViews.ts`, `logic/stats.ts` | Combined focus/rest history, full-list thought search and 20-item pages. Totals use confirmed focus records |
+| Settings | `screens/SettingsScreen.tsx`, `hooks/useSettingsForm.ts`, `logic/settings.ts`, `styles/settings.css` | New settings apply to future sessions |
+| Shared stylesheet entry | `styles/app.css`, `styles/thoughts.css` | App and Focus preview import the same ordered cascade; the book imports its own scoped CSS |
 | Snapshot format and compatibility | `logic/snapshot.ts`, `logic/snapshot/` | Keep the stable entry point; protect old and newer raw data |
 | Storage and concurrency | `adapters/storage.ts`, `adapters/browser-store.ts`, `adapters/locks.ts` | Read latest, transition, write under one short lock |
 | Companion appearance and motion | `components/companion/`, `hooks/companion/`, `logic/scene-*.ts`, `data/scene-*.ts` | Rendering can be interrupted or disabled without changing saved facts |
@@ -46,9 +48,28 @@ Snapshot v10 adds durable ended rests keyed by session ID. A v9 snapshot can sup
 
 ## Records modules
 
-`RecordsScreen` composes the current book page and retains the reading position across navigation. `BookPaper` draws its shared page elements, `BookWriting` presents thoughts and saved quotes, and `BookTools` presents the month picker, statistics and status. Edits go through the app's existing writing controllers. `motion.ts` animates an inert copy of a page while its destination already accepts input.
+`RecordsScreen` composes the book shell and ribbon tabs. It consumes `useRecordsBook` and renders views; it does not own navigation effects, save transactions or queries.
+
+| Module | Responsibility |
+| --- | --- |
+| `hooks/records/useBookNavigation.ts` | Reading visit, chapter/page history, keyboard/swipe intents, inert page-turn animation, scroll and focus restoration |
+| `hooks/records/useRecordsBook.ts` | Search/month/page intents, writing and deletion return, undo location, saved-state feedback, accessible page labels |
+| `hooks/records/book-navigation.ts` | Visit/location types, initial chapter state and DOM anchor helpers; the app retains the visit across screen changes |
+| `hooks/records/book-data.ts` | Project existing read-only views into memory pages and notes, then memoize the chapter's entries |
+| `logic/records-query.ts` | Pure month/text filtering, full-list search, memory order, activity source indexes and 20-item page windows |
+| `components/records/book/BookChapters.tsx` | The four chapter roots: memories, thoughts, room and favorites |
+| `components/records/book/BookContent.tsx` | Route reading/editing detail pages within the current chapter |
+| `components/records/book/BookMemory.tsx` | One memory leaf shared by the main chapter and room source details |
+| `components/records/book/BookFooter.tsx` | Contextual return and page navigation |
+| `components/records/book/BookPaper.tsx`, `BookWriting.tsx`, `BookTools.tsx` | Reusable paper elements, thought/quote reading, filters, pagination, statistics and status |
+
+Edits still go through the app's existing writing controllers. `motion.ts` animates an inert copy while the destination already accepts input. Confirmed-only search and artwork eligibility are applied before page slicing; pending history and unknown dates remain visible with their existing meaning.
 
 ## Cleanup decisions
+
+The November 21 pass traced the current book, both application entry points and browser scripts. It removed the superseded list browser, old record/room/notebook components, the unused `FocusTaskDialog`, and five obsolete Records stylesheets. Shared thought editing and Settings styles now have their own files; `styles/app.css` keeps the app and Focus preview aligned. The former list-query implementation was replaced by the primitives actually consumed by the book. Tests now cover those live queries and their view projection.
+
+The earlier November 6 decisions remain relevant:
 
 1. **Trace actual consumers.** Most existing layers are useful. The old character renderer and pose data were used only by legacy tests and the retained install icon. `data/scene-rules.ts` was a forwarding file used by one test. The old `verify-focus.cjs` still clicked retired controls and was superseded by the production suite.
 2. **Compare module boundaries.** Keep the established logic/adapter/hook/view architecture. A repository-wide move to feature folders would cause unrelated import churn; splitting every small function would scatter coupled behavior. Split the real responsibility boundaries: snapshot migration/validation/merge, Records composition/browsing, runtime settings/icon tooling, and shared browser selection.

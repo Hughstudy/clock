@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import type { Page } from '../../../hooks/records/book'
+import type { Page } from '../../../hooks/records/book-data'
 import { art } from './data'
 
 interface PictureProps {

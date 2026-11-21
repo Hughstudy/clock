@@ -1,0 +1,5 @@
+/* Thought editor shared by Focus and the Records book. */
+.thought-form textarea { width: 100%; min-height: 44px; padding: 10px 14px; border: 1px solid var(--line); border-radius: 14px; background: #fff; color: var(--ink); font: inherit; font-size: 1rem; }.thought-form { width: 100%; display: grid; gap: 8px; padding: 12px; border: 1px solid var(--line); border-radius: 18px; background: #fff; text-align: start; }
+.thought-title { font-size: .875rem; font-weight: 700; }
+.thought-form textarea { resize: vertical; }
+.thought-form-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 4px; }.panel-save-error { margin: .5rem 0 0; color: #71400c; }

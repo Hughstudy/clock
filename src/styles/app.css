@@ -1,0 +1,6 @@
+/* Shared cascade for the application and its isolated Focus preview. */
+@import '../styles.css';
+@import './focus.css';
+@import './settings.css';
+@import './thoughts.css';
+@import './focus-v35.css';

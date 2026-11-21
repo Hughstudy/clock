@@ -197,8 +197,8 @@ body { background: var(--paper); }
 .focus-panel { position: absolute; z-index: 5; inset: auto 10px calc(var(--art-clear, 0px) + 8px); max-block-size: calc(100% - var(--art-clear, 0px) - 64px - env(safe-area-inset-top)); overflow-y: auto;
   padding: 12px 16px 14px; border-radius: var(--radius-card); background: #fff; box-shadow: 0 6px 22px #3c5a8229; text-align: start; overscroll-behavior: contain; }
 /* Panels rise in over 240 ms; they close at once so focus and controls never wait. */
-.focus-panel[open], .focus-task[open] { transition: opacity var(--dur-panel) var(--ease-out), translate var(--dur-panel) var(--ease-out); }
-@starting-style { .focus-panel[open], .focus-task[open] { opacity: 0; translate: 0 8px; } }
+.focus-panel[open] { transition: opacity var(--dur-panel) var(--ease-out), translate var(--dur-panel) var(--ease-out); }
+@starting-style { .focus-panel[open] { opacity: 0; translate: 0 8px; } }
 .focus-panel__header { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-block-size: 30px; }
 .focus-panel__header h2 { margin: 0; font-size: .95rem; color: var(--ink); }
 .focus-panel__header:has(h2.sr-only) { justify-content: flex-end; margin-bottom: -30px; }
@@ -243,7 +243,7 @@ body { background: var(--paper); }
 .focus-panel .thought-form-actions { justify-content: flex-end; }
 .focus-panel .thought-form .btn { min-block-size: 44px; padding: 0 16px; border-radius: 999px; font-size: .875rem; font-weight: 700; box-shadow: none; }
 .focus-panel .thought-form .btn-primary { background: var(--whale); color: #fff; inline-size: auto; min-inline-size: 0; }
-.focus-panel .thought-form .btn-primary:active:not(:disabled), .focus-task .btn-primary:active:not(:disabled) { filter: brightness(.94); box-shadow: none; }
+.focus-panel .thought-form .btn-primary:active:not(:disabled) { filter: brightness(.94); box-shadow: none; }
 .focus-panel .thought-form .btn-secondary { background: #f3f5f9; color: #5b6f8c; border: 0; }
 .focus-panel .field-hint, .focus-panel .field-error { margin: 0; font-size: .75rem; }
 
@@ -278,148 +278,10 @@ body { background: var(--paper); }
   .tab-bar { --tab-center: calc(100vw - var(--plate-end) - var(--plate-w) / 2); --bar-width: min(320px, var(--plate-w) - 32px); }
 }
 
-/* ---------- Settings: a sheet over Focus ---------- */
-/* The sheet covers the tab bar, as any modal does; the page behind is dimmed and out of reach. */
-.app[data-screen='settings'] .tab-bar { visibility: hidden; }
-.settings { position: fixed; z-index: 30; inset: max(44px, env(safe-area-inset-top) + 10px) 0 0; inline-size: min(100%, 640px); margin-inline: auto; gap: 0;
-  overflow-y: auto; overscroll-behavior: contain; padding: 0 max(16px, env(safe-area-inset-right)) calc(env(safe-area-inset-bottom) + 28px) max(16px, env(safe-area-inset-left));
-  border-radius: 34px 34px 0 0; background: #f6f0e4; box-shadow: 0 0 0 100vmax #14213b47, 0 -10px 44px #14213b40;
-  translate: 0 var(--drag, 0px); transition: opacity var(--dur-panel) var(--ease-out), translate var(--spring-gentle-duration) var(--spring-gentle); }
-@starting-style { .settings { opacity: 0; translate: 0 96px; } }
-.settings[data-dragging='true'] { transition: none; }
-.settings > * { flex: none; }
-.settings-header { position: sticky; inset-block-start: 0; z-index: 2; display: grid; grid-template-columns: 44px minmax(0, 1fr) 44px; align-items: center;
-  margin-inline: -8px; padding: 20px 0 8px; background: linear-gradient(#f6f0e4 82%, #f6f0e400); touch-action: none; cursor: grab; user-select: none; -webkit-user-select: none; }
-.settings-header::before { content: ''; position: absolute; inset-block-start: 9px; inset-inline-start: 50%; translate: -50% 0; inline-size: 38px; block-size: 5px; border-radius: 3px; background: #cfc7b8; }
-.settings-header .screen-title { grid-column: 2; margin: 0; text-align: center; font-size: 1.0625rem; font-weight: 700; }
-.settings-header .settings-close { inline-size: 44px; min-inline-size: 44px; min-height: 44px; padding: 0; display: grid; place-items: center; background: none; cursor: pointer; }
-.settings-close svg { inline-size: 30px; block-size: 30px; padding: 8px; border-radius: 50%; background: #e6dece; }
-/* Grouped rows: one white rounded group per topic, a hairline between rows, and the explanation
-   as a quiet note under the group. */
-.settings .settings-form, .settings fieldset { gap: 0; }
-.settings .settings-subhead { margin: 0; padding: 18px 16px 7px; border: 0; font-size: .8125rem; font-weight: 600; letter-spacing: 0; color: var(--muted); }
-.settings legend.settings-subhead { float: inline-start; inline-size: 100%; padding-block-start: 4px; }
-.settings legend.settings-subhead + * { clear: both; }
-.settings-group { border-radius: 22px; background: #fff; overflow: hidden; box-shadow: 0 1px 2px #3a2a140f; }
-.settings .hint + .settings-group { margin-block-start: 16px; }
-.settings .settings-about { margin-block-start: 28px; }
-.settings-row { position: relative; display: flex; align-items: center; justify-content: space-between; gap: 4px 12px; inline-size: 100%; min-block-size: 54px; margin: 0; padding: 5px 12px 5px 16px;
-  border: 0; border-radius: 0; background: none; font: inherit; font-size: 1.0625rem; font-weight: 500; color: var(--ink); text-align: start; }
-.settings-group > :not(:first-child)::before { content: ''; position: absolute; inset: 0 0 auto 16px; block-size: 1px; background: #efe6d6; }
-.settings .field { display: grid; grid-template-columns: minmax(0, 1fr) auto; }
-.settings .field label { font-weight: 500; }
-.settings-action { color: var(--whale-deep); cursor: pointer; }
-.settings-action:active:not(:disabled) { background: #f4eee2; }
-.settings-action:disabled { opacity: .45; cursor: default; }
-.settings :is(.settings-row, .settings-info > summary):focus-visible { outline-offset: -3px; border-radius: 14px; }
-.settings .hint { margin: 0; padding: 7px 16px 0; font-size: .8125rem; line-height: 1.4; }
-/* The value, then one capsule of minus and plus. Each half is a 44px target drawn 34px tall. */
-.settings .stepper { gap: 0; }
-.settings .stepper input { order: -1; inline-size: 3.4rem; min-height: 44px; padding-inline: 4px 12px; border: 0; background: none; font-size: 1.0625rem; font-weight: 600; text-align: end; font-variant-numeric: tabular-nums; }
-.settings .stepper input:focus-visible { outline-offset: -3px; border-radius: 12px; }
-.settings .step { position: relative; inline-size: 46px; block-size: 44px; border: solid transparent; border-width: 5px 0; background-clip: padding-box; border-radius: 999px 0 0 999px; background-color: #efe8da;
-  font-size: 1.25rem; font-weight: 500; line-height: 1; }
-.settings .step:last-child { border-radius: 0 999px 999px 0; }
-.settings .step:last-child::before { content: ''; position: absolute; inset: 8px auto 8px 0; inline-size: 1px; background: #cfc5b3; }
-.settings .step:focus-visible { outline-offset: -2px; }
-.settings .switch-row { min-block-size: 54px; font-weight: 500; }
-.settings .switch { inline-size: 52px; block-size: 31px; flex: none; }
-.settings .switch::after { inset-block-start: 2px; inset-inline-start: 2px; inline-size: 27px; block-size: 27px; }
-.settings .switch:checked::after { transform: translateX(21px); }
-.settings .switch:not(:checked) { background: #ded6c6; }
-.settings .settings-info { position: relative; padding: 0 16px; }
-.settings .settings-info[open] { padding-block-end: 14px; }
-.settings .settings-info > summary { display: flex; align-items: center; justify-content: space-between; min-block-size: 54px; margin-inline: -16px; padding-inline: 16px; cursor: pointer;
-  list-style: none; font-size: 1.0625rem; font-weight: 500; color: var(--ink); }
-.settings .settings-info > summary::-webkit-details-marker { display: none; }
-.settings .settings-info > summary::after { content: ''; flex: none; inline-size: 9px; block-size: 9px; margin-inline-end: 4px; border: solid #b3a995; border-width: 2px 2px 0 0; rotate: 45deg; transition: rotate var(--dur-panel) var(--ease-out); }
-.settings .settings-info[open] > summary::after { rotate: 135deg; }
-.settings .settings-info .hint { padding-inline: 0; }
-
-/* ---------- Records and thought editing (shared) ---------- */
-.thought-form textarea { width: 100%; min-height: 44px; padding: 10px 14px; border: 1px solid var(--line); border-radius: 14px; background: #fff; color: var(--ink); font: inherit; font-size: 1rem; }.thought-form { width: 100%; display: grid; gap: 8px; padding: 12px; border: 1px solid var(--line); border-radius: 18px; background: #fff; text-align: start; }
-.thought-title { font-size: .875rem; font-weight: 700; }
-.thought-form textarea { resize: vertical; }
-.thought-form-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 4px; }.link-button { min-height: 44px; margin-left: 6px; padding: 0 8px; border: 0; background: transparent; color: var(--whale-deep); font: inherit; font-weight: 700; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
+.link-button { min-height: 44px; margin-left: 6px; padding: 0 8px; border: 0; background: transparent; color: var(--whale-deep); font: inherit; font-weight: 700; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
 .link-button:disabled { opacity: .5; cursor: default; }
-.field-error .link-button { margin-left: 0; display: inline-block; }.stats .focus-history > p { color: var(--muted); font-size: .9375rem; margin: 0; }
-.record-summary {
-  display: flex; gap: 8px; align-items: center; width: 100%; min-height: 52px; padding: .75rem 2px;
-  border: 0; background: transparent; color: var(--ink); text-align: start; scroll-margin-block: 1rem calc(var(--tab-height) + env(safe-area-inset-bottom) + 1.5rem);
-}
-.record-summary:hover, .record-summary:focus-visible { background: var(--paper); border-radius: 8px; }
-.record-identity { display: grid; flex: 1; gap: 2px; min-width: 0; }
-.record-meta, .record-detail > p { color: var(--muted); font-size: .8125rem; }
-.record-identity strong { font-size: 1.125rem; }
-.record-step { font-size: .9rem; }
-.record-summary > svg:not(.record-chevron) { width: 32px; height: 32px; flex: none; }
-.record-chevron { width: 16px; height: 16px; flex: none; fill: none; stroke: var(--muted); stroke-width: 1.8; stroke-linejoin: round; stroke-linecap: round; }
-.record-summary[aria-expanded='true'] .record-chevron { transform: rotate(180deg); }
-.record-detail { padding: 0 2px .875rem; }
-.record-detail > p { margin: 0 0 .5rem; }
-.record-story {
-  display: flex; flex-wrap: wrap; align-items: center; gap: .65rem; padding: .75rem;
-  margin: .625rem 0 0; background: #f7f4ec; border-radius: 14px;
-}
-.record-story > svg { display: block; flex: 0 1 108px; width: 108px; max-width: 100%; height: auto; }
-.record-story figcaption { flex: 1 1 8rem; min-width: 0; }
-.record-story small, .record-story strong { display: block; }
-.record-story small { color: #6c604b; font-size: .75rem; }
-.record-story p { margin: .25rem 0 0; font-size: .875rem; line-height: 1.6; }
-.stats .record-thoughts { margin: 0; padding-left: 1.1rem; font-size: .875rem; }
-.stats .thoughts { list-style: none; margin: 0; padding: 0; }
-.stats .thoughts > li { display: grid; gap: 2px; padding: .75rem 0; border-bottom: 1px solid var(--line); overflow-wrap: anywhere; }
-.stats .thoughts > li[data-status='putAway'] p { color: var(--muted); }
-.stats .thoughts p { margin: 0; }.thought-row-actions { display: flex; flex-wrap: wrap; }
-.thought-row-actions .link-button { margin-left: 0; }
-
-/* Records and Settings tasks use the same bottom sheet as Focus: a grabber, a dimmed page, and
-   the keyboard's edge as its floor. */
-.focus-task {
-  position: fixed; inset: auto max(8px, env(safe-area-inset-left)) max(8px, env(safe-area-inset-bottom)) max(8px, env(safe-area-inset-right)); margin: 0 auto;
-  width: auto; max-width: 520px; max-height: calc(var(--visible-height, 100dvh) - max(8px, env(safe-area-inset-top)) - 16px);
-  padding: 28px 18px 18px; overflow-y: auto; overscroll-behavior: contain; border: 0;
-  border-radius: 34px; color: var(--ink); background: #fffdf8; text-align: start;
-  box-shadow: inset 0 0 0 1px #ffffffb3, 0 -10px 44px #14213b38; overflow-wrap: anywhere;
-}
-.focus-task[data-keyboard='true'] { inset-block-end: calc(var(--keyboard, 0px) + 8px); border-radius: 28px; max-height: calc(var(--visible-height, 100dvh) - 16px); }
-.focus-task::before { content: ''; position: absolute; inset-block-start: 9px; inset-inline-start: 50%; translate: -50% 0; inline-size: 38px; block-size: 5px; border-radius: 3px; background: #cfc7b8; }
-.focus-task[open] { transition: opacity var(--dur-panel) var(--ease-out), translate var(--spring-gentle-duration) var(--spring-gentle); }
-@starting-style { .focus-task[open] { opacity: 0; translate: 0 64px; } }
-.focus-task::backdrop { background: #14213b47; }
-.focus-task__header { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-block-size: 44px; margin-block-end: 6px; }
-.focus-task__header .btn { min-height: 44px; padding: 0 14px; border: 0; background: #ede5d6; font-size: .875rem; font-weight: 600; }
-.focus-task__header h2 { font-size: 1.0625rem; margin: 0; }
-.focus-task__body { display: grid; justify-items: start; gap: .5rem; padding-block: .5rem; }
-.focus-task__body p, .focus-task .thought-form p { margin: 0; }
-.focus-task .btn { min-height: 50px; border: 0; font-size: 1.0625rem; }
-.focus-task .btn-primary { inline-size: 100%; min-width: 0; background: var(--whale); box-shadow: 0 6px 14px #2f74d040; }
-.focus-task .btn-primary:disabled { opacity: 1; background: #b9cdea; box-shadow: none; }
-.focus-task .btn-secondary { inline-size: 100%; background: #ede5d6; font-weight: 600; }
-.focus-task .thought-form { border: 0; padding: .5rem 0; background: none; }
-.focus-task .thought-form textarea { min-height: 104px; max-height: 40dvh; padding: 12px 14px; border: 0; border-radius: 18px; background: #f4eee2; box-shadow: inset 0 0 0 1.5px #2f74d02e; font-size: max(1.0625rem, 16px); resize: none; }
-.focus-task .thought-form textarea:focus-visible { outline: 2px solid var(--whale); outline-offset: -2px; }
-.focus-task .thought-form-actions { display: grid; grid-template-columns: minmax(0, 1fr); gap: 8px; }
-.focus-task__body .btn { inline-size: 100%; }
-.focus-task .focus-task__header .btn { inline-size: auto; min-height: 44px; font-size: .875rem; }.panel-save-error { margin: .5rem 0 0; color: #71400c; }
-
-/* Records: the same soft language as Focus. Small pills, light cards, quiet meta text. */
-.stats { gap: 12px; }
-.stats .card { border: 1px solid var(--cream-line); border-radius: var(--radius-card); padding: 14px 16px; background: #fff; }
-/* Segmented controls: a neutral capsule track; the chosen segment is a white pill. Each segment
-   is a 44px target drawn 38px tall. */
-.stats .records-switch { gap: 0; padding: 0 3px; border-radius: 999px; background: #efe8da; }
-.stats .records-switch button { min-block-size: 44px; padding: 0 14px; border: 3px solid transparent; background-clip: padding-box; border-radius: 999px; background-color: transparent;
-  color: #5b6b82; font-size: .8125rem; font-weight: 600; position: relative; transition: background-color var(--dur-quick) ease, color var(--dur-quick) ease; }
-.stats .records-switch button::after { content: none; }
-.stats .records-switch button[aria-pressed='true'] { border-color: transparent; background-color: #fff; color: var(--ink); font-weight: 700; filter: drop-shadow(0 1px 2px #3a2a1426); }.stats .card-title { font-size: .875rem; color: var(--muted); }
-.stats .record-day h4 { margin: .75rem 0 .25rem; font-size: .875rem; color: var(--ink); }
-.stats .record-identity strong { font-size: 1rem; }
-.stats .focus-records > li { border-top-color: #f3ece0; }.stats .link-button { text-decoration: none; font-size: .8125rem; }
-.sound-preview { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 10px; align-items: center; }
-.sound-preview .hint { margin: 0; min-block-size: 3em; }
+.field-error .link-button { margin-left: 0; display: inline-block; }
 .notices--inline { position: static; inset: auto; margin: 0; max-inline-size: none; pointer-events: auto; }
 .notices--inline .notice { padding: 12px; box-shadow: none; background: var(--cream); }
 .notices--inline .notice-action { min-block-size: 44px; }
-@media (max-width: 360px) { .sound-preview { grid-template-columns: 1fr; } }
 .screen-title:focus-visible { outline: none; }

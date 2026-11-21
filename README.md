@@ -79,8 +79,8 @@ Use the [code map](docs/CODE_MAP.md) to find the right module before editing. It
 | `src/logic/` | Pure transitions, queries, snapshot validation/migration/merge, and deterministic drawing geometry |
 | `src/adapters/` | Browser storage, Web Locks, time/calendar, sound and lifecycle |
 | `src/hooks/` | App coordination, input recovery, semantic feedback and saved views |
-| `src/hooks/records/` | Records queries, per-mode state and scroll/focus restoration |
-| `src/screens/`, `src/components/` | Screen composition and reusable presentation; Records subviews live in `components/records/` |
+| `src/hooks/records/` | Book projection, navigation/return and writing coordination |
+| `src/screens/`, `src/components/` | Screen composition and reusable presentation; Book views live in `components/records/book/` |
 | `src/contracts/` | Focus, favorites and read-only main-to-animation contracts |
 | `src/data/app-spec.json` | Validated runtime defaults, bounds and chart configuration |
 | `src/data/companion-spec.json`, `src/data/scene-*.ts` | Current blue companion artwork, motion and scene copy |
@@ -119,7 +119,7 @@ One-time setup: in the repository's **Settings → Pages**, set **Source** to
 
 ## Current verification
 
-See the [code-structure verification](docs/verification/code-structure.md) for the latest refactor and the [phone layout and room verification](docs/verification/companion-first.md) for the November 3 changes and the [v35 interaction report](docs/verification/interaction-v35.md) for the earlier increment. Physical-phone and screen-reader acceptance remain open.
+See the [Records structure verification](docs/verification/records-structure.md) for the latest refactor and the [November 6 structure report](docs/verification/code-structure.md) for the earlier cleanup and the [phone layout and room verification](docs/verification/companion-first.md) for the November 3 changes and the [v35 interaction report](docs/verification/interaction-v35.md) for the earlier increment. Physical-phone and screen-reader acceptance remain open.
 
 ## Credits
 

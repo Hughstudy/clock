@@ -54,3 +54,5 @@ export function formatElapsedParts(ms: number): { value: string; unit: string }[
   if (minutes) return [{ value: String(minutes), unit: '分钟' }]
   return [{ value: String(seconds), unit: '秒' }]
 }
+
+export const monthLabel = (month: string | null) => month === 'unknown' ? '日期不详' : month ? `${Number(month.slice(0, 4))}年${Number(month.slice(5))}月` : '全部日期'

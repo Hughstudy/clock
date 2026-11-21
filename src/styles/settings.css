@@ -1,0 +1,61 @@
+/* ---------- Settings: a sheet over Focus ---------- */
+/* The sheet covers the tab bar, as any modal does; the page behind is dimmed and out of reach. */
+.app[data-screen='settings'] .tab-bar { visibility: hidden; }
+.settings { position: fixed; z-index: 30; inset: max(44px, env(safe-area-inset-top) + 10px) 0 0; inline-size: min(100%, 640px); margin-inline: auto; gap: 0;
+  overflow-y: auto; overscroll-behavior: contain; padding: 0 max(16px, env(safe-area-inset-right)) calc(env(safe-area-inset-bottom) + 28px) max(16px, env(safe-area-inset-left));
+  border-radius: 34px 34px 0 0; background: #f6f0e4; box-shadow: 0 0 0 100vmax #14213b47, 0 -10px 44px #14213b40;
+  translate: 0 var(--drag, 0px); transition: opacity var(--dur-panel) var(--ease-out), translate var(--spring-gentle-duration) var(--spring-gentle); }
+@starting-style { .settings { opacity: 0; translate: 0 96px; } }
+.settings[data-dragging='true'] { transition: none; }
+.settings > * { flex: none; }
+.settings-header { position: sticky; inset-block-start: 0; z-index: 2; display: grid; grid-template-columns: 44px minmax(0, 1fr) 44px; align-items: center;
+  margin-inline: -8px; padding: 20px 0 8px; background: linear-gradient(#f6f0e4 82%, #f6f0e400); touch-action: none; cursor: grab; user-select: none; -webkit-user-select: none; }
+.settings-header::before { content: ''; position: absolute; inset-block-start: 9px; inset-inline-start: 50%; translate: -50% 0; inline-size: 38px; block-size: 5px; border-radius: 3px; background: #cfc7b8; }
+.settings-header .screen-title { grid-column: 2; margin: 0; text-align: center; font-size: 1.0625rem; font-weight: 700; }
+.settings-header .settings-close { inline-size: 44px; min-inline-size: 44px; min-height: 44px; padding: 0; display: grid; place-items: center; background: none; cursor: pointer; }
+.settings-close svg { inline-size: 30px; block-size: 30px; padding: 8px; border-radius: 50%; background: #e6dece; }
+/* Grouped rows: one white rounded group per topic, a hairline between rows, and the explanation
+   as a quiet note under the group. */
+.settings .settings-form, .settings fieldset { gap: 0; }
+.settings .settings-subhead { margin: 0; padding: 18px 16px 7px; border: 0; font-size: .8125rem; font-weight: 600; letter-spacing: 0; color: var(--muted); }
+.settings legend.settings-subhead { float: inline-start; inline-size: 100%; padding-block-start: 4px; }
+.settings legend.settings-subhead + * { clear: both; }
+.settings-group { border-radius: 22px; background: #fff; overflow: hidden; box-shadow: 0 1px 2px #3a2a140f; }
+.settings .hint + .settings-group { margin-block-start: 16px; }
+.settings .settings-about { margin-block-start: 28px; }
+.settings-row { position: relative; display: flex; align-items: center; justify-content: space-between; gap: 4px 12px; inline-size: 100%; min-block-size: 54px; margin: 0; padding: 5px 12px 5px 16px;
+  border: 0; border-radius: 0; background: none; font: inherit; font-size: 1.0625rem; font-weight: 500; color: var(--ink); text-align: start; }
+.settings-group > :not(:first-child)::before { content: ''; position: absolute; inset: 0 0 auto 16px; block-size: 1px; background: #efe6d6; }
+.settings .field { display: grid; grid-template-columns: minmax(0, 1fr) auto; }
+.settings .field label { font-weight: 500; }
+.settings-action { color: var(--whale-deep); cursor: pointer; }
+.settings-action:active:not(:disabled) { background: #f4eee2; }
+.settings-action:disabled { opacity: .45; cursor: default; }
+.settings :is(.settings-row, .settings-info > summary):focus-visible { outline-offset: -3px; border-radius: 14px; }
+.settings .hint { margin: 0; padding: 7px 16px 0; font-size: .8125rem; line-height: 1.4; }
+/* The value, then one capsule of minus and plus. Each half is a 44px target drawn 34px tall. */
+.settings .stepper { gap: 0; }
+.settings .stepper input { order: -1; inline-size: 3.4rem; min-height: 44px; padding-inline: 4px 12px; border: 0; background: none; font-size: 1.0625rem; font-weight: 600; text-align: end; font-variant-numeric: tabular-nums; }
+.settings .stepper input:focus-visible { outline-offset: -3px; border-radius: 12px; }
+.settings .step { position: relative; inline-size: 46px; block-size: 44px; border: solid transparent; border-width: 5px 0; background-clip: padding-box; border-radius: 999px 0 0 999px; background-color: #efe8da;
+  font-size: 1.25rem; font-weight: 500; line-height: 1; }
+.settings .step:last-child { border-radius: 0 999px 999px 0; }
+.settings .step:last-child::before { content: ''; position: absolute; inset: 8px auto 8px 0; inline-size: 1px; background: #cfc5b3; }
+.settings .step:focus-visible { outline-offset: -2px; }
+.settings .switch-row { min-block-size: 54px; font-weight: 500; }
+.settings .switch { inline-size: 52px; block-size: 31px; flex: none; }
+.settings .switch::after { inset-block-start: 2px; inset-inline-start: 2px; inline-size: 27px; block-size: 27px; }
+.settings .switch:checked::after { transform: translateX(21px); }
+.settings .switch:not(:checked) { background: #ded6c6; }
+.settings .settings-info { position: relative; padding: 0 16px; }
+.settings .settings-info[open] { padding-block-end: 14px; }
+.settings .settings-info > summary { display: flex; align-items: center; justify-content: space-between; min-block-size: 54px; margin-inline: -16px; padding-inline: 16px; cursor: pointer;
+  list-style: none; font-size: 1.0625rem; font-weight: 500; color: var(--ink); }
+.settings .settings-info > summary::-webkit-details-marker { display: none; }
+.settings .settings-info > summary::after { content: ''; flex: none; inline-size: 9px; block-size: 9px; margin-inline-end: 4px; border: solid #b3a995; border-width: 2px 2px 0 0; rotate: 45deg; transition: rotate var(--dur-panel) var(--ease-out); }
+.settings .settings-info[open] > summary::after { rotate: 135deg; }
+.settings .settings-info .hint { padding-inline: 0; }
+
+.sound-preview { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 10px; align-items: center; }
+.sound-preview .hint { margin: 0; min-block-size: 3em; }
+@media (max-width: 360px) { .sound-preview { grid-template-columns: 1fr; } }
