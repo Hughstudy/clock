@@ -31,7 +31,7 @@ export function useFeedback(app: ClockApp, options: { active?: boolean; automati
   }))
   // Adjusting local state during render prevents a stale success frame being painted after a
   // failed write or phase change. The signature guard settles in one immediate rerender.
-  const state = stored.signature === feedbackSignature(input) ? stored : updateFeedbackHost(stored, input, feedbackCatalog)
+  const state = stored.signature === feedbackSignature(input) ? stored : updateFeedbackHost(stored, input, feedbackCatalog, nowMs())
   if (state !== stored) setStored(state)
 
   const request = useCallback((category?: AskPool) => {

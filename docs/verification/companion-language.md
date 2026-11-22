@@ -22,7 +22,7 @@ Automatic lines share a 30-second cooldown. Hidden/covered operations do not con
 
 Environment: Linux executor, Node 24.22.3, npm 11.19.1. Dependencies installed from the existing lockfile.
 
-- `npm run check`: strict types and all 503 tests in 41 files passed; covers random eligibility/reproducibility, repeats before pool exhaustion, no adjacent repeats, initial greeting guards, hidden/covered events, shared cooldown, quiet tool actions, explicit-request priority, errors, deduplication and original favorite snapshots.
+- `npm run check`: strict types and all 504 tests in 41 files passed; covers random eligibility/reproducibility, repeats before pool exhaustion, no adjacent repeats, initial greeting guards, hidden/covered events, shared cooldown measured from presentation after delayed saving, quiet tool actions, explicit-request priority, errors, deduplication and original favorite snapshots.
 - `BASE_PATH=/clock/ npm run build`: production build and service-worker generation passed.
 - `python3 scripts/check-prd-docs.py`: 22 PRD modules, 560 local links, 602 anchors and exact parity for all 177 runtime lines passed.
 - `git diff --check`: whitespace validation passed.
@@ -32,6 +32,8 @@ Local production-browser checks were attempted with `/usr/bin/chromium`, but the
 ## Production-browser release gate
 
 The existing main-triggered Pages workflow runs `npm run test:e2e` before deployment. It now also includes `scripts/verify-companion-language.mjs`, which builds production assets and exercises 320/375/430 CSS-pixel widths with reduced motion, first-use silence, eligible random speech, no tick rotation, chrome withdrawal, repeated requested draws, editor return, favorites, 200% text, keyboard focus, recovery, ready greeting, shared cooldown and rest speech. It checks browser errors and emits a report/screenshots in `.preview/companion-language` on its runner. Existing Focus, persistence and other browser suites remain in the gate.
+
+**First CI run.** [Run 45027666015](https://github.com/Hughstudy/clock/actions/runs/45027666015) passed the unit suite and the earlier production checks up to the panel suite. That suite still required a particular sentence to appear within 14 clicks, an obsolete assumption after direct random selection; the combined text/clipping assertion failed and deployment was skipped. Its geometry fixture now injects deterministic feedback entropy to select the longest current interrupted phrase, while preserving random UUID suffixes and the clipping/keyboard/layout assertions. The ordinary language-flow suite continues using real random seeds.
 
 The publication's Actions run is the authoritative result of these browser checks; adding the test is not itself a passing result. Deployment happens only if the workflow succeeds. Desktop emulation does not establish physical iPhone/Android acceptance, live screen-reader listening, soft-keyboard behavior or user preference for the new writing.
 

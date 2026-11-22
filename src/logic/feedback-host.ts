@@ -89,7 +89,7 @@ export function createFeedbackHost(input: FeedbackHostInput, catalog: FeedbackCa
 }
 
 /** Consumes each operation once, including while its screen is hidden. */
-export function updateFeedbackHost(previous: FeedbackHostState, input: FeedbackHostInput, catalog: FeedbackCatalog): FeedbackHostState {
+export function updateFeedbackHost(previous: FeedbackHostState, input: FeedbackHostInput, catalog: FeedbackCatalog, presentedAtMs = input.event?.atMs ?? 0): FeedbackHostState {
   const signature = feedbackSignature(input)
   if (signature === previous.signature) return previous
   const candidate = input.event
@@ -97,7 +97,9 @@ export function updateFeedbackHost(previous: FeedbackHostState, input: FeedbackH
   const eventKey = candidate ? JSON.stringify([candidate.id, candidate.kind, candidate.generation, candidate.revision, candidate.origin]) : null
   const fresh = candidate && eventKey !== previous.lastEventKey
   const current = fresh && candidate.generation === input.snapshot.datasetGeneration && candidate.revision === input.snapshot.revision
-  const event: FeedbackEvent = current ? candidate : { kind: 'reconcile', id: `view:${signature}`, atMs: candidate?.atMs ?? 0, origin: 'user' }
+  // Saving may finish much later than the click. Space automatic lines from
+  // their presentation time, not from the original operation timestamp.
+  const event: FeedbackEvent = current ? { ...candidate, atMs: presentedAtMs } : { kind: 'reconcile', id: `view:${signature}`, atMs: presentedAtMs, origin: 'user' }
   const options: FeedbackOptions = { nodeEncouragement: input.nodeEncouragement && input.active && input.automaticVisible !== false }
   const feedback = transitionFeedback(previous.feedback.state, event, feedbackContext(input.snapshot, input.persistence, candidate), catalog, options)
   // Leaving or covering the surface consumes a passing line; it is never queued for return.
@@ -105,7 +107,7 @@ export function updateFeedbackHost(previous: FeedbackHostState, input: FeedbackH
     feedback.frame = { ...feedback.frame, encouragement: null }
     feedback.state.current = feedback.frame
   }
-  // The current phrase may remain visible, but navigation never replays its cue or announcement.
+  // Requested reading can remain, but navigation never replays its cue or announcement.
   if (!input.active || (!fresh && feedback.frame.status.kind !== 'error')) feedback.announcement = null
   const cue = current ? cueFor(candidate, feedback, input.active) : null
   return { feedback, cue, signature, lastEventKey: eventKey ?? previous.lastEventKey }

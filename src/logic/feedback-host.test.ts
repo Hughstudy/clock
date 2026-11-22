@@ -223,6 +223,18 @@ describe('feedback host lifecycle', () => {
 
 
 describe('ready-entry greeting', () => {
+  it('starts the shared cooldown when a delayed save is presented, not when it was clicked', () => {
+    const running = start()
+    const i = input(running.snapshot, running.event)
+    const first = updateFeedbackHost(createFeedbackHost(i, feedbackCatalog), i, feedbackCatalog, T0 + 5000)
+    expect(first.feedback.state.lastAutomaticAt).toBe(T0 + 5000)
+    const ended = commit(running.snapshot, { type: 'end', sessionId: 'session' }, T0 + 34_999)
+    const next = updateFeedbackHost(first, input(ended.snapshot, ended.event), feedbackCatalog, T0 + 34_999)
+    expect(next.feedback.frame.encouragement).toBeNull()
+    expect(next.feedback.frame.status.text).toContain('34秒')
+    expect(next.feedback.state.lastAutomaticAt).toBe(T0 + 5000)
+  })
+
   it('greets once on opening a saved ready page, without changing data or creating a cue', () => {
     const ended = commit(start().snapshot, { type: 'end', sessionId: 'session' }, T0 + 1000)
     const i = input(ended.snapshot)

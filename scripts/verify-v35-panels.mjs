@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import path from 'node:path'
-import { mkdir, writeFile } from 'node:fs/promises'
+import { mkdir, readFile, writeFile } from 'node:fs/promises'
 import { holdFocusCard, launchChromium } from './lib/browser.mjs'
 import { build, preview } from 'vite'
 
@@ -11,7 +11,15 @@ const errors = []
 const check = (name, condition) => { assert.ok(condition, name); checks.push(name); console.log(`PASS ${name}`) }
 const button = (page, name) => page.getByRole('button', { name, exact: true })
 const dialog = page => page.getByRole('dialog')
-const interruptedLine = '我回到桌边，会先摸一摸那块没摆好的积木。也许接着摆，也许换个地方。'
+const catalog = JSON.parse(await readFile('src/data/encouragement.zh-CN.json', 'utf8'))
+const interruptedPool = catalog.entries.filter(e => e.pool === 'ASKB')
+const longest = interruptedPool.reduce((a, b) => a.text.length >= b.text.length ? a : b)
+const interruptedLine = longest.text
+// Fix only the feedback entropy for this geometry fixture. The ordinary flow
+// suite uses real entropy. The first draw is ASKG; changing category draws ASKB.
+const advance = seed => (Math.imul(seed, 1664525) + 1013904223) >>> 0
+let speechSeed = 0
+while (Math.floor(advance(advance(speechSeed)) / 0x1_0000_0000 * interruptedPool.length) !== interruptedPool.indexOf(longest)) speechSeed++
 async function speechAtHead(page, speech) {
   const bubble = await speech.boundingBox(), head = await page.locator('.fp-art [data-part="tuft"]').boundingBox()
   const tail = await speech.evaluate(element => {
@@ -63,6 +71,12 @@ try {
   for (const [width, height, font] of [[320, 568, 16], [320, 812, 16], [320, 568, 32], [320, 850, 32], [375, 812, 16], [375, 667, 18], [375, 812, 32], [568, 320, 32], [850, 320, 32], [430, 932, 16], [430, 932, 32]]) {
     const name = `${width}x${height}-${font / 16 * 100}percent`
     const context = await browser.newContext({ viewport: { width, height }, reducedMotion: 'reduce' })
+    await context.addInitScript(seed => {
+      const uuid = crypto.randomUUID.bind(crypto)
+      const prefix = seed.toString(16).padStart(8, '0')
+      // Retain random UUID suffixes so session, thought and operation IDs stay unique.
+      crypto.randomUUID = () => prefix + uuid().slice(8)
+    }, speechSeed)
     const page = await context.newPage()
     page.setDefaultTimeout(10_000)
     page.on('pageerror', error => errors.push(`${name}: ${error.message}`))
@@ -139,8 +153,8 @@ try {
     await reader.waitFor()
     check(`${name}: one requested quote and one control set appear without a second dialog`, await reader.count() === 1 && await quote.count() === 1 && !await dialog(page).count() && await ask.getAttribute('aria-pressed') === 'true')
     await category.selectOption('ASKB')
-    // Read the reported sentence in its actual catalogue rotation and its actual line breaks.
-    for (let other = 0; other < 14 && await quote.innerText() !== interruptedLine; other++) await next.click()
+    // The fixture selects the longest current interrupted line, without assuming
+    // random draws exhaust the pool or rerolling until a convenient result appears.
     check(`${name}: the interrupted quote is readable in full without clipping`, await quote.innerText() === interruptedLine && await quote.evaluate(el => el.scrollWidth <= el.clientWidth + 1 && el.scrollHeight <= el.clientHeight + 1))
     if (font < 32 && height >= 667) {
       await speech.waitFor()
