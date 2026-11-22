@@ -35,6 +35,8 @@ The existing main-triggered Pages workflow runs `npm run test:e2e` before deploy
 
 **First CI run.** [Run 45027666015](https://github.com/Hughstudy/clock/actions/runs/45027666015) passed the unit suite and the earlier production checks up to the panel suite. That suite still required a particular sentence to appear within 14 clicks, an obsolete assumption after direct random selection; the combined text/clipping assertion failed and deployment was skipped. Its geometry fixture now injects deterministic feedback entropy to select the longest current interrupted phrase, while preserving random UUID suffixes and the clipping/keyboard/layout assertions. The ordinary language-flow suite continues using real random seeds.
 
+**Second CI run.** [Run 45028169030](https://github.com/Hughstudy/clock/actions/runs/45028169030) passed the longest-line geometry checks across all 11 panel configurations, including 200% text, and reached the older automatic full-text case. That case still expected pause to produce speech. It now verifies pause silence and checks the same full-text fallback using an actual start in a fresh profile. The language-flow suite runs first for faster feedback; all existing suites remain.
+
 The publication's Actions run is the authoritative result of these browser checks; adding the test is not itself a passing result. Deployment happens only if the workflow succeeds. Desktop emulation does not establish physical iPhone/Android acceptance, live screen-reader listening, soft-keyboard behavior or user preference for the new writing.
 
 ## Boundaries
