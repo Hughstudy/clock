@@ -235,20 +235,45 @@ describe('ready-entry greeting', () => {
     expect(next.feedback.state.lastAutomaticAt).toBe(T0 + 5000)
   })
 
-  it('greets once on opening a saved ready page, without changing data or creating a cue', () => {
+  it('greets once after initial ready-page recovery, without changing data or creating a cue', () => {
     const ended = commit(start().snapshot, { type: 'end', sessionId: 'session' }, T0 + 1000)
     const i = input(ended.snapshot)
     const before = structuredClone(i.snapshot)
-    const first = createFeedbackHost(i, feedbackCatalog, { seed: 42, enteredAtMs: T0 + 2000 })
+    const initial = createFeedbackHost(i, feedbackCatalog, { seed: 42, enteredAtMs: T0 + 2000 })
+    expect(initial.feedback.frame.encouragement).toBeNull()
+    const saving = updateFeedbackHost(initial, { ...i, persistence: 'saving' }, feedbackCatalog, T0 + 2001)
+    expect(saving.entryPending).toBe(true)
+    expect(saving.feedback.state.randomState).toBe(initial.feedback.state.randomState)
+    const recovered = commit(ended.snapshot, { type: 'reconcile' }, T0 + 2100, true, 'restore')
+    const opened = input(recovered.snapshot, recovered.event)
+    const first = updateFeedbackHost(saving, opened, feedbackCatalog, T0 + 2200)
     expect(first.feedback.frame.encouragement?.pool).toBe('RET')
+    expect(first.feedback.state.lastAutomaticAt).toBe(T0 + 2200)
     expect(first.feedback.announcement).not.toBeNull()
+    expect(first.entryPending).toBe(false)
     expect(first.cue).toBeNull()
-    expect(updateFeedbackHost(first, i, feedbackCatalog)).toBe(first)
-    const hidden = updateFeedbackHost(first, { ...i, active: false }, feedbackCatalog)
-    const returned = updateFeedbackHost(hidden, i, feedbackCatalog)
+    expect(updateFeedbackHost(first, opened, feedbackCatalog)).toBe(first)
+    const hidden = updateFeedbackHost(first, { ...opened, active: false }, feedbackCatalog)
+    const returned = updateFeedbackHost(hidden, opened, feedbackCatalog)
     expect(returned.feedback.frame.encouragement).toBeNull()
     expect(returned.feedback.announcement).toBeNull()
     expect(i.snapshot).toEqual(before)
+  })
+
+  it('cancels the opening opportunity when interrupted or recovery fails', () => {
+    const ended = commit(start().snapshot, { type: 'end', sessionId: 'session' }, T0 + 1000)
+    const i = input(ended.snapshot)
+    const initial = createFeedbackHost(i, feedbackCatalog, { seed: 42, enteredAtMs: T0 + 2000 })
+    const recovered = commit(ended.snapshot, { type: 'reconcile' }, T0 + 3000, true, 'restore')
+    for (const change of [{ active: false }, { automaticVisible: false }, { persistence: 'pending' as const }]) {
+      const interrupted = updateFeedbackHost(initial, { ...i, ...change }, feedbackCatalog)
+      expect(interrupted.entryPending).toBe(false)
+      expect(updateFeedbackHost(interrupted, input(recovered.snapshot, recovered.event), feedbackCatalog).feedback.frame.encouragement).toBeNull()
+    }
+    const asked = interactWithFeedback(initial, i, { kind: 'encouragement-requested', id: 'ask', atMs: T0 + 2100, origin: 'user' }, feedbackCatalog)
+    expect(asked.entryPending).toBe(false)
+    const after = updateFeedbackHost(asked, input(recovered.snapshot, recovered.event), feedbackCatalog)
+    expect(after.feedback.frame.encouragement).toEqual(asked.feedback.frame.encouragement)
   })
 
   it('keeps first use, result recovery, active sessions, hidden pages and errors quiet', () => {
@@ -256,9 +281,9 @@ describe('ready-entry greeting', () => {
     const ended = commit(running.snapshot, { type: 'end', sessionId: 'session' }, T0 + 1000)
     const ready = input(ended.snapshot)
     for (const i of [input(createSnapshot(spec)), input(running.snapshot), { ...ready, active: false }, { ...ready, automaticVisible: false }, { ...ready, nodeEncouragement: false }, { ...ready, persistence: 'pending' as const }]) {
-      expect(createFeedbackHost(i, feedbackCatalog, { seed: 10, enteredAtMs: T0 }).feedback.frame.encouragement).toBeNull()
+      expect(createFeedbackHost(i, feedbackCatalog, { seed: 10, enteredAtMs: T0 }).entryPending).toBe(false)
     }
-    expect(createFeedbackHost(ready, feedbackCatalog, { seed: 10 }).feedback.frame.encouragement).toBeNull()
+    expect(createFeedbackHost(ready, feedbackCatalog, { seed: 10 }).entryPending).toBe(false)
   })
 
   it('does not consume a random phrase or cooldown while a local panel covers the surface', () => {

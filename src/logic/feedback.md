@@ -14,7 +14,7 @@ The parser validates IDs, versions, states, facts and tags, rejects markup/dupli
 
 | Event | Optional phrase | Preconditions |
 | --- | --- | --- |
-| Initial ready-page entry | RET | Existing saved focus participation/record or rest memory; visible, saved, enabled, no active session, no standing focus result; at most once per mount |
+| Initial ready-page entry | RET | Existing saved focus participation/record or rest memory; visible, saved, enabled, no active session, no standing focus result; at most once after successful initial recovery per mount; any intervening interaction cancels it |
 | Focus start | STA | Committed running focus |
 | Focus end | END / ZER | Committed ready result, actual nonnegative elapsed; zero also needs saved participation |
 | Rest start | BRK | Committed running rest |
