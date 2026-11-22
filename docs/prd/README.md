@@ -12,6 +12,8 @@
 
 **2026-11-21 人物讨论从 App 表达重新出发。** 用户明确要求：先列可用交互，表达不出的设定退出设计；人物简单鲜明，故事简单有趣，并继续具体化创作框架。[交互、性格取舍与四张场景提案](19-character-in-app.md)是当前讨论入口，[人物创作框架与原则](20-character-framework.md)负责稳定动机、选择习惯、相处方式与审稿。早期长弧光和传记保留为参考，不承担当前角色辨识度。本轮核对代码与复盘文稿，没有修改应用或完成新画面验证。
 
+**2026-11-22 全场景语言设计。** [44种语言场景](21-language-scenes.md)按进入与计时、想法、主动支持、触碰与生活、回看、设置与异常组织，分别说明目的、说法、随机范围和退出。[08](08-voice.md)维护共用语气与选句规则；[09](09-encouragement.md)已将56句主动鼓励对齐当前运行文本，保留版本和来源。新降噪、随机选句和闲话宿主属于目标设计，尚未修改应用；对应验收已补充，旧收藏不随新稿覆盖。
+
 ## 先看什么
 
 | 你要做的事 | 建议阅读顺序 | 看完应能回答 |
@@ -19,7 +21,7 @@
 | 讨论这个产品是否成立 | [产品全貌](01-product.md) → [伙伴性格](10-character.md) → 产品全貌的[待决事项](01-product.md#mechanism-decisions) | 产品是什么、为什么值得用、哪些已定、哪些仍待验证 |
 | 打磨人物与弧光 | [已确认的性格](10-character.md) → [App 交互与取舍](19-character-in-app.md) → [创作框架与原则](20-character-framework.md) | 什么能被感受到、哪些设定放下、少量场景如何表现自己的趣味与亲近 |
 | 了解伙伴的背景 | [背景故事](17-character-background.md) → [研究及现状核对](18-character-background-research.md) → [当前表达边界](19-character-in-app.md) | 作者可借鉴哪些往事；为什么它们不自动成为 App 剧情或制作任务 |
-| 写角色台词 | [性格与说话方式](10-character.md#character-basis) → [语气和触发](08-voice.md) → [物件与日常台词](11-dialogue.md) | 这是谁说的、为什么此刻说、简单画面能否承接 |
+| 设计语言与写台词 | [44种使用情境](21-language-scenes.md) → [共用语气和选句](08-voice.md) → [当前句库](09-encouragement.md)／[日常候选](11-dialogue.md) | 此刻该不该说、怎样表达关系与趣味、何时变化与退出、哪些仍未实现 |
 | 设计一个故事 | [场景创作方法](20-character-framework.md#character-scene-method) → [故事规则](02-features.md#story-rewards) → [章稿模板](12-stories.md#chapter-brief) → [故事验收](07-acceptance.md#causal-longterm-tests) | 人物选择是否可见，起因、结果、各个结束落点与收集条件是否完整 |
 | 改页面和按钮 | [功能规格](02-features.md) → [UI规范与固定文案](03-ui.md) → [动作索引](13-actions.md) → [验收](07-acceptance.md) | 一次点击改变什么、控件怎么协作、布局是否稳定 |
 | 实现保存和数据迁移 | [数据原则](04-data.md) → [字段](05-data-fields.md) → [命令映射](06-data-commands.md) → [数据验收](07-acceptance.md#data-contract-tests) | 谁拥有事实、何时提交、失败或旧数据怎样处理 |
@@ -36,8 +38,8 @@
 | [05-data-fields.md](05-data-fields.md) | 字段、关系、不变量、读写、迁移与便携备份格式 | C.9.1—C.9.9；逻辑契约 |
 | [06-data-commands.md](06-data-commands.md) | 前端意图、输入协调、命令前置与逐操作写入 | C.9.10—C.12；实现时对照 |
 | [07-acceptance.md](07-acceptance.md) | 核心、故事、记录、数据、文案及UI的验收场景 | D.1—D.26；目标，不是通过记录 |
-| [08-voice.md](08-voice.md) | 角色语气、触发、错误文案、欢迎笺、禁用表达与编写规范 | E.1—E.2、E.5—E.9；已有编号保留 |
-| [09-encouragement.md](09-encouragement.md) | 节点话语和主动鼓励原文 | E.3—E.4；原有内容与适用条件完整保留 |
+| [08-voice.md](08-voice.md) | 共用语气、优先级、降噪与随机规则、异常、欢迎笺及编写规范 | E.1—E.2、E.5—E.9；11月22日目标修订，运行差异明示 |
+| [09-encouragement.md](09-encouragement.md) | 节点资产与当前56句主动鼓励原文、版本和改稿入口 | E.3—E.4；区分101句运行资源与其余节点资产，不覆盖旧收藏 |
 | [10-character.md](10-character.md) | 主性格、轻微笨拙、偏好、情绪与共用创作基准 | E.11；主性格已定，具体演法仍需样稿 |
 | [11-dialogue.md](11-dialogue.md) | 物件小话、48句日常台词及各自使用条件 | E.10＋本次候选；不是自动播放清单 |
 | [12-stories.md](12-stories.md) | 单章模板、首批内容、成本、暂停与结束样例 | E.12—E.15；章稿与制作交接 |
@@ -49,6 +51,7 @@
 | [18-character-background-research.md](18-character-background-research.md) | 十一项互联网来源、现有形象与活动核对、方向比较及反向检查 | 2026-11-14研究记录；区分来源、推论与实现，不宣称用户验证 |
 | [19-character-in-app.md](19-character-in-app.md) | 实际交互与表达通道、性格取舍、四张简单场景卡与能力边界 | 2026-11-21当前人物讨论入口；前三张优先试稿，物件点击后置，均未实施 |
 | [20-character-framework.md](20-character-framework.md) | 动机、选择、相处方式、情绪、场景写法、制作原则与再次复盘 | 创作工作稿；供评稿与筛选，不是新增运行时人格系统 |
+| [21-language-scenes.md](21-language-scenes.md) | 44种使用情境的语言目的、候选说法、呈现／变化／退出、三段使用路径和接入顺序 | 语言设计入口；固定状态、主动支持、日常闲话与未来故事分清职责，新增行为未实施 |
 
 ## 不要混淆的几件事
 
