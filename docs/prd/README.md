@@ -25,6 +25,7 @@
 | 设计一个故事 | [场景创作方法](20-character-framework.md#character-scene-method) → [故事规则](02-features.md#story-rewards) → [章稿模板](12-stories.md#chapter-brief) → [故事验收](07-acceptance.md#causal-longterm-tests) | 人物选择是否可见，起因、结果、各个结束落点与收集条件是否完整 |
 | 改页面和按钮 | [功能规格](02-features.md) → [UI规范与固定文案](03-ui.md) → [动作索引](13-actions.md) → [验收](07-acceptance.md) | 一次点击改变什么、控件怎么协作、布局是否稳定 |
 | 研究专注、休息与临时调时 | [交互研究](22-timer-interaction-research.md) → [现行计时规则](02-features.md#f1) | 区分下一段准备、原段内调时和结束切换；查看调研证据、三种方案与待验证影响 |
+| 核对当前计时操作有多绕 | [现状操作全图](23-timer-current-flows.md) → [交互研究](22-timer-interaction-research.md) | 按用户目标查看起点、每次点击、结果、额外步骤和当前没有直达路径的目标 |
 | 实现保存和数据迁移 | [数据原则](04-data.md) → [字段](05-data-fields.md) → [命令映射](06-data-commands.md) → [数据验收](07-acceptance.md#data-contract-tests) | 谁拥有事实、何时提交、失败或旧数据怎样处理 |
 | 判断开发进度和差异 | [PRD与代码桥接](14-code-bridge.md) → [工程计划](../../PLAN.md) → [验证报告目录](../verification/) | 什么已实现、证据对应哪个提交、哪些仍是缺口 |
 
@@ -54,6 +55,7 @@
 | [20-character-framework.md](20-character-framework.md) | 动机、选择、相处方式、情绪、场景写法、制作原则与再次复盘 | 创作工作稿；供评稿与筛选，不是新增运行时人格系统 |
 | [21-language-scenes.md](21-language-scenes.md) | 44种使用情境的语言目的、候选说法、呈现／变化／退出、三段使用路径和接入顺序 | 语言设计入口；固定状态、主动支持、日常闲话与未来故事分清职责，新增行为未实施 |
 | [22-timer-interaction-research.md](22-timer-interaction-research.md) | 专注、休息与时间选择的独立研究；竞品、代码历史、三案比较、反例和验证任务 | 2026-11-22讨论稿；建议优先研究原段内重排时间，尚未替换现行规则或实施 |
+| [23-timer-current-flows.md](23-timer-current-flows.md) | 专注、休息、时长的全部基础状态与动作；按目标列完整路径、点击数、输入成本及异常分支 | 2026-11-22现状说明；与候选方案分开，先供流程评审，非改版验收 |
 
 ## 不要混淆的几件事
 
