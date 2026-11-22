@@ -11,19 +11,19 @@ const reduce = (e: FeedbackEvent, c = ready, m = createFeedbackMemory(), options
 
 describe('PRD copy resource integrity', () => {
   it('contains the exact pool coverage, candidate status and deep/light separation', () => {
-    for (const pool of NODE_POOLS) expect(feedbackCatalog.entries.filter(e => e.pool === pool).length).toBeGreaterThanOrEqual(5)
-    for (const pool of ASK_POOLS) expect(feedbackCatalog.entries.filter(e => e.pool === pool)).toHaveLength(24)
-    expect(feedbackCatalog.entries).toHaveLength(177)
+    for (const pool of NODE_POOLS) expect(feedbackCatalog.entries.filter(e => e.pool === pool).length).toBeGreaterThanOrEqual(2)
+    for (const pool of ASK_POOLS) expect(feedbackCatalog.entries.filter(e => e.pool === pool).length).toBeGreaterThanOrEqual(2)
+    expect(feedbackCatalog.entries).toHaveLength(61)
     expect(feedbackCatalog.entries.every(e => e.reviewStatus === 'candidate')).toBe(true)
   })
 
   it('versions the companion’s spoken lines independently from automatic and welcome copy', () => {
     for (const entry of feedbackCatalog.entries) {
       if (entry.pool.startsWith('ASK')) {
-        expect(entry.copyVersion).toBe('companion-voice-v2')
-      } else expect(entry.copyVersion).toBe('companion-moments-v1')
+        expect(entry.copyVersion).toBe('companion-voice-v3')
+      } else expect(entry.copyVersion).toBe('companion-moments-v2')
     }
-    expect(feedbackCatalog.welcomeNote.copyVersion).toBe('companion-moments-v1')
+    expect(feedbackCatalog.welcomeNote.copyVersion).toBe('companion-moments-v2')
   })
 
   it.each(['id', 'facts', 'states', 'version', 'requested-version', 'markup', 'missing', 'deep', 'ui', 'error'] as const)('rejects damaged %s before use', kind => {
@@ -71,7 +71,7 @@ describe('truthful feedback eligibility', () => {
 
   it('uses truthful zero/sub-second results and never invents time', () => {
     const zero = reduce(event({ kind: 'focus-ended', elapsedMs: 0, reason: 'manual' }))
-    expect(zero.frame.status.text).toBe('已开始过这一段。')
+    expect(zero.frame.status.text).toBe('本段计时0秒。')
     expect(zero.frame.encouragement?.pool).toBe('ZER')
     expect(reduce(event({ kind: 'focus-ended', elapsedMs: 1, reason: 'manual' })).frame.status.text).toBe('本段计时不到1秒。')
     expect(reduce(event({ kind: 'focus-ended', elapsedMs: 20_000, reason: 'manual' })).frame.status.text).toBe('本段计时20秒。')
@@ -105,7 +105,7 @@ describe('truthful feedback eligibility', () => {
 })
 
 describe('rotation, silence and one-result-per-action', () => {
-  it.each([...ASK_POOLS, 'RET', 'STA', 'END', 'ZER', 'BRK'] as const)('draws randomly from %s with no adjacent repeats and no exhaustion requirement', pool => {
+  it.each([...ASK_POOLS, 'RET', 'STA', 'END', 'ZER', 'BRK'] as const)('draws reproducibly from %s with no adjacent repeats', pool => {
     const e: Omit<FeedbackEvent, 'id' | 'atMs' | 'origin'> & Record<string, unknown> = pool.startsWith('ASK') ? { kind: 'encouragement-requested', category: pool }
       : pool === 'RET' ? { kind: 'ready-entered' }
       : pool === 'STA' ? { kind: 'focus-started' }
@@ -125,11 +125,23 @@ describe('rotation, silence and one-result-per-action', () => {
       return ids
     }
     const ids = sequence(1234)
-    expect(new Set(ids).size).toBeGreaterThan(2)
-    expect(new Set(ids.slice(0, count)).size).toBeLessThan(count)
+    expect(new Set(ids).size).toBeGreaterThanOrEqual(Math.min(3, count))
+    expect(ids.every(id => feedbackCatalog.entries.some(e => e.id === id && e.pool === pool))).toBe(true)
     expect(ids.every((id, i) => i === 0 || id !== ids[i - 1])).toBe(true)
     expect(sequence(1234)).toEqual(ids)
     expect(sequence(987654321)).not.toEqual(ids)
+  })
+
+  it('can repeat a phrase before exhausting the requested pool', () => {
+    let memory = createFeedbackMemory(1234)
+    const ids: string[] = []
+    const count = feedbackCatalog.entries.filter(e => e.pool === 'ASKG').length
+    for (let i = 0; i < count; i++) {
+      const result = reduce(event({ kind: 'encouragement-requested' }, String(i)), ready, memory)
+      memory = result.state
+      ids.push(result.frame.encouragement!.id)
+    }
+    expect(new Set(ids).size).toBeLessThan(count)
   })
 
   it('defaults each new general request to ASKG, with no carried-over emotion category', () => {

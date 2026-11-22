@@ -69,14 +69,29 @@ describe('quote favorite relationships', () => {
 })
 
 
-it('keeps a v1 favorite snapshot when the runtime catalog advances to companion-voice-v2', () => {
+it('keeps a removed phrase readable and cancellable without allowing a new favorite', () => {
   const original = { id: 'ASKG06', text: '我把窗边的位置留出来，看看今天的光。', copyVersion: 'companion-voice-v1', savedAt: 900, rev: 1, deletedAt: null }
   const saved = { ...createSnapshot(spec), quoteFavorites: [original] }
   const decoded = decodeSnapshot(encodeSnapshot(saved), spec, { timeZone: 'UTC' })
   expect(decoded).toMatchObject({ kind: 'ok', issues: [], snapshot: { quoteFavorites: [original] } })
+  expect(feedbackCatalog.entries.find(e => e.id === original.id)).toBeUndefined()
+  const context = { now: 2000, dateKeyOf: () => '2026-11-22', quoteCatalog: feedbackCatalog.entries }
+  const command: FavoriteAction = { type: 'setQuoteFavorite', quote: original, selected: false, expectedRev: 1, requestedAt: 2000 }
+  const cancelled = applyAction(saved, command, context, spec)
+  expect(cancelled.snapshot.quoteFavorites[0]).toMatchObject({ id: original.id, text: '', rev: 2, deletedAt: 2000 })
+  expect(applyAction(createSnapshot(spec), { ...command, selected: true, expectedRev: null }, context, spec).favoriteRejected).toBe(true)
+})
+
+it('preserves a revised phrase snapshot until explicit cancellation and re-favoriting', () => {
+  const original = { id: 'ASKG12', text: '我试过把书倒过来看。同一幅画，原来还有另一种看法。', copyVersion: 'companion-voice-v2', savedAt: 900, rev: 1, deletedAt: null }
+  const saved = { ...createSnapshot(spec), quoteFavorites: [original] }
   const current = feedbackCatalog.entries.find(e => e.id === original.id)!
-  expect(current.copyVersion).toBe('companion-voice-v2')
+  expect(current.copyVersion).toBe('companion-voice-v3')
   expect(current.text).not.toBe(original.text)
-  const duplicate = applyAction(saved, { type: 'setQuoteFavorite', quote: current, selected: true, expectedRev: 1, requestedAt: 2000 }, { now: 2000, dateKeyOf: () => '2026-11-22', quoteCatalog: feedbackCatalog.entries }, spec)
-  expect(duplicate.snapshot.quoteFavorites).toEqual([original])
+  const context = { now: 2000, dateKeyOf: () => '2026-11-22', quoteCatalog: feedbackCatalog.entries }
+  const command: FavoriteAction = { type: 'setQuoteFavorite', quote: current, selected: true, expectedRev: 1, requestedAt: 2000 }
+  expect(applyAction(saved, command, context, spec).snapshot.quoteFavorites).toEqual([original])
+  const cancelled = applyAction(saved, { ...command, selected: false }, context, spec).snapshot
+  const refreshed = applyAction(cancelled, { ...command, expectedRev: 2 }, context, spec).snapshot
+  expect(refreshed.quoteFavorites[0]).toMatchObject({ id: current.id, text: current.text, copyVersion: current.copyVersion, deletedAt: null, rev: 3 })
 })

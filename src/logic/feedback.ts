@@ -1,4 +1,4 @@
-export const NODE_POOLS = ['RET', 'STA', 'PAU', 'RES', 'END', 'ZER', 'NME', 'NTX', 'BRK', 'BRE'] as const
+export const NODE_POOLS = ['RET', 'STA', 'END', 'ZER', 'BRK'] as const
 export const ASK_POOLS = ['ASKG', 'ASKS', 'ASKB', 'ASKT'] as const
 export const POOLS = [...NODE_POOLS, ...ASK_POOLS] as const
 export type Pool = typeof POOLS[number]
@@ -193,16 +193,12 @@ function eligibility(event: FeedbackEvent, context: FeedbackContext): { pool: Po
   switch (event.kind) {
     case 'ready-entered': pool = 'RET'; add('returningReady', context.returningReady); break
     case 'focus-started': pool = 'STA'; add('focusStarted', true); break
-    case 'paused': pool = 'PAU'; break
-    case 'resumed': pool = 'RES'; break
     case 'focus-ended':
       if (Number.isFinite(event.elapsedMs) && event.elapsedMs >= 0) {
         pool = event.elapsedMs === 0 ? 'ZER' : 'END'; add(event.elapsedMs === 0 ? 'zeroElapsed' : 'positiveElapsed', true)
       }
       break
-    case 'note-saved': pool = event.hasText ? 'NTX' : 'NME'; add(event.hasText ? 'textNote' : 'emptyNote', true); break
     case 'break-started': pool = 'BRK'; break
-    case 'break-ended': pool = 'BRE'; break
     case 'encouragement-requested':
       pool = event.category ?? 'ASKG'; add('explicitRequest', event.origin === 'user'); add('categorySelected', event.category !== undefined && event.origin === 'user'); break
   }

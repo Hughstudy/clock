@@ -1,8 +1,8 @@
 {
   "schemaVersion": 1,
-  "copyVersion": "companion-moments-v1",
+  "copyVersion": "companion-moments-v2",
   "reviewStatus": "candidate",
-  "source": "产品PRD v3 第7.10节，文档修订7；此处只保留应用已使用的文案，其余见 docs/handoff-20261102/番茄钟_产品PRD_v35.md",
+  "source": "当前文本见 docs/prd/09-encouragement.md；2026-11-22 逐句审稿见 docs/prd/24-copy-review.md；历史来源保留于 Git 提交。",
   "entries": [
     {
       "pool": "RET",
@@ -21,7 +21,7 @@
       "tags": [
         "presence"
       ],
-      "copyVersion": "companion-moments-v1"
+      "copyVersion": "companion-moments-v2"
     },
     {
       "pool": "RET",
@@ -35,12 +35,12 @@
       ],
       "reviewStatus": "candidate",
       "id": "RET02",
-      "text": "见到你了。今天也一起待会儿。",
+      "text": "见到你，我挺高兴的。",
       "level": "light",
       "tags": [
         "autonomy"
       ],
-      "copyVersion": "companion-moments-v1"
+      "copyVersion": "companion-moments-v2"
     },
     {
       "pool": "RET",
@@ -54,88 +54,12 @@
       ],
       "reviewStatus": "candidate",
       "id": "RET03",
-      "text": "想做点什么，还是先歇会儿？都行。",
+      "text": "先忙一会儿，还是先歇会儿？",
       "level": "light",
       "tags": [
         "possibility"
       ],
-      "copyVersion": "companion-moments-v1"
-    },
-    {
-      "pool": "RET",
-      "states": [
-        "focus-ready",
-        "break-ready"
-      ],
-      "requiredFacts": [
-        "operationSaved",
-        "returningReady"
-      ],
-      "reviewStatus": "candidate",
-      "id": "RET04",
-      "text": "来了就好，不用先交代今天的进度。",
-      "level": "light",
-      "tags": [
-        "patience"
-      ],
-      "copyVersion": "companion-moments-v1"
-    },
-    {
-      "pool": "RET",
-      "states": [
-        "focus-ready",
-        "break-ready"
-      ],
-      "requiredFacts": [
-        "operationSaved",
-        "returningReady"
-      ],
-      "reviewStatus": "candidate",
-      "id": "RET05",
-      "text": "你选你的节奏，我找我的小乐子。",
-      "level": "light",
-      "tags": [
-        "care"
-      ],
-      "copyVersion": "companion-moments-v1"
-    },
-    {
-      "pool": "RET",
-      "states": [
-        "focus-ready",
-        "break-ready"
-      ],
-      "requiredFacts": [
-        "operationSaved",
-        "returningReady"
-      ],
-      "reviewStatus": "candidate",
-      "id": "RET06",
-      "text": "这次想从哪儿开始，慢慢挑。",
-      "level": "light",
-      "tags": [
-        "small-step"
-      ],
-      "copyVersion": "companion-moments-v1"
-    },
-    {
-      "pool": "RET",
-      "states": [
-        "focus-ready",
-        "break-ready"
-      ],
-      "requiredFacts": [
-        "operationSaved",
-        "returningReady"
-      ],
-      "reviewStatus": "candidate",
-      "id": "RET07",
-      "text": "先待一会儿也可以，我不催。",
-      "level": "light",
-      "tags": [
-        "presence"
-      ],
-      "copyVersion": "companion-moments-v1"
+      "copyVersion": "companion-moments-v2"
     },
     {
       "pool": "RET",
@@ -149,12 +73,12 @@
       ],
       "reviewStatus": "candidate",
       "id": "RET08",
-      "text": "我喜欢有点小计划，也喜欢临时改主意。",
+      "text": "我喜欢做点小计划，也喜欢临时改主意。",
       "level": "light",
       "tags": [
         "autonomy"
       ],
-      "copyVersion": "companion-moments-v1"
+      "copyVersion": "companion-moments-v2"
     },
     {
       "pool": "RET",
@@ -168,69 +92,12 @@
       ],
       "reviewStatus": "candidate",
       "id": "RET09",
-      "text": "你好呀。手头的事，一件件来。",
+      "text": "你好呀。一起待会儿吧。",
       "level": "light",
       "tags": [
         "possibility"
       ],
-      "copyVersion": "companion-moments-v1"
-    },
-    {
-      "pool": "RET",
-      "states": [
-        "focus-ready",
-        "break-ready"
-      ],
-      "requiredFacts": [
-        "operationSaved",
-        "returningReady"
-      ],
-      "reviewStatus": "candidate",
-      "id": "RET10",
-      "text": "一想到能试点新东西，我就有点坐不住。你慢慢选。",
-      "level": "light",
-      "tags": [
-        "patience"
-      ],
-      "copyVersion": "companion-moments-v1"
-    },
-    {
-      "pool": "RET",
-      "states": [
-        "focus-ready",
-        "break-ready"
-      ],
-      "requiredFacts": [
-        "operationSaved",
-        "returningReady"
-      ],
-      "reviewStatus": "candidate",
-      "id": "RET11",
-      "text": "我偏爱小开头，往后还能改好多次主意。",
-      "level": "light",
-      "tags": [
-        "care"
-      ],
-      "copyVersion": "companion-moments-v1"
-    },
-    {
-      "pool": "RET",
-      "states": [
-        "focus-ready",
-        "break-ready"
-      ],
-      "requiredFacts": [
-        "operationSaved",
-        "returningReady"
-      ],
-      "reviewStatus": "candidate",
-      "id": "RET12",
-      "text": "又见面了。这会儿想怎么过，听你的。",
-      "level": "light",
-      "tags": [
-        "small-step"
-      ],
-      "copyVersion": "companion-moments-v1"
+      "copyVersion": "companion-moments-v2"
     },
     {
       "id": "STA01",
@@ -247,13 +114,13 @@
       "tags": [
         "presence"
       ],
-      "copyVersion": "companion-moments-v1",
+      "copyVersion": "companion-moments-v2",
       "reviewStatus": "candidate"
     },
     {
       "id": "STA02",
       "pool": "STA",
-      "text": "好，开工。先顾眼前这一件。",
+      "text": "好，开工。",
       "level": "light",
       "states": [
         "focus-running"
@@ -265,85 +132,13 @@
       "tags": [
         "autonomy"
       ],
-      "copyVersion": "companion-moments-v1",
-      "reviewStatus": "candidate"
-    },
-    {
-      "id": "STA03",
-      "pool": "STA",
-      "text": "你忙你的，我也有自己的小事。",
-      "level": "light",
-      "states": [
-        "focus-running"
-      ],
-      "requiredFacts": [
-        "operationSaved",
-        "focusStarted"
-      ],
-      "tags": [
-        "possibility"
-      ],
-      "copyVersion": "companion-moments-v1",
-      "reviewStatus": "candidate"
-    },
-    {
-      "id": "STA04",
-      "pool": "STA",
-      "text": "先动手，细节可以边做边想。",
-      "level": "light",
-      "states": [
-        "focus-running"
-      ],
-      "requiredFacts": [
-        "operationSaved",
-        "focusStarted"
-      ],
-      "tags": [
-        "patience"
-      ],
-      "copyVersion": "companion-moments-v1",
-      "reviewStatus": "candidate"
-    },
-    {
-      "id": "STA05",
-      "pool": "STA",
-      "text": "这一段，不用开个漂亮的头。",
-      "level": "light",
-      "states": [
-        "focus-running"
-      ],
-      "requiredFacts": [
-        "operationSaved",
-        "focusStarted"
-      ],
-      "tags": [
-        "care"
-      ],
-      "copyVersion": "companion-moments-v1",
-      "reviewStatus": "candidate"
-    },
-    {
-      "id": "STA06",
-      "pool": "STA",
-      "text": "开始啦。有什么新主意，留到歇着时再聊。",
-      "level": "light",
-      "states": [
-        "focus-running"
-      ],
-      "requiredFacts": [
-        "operationSaved",
-        "focusStarted"
-      ],
-      "tags": [
-        "small-step"
-      ],
-      "copyVersion": "companion-moments-v1",
+      "copyVersion": "companion-moments-v2",
       "reviewStatus": "candidate"
     },
     {
       "id": "STA07",
       "pool": "STA",
-      "text": "我喜欢刚开始的时候，还不知道会做成什么样。",
+      "text": "刚开始那股新鲜劲儿，我挺喜欢。",
       "level": "light",
       "states": [
         "focus-running"
@@ -355,25 +150,7 @@
       "tags": [
         "presence"
       ],
-      "copyVersion": "companion-moments-v1",
-      "reviewStatus": "candidate"
-    },
-    {
-      "id": "STA08",
-      "pool": "STA",
-      "text": "先试一点。我也常常试着试着才想明白。",
-      "level": "light",
-      "states": [
-        "focus-running"
-      ],
-      "requiredFacts": [
-        "operationSaved",
-        "focusStarted"
-      ],
-      "tags": [
-        "autonomy"
-      ],
-      "copyVersion": "companion-moments-v1",
+      "copyVersion": "companion-moments-v2",
       "reviewStatus": "candidate"
     },
     {
@@ -391,49 +168,13 @@
       "tags": [
         "possibility"
       ],
-      "copyVersion": "companion-moments-v1",
-      "reviewStatus": "candidate"
-    },
-    {
-      "id": "STA10",
-      "pool": "STA",
-      "text": "有些事得先碰一碰，才知道从哪儿下手。",
-      "level": "light",
-      "states": [
-        "focus-running"
-      ],
-      "requiredFacts": [
-        "operationSaved",
-        "focusStarted"
-      ],
-      "tags": [
-        "patience"
-      ],
-      "copyVersion": "companion-moments-v1",
-      "reviewStatus": "candidate"
-    },
-    {
-      "id": "STA11",
-      "pool": "STA",
-      "text": "这一小会儿，咱们就忙眼前的。",
-      "level": "light",
-      "states": [
-        "focus-running"
-      ],
-      "requiredFacts": [
-        "operationSaved",
-        "focusStarted"
-      ],
-      "tags": [
-        "care"
-      ],
-      "copyVersion": "companion-moments-v1",
+      "copyVersion": "companion-moments-v2",
       "reviewStatus": "candidate"
     },
     {
       "id": "STA12",
       "pool": "STA",
-      "text": "我先安静会儿，你按自己的步子来。",
+      "text": "好，我先安静会儿。",
       "level": "light",
       "states": [
         "focus-running"
@@ -445,177 +186,7 @@
       "tags": [
         "small-step"
       ],
-      "copyVersion": "companion-moments-v1",
-      "reviewStatus": "candidate"
-    },
-    {
-      "id": "PAU01",
-      "pool": "PAU",
-      "text": "停一停也好，节奏由你来定。",
-      "level": "light",
-      "states": [
-        "focus-paused"
-      ],
-      "requiredFacts": [
-        "operationSaved"
-      ],
-      "tags": [
-        "autonomy"
-      ],
-      "copyVersion": "companion-moments-v1",
-      "reviewStatus": "candidate"
-    },
-    {
-      "id": "PAU02",
-      "pool": "PAU",
-      "text": "先歇一会儿，之后再决定。",
-      "level": "light",
-      "states": [
-        "focus-paused"
-      ],
-      "requiredFacts": [
-        "operationSaved"
-      ],
-      "tags": [
-        "rest"
-      ],
-      "copyVersion": "companion-moments-v1",
-      "reviewStatus": "candidate"
-    },
-    {
-      "id": "PAU03",
-      "pool": "PAU",
-      "text": "这一刻，留给自己缓一缓。",
-      "level": "light",
-      "states": [
-        "focus-paused"
-      ],
-      "requiredFacts": [
-        "operationSaved"
-      ],
-      "tags": [
-        "presence"
-      ],
-      "copyVersion": "companion-moments-v1",
-      "reviewStatus": "candidate"
-    },
-    {
-      "id": "PAU04",
-      "pool": "PAU",
-      "text": "按下暂停，也是在照顾自己的节奏。",
-      "level": "light",
-      "states": [
-        "focus-paused"
-      ],
-      "requiredFacts": [
-        "operationSaved"
-      ],
-      "tags": [
-        "autonomy"
-      ],
-      "copyVersion": "companion-moments-v1",
-      "reviewStatus": "candidate"
-    },
-    {
-      "id": "PAU05",
-      "pool": "PAU",
-      "text": "就停在这里，下一步由你选。",
-      "level": "light",
-      "states": [
-        "focus-paused"
-      ],
-      "requiredFacts": [
-        "operationSaved"
-      ],
-      "tags": [
-        "autonomy"
-      ],
-      "copyVersion": "companion-moments-v1",
-      "reviewStatus": "candidate"
-    },
-    {
-      "id": "RES01",
-      "pool": "RES",
-      "text": "好，我们接着这里。",
-      "level": "light",
-      "states": [
-        "focus-running"
-      ],
-      "requiredFacts": [
-        "operationSaved"
-      ],
-      "tags": [
-        "return"
-      ],
-      "copyVersion": "companion-moments-v1",
-      "reviewStatus": "candidate"
-    },
-    {
-      "id": "RES02",
-      "pool": "RES",
-      "text": "从刚才停下的地方继续就好。",
-      "level": "light",
-      "states": [
-        "focus-running"
-      ],
-      "requiredFacts": [
-        "operationSaved"
-      ],
-      "tags": [
-        "rest"
-      ],
-      "copyVersion": "companion-moments-v1",
-      "reviewStatus": "candidate"
-    },
-    {
-      "id": "RES03",
-      "pool": "RES",
-      "text": "回来了，这一段接着走。",
-      "level": "light",
-      "states": [
-        "focus-running"
-      ],
-      "requiredFacts": [
-        "operationSaved"
-      ],
-      "tags": [
-        "return"
-      ],
-      "copyVersion": "companion-moments-v1",
-      "reviewStatus": "candidate"
-    },
-    {
-      "id": "RES04",
-      "pool": "RES",
-      "text": "这一小步，继续按你的节奏来。",
-      "level": "light",
-      "states": [
-        "focus-running"
-      ],
-      "requiredFacts": [
-        "operationSaved"
-      ],
-      "tags": [
-        "autonomy"
-      ],
-      "copyVersion": "companion-moments-v1",
-      "reviewStatus": "candidate"
-    },
-    {
-      "id": "RES05",
-      "pool": "RES",
-      "text": "好，给眼前这件事一点时间。",
-      "level": "light",
-      "states": [
-        "focus-running"
-      ],
-      "requiredFacts": [
-        "operationSaved"
-      ],
-      "tags": [
-        "patience"
-      ],
-      "copyVersion": "companion-moments-v1",
+      "copyVersion": "companion-moments-v2",
       "reviewStatus": "candidate"
     },
     {
@@ -634,13 +205,13 @@
       "tags": [
         "presence"
       ],
-      "copyVersion": "companion-moments-v1",
+      "copyVersion": "companion-moments-v2",
       "reviewStatus": "candidate"
     },
     {
       "id": "END02",
       "pool": "END",
-      "text": "辛苦了。接下来想歇着也好。",
+      "text": "辛苦啦，先松口气。",
       "level": "light",
       "states": [
         "focus-ready",
@@ -653,51 +224,13 @@
       "tags": [
         "autonomy"
       ],
-      "copyVersion": "companion-moments-v1",
-      "reviewStatus": "candidate"
-    },
-    {
-      "id": "END03",
-      "pool": "END",
-      "text": "这一段收住了，别的事待会儿再说。",
-      "level": "light",
-      "states": [
-        "focus-ready",
-        "break-ready"
-      ],
-      "requiredFacts": [
-        "operationSaved",
-        "positiveElapsed"
-      ],
-      "tags": [
-        "possibility"
-      ],
-      "copyVersion": "companion-moments-v1",
-      "reviewStatus": "candidate"
-    },
-    {
-      "id": "END04",
-      "pool": "END",
-      "text": "好，先不往后赶。",
-      "level": "light",
-      "states": [
-        "focus-ready",
-        "break-ready"
-      ],
-      "requiredFacts": [
-        "operationSaved",
-        "positiveElapsed"
-      ],
-      "tags": [
-        "patience"
-      ],
-      "copyVersion": "companion-moments-v1",
+      "copyVersion": "companion-moments-v2",
       "reviewStatus": "candidate"
     },
     {
       "id": "END05",
       "pool": "END",
-      "text": "到这里啦。我挺喜欢一起忙一会儿的感觉。",
+      "text": "我挺喜欢和你一起待着。",
       "level": "light",
       "states": [
         "focus-ready",
@@ -710,64 +243,7 @@
       "tags": [
         "care"
       ],
-      "copyVersion": "companion-moments-v1",
-      "reviewStatus": "candidate"
-    },
-    {
-      "id": "END06",
-      "pool": "END",
-      "text": "这会儿可以换个姿势了。",
-      "level": "light",
-      "states": [
-        "focus-ready",
-        "break-ready"
-      ],
-      "requiredFacts": [
-        "operationSaved",
-        "positiveElapsed"
-      ],
-      "tags": [
-        "small-step"
-      ],
-      "copyVersion": "companion-moments-v1",
-      "reviewStatus": "candidate"
-    },
-    {
-      "id": "END07",
-      "pool": "END",
-      "text": "先停在这儿，接下来慢慢选。",
-      "level": "light",
-      "states": [
-        "focus-ready",
-        "break-ready"
-      ],
-      "requiredFacts": [
-        "operationSaved",
-        "positiveElapsed"
-      ],
-      "tags": [
-        "presence"
-      ],
-      "copyVersion": "companion-moments-v1",
-      "reviewStatus": "candidate"
-    },
-    {
-      "id": "END08",
-      "pool": "END",
-      "text": "好，咱们歇口气。",
-      "level": "light",
-      "states": [
-        "focus-ready",
-        "break-ready"
-      ],
-      "requiredFacts": [
-        "operationSaved",
-        "positiveElapsed"
-      ],
-      "tags": [
-        "autonomy"
-      ],
-      "copyVersion": "companion-moments-v1",
+      "copyVersion": "companion-moments-v2",
       "reviewStatus": "candidate"
     },
     {
@@ -786,70 +262,13 @@
       "tags": [
         "possibility"
       ],
-      "copyVersion": "companion-moments-v1",
-      "reviewStatus": "candidate"
-    },
-    {
-      "id": "END10",
-      "pool": "END",
-      "text": "这段结束了，不急着把下一段接上。",
-      "level": "light",
-      "states": [
-        "focus-ready",
-        "break-ready"
-      ],
-      "requiredFacts": [
-        "operationSaved",
-        "positiveElapsed"
-      ],
-      "tags": [
-        "patience"
-      ],
-      "copyVersion": "companion-moments-v1",
-      "reviewStatus": "candidate"
-    },
-    {
-      "id": "END11",
-      "pool": "END",
-      "text": "好，到这儿。空一点时间出来也不错。",
-      "level": "light",
-      "states": [
-        "focus-ready",
-        "break-ready"
-      ],
-      "requiredFacts": [
-        "operationSaved",
-        "positiveElapsed"
-      ],
-      "tags": [
-        "care"
-      ],
-      "copyVersion": "companion-moments-v1",
-      "reviewStatus": "candidate"
-    },
-    {
-      "id": "END12",
-      "pool": "END",
-      "text": "这会儿，你想继续安排，还是放空一下，都听你的。",
-      "level": "light",
-      "states": [
-        "focus-ready",
-        "break-ready"
-      ],
-      "requiredFacts": [
-        "operationSaved",
-        "positiveElapsed"
-      ],
-      "tags": [
-        "small-step"
-      ],
-      "copyVersion": "companion-moments-v1",
+      "copyVersion": "companion-moments-v2",
       "reviewStatus": "candidate"
     },
     {
       "id": "ZER01",
       "pool": "ZER",
-      "text": "好，这次先到这里。",
+      "text": "好，先停在这里。",
       "level": "light",
       "states": [
         "focus-ready",
@@ -863,93 +282,13 @@
       "tags": [
         "presence"
       ],
-      "copyVersion": "companion-moments-v1",
-      "reviewStatus": "candidate"
-    },
-    {
-      "id": "ZER02",
-      "pool": "ZER",
-      "text": "刚开始就改主意，也可以。",
-      "level": "light",
-      "states": [
-        "focus-ready",
-        "break-ready"
-      ],
-      "requiredFacts": [
-        "operationSaved",
-        "zeroElapsed",
-        "participationSaved"
-      ],
-      "tags": [
-        "autonomy"
-      ],
-      "copyVersion": "companion-moments-v1",
-      "reviewStatus": "candidate"
-    },
-    {
-      "id": "ZER03",
-      "pool": "ZER",
-      "text": "那就先停，不用特地补上一段。",
-      "level": "light",
-      "states": [
-        "focus-ready",
-        "break-ready"
-      ],
-      "requiredFacts": [
-        "operationSaved",
-        "zeroElapsed",
-        "participationSaved"
-      ],
-      "tags": [
-        "possibility"
-      ],
-      "copyVersion": "companion-moments-v1",
-      "reviewStatus": "candidate"
-    },
-    {
-      "id": "ZER04",
-      "pool": "ZER",
-      "text": "好，时间怎么安排，还是你说了算。",
-      "level": "light",
-      "states": [
-        "focus-ready",
-        "break-ready"
-      ],
-      "requiredFacts": [
-        "operationSaved",
-        "zeroElapsed",
-        "participationSaved"
-      ],
-      "tags": [
-        "patience"
-      ],
-      "copyVersion": "companion-moments-v1",
-      "reviewStatus": "candidate"
-    },
-    {
-      "id": "ZER05",
-      "pool": "ZER",
-      "text": "先不做了也行，我不追问。",
-      "level": "light",
-      "states": [
-        "focus-ready",
-        "break-ready"
-      ],
-      "requiredFacts": [
-        "operationSaved",
-        "zeroElapsed",
-        "participationSaved"
-      ],
-      "tags": [
-        "care"
-      ],
-      "copyVersion": "companion-moments-v1",
+      "copyVersion": "companion-moments-v2",
       "reviewStatus": "candidate"
     },
     {
       "id": "ZER06",
       "pool": "ZER",
-      "text": "这次先试到这儿。",
+      "text": "嗯，这次就到这儿。",
       "level": "light",
       "states": [
         "focus-ready",
@@ -963,283 +302,13 @@
       "tags": [
         "small-step"
       ],
-      "copyVersion": "companion-moments-v1",
-      "reviewStatus": "candidate"
-    },
-    {
-      "id": "ZER07",
-      "pool": "ZER",
-      "text": "好，重新选也来得及。",
-      "level": "light",
-      "states": [
-        "focus-ready",
-        "break-ready"
-      ],
-      "requiredFacts": [
-        "operationSaved",
-        "zeroElapsed",
-        "participationSaved"
-      ],
-      "tags": [
-        "presence"
-      ],
-      "copyVersion": "companion-moments-v1",
-      "reviewStatus": "candidate"
-    },
-    {
-      "id": "ZER08",
-      "pool": "ZER",
-      "text": "那就停在这里，接下来慢慢想。",
-      "level": "light",
-      "states": [
-        "focus-ready",
-        "break-ready"
-      ],
-      "requiredFacts": [
-        "operationSaved",
-        "zeroElapsed",
-        "participationSaved"
-      ],
-      "tags": [
-        "autonomy"
-      ],
-      "copyVersion": "companion-moments-v1",
-      "reviewStatus": "candidate"
-    },
-    {
-      "id": "NME01",
-      "pool": "NME",
-      "text": "先留个记号，想补充时再说。",
-      "level": "light",
-      "states": [
-        "focus-ready",
-        "focus-running",
-        "focus-paused",
-        "break-ready",
-        "break-running",
-        "break-paused"
-      ],
-      "requiredFacts": [
-        "operationSaved",
-        "emptyNote"
-      ],
-      "tags": [
-        "stored"
-      ],
-      "copyVersion": "companion-moments-v1",
-      "reviewStatus": "candidate"
-    },
-    {
-      "id": "NME02",
-      "pool": "NME",
-      "text": "记号放好了，接下来按你的节奏来。",
-      "level": "light",
-      "states": [
-        "focus-ready",
-        "focus-running",
-        "focus-paused",
-        "break-ready",
-        "break-running",
-        "break-paused"
-      ],
-      "requiredFacts": [
-        "operationSaved",
-        "emptyNote"
-      ],
-      "tags": [
-        "autonomy"
-      ],
-      "copyVersion": "companion-moments-v1",
-      "reviewStatus": "candidate"
-    },
-    {
-      "id": "NME03",
-      "pool": "NME",
-      "text": "给刚才那一刻，留了个小记号。",
-      "level": "light",
-      "states": [
-        "focus-ready",
-        "focus-running",
-        "focus-paused",
-        "break-ready",
-        "break-running",
-        "break-paused"
-      ],
-      "requiredFacts": [
-        "operationSaved",
-        "emptyNote"
-      ],
-      "tags": [
-        "stored"
-      ],
-      "copyVersion": "companion-moments-v1",
-      "reviewStatus": "candidate"
-    },
-    {
-      "id": "NME04",
-      "pool": "NME",
-      "text": "这一笔先记着，想写什么以后再加。",
-      "level": "light",
-      "states": [
-        "focus-ready",
-        "focus-running",
-        "focus-paused",
-        "break-ready",
-        "break-running",
-        "break-paused"
-      ],
-      "requiredFacts": [
-        "operationSaved",
-        "emptyNote"
-      ],
-      "tags": [
-        "presence"
-      ],
-      "copyVersion": "companion-moments-v1",
-      "reviewStatus": "candidate"
-    },
-    {
-      "id": "NME05",
-      "pool": "NME",
-      "text": "记在这里了，可以回到眼前这一件。",
-      "level": "light",
-      "states": [
-        "focus-ready",
-        "focus-running",
-        "focus-paused",
-        "break-ready",
-        "break-running",
-        "break-paused"
-      ],
-      "requiredFacts": [
-        "operationSaved",
-        "emptyNote"
-      ],
-      "tags": [
-        "stored"
-      ],
-      "copyVersion": "companion-moments-v1",
-      "reviewStatus": "candidate"
-    },
-    {
-      "id": "NTX01",
-      "pool": "NTX",
-      "text": "想法放好了，之后随时能看。",
-      "level": "light",
-      "states": [
-        "focus-ready",
-        "focus-running",
-        "focus-paused",
-        "break-ready",
-        "break-running",
-        "break-paused"
-      ],
-      "requiredFacts": [
-        "operationSaved",
-        "textNote"
-      ],
-      "tags": [
-        "stored"
-      ],
-      "copyVersion": "companion-moments-v1",
-      "reviewStatus": "candidate"
-    },
-    {
-      "id": "NTX02",
-      "pool": "NTX",
-      "text": "这件事先记在这里。",
-      "level": "light",
-      "states": [
-        "focus-ready",
-        "focus-running",
-        "focus-paused",
-        "break-ready",
-        "break-running",
-        "break-paused"
-      ],
-      "requiredFacts": [
-        "operationSaved",
-        "textNote"
-      ],
-      "tags": [
-        "stored"
-      ],
-      "copyVersion": "companion-moments-v1",
-      "reviewStatus": "candidate"
-    },
-    {
-      "id": "NTX03",
-      "pool": "NTX",
-      "text": "记下来了，可以先顾眼前这一件。",
-      "level": "light",
-      "states": [
-        "focus-ready",
-        "focus-running",
-        "focus-paused",
-        "break-ready",
-        "break-running",
-        "break-paused"
-      ],
-      "requiredFacts": [
-        "operationSaved",
-        "textNote"
-      ],
-      "tags": [
-        "stored"
-      ],
-      "copyVersion": "companion-moments-v1",
-      "reviewStatus": "candidate"
-    },
-    {
-      "id": "NTX04",
-      "pool": "NTX",
-      "text": "这条想法，已经有地方放了。",
-      "level": "light",
-      "states": [
-        "focus-ready",
-        "focus-running",
-        "focus-paused",
-        "break-ready",
-        "break-running",
-        "break-paused"
-      ],
-      "requiredFacts": [
-        "operationSaved",
-        "textNote"
-      ],
-      "tags": [
-        "stored"
-      ],
-      "copyVersion": "companion-moments-v1",
-      "reviewStatus": "candidate"
-    },
-    {
-      "id": "NTX05",
-      "pool": "NTX",
-      "text": "先让这个想法在这里歇一会儿。",
-      "level": "light",
-      "states": [
-        "focus-ready",
-        "focus-running",
-        "focus-paused",
-        "break-ready",
-        "break-running",
-        "break-paused"
-      ],
-      "requiredFacts": [
-        "operationSaved",
-        "textNote"
-      ],
-      "tags": [
-        "rest"
-      ],
-      "copyVersion": "companion-moments-v1",
+      "copyVersion": "companion-moments-v2",
       "reviewStatus": "candidate"
     },
     {
       "id": "BRK01",
       "pool": "BRK",
-      "text": "歇会儿吧，这段不用赶。",
+      "text": "歇会儿吧。",
       "level": "light",
       "states": [
         "break-running"
@@ -1250,7 +319,7 @@
       "tags": [
         "rest"
       ],
-      "copyVersion": "companion-moments-v1",
+      "copyVersion": "companion-moments-v2",
       "reviewStatus": "candidate"
     },
     {
@@ -1267,13 +336,13 @@
       "tags": [
         "possibility"
       ],
-      "copyVersion": "companion-moments-v1",
+      "copyVersion": "companion-moments-v2",
       "reviewStatus": "candidate"
     },
     {
       "id": "BRK03",
       "pool": "BRK",
-      "text": "换个舒服的姿势。这回不用端端正正。",
+      "text": "歇着的时候，我就不讲究坐相了。",
       "level": "light",
       "states": [
         "break-running"
@@ -1284,7 +353,7 @@
       "tags": [
         "care"
       ],
-      "copyVersion": "companion-moments-v1",
+      "copyVersion": "companion-moments-v2",
       "reviewStatus": "candidate"
     },
     {
@@ -1301,47 +370,13 @@
       "tags": [
         "autonomy"
       ],
-      "copyVersion": "companion-moments-v1",
-      "reviewStatus": "candidate"
-    },
-    {
-      "id": "BRK05",
-      "pool": "BRK",
-      "text": "先别忙着安排休息要做什么。",
-      "level": "light",
-      "states": [
-        "break-running"
-      ],
-      "requiredFacts": [
-        "operationSaved"
-      ],
-      "tags": [
-        "patience"
-      ],
-      "copyVersion": "companion-moments-v1",
-      "reviewStatus": "candidate"
-    },
-    {
-      "id": "BRK06",
-      "pool": "BRK",
-      "text": "这会儿可以什么都不弄。",
-      "level": "light",
-      "states": [
-        "break-running"
-      ],
-      "requiredFacts": [
-        "operationSaved"
-      ],
-      "tags": [
-        "presence"
-      ],
-      "copyVersion": "companion-moments-v1",
+      "copyVersion": "companion-moments-v2",
       "reviewStatus": "candidate"
     },
     {
       "id": "BRK07",
       "pool": "BRK",
-      "text": "我喜欢没什么安排的一小会儿。",
+      "text": "我喜欢看云，也不一定非看出它像什么。",
       "level": "light",
       "states": [
         "break-running"
@@ -1352,41 +387,7 @@
       "tags": [
         "rest"
       ],
-      "copyVersion": "companion-moments-v1",
-      "reviewStatus": "candidate"
-    },
-    {
-      "id": "BRK08",
-      "pool": "BRK",
-      "text": "歇着吧。有意思的事，也可以待会儿再想。",
-      "level": "light",
-      "states": [
-        "break-running"
-      ],
-      "requiredFacts": [
-        "operationSaved"
-      ],
-      "tags": [
-        "possibility"
-      ],
-      "copyVersion": "companion-moments-v1",
-      "reviewStatus": "candidate"
-    },
-    {
-      "id": "BRK09",
-      "pool": "BRK",
-      "text": "你歇你的，不用分心照看我。",
-      "level": "light",
-      "states": [
-        "break-running"
-      ],
-      "requiredFacts": [
-        "operationSaved"
-      ],
-      "tags": [
-        "care"
-      ],
-      "copyVersion": "companion-moments-v1",
+      "copyVersion": "companion-moments-v2",
       "reviewStatus": "candidate"
     },
     {
@@ -1403,153 +404,7 @@
       "tags": [
         "autonomy"
       ],
-      "copyVersion": "companion-moments-v1",
-      "reviewStatus": "candidate"
-    },
-    {
-      "id": "BRK11",
-      "pool": "BRK",
-      "text": "脑袋里有主意也先搁着，我有时就这么干。",
-      "level": "light",
-      "states": [
-        "break-running"
-      ],
-      "requiredFacts": [
-        "operationSaved"
-      ],
-      "tags": [
-        "patience"
-      ],
-      "copyVersion": "companion-moments-v1",
-      "reviewStatus": "candidate"
-    },
-    {
-      "id": "BRK12",
-      "pool": "BRK",
-      "text": "好，给自己留一点空当。",
-      "level": "light",
-      "states": [
-        "break-running"
-      ],
-      "requiredFacts": [
-        "operationSaved"
-      ],
-      "tags": [
-        "presence"
-      ],
-      "copyVersion": "companion-moments-v1",
-      "reviewStatus": "candidate"
-    },
-    {
-      "id": "BRE01",
-      "pool": "BRE",
-      "text": "下一步，照自己的节奏选。",
-      "level": "light",
-      "states": [
-        "focus-ready",
-        "break-ready"
-      ],
-      "requiredFacts": [
-        "operationSaved"
-      ],
-      "tags": [
-        "autonomy"
-      ],
-      "copyVersion": "companion-moments-v1",
-      "reviewStatus": "candidate"
-    },
-    {
-      "id": "BRE02",
-      "pool": "BRE",
-      "text": "还想歇一会儿，也很好。",
-      "level": "light",
-      "states": [
-        "focus-ready",
-        "break-ready"
-      ],
-      "requiredFacts": [
-        "operationSaved"
-      ],
-      "tags": [
-        "rest"
-      ],
-      "copyVersion": "companion-moments-v1",
-      "reviewStatus": "candidate"
-    },
-    {
-      "id": "BRE03",
-      "pool": "BRE",
-      "text": "可以再休息，也可以开始一小段。",
-      "level": "light",
-      "states": [
-        "focus-ready",
-        "break-ready"
-      ],
-      "requiredFacts": [
-        "operationSaved"
-      ],
-      "tags": [
-        "rest"
-      ],
-      "copyVersion": "companion-moments-v1",
-      "reviewStatus": "candidate"
-    },
-    {
-      "id": "BRE04",
-      "pool": "BRE",
-      "text": "接下来想怎么安排，都由你来。",
-      "level": "light",
-      "states": [
-        "focus-ready",
-        "break-ready"
-      ],
-      "requiredFacts": [
-        "operationSaved"
-      ],
-      "tags": [
-        "autonomy"
-      ],
-      "copyVersion": "companion-moments-v1",
-      "reviewStatus": "candidate"
-    },
-    {
-      "id": "BRE05",
-      "pool": "BRE",
-      "text": "先看看自己现在想做什么。",
-      "level": "light",
-      "states": [
-        "focus-ready",
-        "break-ready"
-      ],
-      "requiredFacts": [
-        "operationSaved"
-      ],
-      "tags": [
-        "presence"
-      ],
-      "copyVersion": "companion-moments-v1",
-      "reviewStatus": "candidate"
-    },
-    {
-      "id": "ASKG01",
-      "pool": "ASKG",
-      "text": "我折纸船，也是一折一折来的。",
-      "level": "light",
-      "states": [
-        "focus-ready",
-        "focus-running",
-        "focus-paused",
-        "break-ready",
-        "break-running",
-        "break-paused"
-      ],
-      "requiredFacts": [
-        "explicitRequest"
-      ],
-      "tags": [
-        "care"
-      ],
-      "copyVersion": "companion-voice-v2",
+      "copyVersion": "companion-moments-v2",
       "reviewStatus": "candidate"
     },
     {
@@ -1571,57 +426,13 @@
       "tags": [
         "autonomy"
       ],
-      "copyVersion": "companion-voice-v2",
-      "reviewStatus": "candidate"
-    },
-    {
-      "id": "ASKG03",
-      "pool": "ASKG",
-      "text": "我喜欢慢慢把纸角抚平。慢一点也很好。",
-      "level": "light",
-      "states": [
-        "focus-ready",
-        "focus-running",
-        "focus-paused",
-        "break-ready",
-        "break-running",
-        "break-paused"
-      ],
-      "requiredFacts": [
-        "explicitRequest"
-      ],
-      "tags": [
-        "patience"
-      ],
-      "copyVersion": "companion-voice-v2",
-      "reviewStatus": "candidate"
-    },
-    {
-      "id": "ASKG04",
-      "pool": "ASKG",
-      "text": "我喜欢听杯子落在桌上的轻响。小事也有意思。",
-      "level": "light",
-      "states": [
-        "focus-ready",
-        "focus-running",
-        "focus-paused",
-        "break-ready",
-        "break-running",
-        "break-paused"
-      ],
-      "requiredFacts": [
-        "explicitRequest"
-      ],
-      "tags": [
-        "care"
-      ],
-      "copyVersion": "companion-voice-v2",
+      "copyVersion": "companion-voice-v3",
       "reviewStatus": "candidate"
     },
     {
       "id": "ASKG05",
       "pool": "ASKG",
-      "text": "我学叠积木时，也常换个摆法。",
+      "text": "不必第一回就定下来。我搭积木，也常试几个摆法。",
       "level": "light",
       "states": [
         "focus-ready",
@@ -1637,80 +448,14 @@
       "tags": [
         "patience"
       ],
-      "copyVersion": "companion-voice-v2",
-      "reviewStatus": "candidate"
-    },
-    {
-      "id": "ASKG06",
-      "pool": "ASKG",
-      "text": "我喜欢在窗边留个位置，看看不一样的光。",
-      "level": "light",
-      "states": [
-        "focus-ready",
-        "focus-running",
-        "focus-paused",
-        "break-ready",
-        "break-running",
-        "break-paused"
-      ],
-      "requiredFacts": [
-        "explicitRequest"
-      ],
-      "tags": [
-        "presence"
-      ],
-      "copyVersion": "companion-voice-v2",
-      "reviewStatus": "candidate"
-    },
-    {
-      "id": "ASKG07",
-      "pool": "ASKG",
-      "text": "我喜欢从手边的一件小事开始。",
-      "level": "light",
-      "states": [
-        "focus-ready",
-        "focus-running",
-        "focus-paused",
-        "break-ready",
-        "break-running",
-        "break-paused"
-      ],
-      "requiredFacts": [
-        "explicitRequest"
-      ],
-      "tags": [
-        "patience"
-      ],
-      "copyVersion": "companion-voice-v2",
-      "reviewStatus": "candidate"
-    },
-    {
-      "id": "ASKG08",
-      "pool": "ASKG",
-      "text": "我会把书签夹好，想回来时再翻开。",
-      "level": "light",
-      "states": [
-        "focus-ready",
-        "focus-running",
-        "focus-paused",
-        "break-ready",
-        "break-running",
-        "break-paused"
-      ],
-      "requiredFacts": [
-        "explicitRequest"
-      ],
-      "tags": [
-        "return"
-      ],
-      "copyVersion": "companion-voice-v2",
+      "copyVersion": "companion-voice-v3",
       "reviewStatus": "candidate"
     },
     {
       "id": "ASKG09",
       "pool": "ASKG",
       "text": "我折过歪歪的纸船。我挺喜欢它那个翘起来的小角。",
-      "level": "deep",
+      "level": "light",
       "states": [
         "focus-ready",
         "focus-running",
@@ -1725,14 +470,14 @@
       "tags": [
         "care"
       ],
-      "copyVersion": "companion-voice-v2",
+      "copyVersion": "companion-voice-v3",
       "reviewStatus": "candidate"
     },
     {
       "id": "ASKG10",
       "pool": "ASKG",
       "text": "我喜欢留点空白。这样翻开本子，还能画上新想到的东西。",
-      "level": "deep",
+      "level": "light",
       "states": [
         "focus-ready",
         "focus-running",
@@ -1747,36 +492,14 @@
       "tags": [
         "care"
       ],
-      "copyVersion": "companion-voice-v2",
-      "reviewStatus": "candidate"
-    },
-    {
-      "id": "ASKG11",
-      "pool": "ASKG",
-      "text": "我看云的时候，有时一朵就看很久。你也可以按自己的速度来。",
-      "level": "deep",
-      "states": [
-        "focus-ready",
-        "focus-running",
-        "focus-paused",
-        "break-ready",
-        "break-running",
-        "break-paused"
-      ],
-      "requiredFacts": [
-        "explicitRequest"
-      ],
-      "tags": [
-        "patience"
-      ],
-      "copyVersion": "companion-voice-v2",
+      "copyVersion": "companion-voice-v3",
       "reviewStatus": "candidate"
     },
     {
       "id": "ASKG12",
       "pool": "ASKG",
-      "text": "我试过把书倒过来看。同一幅画，原来还有另一种看法。",
-      "level": "deep",
+      "text": "我试过倒着看书。图还挺有意思，字就算了。",
+      "level": "light",
       "states": [
         "focus-ready",
         "focus-running",
@@ -1791,14 +514,14 @@
       "tags": [
         "possibility"
       ],
-      "copyVersion": "companion-voice-v2",
+      "copyVersion": "companion-voice-v3",
       "reviewStatus": "candidate"
     },
     {
       "id": "ASKG13",
       "pool": "ASKG",
-      "text": "我用小手捧着杯子，喜欢它刚刚好的暖。愿你也有舒服的一刻。",
-      "level": "deep",
+      "text": "我喜欢捧着暖杯子的那一会儿。也希望你能舒服一点。",
+      "level": "light",
       "states": [
         "focus-ready",
         "focus-running",
@@ -1813,35 +536,13 @@
       "tags": [
         "care"
       ],
-      "copyVersion": "companion-voice-v2",
-      "reviewStatus": "candidate"
-    },
-    {
-      "id": "ASKG14",
-      "pool": "ASKG",
-      "text": "我有时叠积木，有时读书，喜欢自己挑眼下感兴趣的事。",
-      "level": "deep",
-      "states": [
-        "focus-ready",
-        "focus-running",
-        "focus-paused",
-        "break-ready",
-        "break-running",
-        "break-paused"
-      ],
-      "requiredFacts": [
-        "explicitRequest"
-      ],
-      "tags": [
-        "autonomy"
-      ],
-      "copyVersion": "companion-voice-v2",
+      "copyVersion": "companion-voice-v3",
       "reviewStatus": "candidate"
     },
     {
       "id": "ASKG15",
       "pool": "ASKG",
-      "text": "想听我说一句？好，我很喜欢和你一起做点小事。",
+      "text": "来找我啦。好，我陪你一会儿。",
       "level": "light",
       "states": [
         "focus-ready",
@@ -1857,13 +558,13 @@
       "tags": [
         "presence"
       ],
-      "copyVersion": "companion-voice-v2",
+      "copyVersion": "companion-voice-v3",
       "reviewStatus": "candidate"
     },
     {
       "id": "ASKG16",
       "pool": "ASKG",
-      "text": "你不用拿出成绩，我们才算好好待过一会儿。",
+      "text": "能和你一起待会儿，我挺开心的。",
       "level": "light",
       "states": [
         "focus-ready",
@@ -1879,7 +580,7 @@
       "tags": [
         "care"
       ],
-      "copyVersion": "companion-voice-v2",
+      "copyVersion": "companion-voice-v3",
       "reviewStatus": "candidate"
     },
     {
@@ -1901,58 +602,14 @@
       "tags": [
         "possibility"
       ],
-      "copyVersion": "companion-voice-v2",
-      "reviewStatus": "candidate"
-    },
-    {
-      "id": "ASKG18",
-      "pool": "ASKG",
-      "text": "不用把每一步都做漂亮。偶尔有个歪角，我还挺舍不得改。",
-      "level": "light",
-      "states": [
-        "focus-ready",
-        "focus-running",
-        "focus-paused",
-        "break-ready",
-        "break-running",
-        "break-paused"
-      ],
-      "requiredFacts": [
-        "explicitRequest"
-      ],
-      "tags": [
-        "autonomy"
-      ],
-      "copyVersion": "companion-voice-v2",
-      "reviewStatus": "candidate"
-    },
-    {
-      "id": "ASKG19",
-      "pool": "ASKG",
-      "text": "你可以做自己的决定，我不会因为咱们想得不一样就闹别扭。",
-      "level": "light",
-      "states": [
-        "focus-ready",
-        "focus-running",
-        "focus-paused",
-        "break-ready",
-        "break-running",
-        "break-paused"
-      ],
-      "requiredFacts": [
-        "explicitRequest"
-      ],
-      "tags": [
-        "care"
-      ],
-      "copyVersion": "companion-voice-v2",
+      "copyVersion": "companion-voice-v3",
       "reviewStatus": "candidate"
     },
     {
       "id": "ASKG20",
       "pool": "ASKG",
-      "text": "有一点想试的念头，就可以先试一点。剩下的，我也常常边做边想。",
-      "level": "deep",
+      "text": "有点好奇，就先试一小点。说不定会冒出新主意。",
+      "level": "light",
       "states": [
         "focus-ready",
         "focus-running",
@@ -1967,79 +624,13 @@
       "tags": [
         "small-step"
       ],
-      "copyVersion": "companion-voice-v2",
-      "reviewStatus": "candidate"
-    },
-    {
-      "id": "ASKG21",
-      "pool": "ASKG",
-      "text": "我喜欢有自己主意的东西，歪一点的纸船也算。你这次的做法，可以和别人不一样。",
-      "level": "deep",
-      "states": [
-        "focus-ready",
-        "focus-running",
-        "focus-paused",
-        "break-ready",
-        "break-running",
-        "break-paused"
-      ],
-      "requiredFacts": [
-        "explicitRequest"
-      ],
-      "tags": [
-        "autonomy"
-      ],
-      "copyVersion": "companion-voice-v2",
-      "reviewStatus": "candidate"
-    },
-    {
-      "id": "ASKG22",
-      "pool": "ASKG",
-      "text": "这会儿不需要一句很厉害的话。你做一点，我做一点，待在一块儿就挺好。",
-      "level": "deep",
-      "states": [
-        "focus-ready",
-        "focus-running",
-        "focus-paused",
-        "break-ready",
-        "break-running",
-        "break-paused"
-      ],
-      "requiredFacts": [
-        "explicitRequest"
-      ],
-      "tags": [
-        "presence"
-      ],
-      "copyVersion": "companion-voice-v2",
-      "reviewStatus": "candidate"
-    },
-    {
-      "id": "ASKG23",
-      "pool": "ASKG",
-      "text": "你不必把一天过成很值得讲的故事。普通的一小段，我也愿意陪着。",
-      "level": "deep",
-      "states": [
-        "focus-ready",
-        "focus-running",
-        "focus-paused",
-        "break-ready",
-        "break-running",
-        "break-paused"
-      ],
-      "requiredFacts": [
-        "explicitRequest"
-      ],
-      "tags": [
-        "patience"
-      ],
-      "copyVersion": "companion-voice-v2",
+      "copyVersion": "companion-voice-v3",
       "reviewStatus": "candidate"
     },
     {
       "id": "ASKG24",
       "pool": "ASKG",
-      "text": "我有时候会把小事弄复杂，弄到一半才发现。发现了就改，倒也不影响我继续喜欢它。",
+      "text": "我有时把小事弄复杂，做到一半才发现。那就改改，反正还是挺想做。",
       "level": "deep",
       "states": [
         "focus-ready",
@@ -2055,7 +646,7 @@
       "tags": [
         "possibility"
       ],
-      "copyVersion": "companion-voice-v2",
+      "copyVersion": "companion-voice-v3",
       "reviewStatus": "candidate"
     },
     {
@@ -2078,53 +669,7 @@
       "tags": [
         "small-step"
       ],
-      "copyVersion": "companion-voice-v2",
-      "reviewStatus": "candidate"
-    },
-    {
-      "id": "ASKS02",
-      "pool": "ASKS",
-      "text": "我会先把书翻开，让眼睛找找第一行。",
-      "level": "light",
-      "states": [
-        "focus-ready",
-        "focus-running",
-        "focus-paused",
-        "break-ready",
-        "break-running",
-        "break-paused"
-      ],
-      "requiredFacts": [
-        "explicitRequest",
-        "categorySelected"
-      ],
-      "tags": [
-        "presence"
-      ],
-      "copyVersion": "companion-voice-v2",
-      "reviewStatus": "candidate"
-    },
-    {
-      "id": "ASKS03",
-      "pool": "ASKS",
-      "text": "我折第一下也会想一想。不着急。",
-      "level": "light",
-      "states": [
-        "focus-ready",
-        "focus-running",
-        "focus-paused",
-        "break-ready",
-        "break-running",
-        "break-paused"
-      ],
-      "requiredFacts": [
-        "explicitRequest",
-        "categorySelected"
-      ],
-      "tags": [
-        "small-step"
-      ],
-      "copyVersion": "companion-voice-v2",
+      "copyVersion": "companion-voice-v3",
       "reviewStatus": "candidate"
     },
     {
@@ -2147,36 +692,13 @@
       "tags": [
         "small-step"
       ],
-      "copyVersion": "companion-voice-v2",
-      "reviewStatus": "candidate"
-    },
-    {
-      "id": "ASKS05",
-      "pool": "ASKS",
-      "text": "我遇到大大的纸，会先摸摸一个小角。",
-      "level": "light",
-      "states": [
-        "focus-ready",
-        "focus-running",
-        "focus-paused",
-        "break-ready",
-        "break-running",
-        "break-paused"
-      ],
-      "requiredFacts": [
-        "explicitRequest",
-        "categorySelected"
-      ],
-      "tags": [
-        "presence"
-      ],
-      "copyVersion": "companion-voice-v2",
+      "copyVersion": "companion-voice-v3",
       "reviewStatus": "candidate"
     },
     {
       "id": "ASKS06",
       "pool": "ASKS",
-      "text": "我有时只把笔拿在手里，想想要画哪一笔。",
+      "text": "我有时握着笔想半天，最后干脆画一条线，再看看能接成什么。",
       "level": "light",
       "states": [
         "focus-ready",
@@ -2193,36 +715,13 @@
       "tags": [
         "small-step"
       ],
-      "copyVersion": "companion-voice-v2",
-      "reviewStatus": "candidate"
-    },
-    {
-      "id": "ASKS07",
-      "pool": "ASKS",
-      "text": "我拼图时，喜欢先找一块有直边的。",
-      "level": "light",
-      "states": [
-        "focus-ready",
-        "focus-running",
-        "focus-paused",
-        "break-ready",
-        "break-running",
-        "break-paused"
-      ],
-      "requiredFacts": [
-        "explicitRequest",
-        "categorySelected"
-      ],
-      "tags": [
-        "small-step"
-      ],
-      "copyVersion": "companion-voice-v2",
+      "copyVersion": "companion-voice-v3",
       "reviewStatus": "candidate"
     },
     {
       "id": "ASKS08",
       "pool": "ASKS",
-      "text": "我能先坐舒服一点，再看看面前的事。",
+      "text": "先坐舒服一点，再看看从哪里下手。",
       "level": "light",
       "states": [
         "focus-ready",
@@ -2239,106 +738,14 @@
       "tags": [
         "presence"
       ],
-      "copyVersion": "companion-voice-v2",
-      "reviewStatus": "candidate"
-    },
-    {
-      "id": "ASKS09",
-      "pool": "ASKS",
-      "text": "我刚学折纸船时，第一下也折歪过。我把纸转个方向，接着折了下去。",
-      "level": "deep",
-      "states": [
-        "focus-ready",
-        "focus-running",
-        "focus-paused",
-        "break-ready",
-        "break-running",
-        "break-paused"
-      ],
-      "requiredFacts": [
-        "explicitRequest",
-        "categorySelected"
-      ],
-      "tags": [
-        "care"
-      ],
-      "copyVersion": "companion-voice-v2",
-      "reviewStatus": "candidate"
-    },
-    {
-      "id": "ASKS10",
-      "pool": "ASKS",
-      "text": "我碰到难读的一页，会先找一个眼熟的字。有了小小的落脚处，就好翻下去了。",
-      "level": "deep",
-      "states": [
-        "focus-ready",
-        "focus-running",
-        "focus-paused",
-        "break-ready",
-        "break-running",
-        "break-paused"
-      ],
-      "requiredFacts": [
-        "explicitRequest",
-        "categorySelected"
-      ],
-      "tags": [
-        "care"
-      ],
-      "copyVersion": "companion-voice-v2",
-      "reviewStatus": "candidate"
-    },
-    {
-      "id": "ASKS11",
-      "pool": "ASKS",
-      "text": "我想不到画什么时，会先轻轻点一个点。后面画成什么，还可以慢慢选。",
-      "level": "deep",
-      "states": [
-        "focus-ready",
-        "focus-running",
-        "focus-paused",
-        "break-ready",
-        "break-running",
-        "break-paused"
-      ],
-      "requiredFacts": [
-        "explicitRequest",
-        "categorySelected"
-      ],
-      "tags": [
-        "possibility"
-      ],
-      "copyVersion": "companion-voice-v2",
-      "reviewStatus": "candidate"
-    },
-    {
-      "id": "ASKS12",
-      "pool": "ASKS",
-      "text": "我要收拾一桌积木时，先把手边的两块放在一起。远处那些可以稍后再看。",
-      "level": "deep",
-      "states": [
-        "focus-ready",
-        "focus-running",
-        "focus-paused",
-        "break-ready",
-        "break-running",
-        "break-paused"
-      ],
-      "requiredFacts": [
-        "explicitRequest",
-        "categorySelected"
-      ],
-      "tags": [
-        "small-step"
-      ],
-      "copyVersion": "companion-voice-v2",
+      "copyVersion": "companion-voice-v3",
       "reviewStatus": "candidate"
     },
     {
       "id": "ASKS13",
       "pool": "ASKS",
-      "text": "我也会对着空白纸想很久。画第一笔的时间，可以由我自己来定。",
-      "level": "deep",
+      "text": "开头有时就是磨人。我陪你缓一会儿。",
+      "level": "light",
       "states": [
         "focus-ready",
         "focus-running",
@@ -2354,36 +761,13 @@
       "tags": [
         "possibility"
       ],
-      "copyVersion": "companion-voice-v2",
-      "reviewStatus": "candidate"
-    },
-    {
-      "id": "ASKS14",
-      "pool": "ASKS",
-      "text": "我喜欢从会做的那个小动作开始。你也可以挑个顺手的起点。",
-      "level": "deep",
-      "states": [
-        "focus-ready",
-        "focus-running",
-        "focus-paused",
-        "break-ready",
-        "break-running",
-        "break-paused"
-      ],
-      "requiredFacts": [
-        "explicitRequest",
-        "categorySelected"
-      ],
-      "tags": [
-        "care"
-      ],
-      "copyVersion": "companion-voice-v2",
+      "copyVersion": "companion-voice-v3",
       "reviewStatus": "candidate"
     },
     {
       "id": "ASKS15",
       "pool": "ASKS",
-      "text": "难开头的话，先做一件不用想太久的小事。比如把要用的东西打开。",
+      "text": "先把要用的东西打开，别的等动手了再说。",
       "level": "light",
       "states": [
         "focus-ready",
@@ -2400,13 +784,13 @@
       "tags": [
         "small-step"
       ],
-      "copyVersion": "companion-voice-v2",
+      "copyVersion": "companion-voice-v3",
       "reviewStatus": "candidate"
     },
     {
       "id": "ASKS16",
       "pool": "ASKS",
-      "text": "先写个不太满意的开头也行，待会儿才有东西可以改。",
+      "text": "写东西的话，先留个草稿。哪里不满意，待会儿再改。",
       "level": "light",
       "states": [
         "focus-ready",
@@ -2423,36 +807,13 @@
       "tags": [
         "possibility"
       ],
-      "copyVersion": "companion-voice-v2",
-      "reviewStatus": "candidate"
-    },
-    {
-      "id": "ASKS17",
-      "pool": "ASKS",
-      "text": "别一下把整件事搬过来。先拿最小的那一块。",
-      "level": "light",
-      "states": [
-        "focus-ready",
-        "focus-running",
-        "focus-paused",
-        "break-ready",
-        "break-running",
-        "break-paused"
-      ],
-      "requiredFacts": [
-        "explicitRequest",
-        "categorySelected"
-      ],
-      "tags": [
-        "care"
-      ],
-      "copyVersion": "companion-voice-v2",
+      "copyVersion": "companion-voice-v3",
       "reviewStatus": "candidate"
     },
     {
       "id": "ASKS18",
       "pool": "ASKS",
-      "text": "你可以先碰一碰它，不必现在就答应做完。",
+      "text": "先试一小会儿，再决定要不要往下做。",
       "level": "light",
       "states": [
         "focus-ready",
@@ -2469,14 +830,14 @@
       "tags": [
         "autonomy"
       ],
-      "copyVersion": "companion-voice-v2",
+      "copyVersion": "companion-voice-v3",
       "reviewStatus": "candidate"
     },
     {
       "id": "ASKS19",
       "pool": "ASKS",
-      "text": "我有时会先挑有趣的部分做。顺序没那么要紧的话，你也可以。",
-      "level": "deep",
+      "text": "顺序不打紧的话，先挑有趣的那部分。我常这么干。",
+      "level": "light",
       "states": [
         "focus-ready",
         "focus-running",
@@ -2492,106 +853,14 @@
       "tags": [
         "possibility"
       ],
-      "copyVersion": "companion-voice-v2",
-      "reviewStatus": "candidate"
-    },
-    {
-      "id": "ASKS20",
-      "pool": "ASKS",
-      "text": "不知道怎么开始，就先写一句“我还没想好”。这也算把纸面占住一点了。",
-      "level": "deep",
-      "states": [
-        "focus-ready",
-        "focus-running",
-        "focus-paused",
-        "break-ready",
-        "break-running",
-        "break-paused"
-      ],
-      "requiredFacts": [
-        "explicitRequest",
-        "categorySelected"
-      ],
-      "tags": [
-        "small-step"
-      ],
-      "copyVersion": "companion-voice-v2",
-      "reviewStatus": "candidate"
-    },
-    {
-      "id": "ASKS21",
-      "pool": "ASKS",
-      "text": "现在只选一个动作：打开、翻到、写一行。选完就先做这个，后面的先不派活。",
-      "level": "deep",
-      "states": [
-        "focus-ready",
-        "focus-running",
-        "focus-paused",
-        "break-ready",
-        "break-running",
-        "break-paused"
-      ],
-      "requiredFacts": [
-        "explicitRequest",
-        "categorySelected"
-      ],
-      "tags": [
-        "patience"
-      ],
-      "copyVersion": "companion-voice-v2",
-      "reviewStatus": "candidate"
-    },
-    {
-      "id": "ASKS22",
-      "pool": "ASKS",
-      "text": "不用等到很有把握。我折纸时，第一道折痕也没答应后面一定像样。",
-      "level": "deep",
-      "states": [
-        "focus-ready",
-        "focus-running",
-        "focus-paused",
-        "break-ready",
-        "break-running",
-        "break-paused"
-      ],
-      "requiredFacts": [
-        "explicitRequest",
-        "categorySelected"
-      ],
-      "tags": [
-        "possibility"
-      ],
-      "copyVersion": "companion-voice-v2",
-      "reviewStatus": "candidate"
-    },
-    {
-      "id": "ASKS23",
-      "pool": "ASKS",
-      "text": "要是今天只想试个头，就按试个头来安排。我不会偷偷把它算成你的承诺。",
-      "level": "deep",
-      "states": [
-        "focus-ready",
-        "focus-running",
-        "focus-paused",
-        "break-ready",
-        "break-running",
-        "break-paused"
-      ],
-      "requiredFacts": [
-        "explicitRequest",
-        "categorySelected"
-      ],
-      "tags": [
-        "autonomy"
-      ],
-      "copyVersion": "companion-voice-v2",
+      "copyVersion": "companion-voice-v3",
       "reviewStatus": "candidate"
     },
     {
       "id": "ASKS24",
       "pool": "ASKS",
-      "text": "开头不一定要庄重。我比较喜欢“先弄一下看看”，动手的时候轻松一点。",
-      "level": "deep",
+      "text": "“先弄一下看看。”我挺喜欢这样开头。",
+      "level": "light",
       "states": [
         "focus-ready",
         "focus-running",
@@ -2607,7 +876,7 @@
       "tags": [
         "presence"
       ],
-      "copyVersion": "companion-voice-v2",
+      "copyVersion": "companion-voice-v3",
       "reviewStatus": "candidate"
     },
     {
@@ -2630,152 +899,14 @@
       "tags": [
         "return"
       ],
-      "copyVersion": "companion-voice-v2",
-      "reviewStatus": "candidate"
-    },
-    {
-      "id": "ASKB02",
-      "pool": "ASKB",
-      "text": "我会先看看纸上的折痕，再找下一折。",
-      "level": "light",
-      "states": [
-        "focus-ready",
-        "focus-running",
-        "focus-paused",
-        "break-ready",
-        "break-running",
-        "break-paused"
-      ],
-      "requiredFacts": [
-        "explicitRequest",
-        "categorySelected"
-      ],
-      "tags": [
-        "presence"
-      ],
-      "copyVersion": "companion-voice-v2",
-      "reviewStatus": "candidate"
-    },
-    {
-      "id": "ASKB03",
-      "pool": "ASKB",
-      "text": "我回来时，有时从刚才那行重读一遍。",
-      "level": "light",
-      "states": [
-        "focus-ready",
-        "focus-running",
-        "focus-paused",
-        "break-ready",
-        "break-running",
-        "break-paused"
-      ],
-      "requiredFacts": [
-        "explicitRequest",
-        "categorySelected"
-      ],
-      "tags": [
-        "autonomy"
-      ],
-      "copyVersion": "companion-voice-v2",
-      "reviewStatus": "candidate"
-    },
-    {
-      "id": "ASKB04",
-      "pool": "ASKB",
-      "text": "我找不到原来的位置，也可以重新挑一页。",
-      "level": "light",
-      "states": [
-        "focus-ready",
-        "focus-running",
-        "focus-paused",
-        "break-ready",
-        "break-running",
-        "break-paused"
-      ],
-      "requiredFacts": [
-        "explicitRequest",
-        "categorySelected"
-      ],
-      "tags": [
-        "return"
-      ],
-      "copyVersion": "companion-voice-v2",
-      "reviewStatus": "candidate"
-    },
-    {
-      "id": "ASKB05",
-      "pool": "ASKB",
-      "text": "我也会停一停，再找回刚才那一行。",
-      "level": "light",
-      "states": [
-        "focus-ready",
-        "focus-running",
-        "focus-paused",
-        "break-ready",
-        "break-running",
-        "break-paused"
-      ],
-      "requiredFacts": [
-        "explicitRequest",
-        "categorySelected"
-      ],
-      "tags": [
-        "patience"
-      ],
-      "copyVersion": "companion-voice-v2",
-      "reviewStatus": "candidate"
-    },
-    {
-      "id": "ASKB06",
-      "pool": "ASKB",
-      "text": "我把手放回桌边，再想想接下来想做什么。",
-      "level": "light",
-      "states": [
-        "focus-ready",
-        "focus-running",
-        "focus-paused",
-        "break-ready",
-        "break-running",
-        "break-paused"
-      ],
-      "requiredFacts": [
-        "explicitRequest",
-        "categorySelected"
-      ],
-      "tags": [
-        "autonomy"
-      ],
-      "copyVersion": "companion-voice-v2",
-      "reviewStatus": "candidate"
-    },
-    {
-      "id": "ASKB07",
-      "pool": "ASKB",
-      "text": "我会从还记得的那一点接着做。",
-      "level": "light",
-      "states": [
-        "focus-ready",
-        "focus-running",
-        "focus-paused",
-        "break-ready",
-        "break-running",
-        "break-paused"
-      ],
-      "requiredFacts": [
-        "explicitRequest",
-        "categorySelected"
-      ],
-      "tags": [
-        "patience"
-      ],
-      "copyVersion": "companion-voice-v2",
+      "copyVersion": "companion-voice-v3",
       "reviewStatus": "candidate"
     },
     {
       "id": "ASKB08",
       "pool": "ASKB",
-      "text": "我喜欢留张小纸条，回来时看一眼。",
-      "level": "light",
+      "text": "我会留张小纸条，写好下一步做什么。回来时就不用重新想一遍。",
+      "level": "deep",
       "states": [
         "focus-ready",
         "focus-running",
@@ -2791,37 +922,14 @@
       "tags": [
         "return"
       ],
-      "copyVersion": "companion-voice-v2",
-      "reviewStatus": "candidate"
-    },
-    {
-      "id": "ASKB09",
-      "pool": "ASKB",
-      "text": "我放下半折的纸船时，折痕还留在纸上。回来后，我慢慢认一认它。",
-      "level": "deep",
-      "states": [
-        "focus-ready",
-        "focus-running",
-        "focus-paused",
-        "break-ready",
-        "break-running",
-        "break-paused"
-      ],
-      "requiredFacts": [
-        "explicitRequest",
-        "categorySelected"
-      ],
-      "tags": [
-        "possibility"
-      ],
-      "copyVersion": "companion-voice-v2",
+      "copyVersion": "companion-voice-v3",
       "reviewStatus": "candidate"
     },
     {
       "id": "ASKB10",
       "pool": "ASKB",
-      "text": "我读书被岔开时，偶尔要多翻两页才找得到。我可以给自己这点时间。",
-      "level": "deep",
+      "text": "我读书被打断，也会往回翻两页。有时候就是得重新找一找。",
+      "level": "light",
       "states": [
         "focus-ready",
         "focus-running",
@@ -2837,105 +945,13 @@
       "tags": [
         "presence"
       ],
-      "copyVersion": "companion-voice-v2",
-      "reviewStatus": "candidate"
-    },
-    {
-      "id": "ASKB11",
-      "pool": "ASKB",
-      "text": "我回到桌边，会先摸一摸那块没摆好的积木。也许接着摆，也许换个地方。",
-      "level": "deep",
-      "states": [
-        "focus-ready",
-        "focus-running",
-        "focus-paused",
-        "break-ready",
-        "break-running",
-        "break-paused"
-      ],
-      "requiredFacts": [
-        "explicitRequest",
-        "categorySelected"
-      ],
-      "tags": [
-        "autonomy"
-      ],
-      "copyVersion": "companion-voice-v2",
+      "copyVersion": "companion-voice-v3",
       "reviewStatus": "candidate"
     },
     {
       "id": "ASKB12",
       "pool": "ASKB",
-      "text": "我接不上刚才的思路时，会先画一个记得的小角，再慢慢找回整幅画。",
-      "level": "deep",
-      "states": [
-        "focus-ready",
-        "focus-running",
-        "focus-paused",
-        "break-ready",
-        "break-running",
-        "break-paused"
-      ],
-      "requiredFacts": [
-        "explicitRequest",
-        "categorySelected"
-      ],
-      "tags": [
-        "autonomy"
-      ],
-      "copyVersion": "companion-voice-v2",
-      "reviewStatus": "candidate"
-    },
-    {
-      "id": "ASKB13",
-      "pool": "ASKB",
-      "text": "我喜欢让书签露出一点点。回来的时候，手指一碰就知道从哪里翻。",
-      "level": "deep",
-      "states": [
-        "focus-ready",
-        "focus-running",
-        "focus-paused",
-        "break-ready",
-        "break-running",
-        "break-paused"
-      ],
-      "requiredFacts": [
-        "explicitRequest",
-        "categorySelected"
-      ],
-      "tags": [
-        "care"
-      ],
-      "copyVersion": "companion-voice-v2",
-      "reviewStatus": "candidate"
-    },
-    {
-      "id": "ASKB14",
-      "pool": "ASKB",
-      "text": "我读书时会留好那一页。你可以接着刚才的一步，也可以从这里重新选。",
-      "level": "deep",
-      "states": [
-        "focus-ready",
-        "focus-running",
-        "focus-paused",
-        "break-ready",
-        "break-running",
-        "break-paused"
-      ],
-      "requiredFacts": [
-        "explicitRequest",
-        "categorySelected"
-      ],
-      "tags": [
-        "autonomy"
-      ],
-      "copyVersion": "companion-voice-v2",
-      "reviewStatus": "candidate"
-    },
-    {
-      "id": "ASKB15",
-      "pool": "ASKB",
-      "text": "被打断了，就先找回刚才那一步，不用从头证明一遍。",
+      "text": "思路断了的话，先写下还记得的几个词，再看看能不能接起来。",
       "level": "light",
       "states": [
         "focus-ready",
@@ -2950,9 +966,9 @@
         "categorySelected"
       ],
       "tags": [
-        "return"
+        "autonomy"
       ],
-      "copyVersion": "companion-voice-v2",
+      "copyVersion": "companion-voice-v3",
       "reviewStatus": "candidate"
     },
     {
@@ -2975,13 +991,13 @@
       "tags": [
         "patience"
       ],
-      "copyVersion": "companion-voice-v2",
+      "copyVersion": "companion-voice-v3",
       "reviewStatus": "candidate"
     },
     {
       "id": "ASKB17",
       "pool": "ASKB",
-      "text": "先把岔进来的事安顿一下，这边可以慢慢接。",
+      "text": "岔进来的事要紧，就先顾那边。",
       "level": "light",
       "states": [
         "focus-ready",
@@ -2998,60 +1014,14 @@
       "tags": [
         "care"
       ],
-      "copyVersion": "companion-voice-v2",
-      "reviewStatus": "candidate"
-    },
-    {
-      "id": "ASKB18",
-      "pool": "ASKB",
-      "text": "接不上也别硬拽。留一句“接下来做什么”，再回来会好找些。",
-      "level": "deep",
-      "states": [
-        "focus-ready",
-        "focus-running",
-        "focus-paused",
-        "break-ready",
-        "break-running",
-        "break-paused"
-      ],
-      "requiredFacts": [
-        "explicitRequest",
-        "categorySelected"
-      ],
-      "tags": [
-        "small-step"
-      ],
-      "copyVersion": "companion-voice-v2",
-      "reviewStatus": "candidate"
-    },
-    {
-      "id": "ASKB19",
-      "pool": "ASKB",
-      "text": "我读书跳了行，会往回找一句认得的。你也可以先找一个熟悉的小地方接上。",
-      "level": "deep",
-      "states": [
-        "focus-ready",
-        "focus-running",
-        "focus-paused",
-        "break-ready",
-        "break-running",
-        "break-paused"
-      ],
-      "requiredFacts": [
-        "explicitRequest",
-        "categorySelected"
-      ],
-      "tags": [
-        "return"
-      ],
-      "copyVersion": "companion-voice-v2",
+      "copyVersion": "companion-voice-v3",
       "reviewStatus": "candidate"
     },
     {
       "id": "ASKB20",
       "pool": "ASKB",
-      "text": "不用把刚才的状态原样找回来。眼下能做的那一点，也能接着用。",
-      "level": "deep",
+      "text": "刚才那股劲儿不一定马上回来，先从顺手的地方接着做。",
+      "level": "light",
       "states": [
         "focus-ready",
         "focus-running",
@@ -3067,37 +1037,14 @@
       "tags": [
         "possibility"
       ],
-      "copyVersion": "companion-voice-v2",
-      "reviewStatus": "candidate"
-    },
-    {
-      "id": "ASKB21",
-      "pool": "ASKB",
-      "text": "有些小岔路就是要走一下。回来后，我们只看下一步，不盘问刚才。",
-      "level": "deep",
-      "states": [
-        "focus-ready",
-        "focus-running",
-        "focus-paused",
-        "break-ready",
-        "break-running",
-        "break-paused"
-      ],
-      "requiredFacts": [
-        "explicitRequest",
-        "categorySelected"
-      ],
-      "tags": [
-        "care"
-      ],
-      "copyVersion": "companion-voice-v2",
+      "copyVersion": "companion-voice-v3",
       "reviewStatus": "candidate"
     },
     {
       "id": "ASKB22",
       "pool": "ASKB",
-      "text": "事情一多容易串线。先把这件事的名字写下来，别的暂时不跟进。",
-      "level": "deep",
+      "text": "几件事挤在一起的时候，可以先挑一件接着做。",
+      "level": "light",
       "states": [
         "focus-ready",
         "focus-running",
@@ -3113,59 +1060,13 @@
       "tags": [
         "small-step"
       ],
-      "copyVersion": "companion-voice-v2",
-      "reviewStatus": "candidate"
-    },
-    {
-      "id": "ASKB23",
-      "pool": "ASKB",
-      "text": "改过顺序，也还是你的安排。先做哪件，你可以重新挑。",
-      "level": "light",
-      "states": [
-        "focus-ready",
-        "focus-running",
-        "focus-paused",
-        "break-ready",
-        "break-running",
-        "break-paused"
-      ],
-      "requiredFacts": [
-        "explicitRequest",
-        "categorySelected"
-      ],
-      "tags": [
-        "autonomy"
-      ],
-      "copyVersion": "companion-voice-v2",
-      "reviewStatus": "candidate"
-    },
-    {
-      "id": "ASKB24",
-      "pool": "ASKB",
-      "text": "我做东西中途停下，回来常要多看两眼。多看两眼就多看两眼，不算又重做了一遍。",
-      "level": "deep",
-      "states": [
-        "focus-ready",
-        "focus-running",
-        "focus-paused",
-        "break-ready",
-        "break-running",
-        "break-paused"
-      ],
-      "requiredFacts": [
-        "explicitRequest",
-        "categorySelected"
-      ],
-      "tags": [
-        "patience"
-      ],
-      "copyVersion": "companion-voice-v2",
+      "copyVersion": "companion-voice-v3",
       "reviewStatus": "candidate"
     },
     {
       "id": "ASKT01",
       "pool": "ASKT",
-      "text": "我喜欢把小手摊开，歇一会儿。你也可以。",
+      "text": "先让手歇一会儿，换个舒服的姿势。",
       "level": "light",
       "states": [
         "focus-ready",
@@ -3182,7 +1083,7 @@
       "tags": [
         "rest"
       ],
-      "copyVersion": "companion-voice-v2",
+      "copyVersion": "companion-voice-v3",
       "reviewStatus": "candidate"
     },
     {
@@ -3205,122 +1106,7 @@
       "tags": [
         "care"
       ],
-      "copyVersion": "companion-voice-v2",
-      "reviewStatus": "candidate"
-    },
-    {
-      "id": "ASKT03",
-      "pool": "ASKT",
-      "text": "我喜欢把肩膀放松，让小手在桌上歇一歇。",
-      "level": "light",
-      "states": [
-        "focus-ready",
-        "focus-running",
-        "focus-paused",
-        "break-ready",
-        "break-running",
-        "break-paused"
-      ],
-      "requiredFacts": [
-        "explicitRequest",
-        "categorySelected"
-      ],
-      "tags": [
-        "patience"
-      ],
-      "copyVersion": "companion-voice-v2",
-      "reviewStatus": "candidate"
-    },
-    {
-      "id": "ASKT04",
-      "pool": "ASKT",
-      "text": "我也会选一个轻松些的下午。",
-      "level": "light",
-      "states": [
-        "focus-ready",
-        "focus-running",
-        "focus-paused",
-        "break-ready",
-        "break-running",
-        "break-paused"
-      ],
-      "requiredFacts": [
-        "explicitRequest",
-        "categorySelected"
-      ],
-      "tags": [
-        "autonomy"
-      ],
-      "copyVersion": "companion-voice-v2",
-      "reviewStatus": "candidate"
-    },
-    {
-      "id": "ASKT05",
-      "pool": "ASKT",
-      "text": "我会先放下手里的积木，找个舒服的位置。",
-      "level": "light",
-      "states": [
-        "focus-ready",
-        "focus-running",
-        "focus-paused",
-        "break-ready",
-        "break-running",
-        "break-paused"
-      ],
-      "requiredFacts": [
-        "explicitRequest",
-        "categorySelected"
-      ],
-      "tags": [
-        "rest"
-      ],
-      "copyVersion": "companion-voice-v2",
-      "reviewStatus": "candidate"
-    },
-    {
-      "id": "ASKT06",
-      "pool": "ASKT",
-      "text": "我给自己倒杯水，也给自己留一点空闲。",
-      "level": "light",
-      "states": [
-        "focus-ready",
-        "focus-running",
-        "focus-paused",
-        "break-ready",
-        "break-running",
-        "break-paused"
-      ],
-      "requiredFacts": [
-        "explicitRequest",
-        "categorySelected"
-      ],
-      "tags": [
-        "rest"
-      ],
-      "copyVersion": "companion-voice-v2",
-      "reviewStatus": "candidate"
-    },
-    {
-      "id": "ASKT07",
-      "pool": "ASKT",
-      "text": "我喜欢靠在窗边，让风吹吹脸。",
-      "level": "light",
-      "states": [
-        "focus-ready",
-        "focus-running",
-        "focus-paused",
-        "break-ready",
-        "break-running",
-        "break-paused"
-      ],
-      "requiredFacts": [
-        "explicitRequest",
-        "categorySelected"
-      ],
-      "tags": [
-        "rest"
-      ],
-      "copyVersion": "companion-voice-v2",
+      "copyVersion": "companion-voice-v3",
       "reviewStatus": "candidate"
     },
     {
@@ -3343,37 +1129,14 @@
       "tags": [
         "rest"
       ],
-      "copyVersion": "companion-voice-v2",
-      "reviewStatus": "candidate"
-    },
-    {
-      "id": "ASKT09",
-      "pool": "ASKT",
-      "text": "我想歇一歇时，就把小手从桌上收回来。等舒服了，再决定接下来做什么。",
-      "level": "deep",
-      "states": [
-        "focus-ready",
-        "focus-running",
-        "focus-paused",
-        "break-ready",
-        "break-running",
-        "break-paused"
-      ],
-      "requiredFacts": [
-        "explicitRequest",
-        "categorySelected"
-      ],
-      "tags": [
-        "rest"
-      ],
-      "copyVersion": "companion-voice-v2",
+      "copyVersion": "companion-voice-v3",
       "reviewStatus": "candidate"
     },
     {
       "id": "ASKT10",
       "pool": "ASKT",
-      "text": "我合上书的时候，那一页还在那里。休息这一会儿，也可以过得很自在。",
-      "level": "deep",
+      "text": "要是还惦记着下一步，先记一句，再去休息。",
+      "level": "light",
       "states": [
         "focus-ready",
         "focus-running",
@@ -3389,105 +1152,13 @@
       "tags": [
         "care"
       ],
-      "copyVersion": "companion-voice-v2",
-      "reviewStatus": "candidate"
-    },
-    {
-      "id": "ASKT11",
-      "pool": "ASKT",
-      "text": "我有时喜欢看杯子里晃动的水慢慢平下来。想停一会儿，就停一会儿。",
-      "level": "deep",
-      "states": [
-        "focus-ready",
-        "focus-running",
-        "focus-paused",
-        "break-ready",
-        "break-running",
-        "break-paused"
-      ],
-      "requiredFacts": [
-        "explicitRequest",
-        "categorySelected"
-      ],
-      "tags": [
-        "care"
-      ],
-      "copyVersion": "companion-voice-v2",
-      "reviewStatus": "candidate"
-    },
-    {
-      "id": "ASKT12",
-      "pool": "ASKT",
-      "text": "我折纸时会中途歇歇，给手指松松劲。想折时再拿起来。",
-      "level": "deep",
-      "states": [
-        "focus-ready",
-        "focus-running",
-        "focus-paused",
-        "break-ready",
-        "break-running",
-        "break-paused"
-      ],
-      "requiredFacts": [
-        "explicitRequest",
-        "categorySelected"
-      ],
-      "tags": [
-        "presence"
-      ],
-      "copyVersion": "companion-voice-v2",
-      "reviewStatus": "candidate"
-    },
-    {
-      "id": "ASKT13",
-      "pool": "ASKT",
-      "text": "我会把书签轻轻夹进去。后面的故事，可以留给另一个精神好些的下午。",
-      "level": "deep",
-      "states": [
-        "focus-ready",
-        "focus-running",
-        "focus-paused",
-        "break-ready",
-        "break-running",
-        "break-paused"
-      ],
-      "requiredFacts": [
-        "explicitRequest",
-        "categorySelected"
-      ],
-      "tags": [
-        "rest"
-      ],
-      "copyVersion": "companion-voice-v2",
-      "reviewStatus": "candidate"
-    },
-    {
-      "id": "ASKT14",
-      "pool": "ASKT",
-      "text": "我喜欢留一段不用安排的时间。窗外有什么，就随意看看。",
-      "level": "deep",
-      "states": [
-        "focus-ready",
-        "focus-running",
-        "focus-paused",
-        "break-ready",
-        "break-running",
-        "break-paused"
-      ],
-      "requiredFacts": [
-        "explicitRequest",
-        "categorySelected"
-      ],
-      "tags": [
-        "possibility"
-      ],
-      "copyVersion": "companion-voice-v2",
+      "copyVersion": "companion-voice-v3",
       "reviewStatus": "candidate"
     },
     {
       "id": "ASKT15",
       "pool": "ASKT",
-      "text": "想歇歇就歇歇，我不会替下一件事催你。",
+      "text": "先歇会儿吧。接下来的事，等舒服一点再想。",
       "level": "light",
       "states": [
         "focus-ready",
@@ -3504,13 +1175,13 @@
       "tags": [
         "rest"
       ],
-      "copyVersion": "companion-voice-v2",
+      "copyVersion": "companion-voice-v3",
       "reviewStatus": "candidate"
     },
     {
       "id": "ASKT16",
       "pool": "ASKT",
-      "text": "这会儿不用给休息安排成果。",
+      "text": "休息的时候，没干什么也挺好。",
       "level": "light",
       "states": [
         "focus-ready",
@@ -3527,13 +1198,13 @@
       "tags": [
         "autonomy"
       ],
-      "copyVersion": "companion-voice-v2",
+      "copyVersion": "companion-voice-v3",
       "reviewStatus": "candidate"
     },
     {
       "id": "ASKT17",
       "pool": "ASKT",
-      "text": "闭会儿眼也行，看看别处也行，挑舒服的。",
+      "text": "闭会儿眼，或看看别处，挑舒服的就好。",
       "level": "light",
       "states": [
         "focus-ready",
@@ -3550,7 +1221,7 @@
       "tags": [
         "care"
       ],
-      "copyVersion": "companion-voice-v2",
+      "copyVersion": "companion-voice-v3",
       "reviewStatus": "candidate"
     },
     {
@@ -3573,60 +1244,14 @@
       "tags": [
         "patience"
       ],
-      "copyVersion": "companion-voice-v2",
-      "reviewStatus": "candidate"
-    },
-    {
-      "id": "ASKT19",
-      "pool": "ASKT",
-      "text": "我不太想把歇着也弄成任务。你要是什么都没干，我觉得也说得过去。",
-      "level": "deep",
-      "states": [
-        "focus-ready",
-        "focus-running",
-        "focus-paused",
-        "break-ready",
-        "break-running",
-        "break-paused"
-      ],
-      "requiredFacts": [
-        "explicitRequest",
-        "categorySelected"
-      ],
-      "tags": [
-        "rest"
-      ],
-      "copyVersion": "companion-voice-v2",
-      "reviewStatus": "candidate"
-    },
-    {
-      "id": "ASKT20",
-      "pool": "ASKT",
-      "text": "先把这一小会儿留给自己。下一件事着不着急，等会儿再看。",
-      "level": "deep",
-      "states": [
-        "focus-ready",
-        "focus-running",
-        "focus-paused",
-        "break-ready",
-        "break-running",
-        "break-paused"
-      ],
-      "requiredFacts": [
-        "explicitRequest",
-        "categorySelected"
-      ],
-      "tags": [
-        "care"
-      ],
-      "copyVersion": "companion-voice-v2",
+      "copyVersion": "companion-voice-v3",
       "reviewStatus": "candidate"
     },
     {
       "id": "ASKT21",
       "pool": "ASKT",
-      "text": "想换点轻松的事做也好。我有时喜欢随便翻翻，不找答案，也不记住什么。",
-      "level": "deep",
+      "text": "想换点轻松的事，也好。我有时就随便翻翻书，不求记住什么。",
+      "level": "light",
       "states": [
         "focus-ready",
         "focus-running",
@@ -3642,14 +1267,14 @@
       "tags": [
         "possibility"
       ],
-      "copyVersion": "companion-voice-v2",
+      "copyVersion": "companion-voice-v3",
       "reviewStatus": "candidate"
     },
     {
       "id": "ASKT22",
       "pool": "ASKT",
-      "text": "歇够没有，还是你自己最清楚。倒计时到了，也不用立刻坐直开工。",
-      "level": "deep",
+      "text": "就算休息计时到了，也不用立刻开工。你还想歇，就接着歇。",
+      "level": "light",
       "states": [
         "focus-ready",
         "focus-running",
@@ -3665,53 +1290,7 @@
       "tags": [
         "autonomy"
       ],
-      "copyVersion": "companion-voice-v2",
-      "reviewStatus": "candidate"
-    },
-    {
-      "id": "ASKT23",
-      "pool": "ASKT",
-      "text": "要是连“怎么休息”都懒得想，就先别想。我投什么都不安排一票。",
-      "level": "deep",
-      "states": [
-        "focus-ready",
-        "focus-running",
-        "focus-paused",
-        "break-ready",
-        "break-running",
-        "break-paused"
-      ],
-      "requiredFacts": [
-        "explicitRequest",
-        "categorySelected"
-      ],
-      "tags": [
-        "patience"
-      ],
-      "copyVersion": "companion-voice-v2",
-      "reviewStatus": "candidate"
-    },
-    {
-      "id": "ASKT24",
-      "pool": "ASKT",
-      "text": "今天先收在这里也可以。你离开的时候，不用担心我会不高兴。",
-      "level": "deep",
-      "states": [
-        "focus-ready",
-        "focus-running",
-        "focus-paused",
-        "break-ready",
-        "break-running",
-        "break-paused"
-      ],
-      "requiredFacts": [
-        "explicitRequest",
-        "categorySelected"
-      ],
-      "tags": [
-        "presence"
-      ],
-      "copyVersion": "companion-voice-v2",
+      "copyVersion": "companion-voice-v3",
       "reviewStatus": "candidate"
     }
   ],
@@ -3773,7 +1352,7 @@
     },
     {
       "id": "UI31",
-      "text": "已开始过这一段。",
+      "text": "本段计时0秒。",
       "condition": "不显示“0分钟成就”或捏造1分钟。"
     },
     {
@@ -3808,7 +1387,7 @@
     },
     {
       "id": "UI44",
-      "text": "休息计时结束了，下一步按你的节奏来。",
+      "text": "休息计时结束了。",
       "condition": "不自动启动工作；不使用“该努力了”。"
     }
   ],
@@ -3828,10 +1407,10 @@
   ],
   "welcomeNote": {
     "id": "WELCOME_NOTE",
-    "text": "很高兴在这里见到你。选一小段时间，做眼前的一小件事。想暂停、想休息，都可以按自己的节奏来。每一次愿意开始，都值得被温柔地记住。",
-    "copyVersion": "companion-moments-v1",
+    "text": "你好，我会在这里陪你，也忙一点自己的事。选个时长就能开始；想记点什么、暂停或休息，随时都行。",
+    "copyVersion": "companion-moments-v2",
     "reviewStatus": "candidate"
   },
-  "interfaceCopyVersion": "prd-v35",
-  "requestedCopyVersion": "companion-voice-v2"
+  "interfaceCopyVersion": "prd-v37",
+  "requestedCopyVersion": "companion-voice-v3"
 }

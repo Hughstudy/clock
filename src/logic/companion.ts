@@ -20,7 +20,7 @@ export function companionPresentation(frame: FeedbackFrame, options: { reducedMo
   const pool = frame.encouragement?.pool
   let stance = STANCES[frame.companionState]
   let cue: CompanionPresentation['cue'] = null
-  if (pool === 'END' || pool === 'ZER' || pool === 'BRE') { stance = 'settled'; cue = 'settle' }
+  if (pool === 'END' || pool === 'ZER') { stance = 'settled'; cue = 'settle' }
   else if (frame.placement === 'requested') { stance = 'support'; cue = 'support' }
   else if (pool === 'STA') cue = 'begin'
   return { stance, cue: staticOnly ? null : cue, staticOnly }
