@@ -50,6 +50,7 @@ export function feedbackContext(snapshot: AppSnapshot, persistence: FeedbackCont
     persistence,
     participationSaved: persistence === 'saved' && event?.sessionId !== undefined &&
       snapshot.participations.some(p => p.sessionId === event.sessionId),
+    returningReady: !snapshot.timer.session && (snapshot.participations.length > 0 || snapshot.records.length > 0 || snapshot.restMemories.length > 0),
   }
 }
 
@@ -67,18 +68,24 @@ export interface FeedbackHostInput {
   event: AppFeedbackEvent | null
   active: boolean
   nodeEncouragement: boolean
+  automaticVisible?: boolean
 }
 
 /** Countdown refreshes are intentionally absent: they never redraw copy or restart cues. */
 export function feedbackSignature(input: FeedbackHostInput): string {
   const { snapshot: s, persistence, event, active, nodeEncouragement } = input
   return JSON.stringify([s.datasetGeneration, s.revision, s.timer.phase, s.timer.session?.id,
-    s.timer.session?.status, persistence, event?.id, event?.kind, event?.origin, event?.revision, active, nodeEncouragement])
+    s.timer.session?.status, persistence, event?.id, event?.kind, event?.origin, event?.revision, active, nodeEncouragement, input.automaticVisible])
 }
 
-export function createFeedbackHost(input: FeedbackHostInput, catalog: FeedbackCatalog): FeedbackHostState {
-  const feedback = transitionFeedback(createFeedbackMemory(), { kind: 'reconcile', id: 'initial-view', atMs: 0, origin: 'restore' }, feedbackContext(input.snapshot, input.persistence, input.event), catalog)
-  return { feedback, cue: null, lastEventKey: null, signature: '' }
+export function createFeedbackHost(input: FeedbackHostInput, catalog: FeedbackCatalog, initial: { seed: number; enteredAtMs?: number } = { seed: 1 }): FeedbackHostState {
+  const context = feedbackContext(input.snapshot, input.persistence, input.event)
+  const greeting = initial.enteredAtMs !== undefined && input.active && input.automaticVisible !== false && input.nodeEncouragement && context.returningReady && context.persistence === 'saved' && !input.event
+  const event: FeedbackEvent = greeting
+    ? { kind: 'ready-entered', id: 'initial-entry', atMs: initial.enteredAtMs!, origin: 'user' }
+    : { kind: 'reconcile', id: 'initial-view', atMs: 0, origin: 'restore' }
+  const feedback = transitionFeedback(createFeedbackMemory(initial.seed), event, context, catalog)
+  return { feedback, cue: null, lastEventKey: null, signature: greeting ? feedbackSignature(input) : '' }
 }
 
 /** Consumes each operation once, including while its screen is hidden. */
@@ -91,8 +98,13 @@ export function updateFeedbackHost(previous: FeedbackHostState, input: FeedbackH
   const fresh = candidate && eventKey !== previous.lastEventKey
   const current = fresh && candidate.generation === input.snapshot.datasetGeneration && candidate.revision === input.snapshot.revision
   const event: FeedbackEvent = current ? candidate : { kind: 'reconcile', id: `view:${signature}`, atMs: candidate?.atMs ?? 0, origin: 'user' }
-  const options: FeedbackOptions = { nodeEncouragement: input.nodeEncouragement }
+  const options: FeedbackOptions = { nodeEncouragement: input.nodeEncouragement && input.active && input.automaticVisible !== false }
   const feedback = transitionFeedback(previous.feedback.state, event, feedbackContext(input.snapshot, input.persistence, candidate), catalog, options)
+  // Leaving or covering the surface consumes a passing line; it is never queued for return.
+  if ((!input.active || input.automaticVisible === false || !input.nodeEncouragement) && feedback.frame.placement === 'node') {
+    feedback.frame = { ...feedback.frame, encouragement: null }
+    feedback.state.current = feedback.frame
+  }
   // The current phrase may remain visible, but navigation never replays its cue or announcement.
   if (!input.active || (!fresh && feedback.frame.status.kind !== 'error')) feedback.announcement = null
   const cue = current ? cueFor(candidate, feedback, input.active) : null

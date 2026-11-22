@@ -186,13 +186,17 @@ export function HomeScreen({ active, view, result, linkedThoughts, defaultsInten
   useEffect(() => { if (!pickerAvailable && task === 'duration') setTask(null) }, [task, pickerAvailable])
 
   // The companion's passing line steps aside while a local panel has the space.
-  const spoken = frame.placement !== 'requested' && !panel ? frame.encouragement : null
+  const passing = frame.placement !== 'requested' && !panel ? frame.encouragement : null
   const noteStatus = thoughts.status
   const pending = saveState === 'pending'
   const needsAttention = pending || noteStatus?.kind === 'error' || !!systemNoticeSummary || saveState === 'memory-only' || saveState === 'read-only'
   const chrome = useFocusChrome({ sessionKey: view.sessionId, running: view.status === 'running' && !timerPending, timings: spec.focusChrome,
     // A mark's undo lasts all session and waits in the card. Only its short confirmation holds it.
     held: !active || readableLayout || !!panel || needsAttention || !!noteStatus })
+  const spoken = !chrome.away ? passing : null
+  useEffect(() => {
+    if (chrome.away && passing) companion.dismiss()
+  }, [chrome.away, passing, companion.dismiss])
   const focusPrimaryOnReturn = useRef(false)
   useLayoutEffect(() => {
     if (chrome.away || !focusPrimaryOnReturn.current) return

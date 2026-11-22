@@ -112,7 +112,7 @@ describe('feedback host lifecycle', () => {
     expect(hidden.feedback.announcement).toBeNull()
     const returned = updateFeedbackHost(hidden, i, feedbackCatalog)
     expect(returned.feedback.announcement).toBeNull()
-    expect(returned.feedback.frame.encouragement?.id).toBe(first.feedback.frame.encouragement?.id)
+    expect(returned.feedback.frame.encouragement).toBeNull()
   })
 
   it('consumes hidden expiry without replaying a celebration when focus is shown again', () => {
@@ -122,6 +122,9 @@ describe('feedback host lifecycle', () => {
     const i = input(ended.snapshot, ended.event)
     const hidden = updateFeedbackHost(first, { ...i, active: false }, feedbackCatalog)
     expect(hidden.feedback.announcement).toBeNull()
+    expect(hidden.feedback.frame.encouragement).toBeNull()
+    expect(hidden.feedback.state.randomState).toBe(first.feedback.state.randomState)
+    expect(updateFeedbackHost(hidden, i, feedbackCatalog).feedback.frame.encouragement).toBeNull()
     expect(updateFeedbackHost(hidden, i, feedbackCatalog).feedback.announcement).toBeNull()
   })
 
@@ -215,5 +218,46 @@ describe('feedback host lifecycle', () => {
     expect(companionSceneOf(ended.snapshot, settled.cue, {
       completedProgress: 0, visible: true, persistence: 'saved', hasError: false,
     })?.ending).toEqual({ cueId: settled.cue!.id, tier: null })
+  })
+})
+
+
+describe('ready-entry greeting', () => {
+  it('greets once on opening a saved ready page, without changing data or creating a cue', () => {
+    const ended = commit(start().snapshot, { type: 'end', sessionId: 'session' }, T0 + 1000)
+    const i = input(ended.snapshot)
+    const before = structuredClone(i.snapshot)
+    const first = createFeedbackHost(i, feedbackCatalog, { seed: 42, enteredAtMs: T0 + 2000 })
+    expect(first.feedback.frame.encouragement?.pool).toBe('RET')
+    expect(first.feedback.announcement).not.toBeNull()
+    expect(first.cue).toBeNull()
+    expect(updateFeedbackHost(first, i, feedbackCatalog)).toBe(first)
+    const hidden = updateFeedbackHost(first, { ...i, active: false }, feedbackCatalog)
+    const returned = updateFeedbackHost(hidden, i, feedbackCatalog)
+    expect(returned.feedback.frame.encouragement).toBeNull()
+    expect(returned.feedback.announcement).toBeNull()
+    expect(i.snapshot).toEqual(before)
+  })
+
+  it('keeps first use, result recovery, active sessions, hidden pages and errors quiet', () => {
+    const running = start()
+    const ended = commit(running.snapshot, { type: 'end', sessionId: 'session' }, T0 + 1000)
+    const ready = input(ended.snapshot)
+    for (const i of [input(createSnapshot(spec)), input(running.snapshot), { ...ready, active: false }, { ...ready, automaticVisible: false }, { ...ready, nodeEncouragement: false }, { ...ready, persistence: 'pending' as const }]) {
+      expect(createFeedbackHost(i, feedbackCatalog, { seed: 10, enteredAtMs: T0 }).feedback.frame.encouragement).toBeNull()
+    }
+    expect(createFeedbackHost(ready, feedbackCatalog, { seed: 10 }).feedback.frame.encouragement).toBeNull()
+  })
+
+  it('does not consume a random phrase or cooldown while a local panel covers the surface', () => {
+    const running = start()
+    const initial = render(input(running.snapshot, running.event))
+    const ended = commit(running.snapshot, { type: 'end', sessionId: 'session' }, T0 + 60_000)
+    const i = { ...input(ended.snapshot, ended.event), automaticVisible: false }
+    const covered = updateFeedbackHost(initial, i, feedbackCatalog)
+    expect(covered.feedback.frame.encouragement).toBeNull()
+    expect(covered.feedback.state.randomState).toBe(initial.feedback.state.randomState)
+    expect(covered.feedback.state.lastAutomaticAt).toBe(initial.feedback.state.lastAutomaticAt)
+    expect(updateFeedbackHost(covered, { ...i, automaticVisible: true }, feedbackCatalog).feedback.frame.encouragement).toBeNull()
   })
 })

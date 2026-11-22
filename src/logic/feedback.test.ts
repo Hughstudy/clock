@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import raw from '../data/encouragement.zh-CN.json'
 import { feedbackCatalog } from '../data/encouragement'
-import { ASK_POOLS, NODE_POOLS, createFeedbackMemory, parseFeedbackCatalog, transitionFeedback, type FeedbackContext, type FeedbackEvent, type FeedbackMemory } from './feedback'
+import { ASK_POOLS, NODE_POOLS, createFeedbackMemory, parseFeedbackCatalog, transitionFeedback, type FeedbackContext, type FeedbackEvent } from './feedback'
 
 const ready: FeedbackContext = { phase: 'focus', status: 'ready', persistence: 'saved', participationSaved: true }
 const running: FeedbackContext = { ...ready, status: 'running' }
@@ -11,20 +11,19 @@ const reduce = (e: FeedbackEvent, c = ready, m = createFeedbackMemory(), options
 
 describe('PRD copy resource integrity', () => {
   it('contains the exact pool coverage, candidate status and deep/light separation', () => {
-    for (const pool of NODE_POOLS) expect(feedbackCatalog.entries.filter(e => e.pool === pool)).toHaveLength(5)
-    for (const pool of ASK_POOLS) expect(feedbackCatalog.entries.filter(e => e.pool === pool)).toHaveLength(14)
-    expect(feedbackCatalog.entries.filter(e => e.level === 'deep')).toHaveLength(24)
+    for (const pool of NODE_POOLS) expect(feedbackCatalog.entries.filter(e => e.pool === pool).length).toBeGreaterThanOrEqual(5)
+    for (const pool of ASK_POOLS) expect(feedbackCatalog.entries.filter(e => e.pool === pool)).toHaveLength(24)
+    expect(feedbackCatalog.entries).toHaveLength(177)
     expect(feedbackCatalog.entries.every(e => e.reviewStatus === 'candidate')).toBe(true)
   })
 
   it('versions the companion’s spoken lines independently from automatic and welcome copy', () => {
     for (const entry of feedbackCatalog.entries) {
       if (entry.pool.startsWith('ASK')) {
-        expect(entry.copyVersion).toBe('companion-voice-v1')
-        expect(entry.text).toContain('我')
-      } else expect(entry.copyVersion).toBe('prd-v3-r7')
+        expect(entry.copyVersion).toBe('companion-voice-v2')
+      } else expect(entry.copyVersion).toBe('companion-moments-v1')
     }
-    expect(feedbackCatalog.welcomeNote.copyVersion).toBe('prd-v3-r7')
+    expect(feedbackCatalog.welcomeNote.copyVersion).toBe('companion-moments-v1')
   })
 
   it.each(['id', 'facts', 'states', 'version', 'requested-version', 'markup', 'missing', 'deep', 'ui', 'error'] as const)('rejects damaged %s before use', kind => {
@@ -35,7 +34,7 @@ describe('PRD copy resource integrity', () => {
     if (kind === 'version') bad.entries[0]!.copyVersion = 'unknown'
     if (kind === 'requested-version') bad.entries.find(e => e.pool === 'ASKG')!.copyVersion = bad.copyVersion
     if (kind === 'markup') bad.entries[0]!.text = '<script>alert(1)</script>'
-    if (kind === 'missing') bad.entries.pop()
+    if (kind === 'missing') bad.entries = bad.entries.filter(e => e.pool !== 'ASKT')
     if (kind === 'deep') bad.entries[0]!.level = 'deep'
     if (kind === 'ui') bad.interfaceCopy[0]!.id = bad.interfaceCopy[1]!.id
     if (kind === 'error') bad.errors[0]!.text = ' '
@@ -44,27 +43,28 @@ describe('PRD copy resource integrity', () => {
 })
 
 describe('truthful feedback eligibility', () => {
-  it('starts at each pool’s first candidate with the facts it needs', () => {
-    const cases: [FeedbackEvent, FeedbackContext, string][] = [
-      [event({ kind: 'focus-started' }), running, 'STA01'],
-      [event({ kind: 'paused' }), paused, 'PAU01'],
-      [event({ kind: 'resumed' }), running, 'RES01'],
-      [event({ kind: 'focus-ended', elapsedMs: 1000, reason: 'manual' }), ready, 'END01'],
-      [event({ kind: 'focus-ended', elapsedMs: 0, reason: 'manual' }), ready, 'ZER01'],
-      [event({ kind: 'note-saved', hasText: false }), running, 'NME01'],
-      [event({ kind: 'note-saved', hasText: true }), running, 'NTX01'],
-      [event({ kind: 'break-started' }), { ...running, phase: 'break' }, 'BRK01'],
-      [event({ kind: 'break-ended' }), ready, 'BRE01'],
-      ...ASK_POOLS.map(pool => [event({ kind: 'encouragement-requested', category: pool }), ready, `${pool}01`] as [FeedbackEvent, FeedbackContext, string]),
+  it('selects only the appropriate pools from committed facts', () => {
+    const cases: [FeedbackEvent, FeedbackContext, string | null][] = [
+      [event({ kind: 'focus-started' }), running, 'STA'],
+      [event({ kind: 'paused' }), paused, null],
+      [event({ kind: 'resumed' }), running, null],
+      [event({ kind: 'focus-ended', elapsedMs: 1000, reason: 'manual' }), ready, 'END'],
+      [event({ kind: 'focus-ended', elapsedMs: 0, reason: 'manual' }), ready, 'ZER'],
+      [event({ kind: 'note-saved', hasText: false }), running, null],
+      [event({ kind: 'note-saved', hasText: true }), running, null],
+      [event({ kind: 'break-started' }), { ...running, phase: 'break' }, 'BRK'],
+      [event({ kind: 'break-ended' }), ready, null],
+      ...ASK_POOLS.map(pool => [event({ kind: 'encouragement-requested', category: pool }), ready, pool] as [FeedbackEvent, FeedbackContext, string]),
     ]
-    for (const [e, context, id] of cases) expect(reduce(e, context).frame.encouragement?.id).toBe(id)
+    cases.push([event({ kind: 'ready-entered' }), { ...ready, returningReady: true }, 'RET'])
+    for (const [e, context, pool] of cases) expect(reduce(e, context).frame.encouragement?.pool ?? null).toBe(pool)
   })
 
   it('treats 1 second, 5 minutes and 25 minutes alike for manual and elapsed endings', () => {
     for (const ms of [1000, 300_000, 1_500_000]) {
       const manual = reduce(event({ kind: 'focus-ended', elapsedMs: ms, reason: 'manual' }))
       const elapsed = reduce({ ...event({ kind: 'focus-ended', elapsedMs: ms, reason: 'elapsed' }), origin: 'expiry' })
-      expect(manual.frame.encouragement?.id).toBe('END01')
+      expect(manual.frame.encouragement?.pool).toBe('END')
       expect(manual.frame.encouragement).toEqual(elapsed.frame.encouragement)
     }
   })
@@ -105,15 +105,31 @@ describe('truthful feedback eligibility', () => {
 })
 
 describe('rotation, silence and one-result-per-action', () => {
-  it.each(ASK_POOLS)('cycles %s indefinitely in editorial order without adjacent repeats', pool => {
-    let memory = createFeedbackMemory()
-    const ids: string[] = []
-    for (let i = 0; i < 42; i++) {
-      const r = reduce(event({ kind: 'encouragement-requested', category: pool }, String(i)), ready, memory)
-      memory = r.state; ids.push(r.frame.encouragement!.id)
+  it.each([...ASK_POOLS, 'RET', 'STA', 'END', 'ZER', 'BRK'] as const)('draws randomly from %s with no adjacent repeats and no exhaustion requirement', pool => {
+    const e: Omit<FeedbackEvent, 'id' | 'atMs' | 'origin'> & Record<string, unknown> = pool.startsWith('ASK') ? { kind: 'encouragement-requested', category: pool }
+      : pool === 'RET' ? { kind: 'ready-entered' }
+      : pool === 'STA' ? { kind: 'focus-started' }
+      : pool === 'BRK' ? { kind: 'break-started' }
+      : { kind: 'focus-ended', elapsedMs: pool === 'ZER' ? 0 : 1000, reason: 'manual' }
+    const context = pool === 'BRK' ? { ...running, phase: 'break' as const }
+      : pool === 'STA' ? running : { ...ready, returningReady: true }
+    const count = feedbackCatalog.entries.filter(e => e.pool === pool).length
+    const sequence = (seed: number) => {
+      let memory = createFeedbackMemory(seed)
+      const ids: string[] = []
+      for (let i = 0; i < count * 3; i++) {
+        const r = reduce(event(e, String(i), i * 30_000), context, memory)
+        memory = r.state
+        ids.push(r.frame.encouragement!.id)
+      }
+      return ids
     }
-    const expected = [1, 9, 2, 10, 3, 11, 4, 12, 5, 13, 6, 14, 7, 8].map(i => `${pool}${String(i).padStart(2, '0')}`)
-    expect(ids).toEqual([...expected, ...expected, ...expected])
+    const ids = sequence(1234)
+    expect(new Set(ids).size).toBeGreaterThan(2)
+    expect(new Set(ids.slice(0, count)).size).toBeLessThan(count)
+    expect(ids.every((id, i) => i === 0 || id !== ids[i - 1])).toBe(true)
+    expect(sequence(1234)).toEqual(ids)
+    expect(sequence(987654321)).not.toEqual(ids)
   })
 
   it('defaults each new general request to ASKG, with no carried-over emotion category', () => {
@@ -121,42 +137,39 @@ describe('rotation, silence and one-result-per-action', () => {
     expect(reduce(event({ kind: 'encouragement-requested' }, 'next'), ready, tired.state).frame.encouragement?.pool).toBe('ASKG')
   })
 
-  it('avoids a similar semantic tag across pools', () => {
-    const pausedResult = reduce(event({ kind: 'paused' }), paused)
-    expect(pausedResult.frame.encouragement?.id).toBe('PAU01')
-    const restEnd = reduce(event({ kind: 'break-ended' }, 'rest-end', 1000), ready, pausedResult.state)
-    expect(restEnd.frame.encouragement?.id).toBe('BRE02')
+  it('shares the automatic cooldown across entry, focus and rest without postponing any phrase', () => {
+    const entry = reduce(event({ kind: 'ready-entered' }), { ...ready, returningReady: true })
+    const start = reduce(event({ kind: 'focus-started' }, 'start', 1000), running, entry.state)
+    expect(start.frame.encouragement).toBeNull()
+    expect(start.state.lastAutomaticAt).toBe(0)
+    expect(start.state.randomState).toBe(entry.state.randomState)
+    const end = reduce(event({ kind: 'focus-ended', elapsedMs: 29_000, reason: 'manual' }, 'end', 30_000), ready, start.state)
+    expect(end.frame.encouragement?.pool).toBe('END')
+    const rest = reduce(event({ kind: 'break-started' }, 'rest', 30_001), { ...running, phase: 'break' }, end.state)
+    expect(rest.frame.encouragement).toBeNull()
+    expect(reduce(event({ kind: 'reconcile' }, 'tick', 60_001), { ...running, phase: 'break' }, rest.state).frame.encouragement).toBeNull()
+    expect(reduce(event({ kind: 'encouragement-requested' }, 'ask', 30_002), ready, rest.state).frame.encouragement?.pool).toBe('ASKG')
   })
 
-  it('falls back to accurate status when no eligible nonrepeating copy remains', () => {
-    const memory: FeedbackMemory = { ...createFeedbackMemory(), lastPool: 'STA', lastTags: ['autonomy', 'rest', 'stored', 'possibility', 'care', 'return', 'small-step', 'patience', 'presence'] }
-    const r = reduce(event({ kind: 'paused' }), paused, memory)
-    expect(r.frame.status.id).toBe('UI26'); expect(r.frame.encouragement).toBeNull()
+  it('keeps pause, resume, notes and rest end factual and quiet', () => {
+    for (const e of [event({ kind: 'paused' }), event({ kind: 'resumed' }), event({ kind: 'note-saved', hasText: false }), event({ kind: 'note-saved', hasText: true }), event({ kind: 'break-ended' })]) {
+      const r = reduce(e, e.kind === 'paused' ? paused : e.kind === 'break-ended' ? ready : running)
+      expect(r.frame.encouragement).toBeNull()
+      expect(r.announcement?.text).toBe(r.frame.status.text)
+      expect(r.state.lastAutomaticAt).toBeNull()
+    }
   })
 
-  it('coalesces repeated pauses and one note interaction but preserves start/end responses', () => {
-    const first = reduce(event({ kind: 'paused' }), paused)
-    const repeated = reduce(event({ kind: 'paused' }, 'b', 29_999), paused, first.state)
-    expect(repeated.frame.encouragement).toBeNull(); expect(repeated.frame.status.id).toBe('UI26')
-    const later = reduce(event({ kind: 'paused' }, 'c', 60_000), paused, repeated.state)
-    expect(later.frame.encouragement?.id).toBe('PAU02')
-    const saved = reduce({ ...event({ kind: 'note-saved', hasText: true }), interactionId: 'note-1' }, running)
-    const returned = reduce({ ...event({ kind: 'note-saved', hasText: true }, 'return', 60_000), interactionId: 'note-1' }, running, saved.state)
-    expect(returned.frame.encouragement).toBeNull()
-    const start = reduce(event({ kind: 'focus-started' }), running)
-    expect(reduce(event({ kind: 'focus-ended', elapsedMs: 0, reason: 'manual' }, 'end', 1), ready, start.state).frame.encouragement?.pool).toBe('ZER')
+  it('requires actual history and ready state for an entry greeting', () => {
+    const e = event({ kind: 'ready-entered' })
+    expect(reduce(e).frame.encouragement).toBeNull()
+    expect(reduce(e, { ...running, returningReady: true }).frame.encouragement).toBeNull()
+    expect(reduce(e, { ...ready, returningReady: true, persistence: 'pending' }).frame.encouragement).toBeNull()
   })
 
-  it('treats a mark and a typed save as one noisy family', () => {
-    const mark = reduce(event({ kind: 'note-saved', hasText: false }), running)
-    const text = reduce(event({ kind: 'note-saved', hasText: true }, 'text', 1000), running, mark.state)
-    expect(text.frame.status.id).toBe('UI33'); expect(text.frame.encouragement).toBeNull()
-  })
-
-  it('supports a configurable cooldown and active requests bypass that cooldown', () => {
-    const first = reduce(event({ kind: 'paused' }), paused)
-    expect(reduce(event({ kind: 'paused' }, 'b', 5), paused, first.state, { cooldownMs: 0 }).frame.encouragement).not.toBeNull()
-    expect(reduce(event({ kind: 'encouragement-requested' }, 'ask', 1), paused, first.state).frame.encouragement?.pool).toBe('ASKG')
+  it('supports a configurable cooldown', () => {
+    const first = reduce(event({ kind: 'focus-started' }), running)
+    expect(reduce(event({ kind: 'focus-ended', elapsedMs: 1, reason: 'manual' }, 'end', 1), ready, first.state, { cooldownMs: 0 }).frame.encouragement?.pool).toBe('END')
   })
 
   it('never automatically rotates on ticks, navigation or recovered/synced events', () => {
@@ -176,10 +189,11 @@ describe('rotation, silence and one-result-per-action', () => {
     const e = event({ kind: 'note-saved', hasText: true })
     const failed = reduce(e, { ...running, persistence: 'pending' })
     const saved = reduce(e, running, failed.state)
-    expect(saved.frame.encouragement?.id).toBe('NTX01')
+    expect(saved.frame.encouragement).toBeNull()
+    expect(saved.frame.status.id).toBe('UI33')
     const duplicate = reduce(e, running, saved.state)
     expect(duplicate.frame).toEqual(saved.frame); expect(duplicate.announcement).toBeNull()
-    expect(duplicate.state.cursors).toEqual(saved.state.cursors)
+    expect(duplicate.state.randomState).toEqual(saved.state.randomState)
   })
 
   it('can close a message and change state without replaying old feedback', () => {
@@ -210,7 +224,7 @@ describe('rotation, silence and one-result-per-action', () => {
     expect(failed.frame.encouragement).toBeNull()
     const repeated = reduce(event({ kind: 'reconcile' }, 'next-tick'), context, failed.state)
     expect(repeated.announcement).toBeNull()
-    expect(repeated.state.cursors).toEqual(first.state.cursors)
+    expect(repeated.state.randomState).toEqual(first.state.randomState)
   })
 
   it('retains functionality and requested support with node encouragement off', () => {

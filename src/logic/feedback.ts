@@ -1,11 +1,11 @@
-export const NODE_POOLS = ['STA', 'PAU', 'RES', 'END', 'ZER', 'NME', 'NTX', 'BRK', 'BRE'] as const
+export const NODE_POOLS = ['RET', 'STA', 'PAU', 'RES', 'END', 'ZER', 'NME', 'NTX', 'BRK', 'BRE'] as const
 export const ASK_POOLS = ['ASKG', 'ASKS', 'ASKB', 'ASKT'] as const
 export const POOLS = [...NODE_POOLS, ...ASK_POOLS] as const
 export type Pool = typeof POOLS[number]
 export type AskPool = typeof ASK_POOLS[number]
 export const COMPANION_STATES = ['focus-ready', 'focus-running', 'focus-paused', 'break-ready', 'break-running', 'break-paused'] as const
 export type CompanionState = typeof COMPANION_STATES[number]
-export const FACTS = ['operationSaved', 'focusStarted', 'positiveElapsed', 'zeroElapsed', 'participationSaved', 'emptyNote', 'textNote', 'explicitRequest', 'categorySelected'] as const
+export const FACTS = ['operationSaved', 'returningReady', 'focusStarted', 'positiveElapsed', 'zeroElapsed', 'participationSaved', 'emptyNote', 'textNote', 'explicitRequest', 'categorySelected'] as const
 export type Fact = typeof FACTS[number]
 const TAGS = ['autonomy', 'rest', 'stored', 'possibility', 'care', 'return', 'small-step', 'patience', 'presence'] as const
 
@@ -32,9 +32,6 @@ export interface FeedbackCatalog {
   readonly welcomeNote: { readonly id: 'WELCOME_NOTE'; readonly text: string; readonly copyVersion: string; readonly reviewStatus: 'candidate' }
 }
 
-const ASK_ORDER = [1, 9, 2, 10, 3, 11, 4, 12, 5, 13, 6, 14, 7, 8]
-const sequenceOf = (pool: Pool) => pool.startsWith('ASK') ? ASK_ORDER : [1, 2, 3, 4, 5]
-
 /** Validate local editable content before any candidate can be selected. */
 export function parseFeedbackCatalog(value: unknown): FeedbackCatalog {
   const fail = (path: string): never => { throw new Error(`feedback catalog: invalid ${path}`) }
@@ -60,18 +57,24 @@ export function parseFeedbackCatalog(value: unknown): FeedbackCatalog {
     if (!POOLS.includes(pool as Pool) || seen.has(id)) fail(`${id}.pool/duplicate`)
     seen.add(id)
     const index = Number(id.slice(pool.length))
-    if (id !== `${pool}${String(index).padStart(2, '0')}` || !sequenceOf(pool as Pool).includes(index)) fail(`${id}.id`)
+    if (id !== `${pool}${String(index).padStart(2, '0')}` || !Number.isSafeInteger(index) || index < 1) fail(`${id}.id`)
     text(e.text, `${id}.text`)
     if (/[{}<>]/.test(e.text as string)) fail(`${id}.text template/markup`)
-    if (e.level !== (pool.startsWith('ASK') && index >= 9 ? 'deep' : 'light')) fail(`${id}.level`)
+    if (!['light', 'deep'].includes(e.level as string) || (!pool.startsWith('ASK') && e.level !== 'light')) fail(`${id}.level`)
     if (e.copyVersion !== (pool.startsWith('ASK') ? requestedVersion : version) || e.reviewStatus !== 'candidate') fail(`${id}.metadata`)
     list(e.states, COMPANION_STATES, `${id}.states`)
     list(e.requiredFacts, FACTS, `${id}.requiredFacts`)
     list(e.tags, TAGS, `${id}.tags`)
   }
-  // Each pool the reducer can pick from needs its whole rotation.
+  // Pool size and short/long mix belong to the catalog, not a hard-coded sequence.
   for (const pool of POOLS) {
-    for (const i of sequenceOf(pool)) if (!seen.has(`${pool}${String(i).padStart(2, '0')}`)) fail(`${pool}.coverage`)
+    const entries = (root.entries as Encouragement[]).filter(e => e.pool === pool)
+    if (entries.length < 2 || new Set(entries.map(e => e.text)).size !== entries.length) fail(`${pool}.coverage`)
+    if (pool.startsWith('ASK')) {
+      for (const state of COMPANION_STATES) {
+        if (entries.filter(e => e.states.includes(state) && e.requiredFacts.every(f => f === 'explicitRequest' || f === 'categorySelected')).length < 2) fail(`${pool}.${state}.coverage`)
+      }
+    }
   }
   for (const key of ['interfaceCopy', 'errors'] as const) {
     if (!Array.isArray(root[key])) fail(key)
@@ -100,10 +103,11 @@ export interface FeedbackContext {
   status: 'ready' | 'running' | 'paused'
   persistence: Persistence
   participationSaved?: boolean
+  returningReady?: boolean
 }
 
 type EventDetails =
-  | { kind: 'focus-started' | 'paused' | 'resumed' | 'break-started' | 'break-ended' | 'dismissed' | 'reconcile' }
+  | { kind: 'ready-entered' | 'focus-started' | 'paused' | 'resumed' | 'break-started' | 'break-ended' | 'dismissed' | 'reconcile' }
   | { kind: 'focus-ended'; elapsedMs: number; reason: 'manual' | 'elapsed' }
   | { kind: 'note-saved'; hasText: boolean }
   | { kind: 'encouragement-requested'; category?: AskPool }
@@ -128,13 +132,10 @@ export interface FeedbackFrame {
 }
 export interface FeedbackMemory {
   current: FeedbackFrame | null
-  cursors: Partial<Record<Pool, number>>
+  randomState: number
+  lastAutomaticAt: number | null
   lastIds: Partial<Record<Pool, string>>
-  lastPool: Pool | null
-  lastTags: readonly string[]
-  lastInteractionAt: Partial<Record<'pause' | 'resume' | 'note', number>>
   handledKeys: readonly string[]
-  handledInteractions: readonly string[]
 }
 export interface FeedbackResult {
   state: FeedbackMemory
@@ -142,8 +143,9 @@ export interface FeedbackResult {
   announcement: { id: string; text: string; priority: 'polite' | 'assertive' } | null
 }
 
-export function createFeedbackMemory(): FeedbackMemory {
-  return { current: null, cursors: {}, lastIds: {}, lastPool: null, lastTags: [], lastInteractionAt: {}, handledKeys: [], handledInteractions: [] }
+export function createFeedbackMemory(seed = 1): FeedbackMemory {
+  if (!Number.isFinite(seed)) throw new Error('feedback seed must be finite')
+  return { current: null, randomState: seed >>> 0, lastAutomaticAt: null, lastIds: {}, handledKeys: [] }
 }
 
 function ui(id: string, catalog: FeedbackCatalog): FeedbackMessage {
@@ -189,6 +191,7 @@ function eligibility(event: FeedbackEvent, context: FeedbackContext): { pool: Po
   add('participationSaved', context.participationSaved)
   let pool: Pool | null = null
   switch (event.kind) {
+    case 'ready-entered': pool = 'RET'; add('returningReady', context.returningReady); break
     case 'focus-started': pool = 'STA'; add('focusStarted', true); break
     case 'paused': pool = 'PAU'; break
     case 'resumed': pool = 'RES'; break
@@ -206,18 +209,14 @@ function eligibility(event: FeedbackEvent, context: FeedbackContext): { pool: Po
   return { pool, facts }
 }
 
-function choose(pool: Pool, facts: Set<Fact>, currentState: CompanionState, memory: FeedbackMemory, catalog: FeedbackCatalog): { entry: Encouragement; cursor: number } | null {
-  const sequence = sequenceOf(pool)
-  const start = memory.cursors[pool] ?? 0
-  for (let n = 0; n < sequence.length; n++) {
-    const cursor = (start + n) % sequence.length
-    const id = `${pool}${String(sequence[cursor]).padStart(2, '0')}`
-    const entry = catalog.entries.find(c => c.id === id)
-    if (!entry || !entry.states.includes(currentState) || !entry.requiredFacts.every(f => facts.has(f)) || memory.lastIds[pool] === id) continue
-    if (memory.lastPool && memory.lastPool !== pool && entry.tags.some(t => memory.lastTags.includes(t))) continue
-    return { entry, cursor: (cursor + 1) % sequence.length }
-  }
-  return null
+function choose(pool: Pool, facts: Set<Fact>, currentState: CompanionState, memory: FeedbackMemory, catalog: FeedbackCatalog) {
+  const eligible = catalog.entries.filter(e => e.pool === pool && e.states.includes(currentState) && e.requiredFacts.every(f => facts.has(f)) && e.id !== memory.lastIds[pool])
+  if (!eligible.length) return null
+  // Independent draws, not a shuffled bag. The host supplies a fresh seed each
+  // time the app opens; only the immediately previous phrase in this pool is excluded.
+  const randomState = (Math.imul(memory.randomState, 1664525) + 1013904223) >>> 0
+  const entry = eligible[Math.floor(randomState / 0x1_0000_0000 * eligible.length)]!
+  return { entry, randomState }
 }
 
 const retain = (items: readonly string[], value: string) => [...items, value].slice(-128)
@@ -235,7 +234,7 @@ export function transitionFeedback(memory: FeedbackMemory, event: FeedbackEvent,
   const requested = event.kind === 'encouragement-requested' && event.origin === 'user'
   const reading = !requested && event.kind !== 'dismissed' && memory.current?.placement === 'requested'
     ? memory.current.encouragement : null
-  const state: FeedbackMemory = { ...memory, cursors: { ...memory.cursors }, lastIds: { ...memory.lastIds }, lastInteractionAt: { ...memory.lastInteractionAt } }
+  const state: FeedbackMemory = { ...memory, lastIds: { ...memory.lastIds } }
   let frame: FeedbackFrame = { status: technical ?? status(context, catalog), encouragement: null, placement: 'node', companionState, persistence: context.persistence }
   const result = (announce: boolean): FeedbackResult => {
     if (reading) frame = { ...frame, placement: 'requested', encouragement: reading }
@@ -269,22 +268,14 @@ export function transitionFeedback(memory: FeedbackMemory, event: FeedbackEvent,
   const { pool, facts } = eligibility(event, context)
   const enabled = options.nodeEncouragement ?? DEFAULT_FEEDBACK_OPTIONS.nodeEncouragement
   if (!pool || (!enabled && !requested)) return result(true)
-  const group = event.kind === 'paused' ? 'pause' : event.kind === 'resumed' ? 'resume' : event.kind === 'note-saved' ? 'note' : null
-  if (group) {
-    const last = memory.lastInteractionAt[group]
-    state.lastInteractionAt[group] = event.atMs
-    const repeated = last !== undefined && event.atMs - last < cooldownMs
-    const sameInteraction = event.interactionId !== undefined && memory.handledInteractions.includes(event.interactionId)
-    if (event.interactionId) state.handledInteractions = retain(state.handledInteractions, event.interactionId)
-    if (repeated || sameInteraction) return result(true)
-  }
+  if (['paused', 'resumed', 'note-saved', 'break-ended'].includes(event.kind)) return result(true)
+  if (!requested && memory.lastAutomaticAt !== null && event.atMs - memory.lastAutomaticAt < cooldownMs) return result(true)
   const chosen = choose(pool, facts, companionState, memory, catalog)
   if (chosen) {
     frame.encouragement = chosen.entry
-    state.cursors[pool] = chosen.cursor
+    state.randomState = chosen.randomState
+    if (!requested) state.lastAutomaticAt = event.atMs
     state.lastIds[pool] = chosen.entry.id
-    state.lastPool = pool
-    state.lastTags = chosen.entry.tags
   }
   return result(true)
 }

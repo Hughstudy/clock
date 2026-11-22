@@ -2,28 +2,29 @@
 
 The pure reducer in `feedback.ts` turns committed app events into one status line, at most one encouragement phrase and at most one announcement. `feedback-host.ts` feeds it from the real timer model, and `src/hooks/useFeedback.ts` connects that host to the app. Animation never supplies facts.
 
-## Content
+## Content and random selection (2026-11-22)
 
-`src/data/encouragement.zh-CN.json` holds only the copy the app uses: node phrases, requested phrases, fixed interface strings, errors and the welcome note. Text for features that are not built yet (welcome and return phrases, records views, mementos, new content and their interface strings) stays in the [PRD snapshot](../../docs/handoff-20261102/番茄钟_产品PRD_v35.md); add it back along with the feature that uses it.
+`src/data/encouragement.zh-CN.json` contains 177 versioned entries: 56 eligible automatic lines (RET/STA/END/BRK: 12 each, ZER: 8), 96 requested lines (24 per category), and 25 retained legacy tool lines that no longer trigger automatically. Fixed interface/error text remains separate. The [PRD catalog](../../docs/prd/09-encouragement.md) mirrors every runtime entry.
 
-`src/data/encouragement.ts` validates the catalog at import. The parser checks structure rather than total counts: unique IDs, known pools, states, facts and tags, no template or markup, and a complete rotation for each pool the reducer can pick from. Node pools rotate 01 to 05. Requested pools follow `ASK_ORDER` and never repeat a phrase back to back.
+The owner explicitly requested direct random selection, not editorial order or a shuffled bag. The hook obtains a fresh crypto-derived seed on each mount; the pure reducer advances a deterministic PRNG only when it selects a phrase. It filters by pool, state and facts and excludes only that pool's immediately previous ID. It may repeat a phrase before using the entire pool. Reloading resets this ephemeral state and may coincidentally choose the same first phrase. Tags and length metadata do not impose selection order. No display history, mood or random state is persisted.
+
+The parser validates IDs, versions, states, facts and tags, rejects markup/duplicates, and requires at least two universally usable requested phrases per declared state. Pool sizes and light/deep order are not hard-coded.
 
 ## Event mapping
 
-| Committed action | Event | Required facts beyond current phase/status |
+| Event | Optional phrase | Preconditions |
 | --- | --- | --- |
-| New focus session | `focus-started` | saved, focus running |
-| Pause/resume | `paused` / `resumed` | saved, corresponding focus state; rest uses functional text only |
-| Manual/deadline end | `focus-ended` | saved, ready, true elapsedMs; zero additionally needs participationSaved |
-| Empty/text note save | `note-saved` | saved, actual hasText; no per-keystroke events |
-| Start/end rest | `break-started` / `break-ended` | saved and matching rest/ready state; no earned-rest condition |
-| User asks/changes phrase | `encouragement-requested` | user origin; missing category always means ASKG |
-| Tick/state refresh | `reconcile` | current facts only; never selects a new phrase |
-| Close phrase | `dismissed` | clears the current phrase without a goodbye or warning |
+| Initial ready-page entry | RET | Existing saved focus participation/record or rest memory; visible, saved, enabled, no active session, no standing focus result; at most once per mount |
+| Focus start | STA | Committed running focus |
+| Focus end | END / ZER | Committed ready result, actual nonnegative elapsed; zero also needs saved participation |
+| Rest start | BRK | Committed running rest |
+| Pause/resume, note save, rest end | None | Functional status only; existing semantic animation cues remain independent |
+| Explicit request/change | Selected ASK category | User request; a new request defaults to ASKG; reading never auto-rotates |
+| Tick, restore, synchronization, navigation | None | Restore facts without replaying missed speech or consuming a random draw |
 
-Event IDs identify individual logical results, not just the session. A retry of the same failed write keeps its ID, so the saved result can still appear once. Recovered or cross-window events use `origin: restore` or `sync`, which restore functional status without replaying encouragement.
+Automatic selection shares one 30-second cooldown, updated only when an eligible line is selected for an available surface. Hidden pages and covered local panels consume the operation without consuming a draw/cooldown or queuing speech. Explicit support bypasses this cooldown. Automatic text leaves when navigation, a local panel, technical trouble or Focus chrome takes over; calling the card back never replays it. Requested text survives temporary editing and confirmation, and errors remain truthful.
 
-Keep `FeedbackMemory` above page routing so a remount retains the current phrase and cursors. Do not serialize it as a mood profile.
+The host keeps this memory above navigation. Event IDs deduplicate logical results; a failed operation can succeed once on retry without a new ID. Initial greeting is presentation only and writes no timer, scene, reward or history state.
 
 ## Truthful status and accessibility
 

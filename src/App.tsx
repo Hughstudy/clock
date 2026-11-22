@@ -75,7 +75,7 @@ export function App() {
   const focusId = app.snapshot.timer.session?.id ?? app.result?.sessionId
   const linkedThoughts = useMemo(() => statsView.thoughtDays.flatMap(day => day.entries.flatMap(entry =>
     entry.kind === 'thought' && entry.thought.sessionId === focusId ? [entry.thought] : [])), [statsView.thoughtDays, focusId])
-  const companion = useFeedback(app, { active: screen === 'home', completedProgress: timerView.completedProgress })
+  const companion = useFeedback(app, { active: screen === 'home', automaticVisible: !focusTaskOpen && !thoughts.open, completedProgress: timerView.completedProgress })
   const motion = useMotionPreference(app.snapshot.settings.motionEnabled)
   const pwa = usePwaUpdate()
   useStatusExpiry(pwa.offlineReady && !pwa.updateReady ? 'offline-ready' : null, pwa.dismiss)

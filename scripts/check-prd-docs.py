@@ -3,6 +3,7 @@
 from pathlib import Path
 from urllib.parse import unquote, urlsplit
 import re
+import json
 import sys
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -85,8 +86,15 @@ ids = re.findall(r'^\| (DLG-[A-Z]+\d+) \|', dialogue, flags=re.M)
 if len(ids) != len(set(ids)):
     errors.append('Duplicate dialogue candidate IDs')
 
+# The maintained catalog is a bridge to shipped content, not an independent copy.
+runtime = json.loads((ROOT / 'src/data/encouragement.zh-CN.json').read_text())['entries']
+copy_rows = dict(re.findall(r'^\| ([A-Z]+\d+) \| ([^\n]*?) \|$', (PRD / '09-encouragement.md').read_text(), flags=re.M))
+for entry in runtime:
+    if copy_rows.get(entry['id']) != entry['text']:
+        errors.append(f"Runtime/PRD copy mismatch: {entry['id']}")
+
 if errors:
     print('\n'.join(errors), file=sys.stderr)
     sys.exit(1)
 print(f'PASS: {len(MODULES)} PRD documents; {count} local links; '
-      f'{len(explicit_owners)} unique explicit anchors; {len(ids)} dialogue candidates.')
+      f'{len(explicit_owners)} unique explicit anchors; {len(ids)} dialogue candidates; {len(runtime)} runtime lines matched.')

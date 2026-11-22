@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import type { FavoriteQuote } from '../contracts/favorites'
 import { spec } from '../data/spec'
+import { feedbackCatalog } from '../data/encouragement'
 import { applyAction, type FavoriteAction } from './app'
 import { createSnapshot, decodeSnapshot, encodeSnapshot, mergeSnapshots } from './snapshot'
 import type { AppSnapshot } from './types'
@@ -65,4 +66,17 @@ describe('quote favorite relationships', () => {
     const replaced = { ...createSnapshot(spec), datasetGeneration: 1 }
     expect(mergeSnapshots(replaced, selected)).toBe(replaced)
   })
+})
+
+
+it('keeps a v1 favorite snapshot when the runtime catalog advances to companion-voice-v2', () => {
+  const original = { id: 'ASKG06', text: '我把窗边的位置留出来，看看今天的光。', copyVersion: 'companion-voice-v1', savedAt: 900, rev: 1, deletedAt: null }
+  const saved = { ...createSnapshot(spec), quoteFavorites: [original] }
+  const decoded = decodeSnapshot(encodeSnapshot(saved), spec, { timeZone: 'UTC' })
+  expect(decoded).toMatchObject({ kind: 'ok', issues: [], snapshot: { quoteFavorites: [original] } })
+  const current = feedbackCatalog.entries.find(e => e.id === original.id)!
+  expect(current.copyVersion).toBe('companion-voice-v2')
+  expect(current.text).not.toBe(original.text)
+  const duplicate = applyAction(saved, { type: 'setQuoteFavorite', quote: current, selected: true, expectedRev: 1, requestedAt: 2000 }, { now: 2000, dateKeyOf: () => '2026-11-22', quoteCatalog: feedbackCatalog.entries }, spec)
+  expect(duplicate.snapshot.quoteFavorites).toEqual([original])
 })
