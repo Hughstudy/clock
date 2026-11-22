@@ -276,6 +276,22 @@ describe('ready-entry greeting', () => {
     expect(after.feedback.frame.encouragement).toEqual(asked.feedback.frame.encouragement)
   })
 
+  it('waits through overlapping startup recovery receipts and greets only after saving settles', () => {
+    const ended = commit(start().snapshot, { type: 'end', sessionId: 'session' }, T0 + 1000)
+    const i = input(ended.snapshot)
+    const initial = createFeedbackHost(i, feedbackCatalog, { seed: 42, enteredAtMs: T0 + 2000 })
+    const first = commit(ended.snapshot, { type: 'reconcile' }, T0 + 2100, true, 'restore')
+    const busy = updateFeedbackHost(initial, input(first.snapshot, first.event, 'saving'), feedbackCatalog)
+    expect(busy.entryPending).toBe(true)
+    expect(busy.feedback.frame.encouragement).toBeNull()
+    const last = commit(first.snapshot, { type: 'reconcile' }, T0 + 2200, true, 'restore')
+    const opened = input(last.snapshot, last.event)
+    const settled = updateFeedbackHost(busy, opened, feedbackCatalog)
+    expect(settled.feedback.frame.encouragement?.pool).toBe('RET')
+    expect(settled.entryPending).toBe(false)
+    expect(updateFeedbackHost(settled, opened, feedbackCatalog)).toBe(settled)
+  })
+
   it('keeps first use, result recovery, active sessions, hidden pages and errors quiet', () => {
     const running = start()
     const ended = commit(running.snapshot, { type: 'end', sessionId: 'session' }, T0 + 1000)

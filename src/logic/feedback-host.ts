@@ -102,7 +102,8 @@ export function updateFeedbackHost(previous: FeedbackHostState, input: FeedbackH
     available && context.returningReady && input.persistence === 'saved'
   // Initial recovery briefly reports saving. Keep only this opening opportunity,
   // never a phrase; a user interaction, hidden surface or recovery failure cancels it.
-  const entryPending = previous.entryPending && !fresh && available && context.status === 'ready' &&
+  const recovering = Boolean(current && candidate.origin === 'restore' && candidate.kind === 'reconcile' && input.persistence === 'saving')
+  const entryPending = previous.entryPending && (!fresh || recovering) && available && context.status === 'ready' &&
     (input.persistence === 'saved' || input.persistence === 'saving')
   // Saving may finish much later than the click. Space automatic lines from
   // their presentation time, not from the original operation timestamp.
