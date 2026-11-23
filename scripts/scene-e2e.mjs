@@ -75,6 +75,30 @@ async function inspectSpeech(page, id) {
   const reader = page.getByRole('region', { name: '一句鼓励' })
   await reader.waitFor()
   await page.clock.runFor(220)
+  // Long authored text legitimately uses the complete reader on the plate.
+  // Validate that surface, then keep drawing through the real control until a
+  // head-sized phrase is available: every scene must still pass the tail test.
+  const speech = page.locator('.fp-companion-speech[data-visible="true"]')
+  for (let draw = 0; !await speech.count() && draw < 128; draw++) {
+    const fallback = await reader.evaluate(element => {
+      const quote = element.querySelector('.fp-reader-quote')
+      const primary = document.querySelector('.fp-primary').getBoundingClientRect()
+      const text = quote.getBoundingClientRect()
+      const separate = (a, b) => a.bottom <= b.top + 1 || a.top >= b.bottom - 1 || a.right <= b.left + 1 || a.left >= b.right - 1
+      const controls = [...element.querySelectorAll('button, select')]
+      return element.dataset.location === 'plate' && quote.textContent.trim().length > 0 &&
+        quote.scrollHeight <= quote.clientHeight + 1 && quote.scrollWidth <= quote.clientWidth + 1 && separate(text, primary) &&
+        document.documentElement.scrollWidth <= innerWidth + 1 && controls.length >= 3 && controls.every(control => {
+          const r = control.getBoundingClientRect(), hit = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2)
+          return r.width >= 44 && r.height >= 44 && r.top >= 0 && r.bottom <= innerHeight + 1 &&
+            separate(r, primary) && separate(r, text) && hit && (hit === control || control.contains(hit))
+        })
+    })
+    check(`${id}: long quote fallback is complete and its controls stay clear and reachable (draw ${draw + 1})`, fallback)
+    await reader.getByRole('button', { name: '换一句鼓励', exact: true }).click()
+    await page.clock.runFor(220)
+  }
+  check(`${id}: a normal-sized phrase remains available at the original phone viewport`, await speech.count() === 1)
   const geometry = await page.evaluate(() => {
     const speech = document.querySelector('.fp-companion-speech[data-visible="true"]')
     if (!speech) return null

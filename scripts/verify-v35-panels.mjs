@@ -30,6 +30,18 @@ async function speechAtHead(page, speech) {
   return gap - tail.height >= -1 && gap - tail.height <= 12 && tail.height > 0 &&
     headX >= bubble.x + tail.left - 3 && headX <= bubble.x + tail.right + 3
 }
+async function headSizedReader(page, reader) {
+  const speech = page.locator('.fp-companion-speech[data-visible="true"]')
+  for (let draw = 0; !await speech.count() && draw < 128; draw++) {
+    assert.equal(await reader.getAttribute('data-location'), 'plate', 'A long phrase must use the existing complete reader')
+    assert.ok(await reader.locator('.fp-reader-quote').evaluate(el => el.scrollWidth <= el.clientWidth + 1 && el.scrollHeight <= el.clientHeight + 1),
+      'A phrase must remain complete before changing to the head geometry fixture')
+    await button(reader, '换一句鼓励').click()
+    await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))))
+  }
+  assert.equal(await speech.count(), 1, 'A head-sized phrase must remain available at the original viewport')
+  return speech
+}
 async function inViewAndHit(target) {
   return target.evaluate(element => {
     const rect = element.getBoundingClientRect(), viewport = window.visualViewport
@@ -157,18 +169,7 @@ try {
     // random draws exhaust the pool or rerolling until a convenient result appears.
     check(`${name}: the interrupted quote is readable in full without clipping`, await quote.innerText() === interruptedLine && await quote.evaluate(el => el.scrollWidth <= el.clientWidth + 1 && el.scrollHeight <= el.clientHeight + 1))
     if (font < 32 && height >= 667) {
-      await speech.waitFor()
       check(`${name}: opening and changing a request preserves the timer, tool and tab targets`, sameBounds(before, await focusBounds(page)))
-      check(`${name}: the speech bubble sits immediately above the drawn head`, await speechAtHead(page, speech))
-      const digits = await page.locator('.fp-digits').boundingBox()
-      const bubble = await speech.boundingBox()
-      check(`${name}: the entire bubble clears the clock`, bubble.y >= digits.y + digits.height - 1)
-      const wordBox = await quote.boundingBox()
-      for (const control of [next, favorite, category]) {
-        const box = await control.boundingBox()
-        check(`${name}: ${await control.getAttribute('aria-label') || await control.innerText()} is directly under the spoken text and clear of the face`,
-          await inViewAndHit(control) && box.width >= 44 && box.height >= 44 && box.y >= wordBox.y + wordBox.height - 1 && box.y + box.height <= bubble.y + bubble.height + 1)
-      }
       check(`${name}: timer and thought actions stay reachable during reading`, await inViewAndHit(button(page, '开始专注')) && await inViewAndHit(button(page, '记下想法')) && await inViewAndHit(button(page, '留个标记')))
     }
     await page.screenshot({ path: path.join(output, `${name}-reader.png`) })
@@ -183,6 +184,27 @@ try {
     await page.keyboard.press('Enter')
     await reader.waitFor({ state: 'detached' })
     check(`${name}: closing returns keyboard focus to the encouragement opener`, await ask.evaluate(element => element === document.activeElement))
+    if (font < 32 && height >= 667) {
+      // The longest real ASKB line above may need the plate. Exercise head
+      // geometry separately with an actual short draw, at this same viewport.
+      const geometryBefore = await focusBounds(page)
+      await ask.click()
+      await reader.waitFor()
+      await headSizedReader(page, reader)
+      check(`${name}: a head-sized request preserves timer, tool and tab targets`, sameBounds(geometryBefore, await focusBounds(page)))
+      check(`${name}: the speech bubble sits immediately above the drawn head`, await speechAtHead(page, speech))
+      const digits = await page.locator('.fp-digits').boundingBox()
+      const bubble = await speech.boundingBox()
+      check(`${name}: the entire bubble clears the clock`, bubble.y >= digits.y + digits.height - 1)
+      const wordBox = await quote.boundingBox()
+      for (const control of [next, favorite, category]) {
+        const box = await control.boundingBox()
+        check(`${name}: ${await control.getAttribute('aria-label') || await control.innerText()} is directly under the spoken text and clear of the face`,
+          await inViewAndHit(control) && box.width >= 44 && box.height >= 44 && box.y >= wordBox.y + wordBox.height - 1 && box.y + box.height <= bubble.y + bubble.height + 1)
+      }
+      await ask.click()
+      await reader.waitFor({ state: 'detached' })
+    }
     await context.close()
   }
 
@@ -241,6 +263,8 @@ try {
   check('Pulling the sheet header down closes it and keeps the draft', await button(page, '继续草稿').isVisible())
   await button(page, '给我一句鼓励').click()
   const reader = page.getByRole('region', { name: '一句鼓励' })
+  await reader.waitFor()
+  await headSizedReader(page, reader)
   const next = button(reader, '换一句鼓励'), phrase = await reader.locator('.fp-reader-quote').innerText()
   await next.focus()
   await page.setViewportSize({ width: 320, height: 568 })
@@ -267,8 +291,9 @@ try {
   check('The automatic tea-scene line points at its off-center head', await speechAtHead(page, automatic))
   const digitsBefore = await page.locator('.fp-digits').boundingBox()
   await button(page, '给我一句鼓励').click()
-  const requested = page.locator('.fp-companion-speech[data-visible="true"]')
-  await requested.waitFor()
+  const teaReader = page.getByRole('region', { name: '一句鼓励' })
+  await teaReader.waitFor()
+  const requested = await headSizedReader(page, teaReader)
   const digitsAfter = await page.locator('.fp-digits').boundingBox()
   check('Requesting a phrase in the tea scene keeps the tail on the same head and the clock still',
     await speechAtHead(page, requested) && Math.abs(digitsBefore.y - digitsAfter.y) <= 1 && !await automatic.count())

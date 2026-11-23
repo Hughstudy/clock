@@ -10,10 +10,14 @@ The existing uncommitted conditional-selection implementation is included after 
 
 ## Validation
 
-- Final TypeScript and all 41 unit-test files passed (537 tests); the production build passed. The build emitted the existing Vite chunk-size advisory at the 500 kB threshold.
-- Documentation checks passed: 26 PRD files, 13 learning files, 746 local links, 602 unique explicit PRD anchors, 48 separate dialogue candidates and all 239 current runtime entries matched. `git diff --check` passed.
+- Final TypeScript and all 41 unit-test files passed (537 tests); the production build passed. The build emitted a Vite chunk-size advisory at the 500 kB threshold.
+- Documentation checks passed: 26 PRD files, 13 learning files, 747 local links, 602 unique explicit PRD anchors, 48 separate dialogue candidates and all 239 current runtime entries matched. `git diff --check` passed.
 - The conditional-selection tests cover unknown facts, daypart and duration boundaries, combined conditions, enabled scenes, deterministic direct draws and generic fallback without hard-coding editorial pool sizes.
 - The production-language suite now selects the longest real requested text (currently ASKT26, 79 characters) through the normal category control. It checks 320/375/430-pixel widths, 100%/200% root text size, complete text, viewport containment and keyboard access. Only the existing ID entropy is fixed for repeatability; the runtime catalog and UI are not replaced.
 - Local browser execution was attempted through the existing launcher. The installed Chromium process was blocked by `process_singleton` socket permission; no sandbox bypass was attempted. Production-browser checks therefore run in the main-triggered CI before Pages deployment. A browser result is not claimed from local unit tests.
 
 Publication, CI and Pages deployment are separate outcomes. This increment does not claim a physical-device study, clinical effectiveness, two-month user acceptance, finished story collection or final art acceptance.
+
+## First CI attempt and scene-reader coverage
+
+Run [45165982534](https://github.com/Hughstudy/clock/actions/runs/45165982534), for `c47b490`, passed the full 537-test unit suite and all 214 production-language checks, including the longest requested text at every target width and text size. A later scene check stopped at F8 because `inspectSpeech` assumed every requested quote used the head bubble; the longer ASKG25 selected the existing console-reader fallback, so bubble geometry was absent. The failed attempt did not deploy. The follow-up corrects both `scene-e2e.mjs` and the same assumption in `verify-v35-panels.mjs`. It validates the complete, accessible fallback with unobstructed controls, then uses the existing next-phrase control to reach a head-sized phrase at the original viewport and retains the bubble tail/hand/clock assertions for each scene. Longest-copy, favorites, keyboard, resize and stable-target checks remain. Both scripts pass syntax and whitespace checks; the complete CI is rerun before deployment.
