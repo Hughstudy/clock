@@ -1,20 +1,24 @@
 import { useMemo } from 'react'
 import { localClockTime, localDateKey, localHour, localMinutes } from '../adapters/calendar'
 import { spec } from '../data/spec'
-import { nextFocusMinutes } from '../logic/app'
+import { nextFocusMinutes, type AppAction } from '../logic/app'
 import { dayHeading, shortDate } from '../logic/calendar'
 import { nightLevel } from '../logic/daylight'
 import { showsHandleHint } from '../logic/focus-chrome'
 import { recordsBand, type RecordsBand } from '../logic/record-stories'
+import { focusSceneProgress } from '../logic/presentation'
 import { groupEntries, indexByDay, rangeTotals, type DayIndex, type HistoryDay, type RangeLength } from '../logic/stats'
 import { isLive } from '../logic/thoughts'
-import { isBreak, remainingMs, totalMs } from '../logic/timer'
+import { isBreak, maxRemainingMinutes, remainingMs, sessionScheduleKey, totalMs } from '../logic/timer'
 import type { AppSnapshot, FocusRecord, Phase, RestMemory, Session, Thought } from '../logic/types'
 
 const MINUTE_MS = 60_000
 
 export interface TimerView {
   sessionId: string | null
+  /** Capture at editor open. Ticking and unrelated writes leave the guard valid. */
+  adjustmentGuard: Omit<Required<Extract<AppAction, { type: 'adjustRemaining' }>>, 'type' | 'remainingMinutes'> | null
+  maxRemainingMinutes: number
   /** Whole-minute bounds for a one-off focus length. */
   focusMinutesRange: { min: number; max: number }
   shortBreakMinutes: number
@@ -28,9 +32,11 @@ export interface TimerView {
   status: Session['status'] | 'ready'
   remainingMs: number
   totalMs: number
+  /** Captured when the session began, also used as the companion's original activity length. */
+  initialDurationMs: number
   /** Remaining proportion: full at the start, empty when the session is due. */
   progress: number
-  /** Precise elapsed focus proportion, 0 at start, 1 at deadline; pauses retain the value. */
+  /** Precise progress on the original focus activity. Editing the timer leaves this value in place. */
   completedProgress: number
   /** The device clock's level of night, 0 in daylight and 1 after dark. */
   night: number
@@ -44,8 +50,12 @@ export function useTimerView(snapshot: AppSnapshot, now: number): TimerView {
   const readyFocus = !timer.session && timer.phase === 'focus'
   const remaining = readyFocus ? next * MINUTE_MS : remainingMs(timer, settings, now)
   const total = readyFocus ? next * MINUTE_MS : totalMs(timer, settings)
+  const initialDurationMs = timer.session?.initialDurationMs ?? total
   return {
     sessionId: timer.session?.id ?? null,
+    adjustmentGuard: timer.session ? { sessionId: timer.session.id, generation: snapshot.datasetGeneration,
+      expectedTimingRevision: timer.session.timingRevision ?? 0, expectedSchedule: sessionScheduleKey(timer.session) } : null,
+    maxRemainingMinutes: timer.session ? maxRemainingMinutes(total - remaining, spec.timer.durationsMinutes[timer.phase].max) : 0,
     focusMinutesRange: spec.timer.durationsMinutes.focus,
     shortBreakMinutes: settings.durationsMinutes.shortBreak,
     longBreakMinutes: settings.durationsMinutes.longBreak,
@@ -56,9 +66,9 @@ export function useTimerView(snapshot: AppSnapshot, now: number): TimerView {
     status: timer.session?.status ?? 'ready',
     remainingMs: remaining,
     totalMs: total,
+    initialDurationMs,
     progress: total > 0 ? remaining / total : 0,
-    completedProgress: timer.session && !isBreak(timer.phase) && total > 0
-      ? Math.min(1, Math.max(0, 1 - remaining / total)) : 0,
+    completedProgress: timer.session && !isBreak(timer.phase) ? focusSceneProgress(total - remaining, initialDurationMs) : 0,
     night: nightLevel(localMinutes(now)),
     handleHint: showsHandleHint(snapshot.participations.length, spec.focusChrome.hintSessions),
   }
@@ -132,7 +142,7 @@ export function useStatsView(snapshot: AppSnapshot, now: number, savedRecordIds:
       const records = snapshot.records.map(r => ({
         ...r,
         saved: savedRecordIds.has(r.sessionId),
-        sceneProgress: Math.min(1, Math.max(0, r.elapsedMs / Math.max(1, r.targetMs))),
+        sceneProgress: focusSceneProgress(r.elapsedMs, r.initialDurationMs ?? r.targetMs),
         thoughts: (bySession.get(r.sessionId) ?? []).sort((a, b) => a.createdAt - b.createdAt || a.id.localeCompare(b.id)),
         timeLabel: r.startedAt === null ? `${localClockTime(r.endedAt)} 结束` : `${localClockTime(r.startedAt)}–${localClockTime(r.endedAt)}`,
       }))

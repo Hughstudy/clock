@@ -11,8 +11,8 @@ import { readTimer, readRestSuggestion, readRecords, readRestMemories, readParti
 export { MIGRATIONS, runMigrations, type Migration, type MigrationContext } from './snapshot/migrations'
 export { mergeSnapshots, hasMissingRecords } from './snapshot/merge'
 
-/** v10 keeps ended rest memories independently of the current timer or its artwork. */
-export const SNAPSHOT_VERSION = 10
+/** v11 preserves conditional timing edits and their original session plans. */
+export const SNAPSHOT_VERSION = 11
 
 export function createSnapshot(spec: Spec): AppSnapshot {
   return {

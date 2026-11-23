@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from 'vitest'
 import { spec } from '../data/spec'
 import { applyAction, standingFocusResult, type AppAction } from '../logic/app'
 import { encodeSnapshot, SNAPSHOT_VERSION } from '../logic/snapshot'
+import { sessionScheduleKey } from '../logic/timer'
 import type { AppSnapshot } from '../logic/types'
 import { createLock, type LockRunner } from './locks'
 import { SnapshotStore, type KeyValueStorage } from './storage'
@@ -93,6 +94,118 @@ describe('durable quote favorites', () => {
 function stored(storage: MemoryStorage): AppSnapshot {
   return JSON.parse(storage.data.get(KEY) ?? 'null') as AppSnapshot
 }
+
+describe('same-session remaining-time edits', () => {
+  const start = { type: 'startFocus' as const, sessionId: 'current', timeZone: 'UTC' }
+  const adjust = (remainingMinutes: number, expectedTimingRevision = 0): Extract<AppAction, { type: 'adjustRemaining' }> =>
+    ({ type: 'adjustRemaining', sessionId: 'current', remainingMinutes, expectedTimingRevision, generation: 0 })
+
+  it('serializes two edits from the same clock, then reopens and settles the accepted deadline once', async () => {
+    const storage = new MemoryStorage(), lock = sharedLock(), a = tab(storage, 'a', lock)
+    await act(a, start, T0)
+    const b = tab(storage, 'b', lock)
+    await Promise.all([act(a, adjust(10), T0 + 8 * MIN), act(b, adjust(5), T0 + 9 * MIN)])
+    const reopened = tab(storage, 'reopened', lock)
+    expect(reopened.snapshot.timer.session).toMatchObject({ id: 'current', deadline: T0 + 18 * MIN, durationMs: 18 * MIN, initialDurationMs: 25 * MIN })
+    await Promise.all([act(reopened, { type: 'reconcile' }, T0 + 19 * MIN), act(a, adjust(10), T0 + 19 * MIN)])
+    expect(stored(storage).records).toMatchObject([{ sessionId: 'current', elapsedMs: 18 * MIN, endedAt: T0 + 18 * MIN }])
+    expect(stored(storage).timer.completedFocusCount).toBe(1)
+    expect(stored(storage).participations).toHaveLength(1)
+  })
+
+  it('retries a failed adjustment beside an unrelated peer write with the original adjusted deadline', async () => {
+    const storage = new MemoryStorage(), lock = sharedLock(), local = tab(storage, 'a', lock)
+    await act(local, start, T0)
+    const peer = tab(storage, 'b', lock)
+    storage.failWrites = true
+    const at = T0 + 8 * MIN + 357
+    expect((await act(local, adjust(10), at)).saved).toBe(false)
+    expect(local.snapshot.timer.session).toMatchObject({ deadline: at + 10 * MIN })
+    expect(local.durableSnapshot?.timer.session).toMatchObject({ deadline: T0 + 25 * MIN })
+    storage.failWrites = false
+    await act(peer, { type: 'updateSettings', patch: { motionEnabled: false } }, at + MIN)
+    local.receive(storage.getItem(KEY))
+    await act(local, { type: 'reconcile' }, at + 2 * MIN)
+    expect(tab(storage, 'reloaded').snapshot).toMatchObject({ settings: { motionEnabled: false },
+      timer: { session: { id: 'current', durationMs: 18 * MIN + 357, deadline: at + 10 * MIN } } })
+  })
+
+  it.each(['storage event', 'locked read'])('keeps the accepted plan after a peer adjusts twice back to the original deadline (%s)', async delivery => {
+    const storage = new MemoryStorage(), lock = sharedLock(), local = tab(storage, 'a', lock)
+    await act(local, start, T0)
+    const peer = tab(storage, 'b', lock), at = T0 + 8 * MIN
+    storage.failWrites = true
+    await act(local, adjust(20), at)
+    storage.failWrites = false
+    await act(peer, adjust(5), at)
+    await act(peer, adjust(17, 1), at)
+    if (delivery === 'storage event') local.receive(storage.getItem(KEY))
+    await act(local, { type: 'reconcile' }, at + MIN)
+    expect(stored(storage).timer.session).toMatchObject({ id: 'current', durationMs: 25 * MIN,
+      deadline: T0 + 25 * MIN, timingRevision: 2 })
+  })
+
+  it('rejects an editor opened on a failed-write fork when the accepted clock has the same revision', async () => {
+    const storage = new MemoryStorage(), lock = sharedLock(), local = tab(storage, 'a', lock)
+    await act(local, start, T0)
+    const peer = tab(storage, 'b', lock), at = T0 + 8 * MIN
+    storage.failWrites = true
+    await act(local, adjust(20), at)
+    const editor = { ...adjust(3, 1), expectedSchedule: sessionScheduleKey(local.snapshot.timer.session!) }
+    storage.failWrites = false
+    await act(peer, adjust(6), at)
+    await act(local, editor, at + MIN)
+    expect(stored(storage).timer.session).toMatchObject({ id: 'current', durationMs: 14 * MIN, deadline: T0 + 14 * MIN, timingRevision: 1 })
+  })
+
+  it.each(['focus','rest'] as const)('discards a provisional manual %s ending from a superseded plan even if elapsed matches', async kind => {
+    const storage = new MemoryStorage(), lock = sharedLock(), local = tab(storage, 'a', lock)
+    await act(local, kind === 'focus' ? start : { ...start, type: 'startBreak' }, T0)
+    const peer = tab(storage, 'b', lock)
+    await act(peer, adjust(10), T0 + MIN)
+    storage.failReads = true
+    expect((await act(local, { type: 'end', sessionId: 'current' }, T0 + 2 * MIN)).saved).toBe(false)
+    storage.failReads = false
+    await act(local, { type: 'reconcile' }, T0 + 3 * MIN)
+    expect(local.snapshot.records).toEqual([])
+    expect(local.snapshot.restMemories).toEqual([])
+    expect(local.snapshot.timer.session).toMatchObject({ id: 'current', deadline: T0 + 11 * MIN })
+  })
+
+  it('rejects a provisional expiry on a losing schedule while preserving a later explicit start, note and manual ending', async () => {
+    const storage = new MemoryStorage(), lock = sharedLock(), local = tab(storage, 'a', lock)
+    await act(local, start, T0)
+    const peer = tab(storage, 'b', lock)
+    storage.failWrites = true
+    await act(local, adjust(2), T0 + MIN)
+    storage.failWrites = false
+    await act(peer, adjust(20), T0 + MIN)
+    storage.failReads = true
+    await act(local, { type: 'reconcile' }, T0 + 3 * MIN)
+    await act(local, { type: 'startFocus', sessionId: 'later', timeZone: 'UTC' }, T0 + 4 * MIN)
+    await act(local, { type: 'markThought', thoughtId: 'idea', timeZone: 'UTC' }, T0 + 4 * MIN + 100)
+    await act(local, { type: 'end', sessionId: 'later' }, T0 + 5 * MIN)
+    storage.failReads = false
+    await act(local, { type: 'reconcile' }, T0 + 6 * MIN)
+    const reopened = tab(storage, 'reopened')
+    expect(reopened.snapshot.timer).toMatchObject({ completedFocusCount: 0, session: { id: 'current', deadline: T0 + 21 * MIN } })
+    expect(reopened.snapshot.records).toMatchObject([{ sessionId: 'later', elapsedMs: MIN, endReason: 'manual' }])
+    expect(reopened.snapshot.participations.map(p => p.sessionId)).toEqual(['current', 'later'])
+    expect(reopened.snapshot.thoughts).toMatchObject([{ id: 'idea', sessionId: 'later' }])
+  })
+
+  it.each(['initialDurationMs','targetMs'] as const)('only confirms a result with matching %s on disk', async field => {
+    const storage = new MemoryStorage(), store = tab(storage, 'a')
+    await act(store, start, T0)
+    await act(store, adjust(10), T0 + MIN)
+    await act(store, { type: 'end', sessionId: 'current' }, T0 + 2 * MIN)
+    expect(store.savedRecordIds.has('current')).toBe(true)
+    storage.failWrites = true
+    await store.transact(latest => ({ snapshot: { ...latest, records: latest.records.map(record => ({ ...record, [field]: 20 * MIN })) },
+      changed: true, value: null }))
+    expect(store.savedRecordIds.has('current')).toBe(false)
+  })
+})
 
 describe('SnapshotStore persistence', () => {
   it('starts with defaults and writes only when something changes', async () => {

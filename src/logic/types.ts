@@ -38,14 +38,18 @@ export interface SceneState {
 }
 
 /**
- * A started session. Its duration was captured at start, so later settings
- * changes never alter it. Running sessions are deadline-based; paused
+ * A started session. Only explicit timing edits change its planned total.
+ * Running sessions are deadline-based; paused
  * sessions hold the remaining time. `timeZone` is the IANA zone at start,
  * used to date the completion even if the device travels.
  */
 export type Session = {
   id: string
   durationMs: number
+  /** Captured on the first timing edit. Before then durationMs is the original plan. */
+  initialDurationMs?: number
+  /** Clock position revision for conditional edits, zero until the first change. */
+  timingRevision?: number
   timeZone: string
   /** Unknown for sessions created before schema v3; never inferred from a deadline. */
   startedAt: number | null
@@ -54,7 +58,7 @@ export type Session = {
   /** Absent only for old records/sessions with no historical scene assignment. */
   scene?: SceneAssignment
 } & (
-  | { status: 'running'; deadline: number }
+  | { status: 'running'; deadline: number; runStartRemainingMs?: number }
   | { status: 'paused'; remainingMs: number }
 )
 
@@ -74,6 +78,8 @@ export interface FocusRecord {
   endedAt: number
   dateKey: DateKey
   targetMs: number
+  /** Absent if the starting target was never adjusted. targetMs is the final plan. */
+  initialDurationMs?: number
   elapsedMs: number
   endReason: 'deadline' | 'manual'
   source: 'native' | 'legacy'
@@ -91,6 +97,9 @@ export interface RestMemory {
   phase: 'shortBreak' | 'longBreak' | null
   endReason: 'deadline' | 'manual' | null
   sceneId: RestSceneId | null
+  /** Both plans are preserved when this rest was adjusted, without inventing legacy plans. */
+  initialDurationMs?: number
+  targetMs?: number
 }
 
 /** One entry at start, independent of duration and full-completion cadence. */

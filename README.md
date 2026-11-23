@@ -46,6 +46,7 @@ A mobile-first Pomodoro-style focus timer built with React 18, TypeScript,
 Vite and rough.js. Early and full endings receive equal supportive feedback.
 Actual time excludes pauses, includes sub-minute sessions, and is saved locally.
 The first-use default is 25 minutes. A one-off selection leaves the configured default intact.
+During focus or a break, tap the countdown to set the remaining minutes. Adjusting a paused timer keeps it paused. History retains the time already spent in the same session.
 
 See [PLAN.md](PLAN.md) for scope, invariants and acceptance checks, and
 [AGENTS.md](AGENTS.md) for architecture rules.

@@ -114,10 +114,11 @@
 | `started_at_ms` | INTEGER；UTC整数毫秒或NULL | native必填；旧开始时刻未知才NULL | 开始时受控意图时刻；固定 | 不是每次继续时刻；不得用ended_at_ms-effective_ms倒推 |
 | `start_zone` | TEXT；可识别时区ID或NULL | native必填；旧依据缺失可NULL | 开始捕获，常规固定 | 不以查看/导入时区替换；时区偏移不是稳定时区ID |
 | `participation_date_key` | TEXT；YYYY-MM-DD或NULL | native focus必填；休息NULL；legacy开始日期不明NULL | 开始时按原时区生成，固定 | 有原时刻/时区时须一致；不等于end_date_key；已有可信旧日期不丢弃 |
-| `target_ms` | INTEGER；正整数毫秒或NULL | native按模式整数分钟×60000；旧目标未知NULL | 开始锁定，常规固定 | focus≤7200000、short≤3600000、long≤5400000；旧可证实非整分钟不强制改写 |
+| `target_ms` | INTEGER；正整数毫秒或NULL | 开始时按模式整数分钟×60000；旧目标未知NULL | 显式中途改时更新为已投入毫秒＋新余量，另保留起初的目标 | focus≤7200000、short≤3600000、long≤5400000；旧可证实非整分钟不强制改写 |
+| 原始目标（快照 `initialDurationMs`） | 正整数毫秒 | 未调时沿用现有目标 | 首次中途调整时留存，后续调整和结束沿用 | 与最终安排和实际时长分别读取 |
 | `step_text` | TEXT；Unicode文本≤80码点或NULL | 未填可NULL或已有合法空串；不猜标题，不悄悄裁剪 | 捕获用户确认内容后固定 | 不从notes或角色活动生成；旧超限仅兼容原件，不静默截断 |
-| `deadline_at_ms` | INTEGER；UTC整数毫秒或NULL | running必填，其余状态NULL | 开始＝原开始时刻+目标；继续＝受控继续时刻+暂停余量 | 剩余量夹在0..target；暂停/结束清NULL；失败重试不拿新的等待时刻重算 |
-| `paused_remaining_ms` | INTEGER；整数毫秒0..target或NULL | paused必填，其余NULL | 暂停采样/备份检查点生成；继续/结束清除 | 与deadline互斥；允许0但不为它补一秒，不自动制造新会话 |
+| `deadline_at_ms` | INTEGER；UTC整数毫秒或NULL | running必填，其余状态NULL | 开始＝原开始时刻+目标；继续＝受控继续时刻+暂停余量；运行中调时＝受理时刻+新余量 | 剩余量夹在0..target；暂停/结束清NULL；失败重试不拿新的等待时刻重算 |
+| `paused_remaining_ms` | INTEGER；整数毫秒0..target或NULL | paused必填，其余NULL | 暂停采样/备份检查点生成；暂停中调时更新余量；继续/结束清除 | 与deadline互斥；允许0但不为它补一秒，不自动制造新会话 |
 | `effective_ms` | INTEGER；整数毫秒0..target或NULL | 活动/legacy_unknown为NULL；native ended必填；旧终态可未知 | 结束时一次定稿，不逐秒改库 | 不是ended-started；排除暂停；0是实际0，NULL是未知；自然到期等于target |
 | `ended_at_ms` | INTEGER；UTC整数毫秒或NULL | 活动NULL；native ended必填；旧终态时间不明NULL | deadline用实际截止点；manual用受控确认时刻；固定 | 保存/重试时间不是结束时间；不从这一列判断用户任务完成 |
 | `end_date_key` | TEXT；YYYY-MM-DD或NULL | 活动NULL；native ended必填；旧归档日未知NULL | 用开始时区中的结束日定稿 | 不随旅行重算，不拆午夜；有可靠时间依据时核对一致 |

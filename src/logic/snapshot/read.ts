@@ -17,9 +17,18 @@ function readSession(raw: unknown, issues: string[]): Session | null {
   const { id, durationMs, timeZone, startedAt, step } = raw
   const scene = raw.scene === undefined ? null : readSceneAssignment(raw.scene)
   if (raw.scene !== undefined && !scene) issues.push('timer.session.scene')
-  const art = scene ? { scene } : {}
-  if (raw.status === 'running' && isInstant(raw.deadline)) return { status: 'running', id, durationMs, timeZone, startedAt, step, deadline: raw.deadline, ...art }
-  if (raw.status === 'paused' && isInstant(raw.remainingMs) && raw.remainingMs <= durationMs) return { status: 'paused', id, durationMs, timeZone, startedAt, step, remainingMs: raw.remainingMs, ...art }
+  if (raw.initialDurationMs !== undefined && !isPositiveMs(raw.initialDurationMs)) issues.push('timer.session.initialDurationMs')
+  if (raw.timingRevision !== undefined && !isCount(raw.timingRevision)) issues.push('timer.session.timingRevision')
+  const shared = { id, durationMs, timeZone, startedAt, step, ...(scene ? { scene } : {}),
+    ...(isPositiveMs(raw.initialDurationMs) ? { initialDurationMs: raw.initialDurationMs } : {}),
+    ...(isCount(raw.timingRevision) ? { timingRevision: raw.timingRevision } : {}) }
+  if (raw.status === 'running' && isInstant(raw.deadline)) {
+    const cap = raw.runStartRemainingMs
+    const validCap = isInstant(cap) && cap <= durationMs
+    if (cap !== undefined && !validCap) issues.push('timer.session.runStartRemainingMs')
+    return { ...shared, status: 'running', deadline: raw.deadline, ...(validCap ? { runStartRemainingMs: cap } : {}) }
+  }
+  if (raw.status === 'paused' && isInstant(raw.remainingMs) && raw.remainingMs <= durationMs) return { ...shared, status: 'paused', remainingMs: raw.remainingMs }
   return null
 }
 
@@ -62,8 +71,10 @@ export function readRecords(raw: unknown, issues: string[]): FocusRecord[] {
       seen.add(r.sessionId)
       const scene = r.scene === undefined ? null : readSceneAssignment(r.scene)
       if (r.scene !== undefined && (!scene || !isFocusSceneId(scene.sceneId))) issues.push(`record.scene (${r.sessionId})`)
+      if (r.initialDurationMs !== undefined && !isPositiveMs(r.initialDurationMs)) issues.push(`record.initialDurationMs (${r.sessionId})`)
       records.push({ sessionId: r.sessionId, startedAt: r.startedAt, endedAt: r.endedAt, dateKey: r.dateKey,
         targetMs: r.targetMs, elapsedMs: r.elapsedMs, endReason: r.endReason, source: r.source, step: r.step,
+        ...(isPositiveMs(r.initialDurationMs) ? { initialDurationMs: r.initialDurationMs } : {}),
         ...(scene && isFocusSceneId(scene.sceneId) ? { scene } : {}) })
     } else dropped += 1
   }
@@ -84,7 +95,12 @@ export function readRestMemories(raw: unknown, issues: string[]): RestMemory[] {
     const sceneId = isSceneId(rest.sceneId) && !isFocusSceneId(rest.sceneId) ? rest.sceneId : null
     if (rest.sceneId !== sceneId) issues.push('restMemories.sceneId')
     const { sessionId, endedAt, elapsedMs, dateKey, phase, endReason } = rest
-    memories.push({ sessionId, endedAt, elapsedMs, dateKey, phase, endReason, sceneId })
+    const { initialDurationMs, targetMs } = rest
+    const hasPlans = isPositiveMs(initialDurationMs) && isPositiveMs(targetMs) && targetMs >= elapsedMs &&
+      (endReason !== 'deadline' || elapsedMs === targetMs)
+    if ((initialDurationMs !== undefined || targetMs !== undefined) && !hasPlans) issues.push(`restMemories.plans (${sessionId})`)
+    memories.push({ sessionId, endedAt, elapsedMs, dateKey, phase, endReason, sceneId,
+      ...(hasPlans ? { initialDurationMs, targetMs } : {}) })
     seen.add(sessionId)
   }
   if (memories.length !== raw.length) issues.push(`restMemories (${raw.length - memories.length} unreadable)`)

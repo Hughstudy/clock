@@ -1,5 +1,6 @@
 /**
- * C2-P4: main → animation boundary. Main supplies a read-only view, at most one
+ * C2-P5: the activity keeps its starting timeline across a remaining-time edit.
+ * Main supplies a read-only view, at most one
  * permitted transient cue with its own identity, and explicit user-intent
  * callbacks. Animation completion or cancellation changes only local
  * presentation state: it never saves, grants content, starts/ends timers or

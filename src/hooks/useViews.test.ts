@@ -59,6 +59,22 @@ describe('confirmed records and formal thought projection', () => {
 })
 
 describe('precise main-owned scene progress', () => {
+  it('keeps the original scene timeline through shortening, extending and reading the saved ending', () => {
+    const minute = 60_000
+    const started = act(createSnapshot(spec), { type: 'start', sessionId: 'edit', timeZone: 'UTC', durationMinutes: 25 })
+    const editAt = T0 + 8 * minute
+    for (const remainingMinutes of [10, 30]) {
+      const adjusted = act(started, { type: 'adjustRemaining', sessionId: 'edit', expectedTimingRevision: 0, remainingMinutes }, editAt)
+      expect(viewOf(adjusted, editAt).completedProgress).toBe(viewOf(started, editAt).completedProgress)
+      expect(viewOf(adjusted, editAt).initialDurationMs).toBe(25 * minute)
+      const deadline = editAt + remainingMinutes * minute
+      const ended = act(adjusted, { type: 'reconcile' }, deadline)
+      const expected = Math.min(1, (8 + remainingMinutes) / 25)
+      expect(viewOf(adjusted, deadline).completedProgress).toBe(expected)
+      expect(statsOf(ended, new Set(['edit']), []).recordBySession.get('edit')?.sceneProgress).toBe(expected)
+    }
+  })
+
   it('advances below the former one-percent threshold while the badge keeps remaining progress', () => {
     const snapshot = act(createSnapshot(spec), { type: 'start', sessionId: 'precise', timeZone: 'UTC', durationMinutes: 25 })
     const view = viewOf(snapshot, T0 + 250)

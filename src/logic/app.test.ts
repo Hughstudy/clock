@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { spec } from '../data/spec'
 import { applyAction, expiredSessionResult, reconcile, resolveSessionResult, shouldChime, staleBreakSuggestion, standingFocusResult, type ActionContext, type AppAction, type SessionResult } from './app'
 import { createSnapshot } from './snapshot'
-import { remainingMs } from './timer'
+import { remainingMs, sessionScheduleKey } from './timer'
 import type { AppSnapshot } from './types'
 
 const MIN = 60_000
@@ -23,6 +23,94 @@ function completeFocus(s: AppSnapshot, now: number, id: string): AppSnapshot {
 }
 
 describe('timer actions', () => {
+  const edit = (remainingMinutes: number, expectedTimingRevision = 0, sessionId = 'a'): AppAction =>
+    ({ type: 'adjustRemaining', sessionId, expectedTimingRevision, remainingMinutes })
+
+  it('adjusts from the commit instant, retaining fractional elapsed work and one focus identity', () => {
+    const started = run(createSnapshot(spec), [
+      [T0, { type: 'startFocus', sessionId: 'a', durationMinutes: 22, step: 'read', timeZone: 'Asia/Tokyo' }],
+      [T0 + MIN, { type: 'markThought', thoughtId: 't', timeZone: 'Asia/Tokyo' }],
+    ])
+    const now = T0 + 8 * MIN + 20_345
+    const update = applyAction(started, edit(10), ctx(now), spec)
+    expect(update).toMatchObject({ adjustment: 'applied', completion: null, ended: null, thought: null })
+    const adjusted = update.snapshot
+    expect(adjusted.timer.session).toMatchObject({ status: 'running', id: 'a', initialDurationMs: 22 * MIN,
+      durationMs: 18 * MIN + 20_345, deadline: now + 10 * MIN, startedAt: T0, timeZone: 'Asia/Tokyo',
+      step: 'read', scene: started.timer.session!.scene, timingRevision: 1 })
+    expect(adjusted.thoughts).toBe(started.thoughts)
+    expect(adjusted.participations).toBe(started.participations)
+    expect(adjusted.scenes).toBe(started.scenes)
+    expect(adjusted.lastFocusMinutes).toBe(22)
+    expect(adjusted.settings).toBe(started.settings)
+    expect(remainingMs(adjusted.timer, adjusted.settings, T0)).toBe(10 * MIN)
+    const done = reconcile(adjusted, ctx(now + 10 * MIN), spec)
+    expect(done.snapshot.records).toMatchObject([{ sessionId: 'a', elapsedMs: 18 * MIN + 20_345, targetMs: 18 * MIN + 20_345,
+      initialDurationMs: 22 * MIN, endedAt: now + 10 * MIN, endReason: 'deadline' }])
+    expect(done.snapshot.timer.completedFocusCount).toBe(1)
+    expect(run(done.snapshot, [[now + 100 * MIN, edit(1)]])).toBe(done.snapshot)
+  })
+
+  it('keeps pauses and repeated edits in the original focus, protecting already invested work after a backwards clock change', () => {
+    const s = run(createSnapshot(spec), [
+      [T0, { type: 'startFocus', sessionId: 'a', timeZone: 'UTC' }],
+      [T0 + 8 * MIN, { type: 'pause', sessionId: 'a' }],
+      [T0 + 1_000 * MIN, edit(10, 1)], [T0 + 2_000 * MIN, edit(20, 2)],
+    ])
+    expect(s.timer.session).toMatchObject({ status: 'paused', durationMs: 28 * MIN, remainingMs: 20 * MIN, initialDurationMs: 25 * MIN })
+    expect(reconcile(s, ctx(T0 + 3_000 * MIN), spec).changed).toBe(false)
+    const resumed = run(s, [[T0 + 3_000 * MIN, {type: 'resume', sessionId:'a'}]])
+    expect(remainingMs(resumed.timer, resumed.settings, T0)).toBe(20 * MIN)
+    const ended = run(resumed, [[T0 + 3_001 * MIN, {type: 'end', sessionId:'a'}]])
+    expect(ended.records).toMatchObject([{ initialDurationMs: 25 * MIN, targetMs: 28 * MIN, elapsedMs: 9 * MIN, endReason: 'manual' }])
+    expect(ended.timer.completedFocusCount).toBe(0)
+  })
+
+  it('rejects stale editor revisions, IDs and generations; the original deadline wins over an editor left open', () => {
+    const started = run(createSnapshot(spec), [[T0, {type:'startFocus', sessionId:'a', timeZone:'UTC'}]])
+    const adjusted = run(started, [[T0, edit(25)]])
+    const peer = run(started, [[T0, edit(5)]])
+    for (const stale of [edit(25), edit(25, 1, 'elsewhere'), {...edit(25, 1), generation:1},
+      {...edit(25, 1), expectedSchedule:sessionScheduleKey(peer.timer.session!)}]) {
+      const rejected = applyAction(adjusted, stale, ctx(T0 + MIN), spec)
+      expect(rejected.adjustment).toBe('stale')
+      expect(rejected.snapshot).toBe(adjusted)
+    }
+    const resumed = run(adjusted, [[T0, {type:'pause'}], [T0, {type:'resume'}]])
+    expect(applyAction(resumed, edit(1, 1), ctx(T0), spec).adjustment).toBe('stale')
+    const expired = applyAction(resumed, edit(1, 3), ctx(T0 + 25 * MIN), spec)
+    expect(expired.adjustment).toBe('stale')
+    expect(expired.completion?.credited).toBe(true)
+    expect(expired.snapshot.timer.session).toBeNull()
+    expect(expired.snapshot.records).toHaveLength(1)
+  })
+
+  it.each(['focus', 'shortBreak', 'longBreak'] as const)('enforces the %s total cap at the time of application', phase => {
+    const limit = spec.timer.durationsMinutes[phase].max
+    const chosen = phase === 'focus' ? {type:'startFocus' as const} : {type:'startBreak' as const, phase}
+    const started = run(createSnapshot(spec), [[T0, {...chosen, durationMinutes:limit, sessionId:'a', timeZone:'UTC'}]])
+    for (const outside of [0, 1.5, NaN, limit]) {
+      const rejected = applyAction(started, edit(outside), ctx(T0 + 1), spec)
+      expect(rejected.adjustment).toBe('invalid')
+      expect(rejected.snapshot).toBe(started)
+    }
+    expect(applyAction(started, edit(limit - 1), ctx(T0 + MIN), spec).adjustment).toBe('applied')
+    expect(applyAction(started, edit(1), ctx(T0 + (limit - 1) * MIN + 1), spec).adjustment).toBe('invalid')
+  })
+
+  it('uses the recorded reason when a stale observer sees a shortened rest expire or an extended rest end manually', () => {
+    const resting = run(createSnapshot(spec), [[T0, {type:'startBreak', phase:'shortBreak', sessionId:'a', timeZone:'UTC'}]])
+    const expired = run(resting, [[T0 + MIN, edit(2)], [T0 + 3 * MIN, {type:'reconcile'}]])
+    expect(expired.restMemories).toMatchObject([{sessionId:'a', initialDurationMs:5 * MIN, targetMs:3 * MIN,
+      elapsedMs:3 * MIN, endReason:'deadline', phase:'shortBreak'}])
+    expect(expiredSessionResult(resting.timer.session, expired)?.elapsedMs).toBe(3 * MIN)
+    expect(expired.timer.completedFocusCount).toBe(0)
+    expect(expired.participations).toHaveLength(0)
+    const ended = run(resting, [[T0 + MIN, edit(8)], [T0 + 6 * MIN, {type:'end', sessionId:'a'}]])
+    expect(ended.restMemories[0]).toMatchObject({targetMs:9 * MIN, elapsedMs:6 * MIN})
+    expect(expiredSessionResult(resting.timer.session, ended)).toBeNull()
+  })
+
   it('updates a provisional ending to the actual winning durable record and revokes unconfirmed badges', () => {
     const started = run(createSnapshot(spec), [[T0, { type: 'start', sessionId: 'same', timeZone: 'UTC' }]])
     const early = run(started, [[T0 + 10_000, { type: 'end', sessionId: 'same' }]])

@@ -14,6 +14,11 @@ export function formatClock(ms: number): string {
   return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`
 }
 
+/** A running editor shows actual elapsed seconds without counting a partial second as completed. */
+export function elapsedClock(ms: number): string {
+  return formatClock(Math.floor(ms / 1000) * 1000)
+}
+
 export function spokenClock(ms: number): string {
   const totalSeconds = Math.ceil(Math.max(0, ms) / 1000)
   const minutes = Math.floor(totalSeconds / 60)

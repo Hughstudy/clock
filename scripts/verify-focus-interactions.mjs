@@ -5,6 +5,7 @@ import { holdFocusCard, launchChromium } from './lib/browser.mjs'
 import { build, preview } from 'vite'
 import { focusTime, prepareMinutes } from './focus-duration-actions.mjs'
 import { checkDurationRuler } from './check-duration-ruler.mjs'
+import { checkRemainingTime } from './check-remaining-time.mjs'
 import { checkTimerNotices } from './check-timer-notices.mjs'
 
 const output = path.resolve(process.env.FOCUS_REVIEW_OUTPUT || '.preview/v35-interactions')
@@ -49,7 +50,10 @@ await build({ build: { outDir, rolldownOptions: { input: [path.resolve('index.ht
 const server = await preview({ build: { outDir }, preview: { host: '127.0.0.1', port: 0 } })
 let browser
 try {
-  browser = holdFocusCard(await launchChromium())
+  browser = await launchChromium()
+  const url = `http://127.0.0.1:${server.httpServer.address().port}/clock/`
+  await checkRemainingTime(browser, url, check, output)
+  holdFocusCard(browser)
   const context = await browser.newContext({ viewport: { width: 375, height: 850 }, timezoneId: 'Asia/Singapore', reducedMotion: 'reduce' })
   context.on('page', page => {
     page.on('pageerror', error => errors.push(error.message))
@@ -57,7 +61,6 @@ try {
   })
   const page = await context.newPage()
   page.setDefaultTimeout(6000)
-  const url = `http://127.0.0.1:${server.httpServer.address().port}/clock/`
   await page.clock.install({ time: new Date('2026-10-31T23:58:00+08:00') })
   await page.goto(url)
   await button(page, '开始专注').waitFor()

@@ -31,7 +31,29 @@ function legacy(version: number) {
   }
 }
 
-describe('snapshot v10 and migration', () => {
+describe('snapshot v11 and migration', () => {
+  it('keeps v10 plans, elapsed work and the paused position verbatim, without inventing edits', () => {
+    const current = sample()
+    const previous = { ...current, version: 10 }
+    expect(decodeSnapshot(encodeSnapshot(previous), spec, ctx)).toEqual({ kind: 'ok', snapshot: current, issues: [] })
+  })
+
+  it('round-trips adjusted running, paused and ended plans down to the millisecond', () => {
+    const current = sample()
+    const shared = { id:'adjusted', durationMs:1_100_345, initialDurationMs:1_500_000, timingRevision:3,
+      timeZone:'Asia/Tokyo', startedAt:1234, step:'read' }
+    for (const session of [
+      { ...shared, status:'running' as const, deadline:2_000_000, runStartRemainingMs:600_000 },
+      { ...shared, status:'paused' as const, remainingMs:599_000 },
+    ]) {
+      const adjusted: AppSnapshot = { ...current, timer:{ ...current.timer, session },
+        records:[{ ...record('focus'), initialDurationMs:900_000 }],
+        restMemories:[{ sessionId:'rest', endedAt:100_345, elapsedMs:100_345, targetMs:100_345, initialDurationMs:300_000,
+          dateKey:'2026-10-28', phase:'shortBreak', endReason:'deadline', sceneId:null }] }
+      expect(decodeSnapshot(encodeSnapshot(adjusted), spec, ctx)).toEqual({ kind:'ok', snapshot:adjusted, issues:[] })
+    }
+  })
+
   it('recovers the latest known legacy rest and only its matching scene, without assigning a date, kind or reason', () => {
     const before = sample()
     const lastRestEnd = { sessionId: 'rest', endedAt: 42, elapsedMs: 0 }

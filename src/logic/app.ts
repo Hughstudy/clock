@@ -2,7 +2,7 @@ import { applySettingsPatch, defaultSettings, isValidDuration, sameSettings, typ
 import { isFocusSceneId, selectScene } from './scenes'
 import type { Spec } from './spec'
 import { canRestore, isLive, isWellFormedUnicode, normalizeStep, purgeExpiredText } from './thoughts'
-import { breakAfterFocus, expireSession, pauseSession, remainingMs, resetSession, resumeSession, skipBreak, startSession } from './timer'
+import { adjustRemaining, breakAfterFocus, expireSession, maxRemainingMinutes, pauseSession, remainingMs, resetSession, resumeSession, sessionScheduleKey, skipBreak, startSession } from './timer'
 import type { AppSnapshot, DateKey, FocusRecord, Phase, RestMemory, Session, Settings, Thought, ThoughtDraft } from './types'
 import { quoteKey, type FavoriteQuote } from '../contracts/favorites'
 
@@ -23,6 +23,7 @@ export type AppAction = (
   | { type: 'start' | 'startFocus'; sessionId: string; timeZone: string; durationMinutes?: number; expectedPhase?: Phase; step?: string }
   | { type: 'startBreak'; sessionId: string; timeZone: string; durationMinutes?: number; expectedPhase?: Phase; phase?: 'shortBreak' | 'longBreak' }
   | { type: 'pause' | 'resume' | 'end'; sessionId?: string }
+  | { type: 'adjustRemaining'; sessionId: string; expectedTimingRevision: number; expectedSchedule?: string; remainingMinutes: number }
   | { type: 'skipBreak'; sessionId?: string | null }
   | { type: 'resetDurations' }
   | { type: 'prepare'; phase: Phase; expectedPhase: Phase }
@@ -54,6 +55,7 @@ export interface Transition {
   thought: { id: string; change: ThoughtChange | 'rejected' } | null
   draftConflict?: boolean
   favoriteRejected?: boolean
+  adjustment?: 'applied' | 'stale' | 'invalid'
   changed: boolean
 }
 
@@ -83,7 +85,8 @@ export function expiredSessionResult(previous: Session | null, current: AppSnaps
   const record = current.records.find(r => r.sessionId === previous.id)
   if (record) return record.endReason === 'deadline' ? { sessionId: previous.id, phase: 'focus', elapsedMs: record.elapsedMs, saved: false } : null
   const rest = current.lastRestEnd
-  return rest?.sessionId === previous.id && rest.elapsedMs >= previous.durationMs
+  const reason = current.restMemories.find(memory => memory.sessionId === previous.id)?.endReason
+  return rest?.sessionId === previous.id && (reason ? reason === 'deadline' : rest.elapsedMs >= previous.durationMs)
     ? { sessionId: previous.id, phase: 'rest', elapsedMs: rest.elapsedMs, saved: false } : null
 }
 
@@ -145,6 +148,7 @@ export function reconcile(snapshot: AppSnapshot, ctx: ActionContext, spec: Spec)
     endedAt: expired.deadline,
     dateKey: ctx.dateKeyOf(expired.deadline, expired.timeZone),
     targetMs: expired.durationMs,
+    ...(active?.initialDurationMs !== undefined ? { initialDurationMs: active.initialDurationMs } : {}),
     elapsedMs: expired.durationMs,
     endReason: 'deadline',
     source: expired.startedAt === null ? 'legacy' : 'native',
@@ -227,6 +231,20 @@ function act(snapshot: AppSnapshot, action: AppAction, ctx: ActionContext, spec:
     }
     case 'pause': return withTimer(pauseSession(snapshot.timer, now))
     case 'resume': return withTimer(resumeSession(snapshot.timer, now))
+    case 'adjustRemaining': {
+      const { session, phase } = snapshot.timer
+      if (!session || session.id !== action.sessionId || (session.timingRevision ?? 0) !== action.expectedTimingRevision ||
+          (action.expectedSchedule !== undefined && sessionScheduleKey(session) !== action.expectedSchedule)) {
+        return { ...unchanged(snapshot), adjustment: 'stale' }
+      }
+      const elapsed = session.durationMs - remainingMs(snapshot.timer, snapshot.settings, now)
+      if (!isValidDuration(phase, action.remainingMinutes, spec) ||
+          action.remainingMinutes > maxRemainingMinutes(elapsed, spec.timer.durationsMinutes[phase].max)) {
+        return { ...unchanged(snapshot), adjustment: 'invalid' }
+      }
+      const adjusted = adjustRemaining(session, now, action.remainingMinutes)
+      return { ...withTimer({ ...snapshot.timer, session: adjusted }), adjustment: 'applied' }
+    }
     case 'end': {
       const session = snapshot.timer.session
       if (!session) return unchanged(snapshot)
@@ -237,6 +255,7 @@ function act(snapshot: AppSnapshot, action: AppAction, ctx: ActionContext, spec:
         endedAt: now,
         dateKey: ctx.dateKeyOf(now, session.timeZone),
         targetMs: session.durationMs,
+        ...(session.initialDurationMs !== undefined ? { initialDurationMs: session.initialDurationMs } : {}),
         elapsedMs: session.durationMs - remainingMs(snapshot.timer, snapshot.settings, now),
         endReason: 'manual',
         source: session.startedAt === null ? 'legacy' : 'native',
@@ -274,7 +293,8 @@ function endRest(snapshot: AppSnapshot, ctx: ActionContext, endedAt: number, end
     elapsedMs: session.durationMs - remainingMs(snapshot.timer, snapshot.settings, endedAt) }
   const sceneId = session.scene?.sceneId
   const memory: RestMemory = { ...lastRestEnd, dateKey: ctx.dateKeyOf(endedAt, session.timeZone), phase, endReason,
-    sceneId: sceneId && !isFocusSceneId(sceneId) ? sceneId : null }
+    sceneId: sceneId && !isFocusSceneId(sceneId) ? sceneId : null,
+    ...(session.initialDurationMs !== undefined ? { initialDurationMs: session.initialDurationMs, targetMs: session.durationMs } : {}) }
   const lastEnded = session.scene ? { ...lastRestEnd, phase: 'rest' as const, scene: session.scene } : null
   return { ...unchanged(snapshot), changed: true, snapshot: { ...snapshot, timer: skipBreak(snapshot.timer),
     lastRestEnd, restMemories: [...snapshot.restMemories, memory], restSuggestionSessionId: null,
@@ -346,7 +366,9 @@ function actOnThought(snapshot: AppSnapshot, action: ThoughtAction, ctx: ActionC
 
 /** Expiry wins a race with manual end. Guard session actions against stale tabs. */
 export function applyAction(snapshot: AppSnapshot, action: AppAction, ctx: ActionContext, spec: Spec): Transition {
-  if (action.generation !== undefined && action.generation !== snapshot.datasetGeneration) return unchanged(snapshot)
+  if (action.generation !== undefined && action.generation !== snapshot.datasetGeneration) {
+    return action.type === 'adjustRemaining' ? { ...unchanged(snapshot), adjustment: 'stale' } : unchanged(snapshot)
+  }
   const settled = reconcile(snapshot, ctx, spec)
   const thoughts = purgeExpiredText(settled.snapshot.thoughts, ctx.now, spec.thoughts.undoPeriodMs)
   const purged = thoughts !== settled.snapshot.thoughts

@@ -68,6 +68,8 @@ export const MIGRATIONS: Readonly<Record<number, Migration>> = {
   // No old schema recorded a rest's original civil date, kind or ending reason.
   // The validated last ending and its matching artwork are projected in decodeSnapshot.
   9: old => ({ ...old, version: 10, restMemories: [] }),
+  // Every old clock is unedited. Its duration already represents its initial and current plan.
+  10: old => ({ ...old, version: 11 }),
 }
 
 export function runMigrations(data: Json, from: number, to: number, migrations: Readonly<Record<number, Migration>>, context: MigrationContext): Json | null {

@@ -2,7 +2,7 @@
 
 > [返回文档地图](README.md) · [交互研究与候选方案](22-timer-interaction-research.md) · 2026-11-22
 >
-> **这是当前实现的说明，不是改版方案。** 先看第2节的重点路径，再按第3—8节查完整操作。应用代码基线为 [b132621](https://github.com/Hughstudy/clock/commit/b132621d8dc090600270a94f25531d972b6b0fd9)，之后的研究稿提交未修改应用。
+> **这是2026-11-22的改版前基线。** 11月23日选定的[中途改时](02-features.md#adjust-remaining)更新了本段调时路径，本图保留评审时的原始点击计数。 先看第2节的重点路径，再按第3—8节查完整操作。应用代码基线为 [b132621](https://github.com/Hughstudy/clock/commit/b132621d8dc090600270a94f25531d972b6b0fd9)，之后的研究稿提交未修改应用。
 
 ## 1. 范围与点击计算方法
 

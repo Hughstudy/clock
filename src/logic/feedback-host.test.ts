@@ -320,6 +320,8 @@ it('uses captured session duration and the actual enabled scene as copy facts', 
   const context = feedbackContext(snapshot, 'saved', event, 9)
   expect(context.localHour).toBe(9)
   expect(context.focusDurationMs).toBe(5 * 60_000)
+  const revised = commit(snapshot, { type: 'adjustRemaining', sessionId: 'session', expectedTimingRevision: 0, remainingMinutes: 20 }, T0 + 60_000)
+  expect(feedbackContext(revised.snapshot, 'saved', revised.event, 9).focusDurationMs).toBe(5 * 60_000)
   expect(context.focusDurationMs).not.toBe(snapshot.settings.durationsMinutes.focus * 60_000)
   expect(context.sceneId).toBe(snapshot.timer.session!.scene!.sceneId)
   expect(feedbackContext({ ...snapshot, settings: { ...snapshot.settings, sceneVarietyEnabled: false } }, 'saved', event, 9).sceneId).toBeUndefined()

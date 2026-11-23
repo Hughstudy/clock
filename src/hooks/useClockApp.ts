@@ -19,6 +19,7 @@ import { feedbackCatalog } from '../data/encouragement'
 export type UserAction =
   | { type: 'start' | 'startFocus'; durationMinutes?: number; step?: string }
   | { type: 'startBreak'; phase?: 'shortBreak' | 'longBreak'; durationMinutes?: number }
+  | Required<Extract<AppAction, { type: 'adjustRemaining' }>>
   | { type: 'pause' | 'resume' | 'end' | 'skipBreak' | 'retrySave' | 'resetDurations' | 'markThought' }
   | { type: 'updateSettings'; patch: SettingsPatch }
   | { type: 'prepare'; phase: Phase }
@@ -77,7 +78,7 @@ interface PendingThought extends Thought {
 const EMPTY_THOUGHTS: readonly Thought[] = []
 const EMPTY_RESTS: readonly RestMemory[] = []
 const EMPTY_FAVORITES: readonly SavedQuote[] = []
-const TIMER_COMMANDS = new Set(['start', 'startFocus', 'startBreak', 'pause', 'resume', 'end', 'skipBreak', 'prepare'])
+const TIMER_COMMANDS = new Set(['start', 'startFocus', 'startBreak', 'pause', 'resume', 'end', 'skipBreak', 'prepare', 'adjustRemaining'])
 
 export function useClockApp(): ClockApp {
   const [store] = useState(() => openBrowserStore(spec))
@@ -193,7 +194,8 @@ export function useClockApp(): ClockApp {
         refresh()
         if (action.generation !== store.snapshot.datasetGeneration) return false
         const { transition, before } = write.value
-        const accepted = !transition.draftConflict && !transition.favoriteRejected && transition.thought?.change !== 'rejected'
+        const accepted = !transition.draftConflict && !transition.favoriteRejected && transition.thought?.change !== 'rejected' &&
+          (action.type !== 'adjustRemaining' || transition.adjustment === 'applied')
         if (!accepted) onRejected?.()
         if (write.saved) {
           // One successful snapshot write includes prior applied changes. A lock failure
@@ -231,7 +233,10 @@ export function useClockApp(): ClockApp {
       } catch (error) {
         if (action.generation !== store.snapshot.datasetGeneration) return false
         const message = error instanceof Error ? error.message : String(error)
-        pending.current.set(operationId, { action, applied: false, generation: action.generation, error: message })
+        // An unapplied "from now" edit needs a fresh confirmation. A background
+        // lock retry must not set a new deadline minutes after the user left.
+        const retryAction: AppAction = action.type === 'adjustRemaining' ? { type: 'reconcile', generation: action.generation } : action
+        pending.current.set(operationId, { action: retryAction, applied: false, generation: action.generation, error: message })
         if ('thoughtId' in action) remember({ operationId, generation: action.generation, thoughtId: action.thoughtId, change: null, saved: false, revision: null })
         return false
       } finally {
@@ -318,6 +323,8 @@ export function useClockApp(): ClockApp {
         return void commit({ ...action, sessionId: newId(), timeZone: currentTimeZone(), expectedPhase: timer.phase, generation: datasetGeneration })
       case 'retrySave':
         return recover('user')
+      case 'adjustRemaining':
+        return commit(action)
       case 'pause':
       case 'resume':
       case 'end':

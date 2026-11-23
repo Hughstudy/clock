@@ -3,7 +3,7 @@ import { spec } from '../data/spec'
 import { applyAction, type AppAction } from '../logic/app'
 import type { FeedbackEvent, FeedbackResult, Persistence } from '../logic/feedback'
 import { createFeedbackHost, feedbackFromTransition, interactWithFeedback, updateFeedbackHost, type FeedbackHostInput, type FeedbackHostState } from '../logic/feedback-host'
-import { companionSceneOf, companionViewOf, type CompanionScene, type CompanionView, type PresentationCue } from '../logic/presentation'
+import { companionSceneOf, companionViewOf, focusSceneProgress, type CompanionScene, type CompanionView, type PresentationCue } from '../logic/presentation'
 import { createSnapshot } from '../logic/snapshot'
 import { remainingMs } from '../logic/timer'
 import type { AppSnapshot } from '../logic/types'
@@ -52,7 +52,10 @@ function scenario(preferences = { motionEnabled: true, encouragementEnabled: tru
     feedback: { frame: host.feedback.frame, announcement: host.feedback.announcement },
     cue: host.cue,
     scene: companionSceneOf(snapshot, host.cue, {
-      completedProgress: snapshot.timer.session ? 1 - remainingMs(snapshot.timer, snapshot.settings, now) / snapshot.timer.session.durationMs : 0,
+      completedProgress: snapshot.timer.session ? focusSceneProgress(
+        snapshot.timer.session.durationMs - remainingMs(snapshot.timer, snapshot.settings, now),
+        snapshot.timer.session.initialDurationMs ?? snapshot.timer.session.durationMs,
+      ) : 0,
       visible, persistence, hasError: host.feedback.frame.status.kind === 'error',
     }),
   })

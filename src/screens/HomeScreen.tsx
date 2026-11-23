@@ -2,6 +2,7 @@ import { focusCopy as copy } from '../data/focus-copy'
 import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type MouseEvent, type ReactNode } from 'react'
 import { EncouragementReader } from '../components/EncouragementReader'
 import { DurationRuler } from '../components/DurationRuler'
+import { RemainingTimeEditor, type RemainingEdit } from '../components/RemainingTimeEditor'
 import { ShortCompanionMessage } from '../components/ShortCompanionMessage'
 import { FocusPanel } from '../components/FocusPanel'
 import { ConfirmPopover } from '../components/ConfirmPopover'
@@ -26,7 +27,7 @@ import type { SessionResult, UserAction } from '../hooks/useClockApp'
 import type { Thoughts } from '../hooks/useThoughts'
 import type { TimerView } from '../hooks/useViews'
 
-type Panel = 'duration' | 'end' | 'thought' | 'thoughts' | 'encouragement' | 'message' | 'status' | null
+type Panel = 'duration' | 'remaining' | 'end' | 'thought' | 'thoughts' | 'encouragement' | 'message' | 'status' | null
 type RestPhase = 'shortBreak' | 'longBreak'
 
 interface Props {
@@ -46,7 +47,7 @@ interface Props {
   onTaskChange?: (busy: boolean) => void
   systemNoticeSummary?: string | null
   systemNotices?: ReactNode
-  dispatch: (action: UserAction) => void
+  dispatch: (action: UserAction) => void | Promise<boolean>
   onSettings: () => void
 }
 
@@ -64,6 +65,7 @@ export function HomeScreen({ active, view, result, linkedThoughts, defaultsInten
   const choice = useDurationChoice(defaultsIntent)
   const [restChoice, setRestChoice] = useState<RestPhase | null>(null)
   const [draft, setDraft] = useState('')
+  const remainingEdit = useRef<RemainingEdit | null>(null)
   const [message, setMessage] = useState('')
   const confirming = useRef<string | null>(null)
   const sceneBox = useRef<HTMLDivElement>(null)
@@ -118,6 +120,14 @@ export function HomeScreen({ active, view, result, linkedThoughts, defaultsInten
   }, [active, panel])
 
   const show = (next: Exclude<Panel, null>, target: HTMLElement) => {
+    if (next === 'remaining') {
+      if (!view.adjustmentGuard || !canEdit || timerPending) return
+      remainingEdit.current = {
+        guard: view.adjustmentGuard,
+        minutes: Math.max(1, Math.min(view.maxRemainingMinutes, Math.ceil(view.remainingMs / 60000))),
+        isRest: view.isBreak,
+      }
+    }
     if (next !== 'thought' && thoughts.open) {
       if (thoughts.conflict) return
       thoughts.setOpen(false)
@@ -183,6 +193,8 @@ export function HomeScreen({ active, view, result, linkedThoughts, defaultsInten
 
   const duration = validateDurationDraft(draft, view.focusMinutesRange.min, view.focusMinutesRange.max)
   const pickerAvailable = active && readyFocus && canEdit && !timerPending
+  const clockEditable = readyFocus || !ready
+  const clockPanel = readyFocus ? 'duration' : 'remaining'
   useEffect(() => { if (!pickerAvailable && task === 'duration') setTask(null) }, [task, pickerAvailable])
 
   // The companion's passing line steps aside while a local panel has the space.
@@ -207,11 +219,12 @@ export function HomeScreen({ active, view, result, linkedThoughts, defaultsInten
   const noteText = pending ? copy.pending : noteStatus?.text ?? (saveState === 'memory-only' ? copy.memoryOnly : saveState === 'read-only' ? '当前只读' : systemNoticeSummary ?? '')
   const timerSummary = ready ? focusResult ? `${copy.focusElapsed} ${formatMinutes(focusResult.elapsedMs)}` : preparingRest ? `准备休息 · ${restMinutes} 分钟` : `准备专注 · ${focusMinutes} 分钟`
     : `${PHASE_LABELS[view.phase]} · ${paused ? copy.paused : copy.running} · 剩余 ${formatClock(view.remainingMs)}`
+  const focusTarget = view.totalMs % 60000 === 0 ? copy.target(view.totalMs / 60000) : `目标 ${formatClock(view.totalMs)}`
   const statusLine = focusResult
     ? `${copy.focusElapsed} ${formatMinutes(focusResult.elapsedMs)} · ${focusResult.saved ? copy.savedRecord : copy.unsavedRecord}`
     : preparingRest ? `${PHASE_LABELS[restPhase]} · ${copy.ready}`
     : ready ? null
-    : `${PHASE_LABELS[view.phase]} · ${paused ? copy.paused : copy.running}${view.isBreak ? '' : ` · ${copy.target(Math.round(view.totalMs / 60000))}`}`
+    : `${PHASE_LABELS[view.phase]} · ${paused ? copy.paused : copy.running}${view.isBreak ? '' : ` · ${focusTarget}`}`
 
   const setting = companion.sceneryEnabled ? sceneSettingFor(scene?.id) : 'plain'
   const light = useSceneLight(setting === 'plain' ? null : setting, view.night)
@@ -308,14 +321,16 @@ export function HomeScreen({ active, view, result, linkedThoughts, defaultsInten
           <CompanionFeedback feedback={companion.feedback} reducedMotion={reducedMotion} renderCharacter={(presentation, keyboardPat) =>
               <BlueCompanion presentation={presentation} keyboardPat={keyboardPat} cueId={companion.cue?.id} scene={scene}
                 panelOpen={!!panel} sceneryEnabled={companion.sceneryEnabled} night={view.night}
-                focusTime={!ready && !view.isBreak ? { elapsedMs: view.totalMs - view.remainingMs, totalMs: view.totalMs } : undefined} />} />
+                focusTime={!ready && !view.isBreak ? { elapsedMs: view.totalMs - view.remainingMs, totalMs: view.initialDurationMs } : undefined} />} />
         </div>
-        <span aria-hidden="true" className="fp-clock-phase">{focusResult ? copy.focusEndedTitle : ready ? (isRest ? '准备休息' : copy.prepareFocus) : paused ? copy.paused : isRest ? '休息中' : '专注中'}{!ready && !view.isBreak && ` · ${copy.target(Math.round(view.totalMs / 60000))}`}</span>
+        <span aria-hidden="true" className="fp-clock-phase">{focusResult ? copy.focusEndedTitle : ready ? (isRest ? '准备休息' : copy.prepareFocus) : paused ? copy.paused : isRest ? '休息中' : '专注中'}{!ready && !view.isBreak && ` · ${focusTarget}`}</span>
         <p className="fp-digits" {...(ready ? {} : { role: 'timer', 'aria-label': `${PHASE_LABELS[view.phase]}还剩${spokenClock(view.remainingMs)}` })}>
-          {readyFocus ? <button type="button" className="fp-clock-trigger" aria-label={`调整专注时长，当前 ${focusMinutes} 分钟`}
-            disabled={!pickerAvailable} tabIndex={panel === 'duration' ? -1 : undefined} aria-haspopup="dialog" aria-expanded={panel === 'duration'}
-            onClick={event => { if (panel !== 'duration') show('duration', event.currentTarget) }}>{panel === 'duration' && duration.ok ? formatClock(duration.minutes * 60000) : digits}
-              {panel !== 'duration' && <svg className="fp-clock-edit" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="m5 15-1 5 5-1L20 8l-4-4zM14 6l4 4"/></svg>}</button> : digits}
+          {clockEditable ? <button key={view.sessionId ?? 'preparation'} type="button" className="fp-clock-trigger"
+            aria-label={readyFocus ? `调整专注时长，当前 ${focusMinutes} 分钟` : `${copy.remainingTitle(isRest)}，还剩 ${spokenClock(view.remainingMs)}`}
+            disabled={!active || !canEdit || timerPending} tabIndex={panel === clockPanel ? -1 : undefined} aria-haspopup="dialog" aria-expanded={panel === clockPanel}
+            onClick={event => { event.stopPropagation(); if (panel !== clockPanel) show(clockPanel, event.currentTarget) }}>
+              {panel === 'duration' && duration.ok ? formatClock(duration.minutes * 60000) : digits}
+              {panel !== clockPanel && <svg className="fp-clock-edit" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="m5 15-1 5 5-1L20 8l-4-4zM14 6l4 4"/></svg>}</button> : digits}
         </p>
         {!readableLayout && !ready && !view.isBreak && view.step && <div className="fp-step">
           <p aria-hidden="true" className="fp-step__current" title={view.step}>{copy.stepPrefix}{view.step}</p>
@@ -327,7 +342,9 @@ export function HomeScreen({ active, view, result, linkedThoughts, defaultsInten
           {pending && <p className="fp-hint fp-hint--error">{copy.pending}
             <button type="button" className="text-action" onClick={() => dispatch({ type: 'retrySave' })}>{copy.retry}</button></p>}
         </FocusPanel>}
-        {panel && panel !== 'duration' && panel !== 'encouragement' && panel !== 'end' && <FocusPanel key={panel} title={titles[panel]} onClose={close} timerSummary={timerSummary}
+        {panel === 'remaining' && remainingEdit.current && <RemainingTimeEditor opened={remainingEdit.current}
+          view={view} anchor={sceneBox.current?.querySelector('.fp-digits') ?? null} canEdit={canEdit} onClose={close} dispatch={dispatch} />}
+        {panel && panel !== 'duration' && panel !== 'remaining' && panel !== 'encouragement' && panel !== 'end' && <FocusPanel key={panel} title={titles[panel]} onClose={close} timerSummary={timerSummary}
           closeLabel={!ready && !view.isBreak ? uiText(view.step ? 'UI16' : 'UI17') : '返回'}>
           {panel === 'message' && <p className="fp-full-message" tabIndex={-1} data-initial-focus>{message}</p>}
           {panel === 'thoughts' && <ul className="fp-session-list">{linkedThoughts.map((note, index) => <li key={note.id} data-thought-id={note.id}>

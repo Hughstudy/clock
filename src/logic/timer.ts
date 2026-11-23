@@ -24,12 +24,29 @@ function clampRemaining(ms: number, durationMs: number): number {
   return Math.min(durationMs, Math.max(0, ms))
 }
 
+function sessionRemainingMs(session: Session, now: number): number {
+  if (session.status === 'paused') return clampRemaining(session.remainingMs, session.durationMs)
+  // A backwards wall-clock change cannot erase time accounted before a resume or edit.
+  return clampRemaining(session.deadline - now, session.runStartRemainingMs ?? session.durationMs)
+}
+
+/** The total bound includes time already invested, down to the millisecond. */
+export function maxRemainingMinutes(elapsedMs: number, maxDurationMinutes: number): number {
+  return Math.max(0, Math.floor((maxDurationMinutes * MINUTE_MS - elapsedMs) / MINUTE_MS))
+}
+
+/** Two tabs can both advance the same revision if one write failed. Bind an editor to its exact clock. */
+export function sessionScheduleKey(session: Session): string {
+  const position = session.status === 'running' ? session.deadline : session.remainingMs
+  return [session.status, position, session.durationMs, session.initialDurationMs ?? session.durationMs,
+    session.status === 'running' ? session.runStartRemainingMs ?? session.durationMs : ''].join(':')
+}
+
 /** Time left at `now`. A ready phase shows the duration a start would capture. */
 export function remainingMs(timer: TimerState, settings: Settings, now: number): number {
   const { session } = timer
   if (!session) return phaseDurationMs(settings, timer.phase)
-  if (session.status === 'paused') return clampRemaining(session.remainingMs, session.durationMs)
-  return clampRemaining(session.deadline - now, session.durationMs)
+  return sessionRemainingMs(session, now)
 }
 
 export function totalMs(timer: TimerState, settings: Settings): number {
@@ -56,15 +73,12 @@ export function startSession(
 export function pauseSession(timer: TimerState, now: number): TimerState {
   const { session } = timer
   if (session?.status !== 'running') return timer
+  const { deadline: _deadline, runStartRemainingMs: _startRemaining, ...shared } = session
   const paused: Session = {
+    ...shared,
     status: 'paused',
-    id: session.id,
-    durationMs: session.durationMs,
-    remainingMs: clampRemaining(session.deadline - now, session.durationMs),
-    timeZone: session.timeZone,
-    startedAt: session.startedAt,
-    step: session.step,
-    ...(session.scene ? { scene: session.scene } : {}),
+    remainingMs: sessionRemainingMs(session, now),
+    timingRevision: (session.timingRevision ?? 0) + 1,
   }
   return { ...timer, session: paused }
 }
@@ -72,17 +86,29 @@ export function pauseSession(timer: TimerState, now: number): TimerState {
 export function resumeSession(timer: TimerState, now: number): TimerState {
   const { session } = timer
   if (session?.status !== 'paused') return timer
+  const { remainingMs: left, ...shared } = session
   const running: Session = {
+    ...shared,
     status: 'running',
-    id: session.id,
-    durationMs: session.durationMs,
-    deadline: now + clampRemaining(session.remainingMs, session.durationMs),
-    timeZone: session.timeZone,
-    startedAt: session.startedAt,
-    step: session.step,
-    ...(session.scene ? { scene: session.scene } : {}),
+    deadline: now + left,
+    runStartRemainingMs: left,
+    timingRevision: (session.timingRevision ?? 0) + 1,
   }
   return { ...timer, session: running }
+}
+
+/** A commit always consumes the displayed revision, even if the chosen value is unchanged. */
+export function adjustRemaining(session: Session, now: number, remainingMinutes: number): Session {
+  const left = remainingMinutes * MINUTE_MS
+  const elapsed = session.durationMs - sessionRemainingMs(session, now)
+  const plan = {
+    durationMs: elapsed + left,
+    initialDurationMs: session.initialDurationMs ?? session.durationMs,
+    timingRevision: (session.timingRevision ?? 0) + 1,
+  }
+  return session.status === 'paused'
+    ? { ...session, ...plan, remainingMs: left }
+    : { ...session, ...plan, deadline: now + left, runStartRemainingMs: left }
 }
 
 /** Clears the active session. The application layer must record focus before calling. */

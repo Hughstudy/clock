@@ -49,7 +49,7 @@ export function feedbackContext(snapshot: AppSnapshot, persistence: FeedbackCont
     status: snapshot.timer.session?.status ?? 'ready',
     persistence,
     localHour,
-    focusDurationMs: snapshot.timer.phase === 'focus' ? snapshot.timer.session?.durationMs : undefined,
+    focusDurationMs: snapshot.timer.phase === 'focus' ? (snapshot.timer.session?.initialDurationMs ?? snapshot.timer.session?.durationMs) : undefined,
     sceneId: snapshot.settings.sceneVarietyEnabled ? snapshot.timer.session?.scene?.sceneId : undefined,
     participationSaved: persistence === 'saved' && event?.sessionId !== undefined &&
       snapshot.participations.some(p => p.sessionId === event.sessionId),

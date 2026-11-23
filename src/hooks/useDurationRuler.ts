@@ -33,8 +33,12 @@ export function useDurationRuler({ value, min, max, onChange }: Options) {
   }
 
   useLayoutEffect(() => {
-    if (value !== null && value !== shown.current && ready.current) place(value)
-  }, [value])
+    if (!ready.current) return
+    if (value !== null && value !== shown.current) place(value)
+    // A running segment can lose a whole available minute while its ruler is open.
+    // Match the track's automatic clamp without changing the user's typed draft.
+    else if (shown.current > max || shown.current < min) place(clamp(shown.current))
+  }, [value, min, max])
 
   useEffect(() => {
     const element = track.current

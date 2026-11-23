@@ -8,7 +8,7 @@ import {
 } from '../logic/snapshot'
 import type { Spec } from '../logic/spec'
 import { mergeSceneStates } from '../logic/scenes'
-import { remainingMs } from '../logic/timer'
+import { remainingMs, sessionScheduleKey } from '../logic/timer'
 import type { AppSnapshot, RestMemory, TimerState } from '../logic/types'
 import type { LockRunner } from './locks'
 import { quoteKey } from '../contracts/favorites'
@@ -77,15 +77,16 @@ function mergePreferenceFields<T extends object>(base: T, disk: T, local: T): T 
 function sameTimerPosition(a: TimerState, b: TimerState): boolean {
   if (a.phase !== b.phase || a.session?.id !== b.session?.id) return false
   if (!a.session || !b.session) return a.session === b.session
-  if (a.session.status === 'paused') return b.session.status === 'paused' && a.session.remainingMs === b.session.remainingMs
-  return b.session.status === 'running' && a.session.deadline === b.session.deadline
+  return (a.session.timingRevision ?? 0) === (b.session.timingRevision ?? 0) && sessionScheduleKey(a.session) === sessionScheduleKey(b.session)
 }
 
-/** A pending end can follow a competing pause or resume only if the saved clock agrees. */
-function matchesEndingPosition(ending: Pick<RestMemory, 'sessionId' | 'endReason' | 'endedAt' | 'elapsedMs'>, disk: AppSnapshot): boolean {
+/** An ending from a different plan cannot establish the final target, even if elapsed time agrees. */
+function matchesEndingPosition(ending: Pick<RestMemory, 'sessionId' | 'endReason' | 'endedAt' | 'elapsedMs' | 'targetMs' | 'initialDurationMs'>, disk: AppSnapshot): boolean {
   const session = disk.timer.session
   if (session?.id !== ending.sessionId) return false
-  if (ending.endReason === 'deadline') return session.status === 'running' && session.deadline === ending.endedAt
+  if (ending.initialDurationMs !== session.initialDurationMs ||
+      (ending.targetMs !== undefined && ending.targetMs !== session.durationMs)) return false
+  if (ending.endReason === 'deadline') return session.status === 'running' && session.deadline === ending.endedAt && session.durationMs === ending.elapsedMs
   if (ending.endReason !== 'manual' || (session.status === 'running' && session.deadline <= ending.endedAt)) return false
   return ending.elapsedMs === session.durationMs - remainingMs(disk.timer, disk.settings, ending.endedAt)
 }
@@ -135,8 +136,9 @@ export class SnapshotStore {
     const onDisk = new Map(this.stored.records.map(record => [record.sessionId, record]))
     for (const record of this.memory.records) {
       const saved = onDisk.get(record.sessionId)
-      // Two tabs can end the same session at different times if a write failed.
+      // A fork can share the end instant and actual time but have a different plan.
       if (saved && saved.endedAt === record.endedAt && saved.elapsedMs === record.elapsedMs &&
+          saved.targetMs === record.targetMs && saved.initialDurationMs === record.initialDurationMs &&
           saved.endReason === record.endReason && saved.dateKey === record.dateKey) ids.add(record.sessionId)
     }
     return ids
@@ -225,7 +227,7 @@ export class SnapshotStore {
     const durableRecords = new Map(disk.records.map(record => [record.sessionId, record]))
     const durableRests = new Map(disk.restMemories.map(rest => [rest.sessionId, rest]))
 
-    // Phase, session identity and its deadline/paused amount form one position.
+    // Verify the schedule revision as well as the status and deadline/paused amount.
     // Even an ended zero-second session advances the corresponding scene cursor.
     const diskStartedAnother = disk.scenes.focus.ordinal !== base.scenes.focus.ordinal || disk.scenes.rest.ordinal !== base.scenes.rest.ordinal
     const positionChanged = !sameTimerPosition(base.timer, disk.timer)

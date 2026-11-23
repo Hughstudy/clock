@@ -1,6 +1,6 @@
 .home .fp-clock-trigger { color: inherit; background: none; padding: 0 30px; border: 0; font: inherit; letter-spacing: inherit;
   min-inline-size: 44px; min-block-size: 44px; border-radius: 8px; position: relative; }
-.home .fp-clock-edit { position: absolute; inset-inline-end: 6px; inset-block-start: 50%; transform: translateY(-50%); inline-size: 18px; block-size: 18px; color: var(--muted); }
+.home .fp-clock-edit { position: absolute; inset-inline-end: 6px; inset-block-start: 50%; transform: translateY(-50%); inline-size: 18px; block-size: 18px; color: inherit; }
 .home .fp-duration-surface[data-layout='clock'] {
   --safe-top: env(safe-area-inset-top); --safe-bottom: env(safe-area-inset-bottom);
   --safe-left: env(safe-area-inset-left); --safe-right: env(safe-area-inset-right);
@@ -10,6 +10,8 @@
 }
 .home .fp-duration-surface .focus-panel__header h2 { font-size: .94rem; }
 .home .fp-duration-surface .focus-panel__header { gap: 4px; }
+.home .fp-duration-surface .fp-remaining-summary { margin: 0 0 4px; color: var(--ink); font-size: .8125rem; }
+.home[data-panel='remaining'] :is(.fp-remaining-summary, .duration-ruler .fp-hint) { font-variant-numeric: tabular-nums; }
 .home .duration-ruler { display: grid; grid-template-columns: minmax(0, 1fr); gap: 4px; }
 .home .duration-ruler__frame { position: relative; block-size: 60px; border-radius: 14px; }
 .home .duration-ruler__frame:has(:focus-visible) { outline: 3px solid var(--focus); outline-offset: 1px; }

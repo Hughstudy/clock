@@ -3,7 +3,12 @@ import { endingTierForElapsed } from './scenes'
 import type { AppSnapshot, SceneId } from './types'
 
 /** Contract version for the main → animation boundary. Bump when a field's meaning changes. */
-export const PRESENTATION_CONTRACT = 'C2-P4'
+export const PRESENTATION_CONTRACT = 'C2-P5'
+
+/** The activity follows the time budget it started with, including after a timer edit or reload. */
+export function focusSceneProgress(elapsedMs: number, originalDurationMs: number): number {
+  return originalDurationMs > 0 ? Math.min(1, Math.max(0, elapsedMs / originalDurationMs)) : 0
+}
 
 /** Semantic results a renderer may react to. No species, asset, reward or ranking identity. */
 export const CUE_KINDS = ['begin', 'pause', 'resume', 'settle', 'rest', 'thought-saved', 'support'] as const
@@ -29,7 +34,7 @@ export interface CompanionScene {
   sessionId: string
   phase: 'focus' | 'break'
   status: 'running' | 'paused' | 'ended'
-  /** Main-owned completed proportion, clamped to [0, 1] without quantization; rest uses zero. */
+  /** Portion of the original activity timeline reached, from 0 to 1. Rest uses zero. */
   completedProgress: number
   /** The host suppresses beats while another input/panel needs attention. */
   allowBeats: boolean
@@ -137,7 +142,7 @@ export function companionSceneOf(snapshot: AppSnapshot, cue: PresentationCue | n
   return {
     key: keyFor(ended.sessionId, ended.scene.selectionVersion), id: ended.scene.sceneId,
     sessionId: ended.sessionId, phase: ended.phase === 'focus' ? 'focus' : 'break', status: 'ended',
-    completedProgress: record && record.targetMs > 0 ? Math.min(1, record.elapsedMs / record.targetMs) : 0,
+    completedProgress: record ? focusSceneProgress(record.elapsedMs, record.initialDurationMs ?? record.targetMs) : 0,
     allowBeats: true, cue: kept,
     ending: { cueId: kept?.id ?? `ending:${ended.sessionId}`, tier: record ? endingTierForElapsed(record.elapsedMs) : null },
   }

@@ -36,7 +36,10 @@ export function BookMemory({
         <div className="jl-record-metadata">
           {p.record.step && <p>这一小步：{p.record.step}</p>}
           <p>
-            目标 {formatMinutes(p.record.targetMs)} ·{' '}
+            {p.record.initialDurationMs !== undefined && p.record.initialDurationMs !== p.record.targetMs
+              ? `原计划 ${formatMinutes(p.record.initialDurationMs)} · 调整后 `
+              : '目标 '}
+            {formatMinutes(p.record.targetMs)} ·{' '}
             {p.record.saved ? '已保存' : props.persistence === 'memory-only' ? '仅在此页' : '待保存'}
           </p>
           {listWindow(p.record.thoughts, 1).items.map((n) => (

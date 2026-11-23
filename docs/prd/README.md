@@ -1,5 +1,7 @@
 # 番茄是个番茄 · 产品文档地图
 
+**计时交互更新（2026-11-23）。** 用户选定了[中途改剩余时间](02-features.md#adjust-remaining)。专注和休息在运行或暂停时沿用同一段。[11月22日评审](22-timer-interaction-research.md)中的下一段直达和组合结束按钮仍为讨论方案。
+
 **当前文案更新（2026-11-23）：** [239句现行库](09-encouragement.md)与运行资源同步；[改稿笔记](../learning/companion-language/07-catalog-rewrite.md)记录学习如何用于删改。当前语言规则见08与21。
 
 **独立学习目录：** [学习与经验地图](../learning/README.md)收纳本窗口的人物、语言研究及可复用经验；PRD保留产品决定与研究入口。新增的对话、中文表达、幽默和长期使用研究见[伙伴语言专题](../learning/companion-language/README.md)。
@@ -60,7 +62,7 @@
 | [19-character-in-app.md](19-character-in-app.md) | 实际交互与表达通道、性格取舍、四张简单场景卡与能力边界 | 2026-11-21当前人物讨论入口；前三张优先试稿，物件点击后置，均未实施 |
 | [20-character-framework.md](20-character-framework.md) | 动机、选择、相处方式、情绪、场景写法、制作原则与再次复盘 | 创作工作稿；供评稿与筛选，不是新增运行时人格系统 |
 | [21-language-scenes.md](21-language-scenes.md) | 44种使用情境的语言目的、候选说法、呈现／变化／退出、三段使用路径和接入顺序 | 语言设计入口；已接入语言规则与未来触碰、物件、故事分开标明 |
-| [22-timer-interaction-research.md](22-timer-interaction-research.md) | 专注、休息与时间选择的独立研究；竞品、代码历史、三案比较、完整流程判断、目标路径和反例 | 2026-11-22讨论稿；建议同时设计下一段直达与原段内调时，分步验证；尚未替换现行规则或实施 |
+| [22-timer-interaction-research.md](22-timer-interaction-research.md) | 专注、休息与时间选择的独立研究；竞品、代码历史、三案比较、完整流程判断、目标路径和反例 | 2026-11-22讨论稿；保留当时的方案比较，中途改时已采纳，其余换段提案待定 |
 | [23-timer-current-flows.md](23-timer-current-flows.md) | 专注、休息、时长的全部基础状态与动作；按目标列完整路径、点击数、输入成本及异常分支 | 2026-11-22现状说明；与候选方案分开，先供流程评审，非改版验收 |
 | [24-copy-review.md](24-copy-review.md) | 199项运行资源逐句审阅，原文、取舍、改后文本与理由 | 2026-11-22编辑记录；历史删除项不作为运行候选，现行文本以09为准 |
 | [25-language-variety.md](25-language-variety.md) | 学习结果怎样回到语言PRD、当前实现与待验证事项 | 研究全文已迁出；重审后采用239句，条件过滤与旧收藏边界见09及验证报告 |
