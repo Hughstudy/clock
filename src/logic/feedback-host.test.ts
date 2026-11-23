@@ -314,3 +314,22 @@ describe('ready-entry greeting', () => {
     expect(updateFeedbackHost(covered, { ...i, automaticVisible: true }, feedbackCatalog).feedback.frame.encouragement).toBeNull()
   })
 })
+
+it('uses captured session duration and the actual enabled scene as copy facts', () => {
+  const { snapshot, event } = start()
+  const context = feedbackContext(snapshot, 'saved', event, 9)
+  expect(context.localHour).toBe(9)
+  expect(context.focusDurationMs).toBe(5 * 60_000)
+  expect(context.focusDurationMs).not.toBe(snapshot.settings.durationsMinutes.focus * 60_000)
+  expect(context.sceneId).toBe(snapshot.timer.session!.scene!.sceneId)
+  expect(feedbackContext({ ...snapshot, settings: { ...snapshot.settings, sceneVarietyEnabled: false } }, 'saved', event, 9).sceneId).toBeUndefined()
+  const ended = commit(snapshot, { type: 'end', sessionId: 'session' }, T0 + 1000)
+  expect(feedbackContext(ended.snapshot, 'saved', ended.event, 10).focusDurationMs).toBeUndefined()
+})
+
+it('does not change an already shown phrase or draw when the local hour changes', () => {
+  const { snapshot, event } = start()
+  const morning = { ...input(snapshot, event), localHour: 9 }
+  const first = render(morning)
+  expect(updateFeedbackHost(first, { ...morning, localHour: 18 }, feedbackCatalog)).toBe(first)
+})

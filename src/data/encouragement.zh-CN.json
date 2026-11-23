@@ -1,8 +1,8 @@
 {
   "schemaVersion": 1,
-  "copyVersion": "companion-moments-v2",
+  "copyVersion": "companion-moments-v3",
   "reviewStatus": "candidate",
-  "source": "当前文本见 docs/prd/09-encouragement.md；2026-11-22 逐句审稿见 docs/prd/24-copy-review.md；历史来源保留于 Git 提交。",
+  "source": "当前文案与条件见 docs/prd/09-encouragement.md；长期使用与260句内容设计见 docs/prd/25-language-variety.md；旧收藏保留原文。",
   "entries": [
     {
       "pool": "RET",
@@ -14,33 +14,16 @@
         "operationSaved",
         "returningReady"
       ],
-      "reviewStatus": "candidate",
-      "id": "RET01",
-      "text": "来啦。先不急着开工。",
-      "level": "light",
       "tags": [
         "presence"
       ],
-      "copyVersion": "companion-moments-v2"
-    },
-    {
-      "pool": "RET",
-      "states": [
-        "focus-ready",
-        "break-ready"
-      ],
-      "requiredFacts": [
-        "operationSaved",
-        "returningReady"
-      ],
+      "copyVersion": "companion-moments-v3",
       "reviewStatus": "candidate",
-      "id": "RET02",
-      "text": "见到你，我挺高兴的。",
-      "level": "light",
-      "tags": [
-        "autonomy"
-      ],
-      "copyVersion": "companion-moments-v2"
+      "id": "RET01",
+      "text": "来啦。见到你真好。",
+      "form": "response",
+      "topic": "greeting",
+      "level": "light"
     },
     {
       "pool": "RET",
@@ -52,14 +35,16 @@
         "operationSaved",
         "returningReady"
       ],
+      "tags": [
+        "presence"
+      ],
+      "copyVersion": "companion-moments-v3",
       "reviewStatus": "candidate",
       "id": "RET03",
-      "text": "先忙一会儿，还是先歇会儿？",
-      "level": "light",
-      "tags": [
-        "possibility"
-      ],
-      "copyVersion": "companion-moments-v2"
+      "text": "这会儿，做点什么或歇一歇，我都在这儿。",
+      "form": "response",
+      "topic": "presence",
+      "level": "light"
     },
     {
       "pool": "RET",
@@ -71,14 +56,16 @@
         "operationSaved",
         "returningReady"
       ],
+      "tags": [
+        "presence"
+      ],
+      "copyVersion": "companion-moments-v3",
       "reviewStatus": "candidate",
       "id": "RET08",
-      "text": "我喜欢做点小计划，也喜欢临时改主意。",
-      "level": "light",
-      "tags": [
-        "autonomy"
-      ],
-      "copyVersion": "companion-moments-v2"
+      "text": "选本子时，我会摸一下封面。手感顺的，胜算很大。",
+      "form": "preference",
+      "topic": "notebook",
+      "level": "light"
     },
     {
       "pool": "RET",
@@ -90,20 +77,499 @@
         "operationSaved",
         "returningReady"
       ],
+      "tags": [
+        "presence"
+      ],
+      "copyVersion": "companion-moments-v3",
       "reviewStatus": "candidate",
       "id": "RET09",
       "text": "你好呀。一起待会儿吧。",
-      "level": "light",
-      "tags": [
-        "possibility"
-      ],
-      "copyVersion": "companion-moments-v2"
+      "form": "response",
+      "topic": "greeting",
+      "level": "light"
     },
     {
+      "pool": "RET",
+      "states": [
+        "focus-ready",
+        "break-ready"
+      ],
+      "requiredFacts": [
+        "operationSaved",
+        "returningReady"
+      ],
+      "tags": [
+        "presence"
+      ],
+      "copyVersion": "companion-moments-v3",
+      "reviewStatus": "candidate",
+      "id": "RET13",
+      "text": "见个面，再各自忙。这样的相处我很喜欢。",
+      "form": "response",
+      "topic": "company",
+      "level": "light"
+    },
+    {
+      "pool": "RET",
+      "states": [
+        "focus-ready",
+        "break-ready"
+      ],
+      "requiredFacts": [
+        "operationSaved",
+        "returningReady"
+      ],
+      "tags": [
+        "presence"
+      ],
+      "copyVersion": "companion-moments-v3",
+      "reviewStatus": "candidate",
+      "id": "RET14",
+      "text": "我在书架上找书，先认封面上的小图。书名反而要想一想。",
+      "form": "small-report",
+      "topic": "books",
+      "level": "light"
+    },
+    {
+      "pool": "RET",
+      "states": [
+        "focus-ready",
+        "break-ready"
+      ],
+      "requiredFacts": [
+        "operationSaved",
+        "returningReady"
+      ],
+      "tags": [
+        "presence"
+      ],
+      "copyVersion": "companion-moments-v3",
+      "reviewStatus": "candidate",
+      "id": "RET15",
+      "text": "绿也分好多种。我偏爱刚剥开豌豆的那一种。",
+      "form": "preference",
+      "topic": "color",
+      "level": "light"
+    },
+    {
+      "pool": "RET",
+      "states": [
+        "focus-ready",
+        "break-ready"
+      ],
+      "requiredFacts": [
+        "operationSaved",
+        "returningReady"
+      ],
+      "tags": [
+        "presence"
+      ],
+      "copyVersion": "companion-moments-v3",
+      "reviewStatus": "candidate",
+      "id": "RET18",
+      "text": "并排待着的时候，我挺自在。连话都不用找。",
+      "form": "response",
+      "topic": "company",
+      "level": "light"
+    },
+    {
+      "pool": "RET",
+      "states": [
+        "focus-ready",
+        "break-ready"
+      ],
+      "requiredFacts": [
+        "operationSaved",
+        "returningReady"
+      ],
+      "tags": [
+        "presence"
+      ],
+      "copyVersion": "companion-moments-v3",
+      "reviewStatus": "candidate",
+      "id": "RET19",
+      "text": "听歌时认出一件乐器，我会有点得意。下一遍专门找它听。",
+      "form": "small-report",
+      "topic": "music",
+      "level": "light"
+    },
+    {
+      "pool": "RET",
+      "states": [
+        "focus-ready",
+        "break-ready"
+      ],
+      "requiredFacts": [
+        "operationSaved",
+        "returningReady"
+      ],
+      "tags": [
+        "presence"
+      ],
+      "copyVersion": "companion-moments-v3",
+      "reviewStatus": "candidate",
+      "id": "RET20",
+      "text": "遇到漂亮的包装纸，我会拆得特别慢。边角也想留完整。",
+      "form": "preference",
+      "topic": "paper",
+      "level": "light"
+    },
+    {
+      "pool": "RET",
+      "states": [
+        "focus-ready",
+        "break-ready"
+      ],
+      "requiredFacts": [
+        "operationSaved",
+        "returningReady"
+      ],
+      "tags": [
+        "presence"
+      ],
+      "copyVersion": "companion-moments-v3",
+      "reviewStatus": "candidate",
+      "id": "RET21",
+      "text": "我的爱好里，挑颜色算一个。光挑，还没开始画。",
+      "form": "small-report",
+      "topic": "color",
+      "level": "light"
+    },
+    {
+      "pool": "RET",
+      "states": [
+        "focus-ready",
+        "break-ready"
+      ],
+      "requiredFacts": [
+        "operationSaved",
+        "returningReady"
+      ],
+      "tags": [
+        "presence"
+      ],
+      "copyVersion": "companion-moments-v3",
+      "reviewStatus": "candidate",
+      "id": "RET22",
+      "text": "遇到没见过的小东西，我总想先看一眼背面。",
+      "form": "preference",
+      "topic": "curiosity",
+      "level": "light"
+    },
+    {
+      "pool": "RET",
+      "states": [
+        "focus-ready",
+        "break-ready"
+      ],
+      "requiredFacts": [
+        "operationSaved",
+        "returningReady"
+      ],
+      "tags": [
+        "presence"
+      ],
+      "copyVersion": "companion-moments-v3",
+      "reviewStatus": "candidate",
+      "id": "RET23",
+      "text": "又能一起待上一阵了。",
+      "form": "response",
+      "topic": "company",
+      "level": "light"
+    },
+    {
+      "pool": "RET",
+      "states": [
+        "focus-ready",
+        "break-ready"
+      ],
+      "requiredFacts": [
+        "operationSaved",
+        "returningReady"
+      ],
+      "tags": [
+        "presence"
+      ],
+      "copyVersion": "companion-moments-v3",
+      "reviewStatus": "candidate",
+      "id": "RET24",
+      "text": "早上好。很高兴这会儿能见到你。",
+      "form": "time-greeting",
+      "topic": "greeting",
+      "when": {
+        "dayparts": [
+          "morning"
+        ]
+      },
+      "level": "light"
+    },
+    {
+      "pool": "RET",
+      "states": [
+        "focus-ready",
+        "break-ready"
+      ],
+      "requiredFacts": [
+        "operationSaved",
+        "returningReady"
+      ],
+      "tags": [
+        "presence"
+      ],
+      "copyVersion": "companion-moments-v3",
+      "reviewStatus": "candidate",
+      "id": "RET25",
+      "text": "早上好。我有个小偏好：早餐也想用自己喜欢的盘子。",
+      "form": "preference",
+      "topic": "food",
+      "when": {
+        "dayparts": [
+          "morning"
+        ]
+      },
+      "level": "light"
+    },
+    {
+      "pool": "RET",
+      "states": [
+        "focus-ready",
+        "break-ready"
+      ],
+      "requiredFacts": [
+        "operationSaved",
+        "returningReady"
+      ],
+      "tags": [
+        "presence"
+      ],
+      "copyVersion": "companion-moments-v3",
+      "reviewStatus": "candidate",
+      "id": "RET26",
+      "text": "下午好。一起待一会儿。",
+      "form": "time-greeting",
+      "topic": "greeting",
+      "when": {
+        "dayparts": [
+          "afternoon"
+        ]
+      },
+      "level": "light"
+    },
+    {
+      "pool": "RET",
+      "states": [
+        "focus-ready",
+        "break-ready"
+      ],
+      "requiredFacts": [
+        "operationSaved",
+        "returningReady"
+      ],
+      "tags": [
+        "presence"
+      ],
+      "copyVersion": "companion-moments-v3",
+      "reviewStatus": "candidate",
+      "id": "RET27",
+      "text": "下午好。我对午后的闲书一向没什么抵抗力。",
+      "form": "preference",
+      "topic": "books",
+      "when": {
+        "dayparts": [
+          "afternoon"
+        ]
+      },
+      "level": "light"
+    },
+    {
+      "pool": "RET",
+      "states": [
+        "focus-ready",
+        "break-ready"
+      ],
+      "requiredFacts": [
+        "operationSaved",
+        "returningReady"
+      ],
+      "tags": [
+        "presence"
+      ],
+      "copyVersion": "companion-moments-v3",
+      "reviewStatus": "candidate",
+      "id": "RET28",
+      "text": "晚上好。很高兴这会儿能碰个面。",
+      "form": "time-greeting",
+      "topic": "greeting",
+      "when": {
+        "dayparts": [
+          "evening"
+        ]
+      },
+      "level": "light"
+    },
+    {
+      "pool": "RET",
+      "states": [
+        "focus-ready",
+        "break-ready"
+      ],
+      "requiredFacts": [
+        "operationSaved",
+        "returningReady"
+      ],
+      "tags": [
+        "presence"
+      ],
+      "copyVersion": "companion-moments-v3",
+      "reviewStatus": "candidate",
+      "id": "RET29",
+      "text": "晚上读到喜欢的地方，我总舍不得马上合上书。",
+      "form": "preference",
+      "topic": "books",
+      "when": {
+        "dayparts": [
+          "evening"
+        ]
+      },
+      "level": "light"
+    },
+    {
+      "pool": "RET",
+      "states": [
+        "focus-ready",
+        "break-ready"
+      ],
+      "requiredFacts": [
+        "operationSaved",
+        "returningReady"
+      ],
+      "tags": [
+        "presence"
+      ],
+      "copyVersion": "companion-moments-v3",
+      "reviewStatus": "candidate",
+      "id": "RET30",
+      "text": "夜里见面，就轻声说句：你好呀。",
+      "form": "time-greeting",
+      "topic": "greeting",
+      "when": {
+        "dayparts": [
+          "night"
+        ]
+      },
+      "level": "light"
+    },
+    {
+      "pool": "RET",
+      "states": [
+        "focus-ready",
+        "break-ready"
+      ],
+      "requiredFacts": [
+        "operationSaved",
+        "returningReady"
+      ],
+      "tags": [
+        "presence"
+      ],
+      "copyVersion": "companion-moments-v3",
+      "reviewStatus": "candidate",
+      "id": "RET31",
+      "text": "夜里翻书，翻页的声音好像也变大了。",
+      "form": "observation",
+      "topic": "sound",
+      "when": {
+        "dayparts": [
+          "night"
+        ]
+      },
+      "level": "light"
+    },
+    {
+      "pool": "RET",
+      "states": [
+        "focus-ready",
+        "break-ready"
+      ],
+      "requiredFacts": [
+        "operationSaved",
+        "returningReady"
+      ],
+      "tags": [
+        "presence"
+      ],
+      "copyVersion": "companion-moments-v3",
+      "reviewStatus": "candidate",
+      "id": "RET32",
+      "text": "有回信封太小，卡片放不下。我把卡片折成了手风琴。",
+      "form": "mini-story",
+      "topic": "paper",
+      "level": "light"
+    },
+    {
+      "pool": "RET",
+      "states": [
+        "focus-ready",
+        "break-ready"
+      ],
+      "requiredFacts": [
+        "operationSaved",
+        "returningReady"
+      ],
+      "tags": [
+        "presence"
+      ],
+      "copyVersion": "companion-moments-v3",
+      "reviewStatus": "candidate",
+      "id": "RET34",
+      "text": "我收过一颗扁石子，很适合压纸。用途有了，名字还没想好。",
+      "form": "mini-story",
+      "topic": "stones",
+      "level": "light"
+    },
+    {
+      "pool": "RET",
+      "states": [
+        "focus-ready",
+        "break-ready"
+      ],
+      "requiredFacts": [
+        "operationSaved",
+        "returningReady"
+      ],
+      "tags": [
+        "presence"
+      ],
+      "copyVersion": "companion-moments-v3",
+      "reviewStatus": "candidate",
+      "id": "RET35",
+      "text": "有回随手哼的调子挺好听。想再哼一遍，已经不是那首了。",
+      "form": "mini-story",
+      "topic": "music",
+      "level": "light"
+    },
+    {
+      "pool": "STA",
+      "states": [
+        "focus-running"
+      ],
+      "requiredFacts": [
+        "operationSaved",
+        "focusStarted"
+      ],
+      "tags": [
+        "presence"
+      ],
+      "copyVersion": "companion-moments-v3",
+      "reviewStatus": "candidate",
       "id": "STA01",
+      "text": "开始啦。我陪你做这一段。",
+      "form": "response",
+      "topic": "company",
+      "level": "light"
+    },
+    {
       "pool": "STA",
-      "text": "开始了，我陪你做这一小段。",
-      "level": "light",
       "states": [
         "focus-running"
       ],
@@ -114,14 +580,16 @@
       "tags": [
         "presence"
       ],
-      "copyVersion": "companion-moments-v2",
-      "reviewStatus": "candidate"
-    },
-    {
+      "copyVersion": "companion-moments-v3",
+      "reviewStatus": "candidate",
       "id": "STA02",
-      "pool": "STA",
       "text": "好，开工。",
-      "level": "light",
+      "form": "response",
+      "topic": "start",
+      "level": "light"
+    },
+    {
+      "pool": "STA",
       "states": [
         "focus-running"
       ],
@@ -130,16 +598,18 @@
         "focusStarted"
       ],
       "tags": [
-        "autonomy"
+        "presence"
       ],
-      "copyVersion": "companion-moments-v2",
-      "reviewStatus": "candidate"
-    },
-    {
+      "copyVersion": "companion-moments-v3",
+      "reviewStatus": "candidate",
       "id": "STA07",
+      "text": "新本子的第一笔，我通常写在第二页。第一页留着以后想。",
+      "form": "preference",
+      "topic": "paper",
+      "level": "light"
+    },
+    {
       "pool": "STA",
-      "text": "刚开始那股新鲜劲儿，我挺喜欢。",
-      "level": "light",
       "states": [
         "focus-running"
       ],
@@ -150,14 +620,16 @@
       "tags": [
         "presence"
       ],
-      "copyVersion": "companion-moments-v2",
-      "reviewStatus": "candidate"
-    },
-    {
+      "copyVersion": "companion-moments-v3",
+      "reviewStatus": "candidate",
       "id": "STA09",
+      "text": "各忙各的，也算一起。",
+      "form": "response",
+      "topic": "company",
+      "level": "light"
+    },
+    {
       "pool": "STA",
-      "text": "好，各忙各的，也算一起。",
-      "level": "light",
       "states": [
         "focus-running"
       ],
@@ -166,16 +638,18 @@
         "focusStarted"
       ],
       "tags": [
-        "possibility"
+        "presence"
       ],
-      "copyVersion": "companion-moments-v2",
-      "reviewStatus": "candidate"
-    },
-    {
+      "copyVersion": "companion-moments-v3",
+      "reviewStatus": "candidate",
       "id": "STA12",
+      "text": "我先安静会儿，待在你旁边。",
+      "form": "response",
+      "topic": "quiet",
+      "level": "light"
+    },
+    {
       "pool": "STA",
-      "text": "好，我先安静会儿。",
-      "level": "light",
       "states": [
         "focus-running"
       ],
@@ -184,16 +658,1443 @@
         "focusStarted"
       ],
       "tags": [
-        "small-step"
+        "presence"
       ],
-      "copyVersion": "companion-moments-v2",
-      "reviewStatus": "candidate"
+      "copyVersion": "companion-moments-v3",
+      "reviewStatus": "candidate",
+      "id": "STA13",
+      "text": "计时开始。咱们动手吧。",
+      "form": "response",
+      "topic": "start",
+      "level": "light"
     },
     {
+      "pool": "STA",
+      "states": [
+        "focus-running"
+      ],
+      "requiredFacts": [
+        "operationSaved",
+        "focusStarted"
+      ],
+      "tags": [
+        "presence"
+      ],
+      "copyVersion": "companion-moments-v3",
+      "reviewStatus": "candidate",
+      "id": "STA14",
+      "text": "看故事时，配角一出场，我也会替它想后面的事。",
+      "form": "preference",
+      "topic": "reading",
+      "level": "light"
+    },
+    {
+      "pool": "STA",
+      "states": [
+        "focus-running"
+      ],
+      "requiredFacts": [
+        "operationSaved",
+        "focusStarted"
+      ],
+      "tags": [
+        "presence"
+      ],
+      "copyVersion": "companion-moments-v3",
+      "reviewStatus": "candidate",
+      "id": "STA15",
+      "text": "画里的树，我会故意留一根矮枝。想象小鸟可以先歇在那儿。",
+      "form": "preference",
+      "topic": "drawing",
+      "level": "light"
+    },
+    {
+      "pool": "STA",
+      "states": [
+        "focus-running"
+      ],
+      "requiredFacts": [
+        "operationSaved",
+        "focusStarted"
+      ],
+      "tags": [
+        "presence"
+      ],
+      "copyVersion": "companion-moments-v3",
+      "reviewStatus": "candidate",
+      "id": "STA17",
+      "text": "搭积木时，我还会留一块放在门口，当小凳子。",
+      "form": "preference",
+      "topic": "building",
+      "level": "light"
+    },
+    {
+      "pool": "STA",
+      "states": [
+        "focus-running"
+      ],
+      "requiredFacts": [
+        "operationSaved",
+        "focusStarted"
+      ],
+      "tags": [
+        "presence"
+      ],
+      "copyVersion": "companion-moments-v3",
+      "reviewStatus": "candidate",
+      "id": "STA18",
+      "text": "我挑书会先翻中间。想看看故事走到一半是什么样。",
+      "form": "preference",
+      "topic": "reading",
+      "level": "light"
+    },
+    {
+      "pool": "STA",
+      "states": [
+        "focus-running"
+      ],
+      "requiredFacts": [
+        "operationSaved",
+        "focusStarted"
+      ],
+      "tags": [
+        "presence"
+      ],
+      "copyVersion": "companion-moments-v3",
+      "reviewStatus": "candidate",
+      "id": "STA20",
+      "text": "有回画杯子，画得像土豆。我给土豆加了个把手。",
+      "form": "mini-story",
+      "topic": "drawing",
+      "level": "light"
+    },
+    {
+      "pool": "STA",
+      "states": [
+        "focus-running"
+      ],
+      "requiredFacts": [
+        "operationSaved",
+        "focusStarted"
+      ],
+      "tags": [
+        "presence"
+      ],
+      "copyVersion": "companion-moments-v3",
+      "reviewStatus": "candidate",
+      "id": "STA21",
+      "text": "好看的插图，我会翻回去再看一次。故事可以等一小会儿。",
+      "form": "preference",
+      "topic": "reading",
+      "level": "light"
+    },
+    {
+      "pool": "STA",
+      "states": [
+        "focus-running"
+      ],
+      "requiredFacts": [
+        "operationSaved",
+        "focusStarted"
+      ],
+      "tags": [
+        "presence"
+      ],
+      "copyVersion": "companion-moments-v3",
+      "reviewStatus": "candidate",
+      "id": "STA22",
+      "text": "铅笔写字的声音很轻，纸下面垫几张纸，还会不一样。",
+      "form": "observation",
+      "topic": "sound",
+      "level": "light"
+    },
+    {
+      "pool": "STA",
+      "states": [
+        "focus-running"
+      ],
+      "requiredFacts": [
+        "operationSaved",
+        "focusStarted"
+      ],
+      "tags": [
+        "presence"
+      ],
+      "copyVersion": "companion-moments-v3",
+      "reviewStatus": "candidate",
+      "id": "STA23",
+      "text": "积木不一定搭高。我更想给它搭个能看风景的窗户。",
+      "form": "preference",
+      "topic": "building",
+      "level": "light"
+    },
+    {
+      "pool": "STA",
+      "states": [
+        "focus-running"
+      ],
+      "requiredFacts": [
+        "operationSaved",
+        "focusStarted"
+      ],
+      "tags": [
+        "presence"
+      ],
+      "copyVersion": "companion-moments-v3",
+      "reviewStatus": "candidate",
+      "id": "STA24",
+      "text": "有个小打算：用三种颜色画一张画。先挑哪三种呢，我得琢磨琢磨。",
+      "form": "small-report",
+      "topic": "drawing",
+      "level": "light"
+    },
+    {
+      "pool": "STA",
+      "states": [
+        "focus-running"
+      ],
+      "requiredFacts": [
+        "operationSaved",
+        "focusStarted"
+      ],
+      "tags": [
+        "presence"
+      ],
+      "copyVersion": "companion-moments-v3",
+      "reviewStatus": "candidate",
+      "id": "STA25",
+      "text": "纸船翻过来，原来底下也挺好看。以前光顾着看船头了。",
+      "form": "observation",
+      "topic": "paper",
+      "level": "light"
+    },
+    {
+      "pool": "STA",
+      "states": [
+        "focus-running"
+      ],
+      "requiredFacts": [
+        "operationSaved",
+        "focusStarted"
+      ],
+      "tags": [
+        "presence"
+      ],
+      "copyVersion": "companion-moments-v3",
+      "reviewStatus": "candidate",
+      "id": "STA26",
+      "text": "新叶子的颜色常常浅一点。我总忍不住多看两眼。",
+      "form": "observation",
+      "topic": "plants",
+      "level": "light"
+    },
+    {
+      "pool": "STA",
+      "states": [
+        "focus-running"
+      ],
+      "requiredFacts": [
+        "operationSaved",
+        "focusStarted"
+      ],
+      "tags": [
+        "presence"
+      ],
+      "copyVersion": "companion-moments-v3",
+      "reviewStatus": "candidate",
+      "id": "STA27",
+      "text": "茶还没泡的时候，我就会先打开盖子闻一下。",
+      "form": "preference",
+      "topic": "tea",
+      "level": "light"
+    },
+    {
+      "pool": "STA",
+      "states": [
+        "focus-running"
+      ],
+      "requiredFacts": [
+        "operationSaved",
+        "focusStarted"
+      ],
+      "tags": [
+        "presence"
+      ],
+      "copyVersion": "companion-moments-v3",
+      "reviewStatus": "candidate",
+      "id": "STA28",
+      "text": "挑了半天颜色，还是拿了第一支。绕一圈回来，挺确定。",
+      "form": "mini-story",
+      "topic": "color",
+      "level": "light"
+    },
+    {
+      "pool": "STA",
+      "states": [
+        "focus-running"
+      ],
+      "requiredFacts": [
+        "operationSaved",
+        "focusStarted"
+      ],
+      "tags": [
+        "presence"
+      ],
+      "copyVersion": "companion-moments-v3",
+      "reviewStatus": "candidate",
+      "id": "STA29",
+      "text": "这一段，就从这里开始。",
+      "form": "response",
+      "topic": "start",
+      "level": "light"
+    },
+    {
+      "pool": "STA",
+      "states": [
+        "focus-running"
+      ],
+      "requiredFacts": [
+        "operationSaved",
+        "focusStarted"
+      ],
+      "tags": [
+        "presence"
+      ],
+      "copyVersion": "companion-moments-v3",
+      "reviewStatus": "candidate",
+      "id": "STA30",
+      "text": "你去忙手头的，我也有自己的小打算。",
+      "form": "response",
+      "topic": "company",
+      "level": "light"
+    },
+    {
+      "pool": "STA",
+      "states": [
+        "focus-running"
+      ],
+      "requiredFacts": [
+        "operationSaved",
+        "focusStarted"
+      ],
+      "tags": [
+        "presence"
+      ],
+      "copyVersion": "companion-moments-v3",
+      "reviewStatus": "candidate",
+      "id": "STA31",
+      "text": "画歪的线我会先留着。有时只是换个方向看，就用得上。",
+      "form": "preference",
+      "topic": "drawing",
+      "level": "light"
+    },
+    {
+      "pool": "STA",
+      "states": [
+        "focus-running"
+      ],
+      "requiredFacts": [
+        "operationSaved",
+        "focusStarted"
+      ],
+      "tags": [
+        "presence"
+      ],
+      "copyVersion": "companion-moments-v3",
+      "reviewStatus": "candidate",
+      "id": "STA32",
+      "text": "杯子有把手的那面，我总觉得是它的正面。",
+      "form": "observation",
+      "topic": "objects",
+      "level": "light"
+    },
+    {
+      "pool": "STA",
+      "states": [
+        "focus-running"
+      ],
+      "requiredFacts": [
+        "operationSaved",
+        "focusStarted"
+      ],
+      "tags": [
+        "presence"
+      ],
+      "copyVersion": "companion-moments-v3",
+      "reviewStatus": "candidate",
+      "id": "STA33",
+      "text": "有回看书看到一只陌生动物。我先翻去找插图，再回来接着读。",
+      "form": "mini-story",
+      "topic": "reading",
+      "level": "light"
+    },
+    {
+      "pool": "STA",
+      "states": [
+        "focus-running"
+      ],
+      "requiredFacts": [
+        "operationSaved",
+        "focusStarted"
+      ],
+      "tags": [
+        "presence"
+      ],
+      "copyVersion": "companion-moments-v3",
+      "reviewStatus": "candidate",
+      "id": "STA35",
+      "text": "蓝笔快没水了，我会留着画远处的海。颜色淡，正好。",
+      "form": "preference",
+      "topic": "color",
+      "level": "light"
+    },
+    {
+      "pool": "STA",
+      "states": [
+        "focus-running"
+      ],
+      "requiredFacts": [
+        "operationSaved",
+        "focusStarted"
+      ],
+      "tags": [
+        "presence"
+      ],
+      "copyVersion": "companion-moments-v3",
+      "reviewStatus": "candidate",
+      "id": "STA36",
+      "text": "咱们安安静静地忙会儿。",
+      "form": "response",
+      "topic": "quiet",
+      "level": "light"
+    },
+    {
+      "pool": "STA",
+      "states": [
+        "focus-running"
+      ],
+      "requiredFacts": [
+        "operationSaved",
+        "focusStarted"
+      ],
+      "tags": [
+        "presence"
+      ],
+      "copyVersion": "companion-moments-v3",
+      "reviewStatus": "candidate",
+      "id": "STA37",
+      "text": "铅笔削好，我总要先在纸角试一下。画什么倒还没决定。",
+      "form": "preference",
+      "topic": "drawing",
+      "level": "light"
+    },
+    {
+      "pool": "STA",
+      "states": [
+        "focus-running"
+      ],
+      "requiredFacts": [
+        "operationSaved",
+        "focusStarted"
+      ],
+      "tags": [
+        "presence"
+      ],
+      "copyVersion": "companion-moments-v3",
+      "reviewStatus": "candidate",
+      "id": "STA38",
+      "text": "给纸船想过好几个名字。最后叫“小船”，一喊就知道是谁。",
+      "form": "mini-story",
+      "topic": "paper",
+      "level": "light"
+    },
+    {
+      "pool": "STA",
+      "states": [
+        "focus-running"
+      ],
+      "requiredFacts": [
+        "operationSaved",
+        "focusStarted"
+      ],
+      "tags": [
+        "presence"
+      ],
+      "copyVersion": "companion-moments-v3",
+      "reviewStatus": "candidate",
+      "id": "STA40",
+      "text": "积木之间留个小缝，倒像一条能走进去的小路。",
+      "form": "observation",
+      "topic": "building",
+      "level": "light"
+    },
+    {
+      "pool": "STA",
+      "states": [
+        "focus-running"
+      ],
+      "requiredFacts": [
+        "operationSaved",
+        "focusStarted"
+      ],
+      "tags": [
+        "presence"
+      ],
+      "copyVersion": "companion-moments-v3",
+      "reviewStatus": "candidate",
+      "id": "STA42",
+      "text": "我看植物不只看花。叶子背面，也有我爱看的纹路。",
+      "form": "preference",
+      "topic": "plants",
+      "level": "light"
+    },
+    {
+      "pool": "STA",
+      "states": [
+        "focus-running"
+      ],
+      "requiredFacts": [
+        "operationSaved",
+        "focusStarted"
+      ],
+      "tags": [
+        "presence"
+      ],
+      "copyVersion": "companion-moments-v3",
+      "reviewStatus": "candidate",
+      "id": "STA43",
+      "text": "画树的时候，我最期待添上最后那几个小枝杈。",
+      "form": "preference",
+      "topic": "drawing",
+      "level": "light"
+    },
+    {
+      "pool": "STA",
+      "states": [
+        "focus-running"
+      ],
+      "requiredFacts": [
+        "operationSaved",
+        "focusStarted"
+      ],
+      "tags": [
+        "presence"
+      ],
+      "copyVersion": "companion-moments-v3",
+      "reviewStatus": "candidate",
+      "id": "STA44",
+      "text": "翻书声里，我偏爱厚纸的那一种。听着就想翻慢一点。",
+      "form": "preference",
+      "topic": "sound",
+      "level": "light"
+    },
+    {
+      "pool": "STA",
+      "states": [
+        "focus-running"
+      ],
+      "requiredFacts": [
+        "operationSaved",
+        "focusStarted"
+      ],
+      "tags": [
+        "presence"
+      ],
+      "copyVersion": "companion-moments-v3",
+      "reviewStatus": "candidate",
+      "id": "STA46",
+      "text": "点心摆得太整齐，我下手前犹豫了一下。只犹豫了一下。",
+      "form": "mini-story",
+      "topic": "food",
+      "level": "light"
+    },
+    {
+      "pool": "STA",
+      "states": [
+        "focus-running"
+      ],
+      "requiredFacts": [
+        "operationSaved",
+        "focusStarted"
+      ],
+      "tags": [
+        "presence"
+      ],
+      "copyVersion": "companion-moments-v3",
+      "reviewStatus": "candidate",
+      "id": "STA47",
+      "text": "面包边烤得脆脆的，我舍不得切掉。那是我最爱吃的部分。",
+      "form": "preference",
+      "topic": "food",
+      "level": "light"
+    },
+    {
+      "pool": "STA",
+      "states": [
+        "focus-running"
+      ],
+      "requiredFacts": [
+        "operationSaved",
+        "focusStarted"
+      ],
+      "tags": [
+        "presence"
+      ],
+      "copyVersion": "companion-moments-v3",
+      "reviewStatus": "candidate",
+      "id": "STA48",
+      "text": "画一排小窗户，只添一扇帘子，那扇就像住了人。",
+      "form": "observation",
+      "topic": "drawing",
+      "level": "light"
+    },
+    {
+      "pool": "STA",
+      "states": [
+        "focus-running"
+      ],
+      "requiredFacts": [
+        "operationSaved",
+        "focusStarted"
+      ],
+      "tags": [
+        "presence"
+      ],
+      "copyVersion": "companion-moments-v3",
+      "reviewStatus": "candidate",
+      "id": "STA49",
+      "text": "折纸最后展开的那一下，我每次都想看仔细。",
+      "form": "preference",
+      "topic": "paper",
+      "level": "light"
+    },
+    {
+      "pool": "STA",
+      "states": [
+        "focus-running"
+      ],
+      "requiredFacts": [
+        "operationSaved",
+        "focusStarted"
+      ],
+      "tags": [
+        "presence"
+      ],
+      "copyVersion": "companion-moments-v3",
+      "reviewStatus": "candidate",
+      "id": "STA50",
+      "text": "小塔搭到一半，我忽然想给它加个阳台。于是那次没再往高处搭。",
+      "form": "mini-story",
+      "topic": "building",
+      "level": "light"
+    },
+    {
+      "pool": "STA",
+      "states": [
+        "focus-running"
+      ],
+      "requiredFacts": [
+        "operationSaved",
+        "focusStarted"
+      ],
+      "tags": [
+        "presence"
+      ],
+      "copyVersion": "companion-moments-v3",
+      "reviewStatus": "candidate",
+      "id": "STA51",
+      "text": "想试一种配色：大部分留白，角落只放一点蓝。",
+      "form": "small-report",
+      "topic": "color",
+      "level": "light"
+    },
+    {
+      "pool": "STA",
+      "states": [
+        "focus-running"
+      ],
+      "requiredFacts": [
+        "operationSaved",
+        "focusStarted"
+      ],
+      "tags": [
+        "presence"
+      ],
+      "copyVersion": "companion-moments-v3",
+      "reviewStatus": "candidate",
+      "id": "STA52",
+      "text": "书里的食物写得好，我会回头再读一遍那一段。",
+      "form": "preference",
+      "topic": "reading",
+      "level": "light"
+    },
+    {
+      "pool": "STA",
+      "states": [
+        "focus-running"
+      ],
+      "requiredFacts": [
+        "operationSaved",
+        "focusStarted"
+      ],
+      "tags": [
+        "presence"
+      ],
+      "copyVersion": "companion-moments-v3",
+      "reviewStatus": "candidate",
+      "id": "STA53",
+      "text": "茶杯底下的小花纹，总要喝到最后才能看全。",
+      "form": "observation",
+      "topic": "tea",
+      "level": "light"
+    },
+    {
+      "pool": "STA",
+      "states": [
+        "focus-running"
+      ],
+      "requiredFacts": [
+        "operationSaved",
+        "focusStarted"
+      ],
+      "tags": [
+        "presence"
+      ],
+      "copyVersion": "companion-moments-v3",
+      "reviewStatus": "candidate",
+      "id": "STA54",
+      "text": "折纸我常用普通的纸。折好了，才想起来给它画花纹。",
+      "form": "preference",
+      "topic": "paper",
+      "level": "light"
+    },
+    {
+      "pool": "STA",
+      "states": [
+        "focus-running"
+      ],
+      "requiredFacts": [
+        "operationSaved",
+        "focusStarted"
+      ],
+      "tags": [
+        "presence"
+      ],
+      "copyVersion": "companion-moments-v3",
+      "reviewStatus": "candidate",
+      "id": "STA55",
+      "text": "书里遇到一个陌生词，念了几遍。意思还没记牢，声音先记住了。",
+      "form": "mini-story",
+      "topic": "reading",
+      "level": "light"
+    },
+    {
+      "pool": "STA",
+      "states": [
+        "focus-running"
+      ],
+      "requiredFacts": [
+        "operationSaved",
+        "focusStarted"
+      ],
+      "tags": [
+        "presence"
+      ],
+      "copyVersion": "companion-moments-v3",
+      "reviewStatus": "candidate",
+      "id": "STA56",
+      "text": "同一根枝上的叶子，也没长得一模一样。凑近看更有意思。",
+      "form": "observation",
+      "topic": "plants",
+      "level": "light"
+    },
+    {
+      "pool": "STA",
+      "states": [
+        "focus-running"
+      ],
+      "requiredFacts": [
+        "operationSaved",
+        "focusStarted"
+      ],
+      "tags": [
+        "presence"
+      ],
+      "copyVersion": "companion-moments-v3",
+      "reviewStatus": "candidate",
+      "id": "STA57",
+      "text": "搭房子的时候，我先想门开在哪里。得有个我想进去的入口。",
+      "form": "preference",
+      "topic": "building",
+      "level": "light"
+    },
+    {
+      "pool": "STA",
+      "states": [
+        "focus-running"
+      ],
+      "requiredFacts": [
+        "operationSaved",
+        "focusStarted"
+      ],
+      "tags": [
+        "presence"
+      ],
+      "copyVersion": "companion-moments-v3",
+      "reviewStatus": "candidate",
+      "id": "STA59",
+      "text": "画过一座小岛，给沙滩添了把椅子。后来觉得太晒，又画了顶伞。",
+      "form": "mini-story",
+      "topic": "drawing",
+      "level": "light"
+    },
+    {
+      "pool": "STA",
+      "states": [
+        "focus-running"
+      ],
+      "requiredFacts": [
+        "operationSaved",
+        "focusStarted"
+      ],
+      "tags": [
+        "presence"
+      ],
+      "copyVersion": "companion-moments-v3",
+      "reviewStatus": "candidate",
+      "id": "STA60",
+      "text": "和你一起做事，我挺乐意。",
+      "form": "response",
+      "topic": "company",
+      "level": "light"
+    },
+    {
+      "pool": "STA",
+      "states": [
+        "focus-running"
+      ],
+      "requiredFacts": [
+        "operationSaved",
+        "focusStarted"
+      ],
+      "tags": [
+        "presence"
+      ],
+      "copyVersion": "companion-moments-v3",
+      "reviewStatus": "candidate",
+      "id": "STA62",
+      "text": "有的书翻开后，里面的颜色和封面完全不同。我喜欢这样的意外。",
+      "form": "observation",
+      "topic": "reading",
+      "level": "light"
+    },
+    {
+      "pool": "STA",
+      "states": [
+        "focus-running"
+      ],
+      "requiredFacts": [
+        "operationSaved",
+        "focusStarted"
+      ],
+      "tags": [
+        "presence"
+      ],
+      "copyVersion": "companion-moments-v3",
+      "reviewStatus": "candidate",
+      "id": "STA63",
+      "text": "有回摆东西总觉得挤。拿走一件，剩下几件忽然都好看了。",
+      "form": "mini-story",
+      "topic": "objects",
+      "level": "light"
+    },
+    {
+      "pool": "STA",
+      "states": [
+        "focus-running"
+      ],
+      "requiredFacts": [
+        "operationSaved",
+        "focusStarted"
+      ],
+      "tags": [
+        "presence"
+      ],
+      "copyVersion": "companion-moments-v3",
+      "reviewStatus": "candidate",
+      "id": "STA64",
+      "text": "煮东西的时候，我最盼着香味刚出来的那一会儿。",
+      "form": "preference",
+      "topic": "food",
+      "level": "light"
+    },
+    {
+      "pool": "STA",
+      "states": [
+        "focus-running"
+      ],
+      "requiredFacts": [
+        "operationSaved",
+        "focusStarted"
+      ],
+      "tags": [
+        "presence"
+      ],
+      "copyVersion": "companion-moments-v3",
+      "reviewStatus": "candidate",
+      "id": "STA65",
+      "text": "泡泡刚吹出来，颜色还会绕着转。我最爱看那几下。",
+      "form": "observation",
+      "topic": "bubbles",
+      "level": "light"
+    },
+    {
+      "pool": "STA",
+      "states": [
+        "focus-running"
+      ],
+      "requiredFacts": [
+        "operationSaved",
+        "focusStarted"
+      ],
+      "tags": [
+        "presence"
+      ],
+      "copyVersion": "companion-moments-v3",
+      "reviewStatus": "candidate",
+      "id": "STA66",
+      "text": "看星星时，我会先找那颗不怎么亮、但认得出来的。",
+      "form": "preference",
+      "topic": "stars",
+      "level": "light"
+    },
+    {
+      "pool": "STA",
+      "states": [
+        "focus-running"
+      ],
+      "requiredFacts": [
+        "operationSaved",
+        "focusStarted"
+      ],
+      "tags": [
+        "presence"
+      ],
+      "copyVersion": "companion-moments-v3",
+      "reviewStatus": "candidate",
+      "id": "STA71",
+      "text": "早上好，咱们开工。",
+      "form": "time-greeting",
+      "topic": "morning",
+      "when": {
+        "dayparts": [
+          "morning"
+        ]
+      },
+      "level": "light"
+    },
+    {
+      "pool": "STA",
+      "states": [
+        "focus-running"
+      ],
+      "requiredFacts": [
+        "operationSaved",
+        "focusStarted"
+      ],
+      "tags": [
+        "presence"
+      ],
+      "copyVersion": "companion-moments-v3",
+      "reviewStatus": "candidate",
+      "id": "STA72",
+      "text": "上午这一段，陪你一起忙。",
+      "form": "time-greeting",
+      "topic": "morning",
+      "when": {
+        "dayparts": [
+          "morning"
+        ]
+      },
+      "level": "light"
+    },
+    {
+      "pool": "STA",
+      "states": [
+        "focus-running"
+      ],
+      "requiredFacts": [
+        "operationSaved",
+        "focusStarted"
+      ],
+      "tags": [
+        "presence"
+      ],
+      "copyVersion": "companion-moments-v3",
+      "reviewStatus": "candidate",
+      "id": "STA75",
+      "text": "下午好，这一段开始啦。",
+      "form": "time-greeting",
+      "topic": "afternoon",
+      "when": {
+        "dayparts": [
+          "afternoon"
+        ]
+      },
+      "level": "light"
+    },
+    {
+      "pool": "STA",
+      "states": [
+        "focus-running"
+      ],
+      "requiredFacts": [
+        "operationSaved",
+        "focusStarted"
+      ],
+      "tags": [
+        "presence"
+      ],
+      "copyVersion": "companion-moments-v3",
+      "reviewStatus": "candidate",
+      "id": "STA76",
+      "text": "午后开工。我也挑件喜欢的事做。",
+      "form": "time-greeting",
+      "topic": "afternoon",
+      "when": {
+        "dayparts": [
+          "afternoon"
+        ]
+      },
+      "level": "light"
+    },
+    {
+      "pool": "STA",
+      "states": [
+        "focus-running"
+      ],
+      "requiredFacts": [
+        "operationSaved",
+        "focusStarted"
+      ],
+      "tags": [
+        "presence"
+      ],
+      "copyVersion": "companion-moments-v3",
+      "reviewStatus": "candidate",
+      "id": "STA79",
+      "text": "晚上好。一起做会儿各自的事。",
+      "form": "time-greeting",
+      "topic": "evening",
+      "when": {
+        "dayparts": [
+          "evening"
+        ]
+      },
+      "level": "light"
+    },
+    {
+      "pool": "STA",
+      "states": [
+        "focus-running"
+      ],
+      "requiredFacts": [
+        "operationSaved",
+        "focusStarted"
+      ],
+      "tags": [
+        "presence"
+      ],
+      "copyVersion": "companion-moments-v3",
+      "reviewStatus": "candidate",
+      "id": "STA80",
+      "text": "晚上的这一段，陪你安静待着。",
+      "form": "time-greeting",
+      "topic": "evening",
+      "when": {
+        "dayparts": [
+          "evening"
+        ]
+      },
+      "level": "light"
+    },
+    {
+      "pool": "STA",
+      "states": [
+        "focus-running"
+      ],
+      "requiredFacts": [
+        "operationSaved",
+        "focusStarted"
+      ],
+      "tags": [
+        "presence"
+      ],
+      "copyVersion": "companion-moments-v3",
+      "reviewStatus": "candidate",
+      "id": "STA83",
+      "text": "夜里好，轻声说一句：开始啦。",
+      "form": "time-greeting",
+      "topic": "night",
+      "when": {
+        "dayparts": [
+          "night"
+        ]
+      },
+      "level": "light"
+    },
+    {
+      "pool": "STA",
+      "states": [
+        "focus-running"
+      ],
+      "requiredFacts": [
+        "operationSaved",
+        "focusStarted"
+      ],
+      "tags": [
+        "presence"
+      ],
+      "copyVersion": "companion-moments-v3",
+      "reviewStatus": "candidate",
+      "id": "STA84",
+      "text": "夜里这一会儿，我在旁边陪你。",
+      "form": "time-greeting",
+      "topic": "night",
+      "when": {
+        "dayparts": [
+          "night"
+        ]
+      },
+      "level": "light"
+    },
+    {
+      "pool": "STA",
+      "states": [
+        "focus-running"
+      ],
+      "requiredFacts": [
+        "operationSaved",
+        "focusStarted"
+      ],
+      "tags": [
+        "presence"
+      ],
+      "copyVersion": "companion-moments-v3",
+      "reviewStatus": "candidate",
+      "id": "STA87",
+      "text": "短短一段，开始啦。",
+      "form": "response",
+      "topic": "short-focus",
+      "when": {
+        "focusMinutes": [
+          1,
+          10
+        ]
+      },
+      "level": "light"
+    },
+    {
+      "pool": "STA",
+      "states": [
+        "focus-running"
+      ],
+      "requiredFacts": [
+        "operationSaved",
+        "focusStarted"
+      ],
+      "tags": [
+        "presence"
+      ],
+      "copyVersion": "companion-moments-v3",
+      "reviewStatus": "candidate",
+      "id": "STA88",
+      "text": "就这一小会儿，我也在。",
+      "form": "response",
+      "topic": "short-focus",
+      "when": {
+        "focusMinutes": [
+          1,
+          10
+        ]
+      },
+      "level": "light"
+    },
+    {
+      "pool": "STA",
+      "states": [
+        "focus-running"
+      ],
+      "requiredFacts": [
+        "operationSaved",
+        "focusStarted"
+      ],
+      "tags": [
+        "presence"
+      ],
+      "copyVersion": "companion-moments-v3",
+      "reviewStatus": "candidate",
+      "id": "STA95",
+      "text": "长一点的计时开始了，中途想歇歇，随时能暂停。",
+      "form": "practical",
+      "topic": "long-focus",
+      "when": {
+        "focusMinutes": [
+          31,
+          120
+        ]
+      },
+      "level": "light"
+    },
+    {
+      "pool": "STA",
+      "states": [
+        "focus-running"
+      ],
+      "requiredFacts": [
+        "operationSaved",
+        "focusStarted"
+      ],
+      "tags": [
+        "presence"
+      ],
+      "copyVersion": "companion-moments-v3",
+      "reviewStatus": "candidate",
+      "id": "STA96",
+      "text": "选了长一些的时间。先陪你过眼前这一会儿。",
+      "form": "response",
+      "topic": "long-focus",
+      "when": {
+        "focusMinutes": [
+          31,
+          120
+        ]
+      },
+      "level": "light"
+    },
+    {
+      "pool": "STA",
+      "states": [
+        "focus-running"
+      ],
+      "requiredFacts": [
+        "operationSaved",
+        "focusStarted"
+      ],
+      "tags": [
+        "presence"
+      ],
+      "copyVersion": "companion-moments-v3",
+      "reviewStatus": "candidate",
+      "id": "STA99",
+      "text": "我来准备一餐。食材摆在一块儿，就开始期待了。",
+      "form": "small-report",
+      "topic": "cooking",
+      "when": {
+        "scenes": [
+          "F1"
+        ]
+      },
+      "level": "light"
+    },
+    {
+      "pool": "STA",
+      "states": [
+        "focus-running"
+      ],
+      "requiredFacts": [
+        "operationSaved",
+        "focusStarted"
+      ],
+      "tags": [
+        "presence"
+      ],
+      "copyVersion": "companion-moments-v3",
+      "reviewStatus": "candidate",
+      "id": "STA100",
+      "text": "我这边照看小植物。叶子长得各有各的方向。",
+      "form": "small-report",
+      "topic": "plants",
+      "when": {
+        "scenes": [
+          "F2"
+        ]
+      },
+      "level": "light"
+    },
+    {
+      "pool": "STA",
+      "states": [
+        "focus-running"
+      ],
+      "requiredFacts": [
+        "operationSaved",
+        "focusStarted"
+      ],
+      "tags": [
+        "presence"
+      ],
+      "copyVersion": "companion-moments-v3",
+      "reviewStatus": "candidate",
+      "id": "STA101",
+      "text": "我读书去啦。碰到喜欢的地方，就多看两眼。",
+      "form": "small-report",
+      "topic": "reading",
+      "when": {
+        "scenes": [
+          "F3"
+        ]
+      },
+      "level": "light"
+    },
+    {
+      "pool": "STA",
+      "states": [
+        "focus-running"
+      ],
+      "requiredFacts": [
+        "operationSaved",
+        "focusStarted"
+      ],
+      "tags": [
+        "presence"
+      ],
+      "copyVersion": "companion-moments-v3",
+      "reviewStatus": "candidate",
+      "id": "STA102",
+      "text": "我来泡茶。热乎乎的这一杯，我挺期待。",
+      "form": "small-report",
+      "topic": "tea",
+      "when": {
+        "scenes": [
+          "F4"
+        ]
+      },
+      "level": "light"
+    },
+    {
+      "pool": "STA",
+      "states": [
+        "focus-running"
+      ],
+      "requiredFacts": [
+        "operationSaved",
+        "focusStarted"
+      ],
+      "tags": [
+        "presence"
+      ],
+      "copyVersion": "companion-moments-v3",
+      "reviewStatus": "candidate",
+      "id": "STA103",
+      "text": "我来吹泡泡。能吹得大些，就想再大一点点。",
+      "form": "small-report",
+      "topic": "bubbles",
+      "when": {
+        "scenes": [
+          "F5"
+        ]
+      },
+      "level": "light"
+    },
+    {
+      "pool": "STA",
+      "states": [
+        "focus-running"
+      ],
+      "requiredFacts": [
+        "operationSaved",
+        "focusStarted"
+      ],
+      "tags": [
+        "presence"
+      ],
+      "copyVersion": "companion-moments-v3",
+      "reviewStatus": "candidate",
+      "id": "STA104",
+      "text": "这回折纸船。折纸这件事，我总有点想试的新办法。",
+      "form": "small-report",
+      "topic": "paper",
+      "when": {
+        "scenes": [
+          "F6"
+        ]
+      },
+      "level": "light"
+    },
+    {
+      "pool": "STA",
+      "states": [
+        "focus-running"
+      ],
+      "requiredFacts": [
+        "operationSaved",
+        "focusStarted"
+      ],
+      "tags": [
+        "presence"
+      ],
+      "copyVersion": "companion-moments-v3",
+      "reviewStatus": "candidate",
+      "id": "STA105",
+      "text": "这回我摆积木。大块小块，都想试试。",
+      "form": "small-report",
+      "topic": "building",
+      "when": {
+        "scenes": [
+          "F7"
+        ]
+      },
+      "level": "light"
+    },
+    {
+      "pool": "STA",
+      "states": [
+        "focus-running"
+      ],
+      "requiredFacts": [
+        "operationSaved",
+        "focusStarted"
+      ],
+      "tags": [
+        "presence"
+      ],
+      "copyVersion": "companion-moments-v3",
+      "reviewStatus": "candidate",
+      "id": "STA106",
+      "text": "我这边看看星星。亮的看得清，小的也想找一找。",
+      "form": "small-report",
+      "topic": "stars",
+      "when": {
+        "scenes": [
+          "F8"
+        ]
+      },
+      "level": "light"
+    },
+    {
+      "pool": "END",
+      "states": [
+        "focus-ready",
+        "break-ready"
+      ],
+      "requiredFacts": [
+        "operationSaved",
+        "positiveElapsed"
+      ],
+      "tags": [
+        "presence"
+      ],
+      "copyVersion": "companion-moments-v3",
+      "reviewStatus": "candidate",
       "id": "END01",
+      "text": "这段就到这里。",
+      "form": "response",
+      "topic": "ending",
+      "level": "light"
+    },
+    {
       "pool": "END",
-      "text": "好，这段就到这里。",
-      "level": "light",
       "states": [
         "focus-ready",
         "break-ready"
@@ -205,14 +2106,16 @@
       "tags": [
         "presence"
       ],
-      "copyVersion": "companion-moments-v2",
-      "reviewStatus": "candidate"
-    },
-    {
+      "copyVersion": "companion-moments-v3",
+      "reviewStatus": "candidate",
       "id": "END02",
-      "pool": "END",
       "text": "辛苦啦，先松口气。",
-      "level": "light",
+      "form": "invitation",
+      "topic": "rest",
+      "level": "light"
+    },
+    {
+      "pool": "END",
       "states": [
         "focus-ready",
         "break-ready"
@@ -222,16 +2125,18 @@
         "positiveElapsed"
       ],
       "tags": [
-        "autonomy"
+        "presence"
       ],
-      "copyVersion": "companion-moments-v2",
-      "reviewStatus": "candidate"
-    },
-    {
+      "copyVersion": "companion-moments-v3",
+      "reviewStatus": "candidate",
       "id": "END05",
+      "text": "一起待了会儿，挺好。",
+      "form": "response",
+      "topic": "company",
+      "level": "light"
+    },
+    {
       "pool": "END",
-      "text": "我挺喜欢和你一起待着。",
-      "level": "light",
       "states": [
         "focus-ready",
         "break-ready"
@@ -241,16 +2146,18 @@
         "positiveElapsed"
       ],
       "tags": [
-        "care"
+        "presence"
       ],
-      "copyVersion": "companion-moments-v2",
-      "reviewStatus": "candidate"
-    },
-    {
+      "copyVersion": "companion-moments-v3",
+      "reviewStatus": "candidate",
       "id": "END09",
+      "text": "这一段结束了。下一段，等你安排。",
+      "form": "response",
+      "topic": "transition",
+      "level": "light"
+    },
+    {
       "pool": "END",
-      "text": "做事有做事的乐趣，收工也有。",
-      "level": "light",
       "states": [
         "focus-ready",
         "break-ready"
@@ -260,16 +2167,208 @@
         "positiveElapsed"
       ],
       "tags": [
-        "possibility"
+        "presence"
       ],
-      "copyVersion": "companion-moments-v2",
-      "reviewStatus": "candidate"
+      "copyVersion": "companion-moments-v3",
+      "reviewStatus": "candidate",
+      "id": "END13",
+      "text": "嗯，到这儿。",
+      "form": "response",
+      "topic": "ending",
+      "level": "light"
     },
     {
+      "pool": "END",
+      "states": [
+        "focus-ready",
+        "break-ready"
+      ],
+      "requiredFacts": [
+        "operationSaved",
+        "positiveElapsed"
+      ],
+      "tags": [
+        "presence"
+      ],
+      "copyVersion": "companion-moments-v3",
+      "reviewStatus": "candidate",
+      "id": "END14",
+      "text": "手放松一下，换个舒服的姿势。",
+      "form": "invitation",
+      "topic": "movement",
+      "level": "light"
+    },
+    {
+      "pool": "END",
+      "states": [
+        "focus-ready",
+        "break-ready"
+      ],
+      "requiredFacts": [
+        "operationSaved",
+        "positiveElapsed"
+      ],
+      "tags": [
+        "presence"
+      ],
+      "copyVersion": "companion-moments-v3",
+      "reviewStatus": "candidate",
+      "id": "END17",
+      "text": "我常在做完一件事后坐一会儿。也不是想什么，就是坐一会儿。",
+      "form": "preference",
+      "topic": "pause",
+      "level": "light"
+    },
+    {
+      "pool": "END",
+      "states": [
+        "focus-ready",
+        "break-ready"
+      ],
+      "requiredFacts": [
+        "operationSaved",
+        "positiveElapsed"
+      ],
+      "tags": [
+        "presence"
+      ],
+      "copyVersion": "companion-moments-v3",
+      "reviewStatus": "candidate",
+      "id": "END18",
+      "text": "还想接着做的话，可以重新安排下一段计时。",
+      "form": "practical",
+      "topic": "next-step",
+      "level": "light"
+    },
+    {
+      "pool": "END",
+      "states": [
+        "focus-ready",
+        "break-ready"
+      ],
+      "requiredFacts": [
+        "operationSaved",
+        "positiveElapsed"
+      ],
+      "tags": [
+        "presence"
+      ],
+      "copyVersion": "companion-moments-v3",
+      "reviewStatus": "candidate",
+      "id": "END19",
+      "text": "下一件事，等你想好再说。",
+      "form": "response",
+      "topic": "choice",
+      "level": "light"
+    },
+    {
+      "pool": "END",
+      "states": [
+        "focus-ready",
+        "break-ready"
+      ],
+      "requiredFacts": [
+        "operationSaved",
+        "positiveElapsed"
+      ],
+      "tags": [
+        "presence"
+      ],
+      "copyVersion": "companion-moments-v3",
+      "reviewStatus": "candidate",
+      "id": "END20",
+      "text": "歇口气吧。",
+      "form": "invitation",
+      "topic": "rest",
+      "level": "light"
+    },
+    {
+      "pool": "END",
+      "states": [
+        "focus-ready",
+        "break-ready"
+      ],
+      "requiredFacts": [
+        "operationSaved",
+        "positiveElapsed"
+      ],
+      "tags": [
+        "presence"
+      ],
+      "copyVersion": "companion-moments-v3",
+      "reviewStatus": "candidate",
+      "id": "END21",
+      "text": "我读完书，有时还会想起里面的一句话。就带着它发会儿呆。",
+      "form": "observation",
+      "topic": "reading",
+      "level": "light"
+    },
+    {
+      "pool": "END",
+      "states": [
+        "focus-ready",
+        "break-ready"
+      ],
+      "requiredFacts": [
+        "operationSaved",
+        "positiveElapsed"
+      ],
+      "tags": [
+        "presence"
+      ],
+      "copyVersion": "companion-moments-v3",
+      "reviewStatus": "candidate",
+      "id": "END26",
+      "text": "眼睛要是想歇歇，就看看远一点的地方。",
+      "form": "invitation",
+      "topic": "eyes",
+      "level": "light"
+    },
+    {
+      "pool": "END",
+      "states": [
+        "focus-ready",
+        "break-ready"
+      ],
+      "requiredFacts": [
+        "operationSaved",
+        "positiveElapsed"
+      ],
+      "tags": [
+        "presence"
+      ],
+      "copyVersion": "companion-moments-v3",
+      "reviewStatus": "candidate",
+      "id": "END27",
+      "text": "画完一页，我会把它放远一点再看。远看又是另一个样子。",
+      "form": "preference",
+      "topic": "drawing",
+      "level": "light"
+    },
+    {
+      "pool": "ZER",
+      "states": [
+        "focus-ready",
+        "break-ready"
+      ],
+      "requiredFacts": [
+        "operationSaved",
+        "zeroElapsed",
+        "participationSaved"
+      ],
+      "tags": [
+        "presence"
+      ],
+      "copyVersion": "companion-moments-v3",
+      "reviewStatus": "candidate",
       "id": "ZER01",
+      "text": "先停在这里。",
+      "form": "response",
+      "topic": "ending",
+      "level": "light"
+    },
+    {
       "pool": "ZER",
-      "text": "好，先停在这里。",
-      "level": "light",
       "states": [
         "focus-ready",
         "break-ready"
@@ -282,14 +2381,16 @@
       "tags": [
         "presence"
       ],
-      "copyVersion": "companion-moments-v2",
-      "reviewStatus": "candidate"
-    },
-    {
+      "copyVersion": "companion-moments-v3",
+      "reviewStatus": "candidate",
       "id": "ZER06",
-      "pool": "ZER",
       "text": "嗯，这次就到这儿。",
-      "level": "light",
+      "form": "response",
+      "topic": "ending",
+      "level": "light"
+    },
+    {
+      "pool": "ZER",
       "states": [
         "focus-ready",
         "break-ready"
@@ -300,16 +2401,59 @@
         "participationSaved"
       ],
       "tags": [
-        "small-step"
+        "presence"
       ],
-      "copyVersion": "companion-moments-v2",
-      "reviewStatus": "candidate"
+      "copyVersion": "companion-moments-v3",
+      "reviewStatus": "candidate",
+      "id": "ZER09",
+      "text": "已经停下了。",
+      "form": "response",
+      "topic": "ending",
+      "level": "light"
     },
     {
+      "pool": "ZER",
+      "states": [
+        "focus-ready",
+        "break-ready"
+      ],
+      "requiredFacts": [
+        "operationSaved",
+        "zeroElapsed",
+        "participationSaved"
+      ],
+      "tags": [
+        "presence"
+      ],
+      "copyVersion": "companion-moments-v3",
+      "reviewStatus": "candidate",
+      "id": "ZER10",
+      "text": "这次计时先收起来。",
+      "form": "response",
+      "topic": "ending",
+      "level": "light"
+    },
+    {
+      "pool": "BRK",
+      "states": [
+        "break-running"
+      ],
+      "requiredFacts": [
+        "operationSaved"
+      ],
+      "tags": [
+        "presence"
+      ],
+      "copyVersion": "companion-moments-v3",
+      "reviewStatus": "candidate",
       "id": "BRK01",
+      "text": "歇会儿吧，我陪你。",
+      "form": "response",
+      "topic": "rest",
+      "level": "light"
+    },
+    {
       "pool": "BRK",
-      "text": "歇会儿吧。",
-      "level": "light",
       "states": [
         "break-running"
       ],
@@ -317,16 +2461,18 @@
         "operationSaved"
       ],
       "tags": [
-        "rest"
+        "presence"
       ],
-      "copyVersion": "companion-moments-v2",
-      "reviewStatus": "candidate"
-    },
-    {
+      "copyVersion": "companion-moments-v3",
+      "reviewStatus": "candidate",
       "id": "BRK02",
+      "text": "发呆的时候，我一般不挑题目。",
+      "form": "observation",
+      "topic": "idleness",
+      "level": "light"
+    },
+    {
       "pool": "BRK",
-      "text": "发会儿呆也行，我赞成。",
-      "level": "light",
       "states": [
         "break-running"
       ],
@@ -334,16 +2480,18 @@
         "operationSaved"
       ],
       "tags": [
-        "possibility"
+        "presence"
       ],
-      "copyVersion": "companion-moments-v2",
-      "reviewStatus": "candidate"
-    },
-    {
+      "copyVersion": "companion-moments-v3",
+      "reviewStatus": "candidate",
       "id": "BRK03",
-      "pool": "BRK",
       "text": "歇着的时候，我就不讲究坐相了。",
-      "level": "light",
+      "form": "preference",
+      "topic": "comfort",
+      "level": "light"
+    },
+    {
+      "pool": "BRK",
       "states": [
         "break-running"
       ],
@@ -351,16 +2499,18 @@
         "operationSaved"
       ],
       "tags": [
-        "care"
+        "presence"
       ],
-      "copyVersion": "companion-moments-v2",
-      "reviewStatus": "candidate"
-    },
-    {
+      "copyVersion": "companion-moments-v3",
+      "reviewStatus": "candidate",
       "id": "BRK04",
-      "pool": "BRK",
       "text": "休息这件事，我不打算赶进度。",
-      "level": "light",
+      "form": "response",
+      "topic": "rest",
+      "level": "light"
+    },
+    {
+      "pool": "BRK",
       "states": [
         "break-running"
       ],
@@ -368,16 +2518,18 @@
         "operationSaved"
       ],
       "tags": [
-        "autonomy"
+        "presence"
       ],
-      "copyVersion": "companion-moments-v2",
-      "reviewStatus": "candidate"
-    },
-    {
+      "copyVersion": "companion-moments-v3",
+      "reviewStatus": "candidate",
       "id": "BRK07",
+      "text": "云不一定非得像什么。白白的一大团，我也爱看。",
+      "form": "preference",
+      "topic": "clouds",
+      "level": "light"
+    },
+    {
       "pool": "BRK",
-      "text": "我喜欢看云，也不一定非看出它像什么。",
-      "level": "light",
       "states": [
         "break-running"
       ],
@@ -385,16 +2537,18 @@
         "operationSaved"
       ],
       "tags": [
-        "rest"
+        "presence"
       ],
-      "copyVersion": "companion-moments-v2",
-      "reviewStatus": "candidate"
-    },
-    {
+      "copyVersion": "companion-moments-v3",
+      "reviewStatus": "candidate",
       "id": "BRK10",
+      "text": "来，舒舒服服地待一会儿。",
+      "form": "invitation",
+      "topic": "comfort",
+      "level": "light"
+    },
+    {
       "pool": "BRK",
-      "text": "这一会儿，怎么舒服怎么来。",
-      "level": "light",
       "states": [
         "break-running"
       ],
@@ -402,16 +2556,833 @@
         "operationSaved"
       ],
       "tags": [
-        "autonomy"
+        "presence"
       ],
-      "copyVersion": "companion-moments-v2",
-      "reviewStatus": "candidate"
+      "copyVersion": "companion-moments-v3",
+      "reviewStatus": "candidate",
+      "id": "BRK13",
+      "text": "把手头的东西放一放，手也能歇一会儿。",
+      "form": "practical",
+      "topic": "comfort",
+      "level": "light"
     },
     {
+      "pool": "BRK",
+      "states": [
+        "break-running"
+      ],
+      "requiredFacts": [
+        "operationSaved"
+      ],
+      "tags": [
+        "presence"
+      ],
+      "copyVersion": "companion-moments-v3",
+      "reviewStatus": "candidate",
+      "id": "BRK14",
+      "text": "下过雨的石头，颜色会深一点。我喜欢看那会儿。",
+      "form": "observation",
+      "topic": "sound",
+      "level": "light"
+    },
+    {
+      "pool": "BRK",
+      "states": [
+        "break-running"
+      ],
+      "requiredFacts": [
+        "operationSaved"
+      ],
+      "tags": [
+        "presence"
+      ],
+      "copyVersion": "companion-moments-v3",
+      "reviewStatus": "candidate",
+      "id": "BRK15",
+      "text": "有次看一朵很像面包的云。看了半天，觉得还是馒头更像。",
+      "form": "mini-story",
+      "topic": "clouds",
+      "level": "light"
+    },
+    {
+      "pool": "BRK",
+      "states": [
+        "break-running"
+      ],
+      "requiredFacts": [
+        "operationSaved"
+      ],
+      "tags": [
+        "presence"
+      ],
+      "copyVersion": "companion-moments-v3",
+      "reviewStatus": "candidate",
+      "id": "BRK16",
+      "text": "休息小计划：暂时没有计划。",
+      "form": "response",
+      "topic": "rest",
+      "level": "light"
+    },
+    {
+      "pool": "BRK",
+      "states": [
+        "break-running"
+      ],
+      "requiredFacts": [
+        "operationSaved"
+      ],
+      "tags": [
+        "presence"
+      ],
+      "copyVersion": "companion-moments-v3",
+      "reviewStatus": "candidate",
+      "id": "BRK17",
+      "text": "热饮到手，第一件事是捧着暖暖手。喝倒可以等一等。",
+      "form": "preference",
+      "topic": "warm-drink",
+      "level": "light"
+    },
+    {
+      "pool": "BRK",
+      "states": [
+        "break-running"
+      ],
+      "requiredFacts": [
+        "operationSaved"
+      ],
+      "tags": [
+        "presence"
+      ],
+      "copyVersion": "companion-moments-v3",
+      "reviewStatus": "candidate",
+      "id": "BRK18",
+      "text": "你歇着，我也自在地待一会儿。",
+      "form": "response",
+      "topic": "company",
+      "level": "light"
+    },
+    {
+      "pool": "BRK",
+      "states": [
+        "break-running"
+      ],
+      "requiredFacts": [
+        "operationSaved"
+      ],
+      "tags": [
+        "presence"
+      ],
+      "copyVersion": "companion-moments-v3",
+      "reviewStatus": "candidate",
+      "id": "BRK19",
+      "text": "在书架前挑书，我能挑很久。光看书名就已经很好玩。",
+      "form": "preference",
+      "topic": "books",
+      "level": "light"
+    },
+    {
+      "pool": "BRK",
+      "states": [
+        "break-running"
+      ],
+      "requiredFacts": [
+        "operationSaved"
+      ],
+      "tags": [
+        "presence"
+      ],
+      "copyVersion": "companion-moments-v3",
+      "reviewStatus": "candidate",
+      "id": "BRK20",
+      "text": "剥橘子时，我会试着把皮留成完整的一圈。偶尔真能剥出来。",
+      "form": "small-report",
+      "topic": "food",
+      "level": "light"
+    },
+    {
+      "pool": "BRK",
+      "states": [
+        "break-running"
+      ],
+      "requiredFacts": [
+        "operationSaved"
+      ],
+      "tags": [
+        "presence"
+      ],
+      "copyVersion": "companion-moments-v3",
+      "reviewStatus": "candidate",
+      "id": "BRK21",
+      "text": "闲着翻地图时，我常常被地名吸引，路倒是没记住。",
+      "form": "small-report",
+      "topic": "maps",
+      "level": "light"
+    },
+    {
+      "pool": "BRK",
+      "states": [
+        "break-running"
+      ],
+      "requiredFacts": [
+        "operationSaved"
+      ],
+      "tags": [
+        "presence"
+      ],
+      "copyVersion": "companion-moments-v3",
+      "reviewStatus": "candidate",
+      "id": "BRK22",
+      "text": "眼睛想歇歇，就先看看别处。",
+      "form": "practical",
+      "topic": "comfort",
+      "level": "light"
+    },
+    {
+      "pool": "BRK",
+      "states": [
+        "break-running"
+      ],
+      "requiredFacts": [
+        "operationSaved"
+      ],
+      "tags": [
+        "presence"
+      ],
+      "copyVersion": "companion-moments-v3",
+      "reviewStatus": "candidate",
+      "id": "BRK23",
+      "text": "饼干泡进牛奶里，我只蘸一下。泡软了，就不是我喜欢的口感了。",
+      "form": "preference",
+      "topic": "food",
+      "level": "light"
+    },
+    {
+      "pool": "BRK",
+      "states": [
+        "break-running"
+      ],
+      "requiredFacts": [
+        "operationSaved"
+      ],
+      "tags": [
+        "presence"
+      ],
+      "copyVersion": "companion-moments-v3",
+      "reviewStatus": "candidate",
+      "id": "BRK24",
+      "text": "有段曲子后半截我总哼错。后来听见原版，反而有点不习惯。",
+      "form": "mini-story",
+      "topic": "music",
+      "level": "light"
+    },
+    {
+      "pool": "BRK",
+      "states": [
+        "break-running"
+      ],
+      "requiredFacts": [
+        "operationSaved"
+      ],
+      "tags": [
+        "presence"
+      ],
+      "copyVersion": "companion-moments-v3",
+      "reviewStatus": "candidate",
+      "id": "BRK25",
+      "text": "空着手坐一会儿，也是我很喜欢的休息。",
+      "form": "preference",
+      "topic": "idleness",
+      "level": "light"
+    },
+    {
+      "pool": "BRK",
+      "states": [
+        "break-running"
+      ],
+      "requiredFacts": [
+        "operationSaved"
+      ],
+      "tags": [
+        "presence"
+      ],
+      "copyVersion": "companion-moments-v3",
+      "reviewStatus": "candidate",
+      "id": "BRK26",
+      "text": "休息的时候，我连翻页都懒得按顺序。",
+      "form": "small-report",
+      "topic": "books",
+      "level": "light"
+    },
+    {
+      "pool": "BRK",
+      "states": [
+        "break-running"
+      ],
+      "requiredFacts": [
+        "operationSaved"
+      ],
+      "tags": [
+        "presence"
+      ],
+      "copyVersion": "companion-moments-v3",
+      "reviewStatus": "candidate",
+      "id": "BRK27",
+      "text": "叶子边缘的小锯齿，我看着看着就会想起邮票。",
+      "form": "observation",
+      "topic": "leaves",
+      "level": "light"
+    },
+    {
+      "pool": "BRK",
+      "states": [
+        "break-running"
+      ],
+      "requiredFacts": [
+        "operationSaved"
+      ],
+      "tags": [
+        "presence"
+      ],
+      "copyVersion": "companion-moments-v3",
+      "reviewStatus": "candidate",
+      "id": "BRK28",
+      "text": "看彩色玻璃时，我最爱看两种颜色叠在一起的地方。",
+      "form": "preference",
+      "topic": "color",
+      "level": "light"
+    },
+    {
+      "pool": "BRK",
+      "states": [
+        "break-running"
+      ],
+      "requiredFacts": [
+        "operationSaved"
+      ],
+      "tags": [
+        "presence"
+      ],
+      "copyVersion": "companion-moments-v3",
+      "reviewStatus": "candidate",
+      "id": "BRK29",
+      "text": "沿着旧木头的纹路看，总有一条会拐到意想不到的地方。",
+      "form": "observation",
+      "topic": "texture",
+      "level": "light"
+    },
+    {
+      "pool": "BRK",
+      "states": [
+        "break-running"
+      ],
+      "requiredFacts": [
+        "operationSaved"
+      ],
+      "tags": [
+        "presence"
+      ],
+      "copyVersion": "companion-moments-v3",
+      "reviewStatus": "candidate",
+      "id": "BRK30",
+      "text": "坐软垫时，陷下去一点点，我就想再往里挪挪。",
+      "form": "preference",
+      "topic": "comfort",
+      "level": "light"
+    },
+    {
+      "pool": "BRK",
+      "states": [
+        "break-running"
+      ],
+      "requiredFacts": [
+        "operationSaved"
+      ],
+      "tags": [
+        "presence"
+      ],
+      "copyVersion": "companion-moments-v3",
+      "reviewStatus": "candidate",
+      "id": "BRK31",
+      "text": "来，一起闲一会儿。",
+      "form": "invitation",
+      "topic": "company",
+      "level": "light"
+    },
+    {
+      "pool": "BRK",
+      "states": [
+        "break-running"
+      ],
+      "requiredFacts": [
+        "operationSaved"
+      ],
+      "tags": [
+        "presence"
+      ],
+      "copyVersion": "companion-moments-v3",
+      "reviewStatus": "candidate",
+      "id": "BRK32",
+      "text": "新茶的名字里有花香。我没尝出来，倒喝得挺高兴。",
+      "form": "mini-story",
+      "topic": "tea",
+      "level": "light"
+    },
+    {
+      "pool": "BRK",
+      "states": [
+        "break-running"
+      ],
+      "requiredFacts": [
+        "operationSaved"
+      ],
+      "tags": [
+        "presence"
+      ],
+      "copyVersion": "companion-moments-v3",
+      "reviewStatus": "candidate",
+      "id": "BRK33",
+      "text": "有本食谱我经常翻。菜没学会几道，图片已经看熟了。",
+      "form": "small-report",
+      "topic": "cookbook",
+      "level": "light"
+    },
+    {
+      "pool": "BRK",
+      "states": [
+        "break-running"
+      ],
+      "requiredFacts": [
+        "operationSaved"
+      ],
+      "tags": [
+        "presence"
+      ],
+      "copyVersion": "companion-moments-v3",
+      "reviewStatus": "candidate",
+      "id": "BRK34",
+      "text": "长椅空着的时候，我会挑正中间坐。两边都宽敞。",
+      "form": "preference",
+      "topic": "comfort",
+      "level": "light"
+    },
+    {
+      "pool": "BRK",
+      "states": [
+        "break-running"
+      ],
+      "requiredFacts": [
+        "operationSaved"
+      ],
+      "tags": [
+        "presence"
+      ],
+      "copyVersion": "companion-moments-v3",
+      "reviewStatus": "candidate",
+      "id": "BRK35",
+      "text": "休息开始。这一会儿，手边的事先放放。",
+      "form": "response",
+      "topic": "rest",
+      "level": "light"
+    },
+    {
+      "pool": "BRK",
+      "states": [
+        "break-running"
+      ],
+      "requiredFacts": [
+        "operationSaved"
+      ],
+      "tags": [
+        "presence"
+      ],
+      "copyVersion": "companion-moments-v3",
+      "reviewStatus": "candidate",
+      "id": "BRK36",
+      "text": "有回听雨，以为雨停了。原来是风把雨吹到屋子的另一边。",
+      "form": "mini-story",
+      "topic": "sound",
+      "level": "light"
+    },
+    {
+      "pool": "BRK",
+      "states": [
+        "break-running"
+      ],
+      "requiredFacts": [
+        "operationSaved"
+      ],
+      "tags": [
+        "presence"
+      ],
+      "copyVersion": "companion-moments-v3",
+      "reviewStatus": "candidate",
+      "id": "BRK37",
+      "text": "我留过一截好看的丝带。没想好绑什么，偶尔拿出来看看。",
+      "form": "small-report",
+      "topic": "ribbon",
+      "level": "light"
+    },
+    {
+      "pool": "BRK",
+      "states": [
+        "break-running"
+      ],
+      "requiredFacts": [
+        "operationSaved"
+      ],
+      "tags": [
+        "presence"
+      ],
+      "copyVersion": "companion-moments-v3",
+      "reviewStatus": "candidate",
+      "id": "BRK38",
+      "text": "一起发呆，不必发同一个呆。",
+      "form": "observation",
+      "topic": "company",
+      "level": "light"
+    },
+    {
+      "pool": "BRK",
+      "states": [
+        "break-running"
+      ],
+      "requiredFacts": [
+        "operationSaved"
+      ],
+      "tags": [
+        "presence"
+      ],
+      "copyVersion": "companion-moments-v3",
+      "reviewStatus": "candidate",
+      "id": "BRK39",
+      "text": "想伸个懒腰的话，正好是时候。",
+      "form": "invitation",
+      "topic": "comfort",
+      "level": "light"
+    },
+    {
+      "pool": "BRK",
+      "states": [
+        "break-running"
+      ],
+      "requiredFacts": [
+        "operationSaved"
+      ],
+      "tags": [
+        "presence"
+      ],
+      "copyVersion": "companion-moments-v3",
+      "reviewStatus": "candidate",
+      "id": "BRK40",
+      "text": "有些歌结束后的那点安静，我也很喜欢。",
+      "form": "preference",
+      "topic": "music",
+      "level": "light"
+    },
+    {
+      "pool": "BRK",
+      "states": [
+        "break-running"
+      ],
+      "requiredFacts": [
+        "operationSaved"
+      ],
+      "tags": [
+        "presence"
+      ],
+      "copyVersion": "companion-moments-v3",
+      "reviewStatus": "candidate",
+      "id": "BRK41",
+      "text": "吃酥饼，我常常先拣小碎屑。整块的留到后面。",
+      "form": "preference",
+      "topic": "food",
+      "level": "light"
+    },
+    {
+      "pool": "BRK",
+      "states": [
+        "break-running"
+      ],
+      "requiredFacts": [
+        "operationSaved"
+      ],
+      "tags": [
+        "presence"
+      ],
+      "copyVersion": "companion-moments-v3",
+      "reviewStatus": "candidate",
+      "id": "BRK42",
+      "text": "先歇着。我也挺喜欢这一会儿。",
+      "form": "response",
+      "topic": "company",
+      "level": "light"
+    },
+    {
+      "pool": "BRK",
+      "states": [
+        "break-running"
+      ],
+      "requiredFacts": [
+        "operationSaved"
+      ],
+      "tags": [
+        "presence"
+      ],
+      "copyVersion": "companion-moments-v3",
+      "reviewStatus": "candidate",
+      "id": "BRK43",
+      "text": "上午歇一会儿，手边的事先放着。",
+      "form": "response",
+      "topic": "rest",
+      "when": {
+        "dayparts": [
+          "morning"
+        ]
+      },
+      "level": "light"
+    },
+    {
+      "pool": "BRK",
+      "states": [
+        "break-running"
+      ],
+      "requiredFacts": [
+        "operationSaved"
+      ],
+      "tags": [
+        "presence"
+      ],
+      "copyVersion": "companion-moments-v3",
+      "reviewStatus": "candidate",
+      "id": "BRK44",
+      "text": "早上能闲一会儿，我会连水都喝得慢一点。",
+      "form": "preference",
+      "topic": "idleness",
+      "when": {
+        "dayparts": [
+          "morning"
+        ]
+      },
+      "level": "light"
+    },
+    {
+      "pool": "BRK",
+      "states": [
+        "break-running"
+      ],
+      "requiredFacts": [
+        "operationSaved"
+      ],
+      "tags": [
+        "presence"
+      ],
+      "copyVersion": "companion-moments-v3",
+      "reviewStatus": "candidate",
+      "id": "BRK45",
+      "text": "午后歇一会儿。眼睛也能换个地方看看。",
+      "form": "practical",
+      "topic": "comfort",
+      "when": {
+        "dayparts": [
+          "afternoon"
+        ]
+      },
+      "level": "light"
+    },
+    {
+      "pool": "BRK",
+      "states": [
+        "break-running"
+      ],
+      "requiredFacts": [
+        "operationSaved"
+      ],
+      "tags": [
+        "presence"
+      ],
+      "copyVersion": "companion-moments-v3",
+      "reviewStatus": "candidate",
+      "id": "BRK46",
+      "text": "午后的点心，我偏爱咸的。最好还有一点葱香。",
+      "form": "preference",
+      "topic": "food",
+      "when": {
+        "dayparts": [
+          "afternoon"
+        ]
+      },
+      "level": "light"
+    },
+    {
+      "pool": "BRK",
+      "states": [
+        "break-running"
+      ],
+      "requiredFacts": [
+        "operationSaved"
+      ],
+      "tags": [
+        "presence"
+      ],
+      "copyVersion": "companion-moments-v3",
+      "reviewStatus": "candidate",
+      "id": "BRK47",
+      "text": "晚上歇着，我喜欢把动静放轻一点。",
+      "form": "preference",
+      "topic": "sound",
+      "when": {
+        "dayparts": [
+          "evening"
+        ]
+      },
+      "level": "light"
+    },
+    {
+      "pool": "BRK",
+      "states": [
+        "break-running"
+      ],
+      "requiredFacts": [
+        "operationSaved"
+      ],
+      "tags": [
+        "presence"
+      ],
+      "copyVersion": "companion-moments-v3",
+      "reviewStatus": "candidate",
+      "id": "BRK48",
+      "text": "晚间的小休息。和你一起安静待着，挺好。",
+      "form": "response",
+      "topic": "company",
+      "when": {
+        "dayparts": [
+          "evening"
+        ]
+      },
+      "level": "light"
+    },
+    {
+      "pool": "BRK",
+      "states": [
+        "break-running"
+      ],
+      "requiredFacts": [
+        "operationSaved"
+      ],
+      "tags": [
+        "presence"
+      ],
+      "copyVersion": "companion-moments-v3",
+      "reviewStatus": "candidate",
+      "id": "BRK49",
+      "text": "夜里的休息开始了，先找个舒服的姿势。",
+      "form": "response",
+      "topic": "comfort",
+      "when": {
+        "dayparts": [
+          "night"
+        ]
+      },
+      "level": "light"
+    },
+    {
+      "pool": "BRK",
+      "states": [
+        "break-running"
+      ],
+      "requiredFacts": [
+        "operationSaved"
+      ],
+      "tags": [
+        "presence"
+      ],
+      "copyVersion": "companion-moments-v3",
+      "reviewStatus": "candidate",
+      "id": "BRK51",
+      "text": "这回伸个懒腰。伸到舒服的地方，我会多停一会儿。",
+      "form": "small-report",
+      "topic": "stretch",
+      "when": {
+        "scenes": [
+          "R1"
+        ]
+      },
+      "level": "light"
+    },
+    {
+      "pool": "BRK",
+      "states": [
+        "break-running"
+      ],
+      "requiredFacts": [
+        "operationSaved"
+      ],
+      "tags": [
+        "presence"
+      ],
+      "copyVersion": "companion-moments-v3",
+      "reviewStatus": "candidate",
+      "id": "BRK52",
+      "text": "我来看看云。看着它们挪一挪，就挺舒服。",
+      "form": "small-report",
+      "topic": "clouds",
+      "when": {
+        "scenes": [
+          "R2"
+        ]
+      },
+      "level": "light"
+    },
+    {
+      "pool": "BRK",
+      "states": [
+        "break-running"
+      ],
+      "requiredFacts": [
+        "operationSaved"
+      ],
+      "tags": [
+        "presence"
+      ],
+      "copyVersion": "companion-moments-v3",
+      "reviewStatus": "candidate",
+      "id": "BRK54",
+      "text": "看云有个好处：不用翻页，下一幅自己就来了。",
+      "form": "observation",
+      "topic": "clouds",
+      "when": {
+        "scenes": [
+          "R2"
+        ]
+      },
+      "level": "light"
+    },
+    {
+      "pool": "ASKG",
+      "states": [
+        "focus-ready",
+        "focus-running",
+        "focus-paused",
+        "break-ready",
+        "break-running",
+        "break-paused"
+      ],
+      "requiredFacts": [
+        "explicitRequest"
+      ],
+      "tags": [
+        "presence"
+      ],
+      "copyVersion": "companion-voice-v4",
+      "reviewStatus": "candidate",
       "id": "ASKG02",
+      "text": "有本书，我已经很熟了。可翻到喜欢的那几页，还是会挨个看过去。知道接下来会发生什么，反而有点盼着。",
+      "form": "preference",
+      "topic": "familiar-book",
+      "level": "deep"
+    },
+    {
       "pool": "ASKG",
-      "text": "我有时只读一页，也很喜欢那一页。",
-      "level": "light",
       "states": [
         "focus-ready",
         "focus-running",
@@ -424,16 +3395,18 @@
         "explicitRequest"
       ],
       "tags": [
-        "autonomy"
+        "presence"
       ],
-      "copyVersion": "companion-voice-v3",
-      "reviewStatus": "candidate"
-    },
-    {
+      "copyVersion": "companion-voice-v4",
+      "reviewStatus": "candidate",
       "id": "ASKG05",
+      "text": "我搭过一座只有门、没有墙的小房子。搭墙就得挡住门边那块漂亮的积木，我舍不得，便让房子这么敞着。",
+      "form": "mini-story",
+      "topic": "blocks-door",
+      "level": "deep"
+    },
+    {
       "pool": "ASKG",
-      "text": "不必第一回就定下来。我搭积木，也常试几个摆法。",
-      "level": "light",
       "states": [
         "focus-ready",
         "focus-running",
@@ -446,16 +3419,18 @@
         "explicitRequest"
       ],
       "tags": [
-        "patience"
+        "presence"
       ],
-      "copyVersion": "companion-voice-v3",
-      "reviewStatus": "candidate"
-    },
-    {
+      "copyVersion": "companion-voice-v4",
+      "reviewStatus": "candidate",
       "id": "ASKG09",
+      "text": "有回折纸船，船头歪了一点。换个方向看，倒像正准备拐弯。",
+      "form": "mini-story",
+      "topic": "paper-boat",
+      "level": "light"
+    },
+    {
       "pool": "ASKG",
-      "text": "我折过歪歪的纸船。我挺喜欢它那个翘起来的小角。",
-      "level": "light",
       "states": [
         "focus-ready",
         "focus-running",
@@ -468,16 +3443,18 @@
         "explicitRequest"
       ],
       "tags": [
-        "care"
+        "presence"
       ],
-      "copyVersion": "companion-voice-v3",
-      "reviewStatus": "candidate"
-    },
-    {
+      "copyVersion": "companion-voice-v4",
+      "reviewStatus": "candidate",
       "id": "ASKG10",
+      "text": "本子的最后一页，我常留来乱画。后来翻本子，最爱看的倒是那一页：有时连我自己都猜不出当初画的是什么。",
+      "form": "mini-story",
+      "topic": "notebook-doodles",
+      "level": "deep"
+    },
+    {
       "pool": "ASKG",
-      "text": "我喜欢留点空白。这样翻开本子，还能画上新想到的东西。",
-      "level": "light",
       "states": [
         "focus-ready",
         "focus-running",
@@ -490,16 +3467,18 @@
         "explicitRequest"
       ],
       "tags": [
-        "care"
+        "presence"
       ],
-      "copyVersion": "companion-voice-v3",
-      "reviewStatus": "candidate"
-    },
-    {
+      "copyVersion": "companion-voice-v4",
+      "reviewStatus": "candidate",
       "id": "ASKG12",
-      "pool": "ASKG",
       "text": "我试过倒着看书。图还挺有意思，字就算了。",
-      "level": "light",
+      "form": "mini-story",
+      "topic": "upside-down-book",
+      "level": "light"
+    },
+    {
+      "pool": "ASKG",
       "states": [
         "focus-ready",
         "focus-running",
@@ -512,16 +3491,18 @@
         "explicitRequest"
       ],
       "tags": [
-        "possibility"
+        "presence"
       ],
-      "copyVersion": "companion-voice-v3",
-      "reviewStatus": "candidate"
-    },
-    {
+      "copyVersion": "companion-voice-v4",
+      "reviewStatus": "candidate",
       "id": "ASKG13",
+      "text": "杯子捧在手里暖暖的，光这样待着就挺舒服。也想让你有这么一会儿。",
+      "form": "response",
+      "topic": "warmth",
+      "level": "light"
+    },
+    {
       "pool": "ASKG",
-      "text": "我喜欢捧着暖杯子的那一会儿。也希望你能舒服一点。",
-      "level": "light",
       "states": [
         "focus-ready",
         "focus-running",
@@ -534,16 +3515,18 @@
         "explicitRequest"
       ],
       "tags": [
-        "care"
+        "presence"
       ],
-      "copyVersion": "companion-voice-v3",
-      "reviewStatus": "candidate"
-    },
-    {
+      "copyVersion": "companion-voice-v4",
+      "reviewStatus": "candidate",
       "id": "ASKG15",
+      "text": "来找我啦。一起待一会儿吧。",
+      "form": "response",
+      "topic": "company",
+      "level": "light"
+    },
+    {
       "pool": "ASKG",
-      "text": "来找我啦。好，我陪你一会儿。",
-      "level": "light",
       "states": [
         "focus-ready",
         "focus-running",
@@ -558,36 +3541,16 @@
       "tags": [
         "presence"
       ],
-      "copyVersion": "companion-voice-v3",
-      "reviewStatus": "candidate"
-    },
-    {
-      "id": "ASKG16",
-      "pool": "ASKG",
-      "text": "能和你一起待会儿，我挺开心的。",
-      "level": "light",
-      "states": [
-        "focus-ready",
-        "focus-running",
-        "focus-paused",
-        "break-ready",
-        "break-running",
-        "break-paused"
-      ],
-      "requiredFacts": [
-        "explicitRequest"
-      ],
-      "tags": [
-        "care"
-      ],
-      "copyVersion": "companion-voice-v3",
-      "reviewStatus": "candidate"
-    },
-    {
+      "copyVersion": "companion-voice-v4",
+      "reviewStatus": "candidate",
       "id": "ASKG17",
+      "text": "各自做点喜欢的事，偶尔凑过来说两句。我很喜欢这样的相处。",
+      "form": "preference",
+      "topic": "company",
+      "level": "light"
+    },
+    {
       "pool": "ASKG",
-      "text": "这次想认真做，我陪你；想先试试，我也有兴趣。",
-      "level": "light",
       "states": [
         "focus-ready",
         "focus-running",
@@ -600,16 +3563,18 @@
         "explicitRequest"
       ],
       "tags": [
-        "possibility"
+        "presence"
       ],
-      "copyVersion": "companion-voice-v3",
-      "reviewStatus": "candidate"
+      "copyVersion": "companion-voice-v4",
+      "reviewStatus": "candidate",
+      "id": "ASKG25",
+      "text": "画画时，两种颜色碰出了一块说不上名字的灰。我本来想盖掉，多看了几眼，发现它衬得旁边的蓝特别好看。最后修改别处，偏偏绕开了那一块。",
+      "form": "mini-story",
+      "topic": "unexpected-color",
+      "level": "deep"
     },
     {
-      "id": "ASKG20",
       "pool": "ASKG",
-      "text": "有点好奇，就先试一小点。说不定会冒出新主意。",
-      "level": "light",
       "states": [
         "focus-ready",
         "focus-running",
@@ -622,16 +3587,18 @@
         "explicitRequest"
       ],
       "tags": [
-        "small-step"
+        "presence"
       ],
-      "copyVersion": "companion-voice-v3",
-      "reviewStatus": "candidate"
+      "copyVersion": "companion-voice-v4",
+      "reviewStatus": "candidate",
+      "id": "ASKG26",
+      "text": "这会儿一起待着，我挺高兴。",
+      "form": "response",
+      "topic": "company",
+      "level": "light"
     },
     {
-      "id": "ASKG24",
       "pool": "ASKG",
-      "text": "我有时把小事弄复杂，做到一半才发现。那就改改，反正还是挺想做。",
-      "level": "deep",
       "states": [
         "focus-ready",
         "focus-running",
@@ -644,16 +3611,619 @@
         "explicitRequest"
       ],
       "tags": [
-        "possibility"
+        "presence"
       ],
-      "copyVersion": "companion-voice-v3",
-      "reviewStatus": "candidate"
+      "copyVersion": "companion-voice-v4",
+      "reviewStatus": "candidate",
+      "id": "ASKG27",
+      "text": "看一本新书时，陌生的名字我常记不住。等看到有人做了件特别有意思的事，名字忽然就记住了。再往前翻，才发现前面已经见过他好几回。",
+      "form": "mini-story",
+      "topic": "book-character",
+      "level": "deep"
     },
     {
+      "pool": "ASKG",
+      "states": [
+        "focus-ready",
+        "focus-running",
+        "focus-paused",
+        "break-ready",
+        "break-running",
+        "break-paused"
+      ],
+      "requiredFacts": [
+        "explicitRequest"
+      ],
+      "tags": [
+        "presence"
+      ],
+      "copyVersion": "companion-voice-v4",
+      "reviewStatus": "candidate",
+      "id": "ASKG28",
+      "text": "一点橙色挨着一大块蓝色，我就会多看几眼。橙色不必很多，一小块已经够惹眼了。",
+      "form": "preference",
+      "topic": "blue-orange",
+      "level": "deep"
+    },
+    {
+      "pool": "ASKG",
+      "states": [
+        "focus-ready",
+        "focus-running",
+        "focus-paused",
+        "break-ready",
+        "break-running",
+        "break-paused"
+      ],
+      "requiredFacts": [
+        "explicitRequest"
+      ],
+      "tags": [
+        "presence"
+      ],
+      "copyVersion": "companion-voice-v4",
+      "reviewStatus": "candidate",
+      "id": "ASKG30",
+      "text": "我画圆有个办法：连着画三个，挑一个最圆的。",
+      "form": "practical",
+      "topic": "drawing-circles",
+      "level": "light"
+    },
+    {
+      "pool": "ASKG",
+      "states": [
+        "focus-ready",
+        "focus-running",
+        "focus-paused",
+        "break-ready",
+        "break-running",
+        "break-paused"
+      ],
+      "requiredFacts": [
+        "explicitRequest"
+      ],
+      "tags": [
+        "presence"
+      ],
+      "copyVersion": "companion-voice-v4",
+      "reviewStatus": "candidate",
+      "id": "ASKG31",
+      "text": "我看过一本封面特别好看的书。看完以后，还是最喜欢封面。",
+      "form": "mini-story",
+      "topic": "book-cover",
+      "level": "light"
+    },
+    {
+      "pool": "ASKG",
+      "states": [
+        "focus-ready",
+        "focus-running",
+        "focus-paused",
+        "break-ready",
+        "break-running",
+        "break-paused"
+      ],
+      "requiredFacts": [
+        "explicitRequest"
+      ],
+      "tags": [
+        "presence"
+      ],
+      "copyVersion": "companion-voice-v4",
+      "reviewStatus": "candidate",
+      "id": "ASKG32",
+      "text": "有回我给积木按高矮排队。排好以后，忽然觉得它们像在等拍照，就暂时没往上搭。",
+      "form": "mini-story",
+      "topic": "blocks-lineup",
+      "level": "deep"
+    },
+    {
+      "pool": "ASKG",
+      "states": [
+        "focus-ready",
+        "focus-running",
+        "focus-paused",
+        "break-ready",
+        "break-running",
+        "break-paused"
+      ],
+      "requiredFacts": [
+        "explicitRequest"
+      ],
+      "tags": [
+        "presence"
+      ],
+      "copyVersion": "companion-voice-v4",
+      "reviewStatus": "candidate",
+      "id": "ASKG33",
+      "text": "挑杯子，我会先试把手。花纹可以慢慢看，握着不舒服的，我就不选了。",
+      "form": "preference",
+      "topic": "cup-handle",
+      "level": "light"
+    },
+    {
+      "pool": "ASKG",
+      "states": [
+        "focus-ready",
+        "focus-running",
+        "focus-paused",
+        "break-ready",
+        "break-running",
+        "break-paused"
+      ],
+      "requiredFacts": [
+        "explicitRequest"
+      ],
+      "tags": [
+        "presence"
+      ],
+      "copyVersion": "companion-voice-v4",
+      "reviewStatus": "candidate",
+      "id": "ASKG34",
+      "text": "有一次我想挑最小的饼干先吃。挑出一块，又看见一块更小的。两块都吃完，倒不用选了。",
+      "form": "mini-story",
+      "topic": "cookies",
+      "level": "deep"
+    },
+    {
+      "pool": "ASKG",
+      "states": [
+        "focus-ready",
+        "focus-running",
+        "focus-paused",
+        "break-ready",
+        "break-running",
+        "break-paused"
+      ],
+      "requiredFacts": [
+        "explicitRequest"
+      ],
+      "tags": [
+        "presence"
+      ],
+      "copyVersion": "companion-voice-v4",
+      "reviewStatus": "candidate",
+      "id": "ASKG35",
+      "text": "有段曲子我听得很熟。快到喜欢的地方时，还是会停一下手里的事，专门听那几秒。",
+      "form": "preference",
+      "topic": "favorite-music",
+      "level": "deep"
+    },
+    {
+      "pool": "ASKG",
+      "states": [
+        "focus-ready",
+        "focus-running",
+        "focus-paused",
+        "break-ready",
+        "break-running",
+        "break-paused"
+      ],
+      "requiredFacts": [
+        "explicitRequest"
+      ],
+      "tags": [
+        "presence"
+      ],
+      "copyVersion": "companion-voice-v4",
+      "reviewStatus": "candidate",
+      "id": "ASKG37",
+      "text": "吃橘子碰到很甜的一瓣，我会把旁边那瓣也尝了，想知道甜是不是连着长的。至今还没琢磨出规律，橘子倒是吃过不少。",
+      "form": "mini-story",
+      "topic": "orange-taste",
+      "level": "deep"
+    },
+    {
+      "pool": "ASKG",
+      "states": [
+        "focus-ready",
+        "focus-running",
+        "focus-paused",
+        "break-ready",
+        "break-running",
+        "break-paused"
+      ],
+      "requiredFacts": [
+        "explicitRequest"
+      ],
+      "tags": [
+        "presence"
+      ],
+      "copyVersion": "companion-voice-v4",
+      "reviewStatus": "candidate",
+      "id": "ASKG38",
+      "text": "有本书的插图里总有一只小鸟，我每翻一页都先找它。有一页怎么也找不到，我前后又翻了一遍。原来藏在画里的窗帘后，只露了两只脚。",
+      "form": "mini-story",
+      "topic": "illustration-bird",
+      "level": "deep"
+    },
+    {
+      "pool": "ASKG",
+      "states": [
+        "focus-ready",
+        "focus-running",
+        "focus-paused",
+        "break-ready",
+        "break-running",
+        "break-paused"
+      ],
+      "requiredFacts": [
+        "explicitRequest"
+      ],
+      "tags": [
+        "presence"
+      ],
+      "copyVersion": "companion-voice-v4",
+      "reviewStatus": "candidate",
+      "id": "ASKG39",
+      "text": "茶太烫时，我会先闻香气。等能喝了，又舍不得喝得太快。一杯茶有两种用法，我都很在行。",
+      "form": "small-report",
+      "topic": "tea-aroma",
+      "level": "deep"
+    },
+    {
+      "pool": "ASKG",
+      "states": [
+        "focus-ready",
+        "focus-running",
+        "focus-paused",
+        "break-ready",
+        "break-running",
+        "break-paused"
+      ],
+      "requiredFacts": [
+        "explicitRequest"
+      ],
+      "tags": [
+        "presence"
+      ],
+      "copyVersion": "companion-voice-v4",
+      "reviewStatus": "candidate",
+      "id": "ASKG40",
+      "text": "雨落到叶子上和窗台上，是两种声音。我听得认真的时候，雨一停，竟然有点像曲子没放完。",
+      "form": "observation",
+      "topic": "rain-sounds",
+      "level": "deep"
+    },
+    {
+      "pool": "ASKG",
+      "states": [
+        "focus-ready",
+        "focus-running",
+        "focus-paused",
+        "break-ready",
+        "break-running",
+        "break-paused"
+      ],
+      "requiredFacts": [
+        "explicitRequest"
+      ],
+      "tags": [
+        "presence"
+      ],
+      "copyVersion": "companion-voice-v4",
+      "reviewStatus": "candidate",
+      "id": "ASKG41",
+      "text": "我给一排颜色起过名字：杏子、橘子、桃子。起到后来有点饿，后面的紫色就直接叫葡萄了。",
+      "form": "mini-story",
+      "topic": "color-names",
+      "level": "deep"
+    },
+    {
+      "pool": "ASKG",
+      "states": [
+        "focus-ready",
+        "focus-running",
+        "focus-paused",
+        "break-ready",
+        "break-running",
+        "break-paused"
+      ],
+      "requiredFacts": [
+        "explicitRequest"
+      ],
+      "tags": [
+        "presence"
+      ],
+      "copyVersion": "companion-voice-v4",
+      "reviewStatus": "candidate",
+      "id": "ASKG42",
+      "text": "折纸用双色纸很有意思。外面只能看见一种颜色，折到最后一翻，另一种才冒出来。我知道它一直在里面，还是喜欢那一下。",
+      "form": "observation",
+      "topic": "two-sided-paper",
+      "level": "deep"
+    },
+    {
+      "pool": "ASKG",
+      "states": [
+        "focus-ready",
+        "focus-running",
+        "focus-paused",
+        "break-ready",
+        "break-running",
+        "break-paused"
+      ],
+      "requiredFacts": [
+        "explicitRequest"
+      ],
+      "tags": [
+        "presence"
+      ],
+      "copyVersion": "companion-voice-v4",
+      "reviewStatus": "candidate",
+      "id": "ASKG43",
+      "text": "挑点心时，我会先找边角。中间那块确实大，可边上更脆，这笔账我算过。",
+      "form": "preference",
+      "topic": "crispy-edges",
+      "level": "light"
+    },
+    {
+      "pool": "ASKG",
+      "states": [
+        "focus-ready",
+        "focus-running",
+        "focus-paused",
+        "break-ready",
+        "break-running",
+        "break-paused"
+      ],
+      "requiredFacts": [
+        "explicitRequest"
+      ],
+      "tags": [
+        "presence"
+      ],
+      "copyVersion": "companion-voice-v4",
+      "reviewStatus": "candidate",
+      "id": "ASKG44",
+      "text": "影子也可以用蓝色画。我试过在黄色旁边放一小块蓝影子，整张纸忽然像晒着太阳。那回我对自己很满意。",
+      "form": "mini-story",
+      "topic": "colored-shadow",
+      "level": "deep"
+    },
+    {
+      "pool": "ASKG",
+      "states": [
+        "focus-ready",
+        "focus-running",
+        "focus-paused",
+        "break-ready",
+        "break-running",
+        "break-paused"
+      ],
+      "requiredFacts": [
+        "explicitRequest"
+      ],
+      "tags": [
+        "presence"
+      ],
+      "copyVersion": "companion-voice-v4",
+      "reviewStatus": "candidate",
+      "id": "ASKG45",
+      "text": "听熟一首曲子以后，我偶尔会提前哼出下一句。恰好对上的时候，总觉得自己和它配合得不错。",
+      "form": "small-report",
+      "topic": "humming",
+      "level": "deep"
+    },
+    {
+      "pool": "ASKG",
+      "states": [
+        "focus-ready",
+        "focus-running",
+        "focus-paused",
+        "break-ready",
+        "break-running",
+        "break-paused"
+      ],
+      "requiredFacts": [
+        "explicitRequest"
+      ],
+      "tags": [
+        "presence"
+      ],
+      "copyVersion": "companion-voice-v4",
+      "reviewStatus": "candidate",
+      "id": "ASKG46",
+      "text": "泡茶时，我喜欢看卷着的叶子慢慢舒展开。尤其是有一片迟迟不肯展开的，我总要多等它一会儿。",
+      "form": "preference",
+      "topic": "tea-leaves",
+      "level": "deep"
+    },
+    {
+      "pool": "ASKG",
+      "states": [
+        "focus-ready",
+        "focus-running",
+        "focus-paused",
+        "break-ready",
+        "break-running",
+        "break-paused"
+      ],
+      "requiredFacts": [
+        "explicitRequest"
+      ],
+      "tags": [
+        "presence"
+      ],
+      "copyVersion": "companion-voice-v4",
+      "reviewStatus": "candidate",
+      "id": "ASKG47",
+      "text": "书里要是附了一张地图，我常在故事开始前就看很久。有次看中了一个地方，读完全书也没写到那里。我还特意翻回地图确认：名字明明挺大的。",
+      "form": "mini-story",
+      "topic": "book-map",
+      "level": "deep"
+    },
+    {
+      "pool": "ASKG",
+      "states": [
+        "focus-ready",
+        "focus-running",
+        "focus-paused",
+        "break-ready",
+        "break-running",
+        "break-paused"
+      ],
+      "requiredFacts": [
+        "explicitRequest"
+      ],
+      "tags": [
+        "presence"
+      ],
+      "copyVersion": "companion-voice-v4",
+      "reviewStatus": "candidate",
+      "id": "ASKG48",
+      "text": "拆开折过的纸，折痕会留下另一张图。我有回沿着那些线涂颜色，原来的纸船没了，倒多出一张挺热闹的画。",
+      "form": "mini-story",
+      "topic": "fold-lines",
+      "level": "deep"
+    },
+    {
+      "pool": "ASKG",
+      "states": [
+        "focus-ready",
+        "focus-running",
+        "focus-paused",
+        "break-ready",
+        "break-running",
+        "break-paused"
+      ],
+      "requiredFacts": [
+        "explicitRequest"
+      ],
+      "tags": [
+        "presence"
+      ],
+      "copyVersion": "companion-voice-v4",
+      "reviewStatus": "candidate",
+      "id": "ASKG49",
+      "text": "我挑过一支很漂亮的铅笔，舍不得削。后来画到一半缺那个颜色，还是拿来用了。削尖以后，竟然比原来还好看。",
+      "form": "mini-story",
+      "topic": "colored-pencil",
+      "level": "deep"
+    },
+    {
+      "pool": "ASKG",
+      "states": [
+        "focus-ready",
+        "focus-running",
+        "focus-paused",
+        "break-ready",
+        "break-running",
+        "break-paused"
+      ],
+      "requiredFacts": [
+        "explicitRequest"
+      ],
+      "tags": [
+        "presence"
+      ],
+      "copyVersion": "companion-voice-v4",
+      "reviewStatus": "candidate",
+      "id": "ASKG50",
+      "text": "翻书时偶尔夹出一小片纸，我会先看看上面写了什么。有次只写着两个字：翻面。翻过去，是一只画到一半的鸭子。",
+      "form": "mini-story",
+      "topic": "paper-surprise",
+      "level": "deep"
+    },
+    {
+      "pool": "ASKG",
+      "states": [
+        "focus-ready",
+        "focus-running",
+        "focus-paused",
+        "break-ready",
+        "break-running",
+        "break-paused"
+      ],
+      "requiredFacts": [
+        "explicitRequest"
+      ],
+      "tags": [
+        "presence"
+      ],
+      "copyVersion": "companion-voice-v4",
+      "reviewStatus": "candidate",
+      "id": "ASKG51",
+      "text": "有一种绿，我每次调都不太一样。后来画一排树，正好一棵一个颜色。我还特意把两棵最不一样的排在一起。",
+      "form": "mini-story",
+      "topic": "greens",
+      "level": "deep"
+    },
+    {
+      "pool": "ASKG",
+      "states": [
+        "focus-ready",
+        "focus-running",
+        "focus-paused",
+        "break-ready",
+        "break-running",
+        "break-paused"
+      ],
+      "requiredFacts": [
+        "explicitRequest"
+      ],
+      "tags": [
+        "presence"
+      ],
+      "copyVersion": "companion-voice-v4",
+      "reviewStatus": "candidate",
+      "id": "ASKG52",
+      "text": "纸船折好后，我会从船头往里看。里面空空的，却总觉得应该装点什么。最后装过一小块纸，上面画了条鱼。",
+      "form": "mini-story",
+      "topic": "boat-cargo",
+      "level": "deep"
+    },
+    {
+      "pool": "ASKG",
+      "states": [
+        "focus-ready",
+        "focus-running",
+        "focus-paused",
+        "break-ready",
+        "break-running",
+        "break-paused"
+      ],
+      "requiredFacts": [
+        "explicitRequest"
+      ],
+      "tags": [
+        "presence"
+      ],
+      "copyVersion": "companion-voice-v4",
+      "reviewStatus": "candidate",
+      "id": "ASKG53",
+      "text": "读到喜欢的地方，我会慢一点。不是舍不得看完，是想把那几句话的声音也读出来。",
+      "form": "preference",
+      "topic": "reading-aloud",
+      "level": "deep"
+    },
+    {
+      "pool": "ASKS",
+      "states": [
+        "focus-ready",
+        "focus-running",
+        "focus-paused",
+        "break-ready",
+        "break-running",
+        "break-paused"
+      ],
+      "requiredFacts": [
+        "explicitRequest",
+        "categorySelected"
+      ],
+      "tags": [
+        "presence"
+      ],
+      "copyVersion": "companion-voice-v4",
+      "reviewStatus": "candidate",
       "id": "ASKS01",
+      "text": "整件事看着太大时，可以只挑出这次准备碰的那一部分。",
+      "form": "practical",
+      "topic": "scope",
+      "level": "light"
+    },
+    {
       "pool": "ASKS",
-      "text": "碰到难开头的事，我喜欢先挑最小的一件。",
-      "level": "light",
       "states": [
         "focus-ready",
         "focus-running",
@@ -667,16 +4237,18 @@
         "categorySelected"
       ],
       "tags": [
-        "small-step"
+        "presence"
       ],
-      "copyVersion": "companion-voice-v3",
-      "reviewStatus": "candidate"
-    },
-    {
+      "copyVersion": "companion-voice-v4",
+      "reviewStatus": "candidate",
       "id": "ASKS04",
+      "text": "积木摆了一桌时，我会先挑一块顺眼的。搭什么，拿起来以后再想。",
+      "form": "mini-story",
+      "topic": "blocks",
+      "level": "light"
+    },
+    {
       "pool": "ASKS",
-      "text": "我搭积木时，先挑一块合眼缘的。",
-      "level": "light",
       "states": [
         "focus-ready",
         "focus-running",
@@ -690,16 +4262,18 @@
         "categorySelected"
       ],
       "tags": [
-        "small-step"
+        "presence"
       ],
-      "copyVersion": "companion-voice-v3",
-      "reviewStatus": "candidate"
-    },
-    {
+      "copyVersion": "companion-voice-v4",
+      "reviewStatus": "candidate",
       "id": "ASKS06",
+      "text": "握着笔想半天，我有时干脆画一条线，再看它能接成什么。有回接成了一条很长的鱼。",
+      "form": "mini-story",
+      "topic": "drawing",
+      "level": "deep"
+    },
+    {
       "pool": "ASKS",
-      "text": "我有时握着笔想半天，最后干脆画一条线，再看看能接成什么。",
-      "level": "light",
       "states": [
         "focus-ready",
         "focus-running",
@@ -713,16 +4287,18 @@
         "categorySelected"
       ],
       "tags": [
-        "small-step"
+        "presence"
       ],
-      "copyVersion": "companion-voice-v3",
-      "reviewStatus": "candidate"
-    },
-    {
+      "copyVersion": "companion-voice-v4",
+      "reviewStatus": "candidate",
       "id": "ASKS08",
+      "text": "要用的东西离得远，就拿到手边。开头能少一道麻烦，也挺好。",
+      "form": "practical",
+      "topic": "setup",
+      "level": "light"
+    },
+    {
       "pool": "ASKS",
-      "text": "先坐舒服一点，再看看从哪里下手。",
-      "level": "light",
       "states": [
         "focus-ready",
         "focus-running",
@@ -738,14 +4314,16 @@
       "tags": [
         "presence"
       ],
-      "copyVersion": "companion-voice-v3",
-      "reviewStatus": "candidate"
-    },
-    {
+      "copyVersion": "companion-voice-v4",
+      "reviewStatus": "candidate",
       "id": "ASKS13",
+      "text": "开头有时就是磨人。咱们在这儿缓一会儿。",
+      "form": "response",
+      "topic": "beginning",
+      "level": "light"
+    },
+    {
       "pool": "ASKS",
-      "text": "开头有时就是磨人。我陪你缓一会儿。",
-      "level": "light",
       "states": [
         "focus-ready",
         "focus-running",
@@ -759,16 +4337,18 @@
         "categorySelected"
       ],
       "tags": [
-        "possibility"
+        "presence"
       ],
-      "copyVersion": "companion-voice-v3",
-      "reviewStatus": "candidate"
-    },
-    {
+      "copyVersion": "companion-voice-v4",
+      "reviewStatus": "candidate",
       "id": "ASKS15",
+      "text": "要用的页面还没打开的话，打开它就行。这一步不用顺便把后面的事都想好。",
+      "form": "practical",
+      "topic": "setup",
+      "level": "light"
+    },
+    {
       "pool": "ASKS",
-      "text": "先把要用的东西打开，别的等动手了再说。",
-      "level": "light",
       "states": [
         "focus-ready",
         "focus-running",
@@ -782,16 +4362,18 @@
         "categorySelected"
       ],
       "tags": [
-        "small-step"
+        "presence"
       ],
-      "copyVersion": "companion-voice-v3",
-      "reviewStatus": "candidate"
-    },
-    {
+      "copyVersion": "companion-voice-v4",
+      "reviewStatus": "candidate",
       "id": "ASKS16",
+      "text": "写东西卡在开头的话，中间那句已经想好的，也可以先写。",
+      "form": "practical",
+      "topic": "writing",
+      "level": "light"
+    },
+    {
       "pool": "ASKS",
-      "text": "写东西的话，先留个草稿。哪里不满意，待会儿再改。",
-      "level": "light",
       "states": [
         "focus-ready",
         "focus-running",
@@ -805,16 +4387,18 @@
         "categorySelected"
       ],
       "tags": [
-        "possibility"
+        "presence"
       ],
-      "copyVersion": "companion-voice-v3",
-      "reviewStatus": "candidate"
-    },
-    {
+      "copyVersion": "companion-voice-v4",
+      "reviewStatus": "candidate",
       "id": "ASKS18",
+      "text": "可以试两分钟，再决定接着做还是换个办法。",
+      "form": "practical",
+      "topic": "try",
+      "level": "light"
+    },
+    {
       "pool": "ASKS",
-      "text": "先试一小会儿，再决定要不要往下做。",
-      "level": "light",
       "states": [
         "focus-ready",
         "focus-running",
@@ -828,39 +4412,18 @@
         "categorySelected"
       ],
       "tags": [
-        "autonomy"
+        "presence"
       ],
-      "copyVersion": "companion-voice-v3",
-      "reviewStatus": "candidate"
-    },
-    {
+      "copyVersion": "companion-voice-v4",
+      "reviewStatus": "candidate",
       "id": "ASKS19",
-      "pool": "ASKS",
       "text": "顺序不打紧的话，先挑有趣的那部分。我常这么干。",
-      "level": "light",
-      "states": [
-        "focus-ready",
-        "focus-running",
-        "focus-paused",
-        "break-ready",
-        "break-running",
-        "break-paused"
-      ],
-      "requiredFacts": [
-        "explicitRequest",
-        "categorySelected"
-      ],
-      "tags": [
-        "possibility"
-      ],
-      "copyVersion": "companion-voice-v3",
-      "reviewStatus": "candidate"
+      "form": "practical",
+      "topic": "interest",
+      "level": "light"
     },
     {
-      "id": "ASKS24",
       "pool": "ASKS",
-      "text": "“先弄一下看看。”我挺喜欢这样开头。",
-      "level": "light",
       "states": [
         "focus-ready",
         "focus-running",
@@ -876,60 +4439,166 @@
       "tags": [
         "presence"
       ],
-      "copyVersion": "companion-voice-v3",
-      "reviewStatus": "candidate"
+      "copyVersion": "companion-voice-v4",
+      "reviewStatus": "candidate",
+      "id": "ASKS24",
+      "text": "我给一份草稿起过名字，叫“随便写写”。改了好几遍以后，它还叫这个。",
+      "form": "mini-story",
+      "topic": "draft",
+      "level": "light"
     },
     {
+      "pool": "ASKS",
+      "states": [
+        "focus-ready",
+        "focus-running",
+        "focus-paused",
+        "break-ready",
+        "break-running",
+        "break-paused"
+      ],
+      "requiredFacts": [
+        "explicitRequest",
+        "categorySelected"
+      ],
+      "tags": [
+        "presence"
+      ],
+      "copyVersion": "companion-voice-v4",
+      "reviewStatus": "candidate",
+      "id": "ASKS25",
+      "text": "要是卡在一件没弄明白的事上，可以把问题原样写下来。想找资料或找人问时，就有了一句具体的话。",
+      "form": "practical",
+      "topic": "uncertainty",
+      "level": "deep"
+    },
+    {
+      "pool": "ASKS",
+      "states": [
+        "focus-ready",
+        "focus-running",
+        "focus-paused",
+        "break-ready",
+        "break-running",
+        "break-paused"
+      ],
+      "requiredFacts": [
+        "explicitRequest",
+        "categorySelected"
+      ],
+      "tags": [
+        "presence"
+      ],
+      "copyVersion": "companion-voice-v4",
+      "reviewStatus": "candidate",
+      "id": "ASKS26",
+      "text": "有回要整理一堆纸，我看着就不想动。后来发现最上面那张背面画着一只小鸟，倒想翻翻还有什么。最后单独留下的那一摞，都是些舍不得扔的小画。",
+      "form": "mini-story",
+      "topic": "sorting",
+      "level": "deep"
+    },
+    {
+      "pool": "ASKS",
+      "states": [
+        "focus-ready",
+        "focus-running",
+        "focus-paused",
+        "break-ready",
+        "break-running",
+        "break-paused"
+      ],
+      "requiredFacts": [
+        "explicitRequest",
+        "categorySelected"
+      ],
+      "tags": [
+        "presence"
+      ],
+      "copyVersion": "companion-voice-v4",
+      "reviewStatus": "candidate",
+      "id": "ASKS27",
+      "text": "如果只是缺个陪着开工的人，我在这儿。你忙你的就行。",
+      "form": "response",
+      "topic": "company",
+      "level": "light"
+    },
+    {
+      "pool": "ASKS",
+      "states": [
+        "focus-ready",
+        "focus-running",
+        "focus-paused",
+        "break-ready",
+        "break-running",
+        "break-paused"
+      ],
+      "requiredFacts": [
+        "explicitRequest",
+        "categorySelected"
+      ],
+      "tags": [
+        "presence"
+      ],
+      "copyVersion": "companion-voice-v4",
+      "reviewStatus": "candidate",
+      "id": "ASKS28",
+      "text": "画画前，我爱把想用的颜色挑出来。还没画，光看它们摆在一起，就有点想试试。",
+      "form": "preference",
+      "topic": "materials",
+      "level": "light"
+    },
+    {
+      "pool": "ASKS",
+      "states": [
+        "focus-ready",
+        "focus-running",
+        "focus-paused",
+        "break-ready",
+        "break-running",
+        "break-paused"
+      ],
+      "requiredFacts": [
+        "explicitRequest",
+        "categorySelected"
+      ],
+      "tags": [
+        "presence"
+      ],
+      "copyVersion": "companion-voice-v4",
+      "reviewStatus": "candidate",
+      "id": "ASKS29",
+      "text": "手头这件事能打草稿的话，就做个只给自己看的版本。不确定的地方留着空，写个“待会儿再说”也行。",
+      "form": "practical",
+      "topic": "rough-version",
+      "level": "deep"
+    },
+    {
+      "pool": "ASKB",
+      "states": [
+        "focus-ready",
+        "focus-running",
+        "focus-paused",
+        "break-ready",
+        "break-running",
+        "break-paused"
+      ],
+      "requiredFacts": [
+        "explicitRequest",
+        "categorySelected"
+      ],
+      "tags": [
+        "presence"
+      ],
+      "copyVersion": "companion-voice-v4",
+      "reviewStatus": "candidate",
       "id": "ASKB01",
-      "pool": "ASKB",
       "text": "我读到一半会夹张书签。回来时，从那儿接上就好。",
-      "level": "light",
-      "states": [
-        "focus-ready",
-        "focus-running",
-        "focus-paused",
-        "break-ready",
-        "break-running",
-        "break-paused"
-      ],
-      "requiredFacts": [
-        "explicitRequest",
-        "categorySelected"
-      ],
-      "tags": [
-        "return"
-      ],
-      "copyVersion": "companion-voice-v3",
-      "reviewStatus": "candidate"
+      "form": "preference",
+      "topic": "bookmark",
+      "level": "light"
     },
     {
-      "id": "ASKB08",
       "pool": "ASKB",
-      "text": "我会留张小纸条，写好下一步做什么。回来时就不用重新想一遍。",
-      "level": "deep",
-      "states": [
-        "focus-ready",
-        "focus-running",
-        "focus-paused",
-        "break-ready",
-        "break-running",
-        "break-paused"
-      ],
-      "requiredFacts": [
-        "explicitRequest",
-        "categorySelected"
-      ],
-      "tags": [
-        "return"
-      ],
-      "copyVersion": "companion-voice-v3",
-      "reviewStatus": "candidate"
-    },
-    {
-      "id": "ASKB10",
-      "pool": "ASKB",
-      "text": "我读书被打断，也会往回翻两页。有时候就是得重新找一找。",
-      "level": "light",
       "states": [
         "focus-ready",
         "focus-running",
@@ -945,14 +4614,66 @@
       "tags": [
         "presence"
       ],
-      "copyVersion": "companion-voice-v3",
-      "reviewStatus": "candidate"
+      "copyVersion": "companion-voice-v4",
+      "reviewStatus": "candidate",
+      "id": "ASKB08",
+      "text": "要离开一下的话，留句“接下来做什么”吧。回来时能少找一会儿。",
+      "form": "practical",
+      "topic": "next-step",
+      "level": "light"
     },
     {
+      "pool": "ASKB",
+      "states": [
+        "focus-ready",
+        "focus-running",
+        "focus-paused",
+        "break-ready",
+        "break-running",
+        "break-paused"
+      ],
+      "requiredFacts": [
+        "explicitRequest",
+        "categorySelected"
+      ],
+      "tags": [
+        "presence"
+      ],
+      "copyVersion": "companion-voice-v4",
+      "reviewStatus": "candidate",
+      "id": "ASKB10",
+      "text": "我读书被打断，也会往回翻两页。有时候就是得重新找一找。",
+      "form": "response",
+      "topic": "reread",
+      "level": "light"
+    },
+    {
+      "pool": "ASKB",
+      "states": [
+        "focus-ready",
+        "focus-running",
+        "focus-paused",
+        "break-ready",
+        "break-running",
+        "break-paused"
+      ],
+      "requiredFacts": [
+        "explicitRequest",
+        "categorySelected"
+      ],
+      "tags": [
+        "presence"
+      ],
+      "copyVersion": "companion-voice-v4",
+      "reviewStatus": "candidate",
       "id": "ASKB12",
+      "text": "思路还剩几个词的话，就把它们记下来。暂时拼不成一句也没关系。",
+      "form": "practical",
+      "topic": "keywords",
+      "level": "light"
+    },
+    {
       "pool": "ASKB",
-      "text": "思路断了的话，先写下还记得的几个词，再看看能不能接起来。",
-      "level": "light",
       "states": [
         "focus-ready",
         "focus-running",
@@ -966,16 +4687,18 @@
         "categorySelected"
       ],
       "tags": [
-        "autonomy"
+        "presence"
       ],
-      "copyVersion": "companion-voice-v3",
-      "reviewStatus": "candidate"
-    },
-    {
+      "copyVersion": "companion-voice-v4",
+      "reviewStatus": "candidate",
       "id": "ASKB16",
+      "text": "找找最后一处还记得的地方，从那里往后看一小段。",
+      "form": "practical",
+      "topic": "place",
+      "level": "light"
+    },
+    {
       "pool": "ASKB",
-      "text": "先看一眼停在哪里。想起来多少，就接多少。",
-      "level": "light",
       "states": [
         "focus-ready",
         "focus-running",
@@ -989,16 +4712,18 @@
         "categorySelected"
       ],
       "tags": [
-        "patience"
+        "presence"
       ],
-      "copyVersion": "companion-voice-v3",
-      "reviewStatus": "candidate"
-    },
-    {
+      "copyVersion": "companion-voice-v4",
+      "reviewStatus": "candidate",
       "id": "ASKB17",
-      "pool": "ASKB",
       "text": "岔进来的事要紧，就先顾那边。",
-      "level": "light",
+      "form": "response",
+      "topic": "priority",
+      "level": "light"
+    },
+    {
+      "pool": "ASKB",
       "states": [
         "focus-ready",
         "focus-running",
@@ -1012,16 +4737,18 @@
         "categorySelected"
       ],
       "tags": [
-        "care"
+        "presence"
       ],
-      "copyVersion": "companion-voice-v3",
-      "reviewStatus": "candidate"
-    },
-    {
+      "copyVersion": "companion-voice-v4",
+      "reviewStatus": "candidate",
       "id": "ASKB20",
+      "text": "刚才那股劲儿不一定马上回来。找个顺手的地方接着做，也能慢慢熟悉起来。",
+      "form": "response",
+      "topic": "rhythm",
+      "level": "light"
+    },
+    {
       "pool": "ASKB",
-      "text": "刚才那股劲儿不一定马上回来，先从顺手的地方接着做。",
-      "level": "light",
       "states": [
         "focus-ready",
         "focus-running",
@@ -1035,16 +4762,18 @@
         "categorySelected"
       ],
       "tags": [
-        "possibility"
+        "presence"
       ],
-      "copyVersion": "companion-voice-v3",
-      "reviewStatus": "candidate"
-    },
-    {
+      "copyVersion": "companion-voice-v4",
+      "reviewStatus": "candidate",
       "id": "ASKB22",
+      "text": "几件事撞在一起时，先挑一件眼下更要紧的。",
+      "form": "practical",
+      "topic": "competing-tasks",
+      "level": "light"
+    },
+    {
       "pool": "ASKB",
-      "text": "几件事挤在一起的时候，可以先挑一件接着做。",
-      "level": "light",
       "states": [
         "focus-ready",
         "focus-running",
@@ -1058,16 +4787,193 @@
         "categorySelected"
       ],
       "tags": [
-        "small-step"
+        "presence"
       ],
-      "copyVersion": "companion-voice-v3",
-      "reviewStatus": "candidate"
+      "copyVersion": "companion-voice-v4",
+      "reviewStatus": "candidate",
+      "id": "ASKB26",
+      "text": "有回拼图拼到一半离开，回来又在找刚才那一块。其实早就找到了，混在旁边。后来找到的，我就翻个面放着，一眼认得出来。",
+      "form": "mini-story",
+      "topic": "puzzle",
+      "level": "deep"
     },
     {
+      "pool": "ASKB",
+      "states": [
+        "focus-ready",
+        "focus-running",
+        "focus-paused",
+        "break-ready",
+        "break-running",
+        "break-paused"
+      ],
+      "requiredFacts": [
+        "explicitRequest",
+        "categorySelected"
+      ],
+      "tags": [
+        "presence"
+      ],
+      "copyVersion": "companion-voice-v4",
+      "reviewStatus": "candidate",
+      "id": "ASKB27",
+      "text": "要是这一下让你有点烦，就在这儿缓一缓。我陪着。",
+      "form": "response",
+      "topic": "frustration",
+      "level": "light"
+    },
+    {
+      "pool": "ASKB",
+      "states": [
+        "focus-ready",
+        "focus-running",
+        "focus-paused",
+        "break-ready",
+        "break-running",
+        "break-paused"
+      ],
+      "requiredFacts": [
+        "explicitRequest",
+        "categorySelected"
+      ],
+      "tags": [
+        "presence"
+      ],
+      "copyVersion": "companion-voice-v4",
+      "reviewStatus": "candidate",
+      "id": "ASKB28",
+      "text": "“我刚才准备做什么来着？”可以只找这一句的答案，不用把整件事重新想一遍。",
+      "form": "practical",
+      "topic": "next-action",
+      "level": "light"
+    },
+    {
+      "pool": "ASKB",
+      "states": [
+        "focus-ready",
+        "focus-running",
+        "focus-paused",
+        "break-ready",
+        "break-running",
+        "break-paused"
+      ],
+      "requiredFacts": [
+        "explicitRequest",
+        "categorySelected"
+      ],
+      "tags": [
+        "presence"
+      ],
+      "copyVersion": "companion-voice-v4",
+      "reviewStatus": "candidate",
+      "id": "ASKB29",
+      "text": "脑子里找不到线索时，看看摊开的那页，或手边做到一半的东西。可能看一眼就想起来了。",
+      "form": "practical",
+      "topic": "visible-cue",
+      "level": "deep"
+    },
+    {
+      "pool": "ASKB",
+      "states": [
+        "focus-ready",
+        "focus-running",
+        "focus-paused",
+        "break-ready",
+        "break-running",
+        "break-paused"
+      ],
+      "requiredFacts": [
+        "explicitRequest",
+        "categorySelected"
+      ],
+      "tags": [
+        "presence"
+      ],
+      "copyVersion": "companion-voice-v4",
+      "reviewStatus": "candidate",
+      "id": "ASKB30",
+      "text": "被打断以后，安排有时确实得变。眼下最要紧的变了，就按现在的来。",
+      "form": "practical",
+      "topic": "replan",
+      "level": "light"
+    },
+    {
+      "pool": "ASKB",
+      "states": [
+        "focus-ready",
+        "focus-running",
+        "focus-paused",
+        "break-ready",
+        "break-running",
+        "break-paused"
+      ],
+      "requiredFacts": [
+        "explicitRequest",
+        "categorySelected"
+      ],
+      "tags": [
+        "presence"
+      ],
+      "copyVersion": "companion-voice-v4",
+      "reviewStatus": "candidate",
+      "id": "ASKB31",
+      "text": "刚冒出来的事还惦记着，就留几个自己看得懂的字。记下来以后，再选接着做哪件。",
+      "form": "practical",
+      "topic": "capture",
+      "level": "deep"
+    },
+    {
+      "pool": "ASKB",
+      "states": [
+        "focus-ready",
+        "focus-running",
+        "focus-paused",
+        "break-ready",
+        "break-running",
+        "break-paused"
+      ],
+      "requiredFacts": [
+        "explicitRequest",
+        "categorySelected"
+      ],
+      "tags": [
+        "presence"
+      ],
+      "copyVersion": "companion-voice-v4",
+      "reviewStatus": "candidate",
+      "id": "ASKB32",
+      "text": "我搭东西被叫走过，回来忘了原先想怎么搭。盯着那几块积木看了一会儿，忽然想起：那块长的，我本来是要拿来做桥。",
+      "form": "mini-story",
+      "topic": "return",
+      "level": "deep"
+    },
+    {
+      "pool": "ASKT",
+      "states": [
+        "focus-ready",
+        "focus-running",
+        "focus-paused",
+        "break-ready",
+        "break-running",
+        "break-paused"
+      ],
+      "requiredFacts": [
+        "explicitRequest",
+        "categorySelected"
+      ],
+      "tags": [
+        "presence"
+      ],
+      "copyVersion": "companion-voice-v4",
+      "reviewStatus": "candidate",
       "id": "ASKT01",
+      "text": "手先歇会儿吧。找个靠着舒服的地方。",
+      "form": "invitation",
+      "topic": "body",
+      "level": "light"
+    },
+    {
       "pool": "ASKT",
-      "text": "先让手歇一会儿，换个舒服的姿势。",
-      "level": "light",
       "states": [
         "focus-ready",
         "focus-running",
@@ -1081,16 +4987,18 @@
         "categorySelected"
       ],
       "tags": [
-        "rest"
+        "presence"
       ],
-      "copyVersion": "companion-voice-v3",
-      "reviewStatus": "candidate"
-    },
-    {
+      "copyVersion": "companion-voice-v4",
+      "reviewStatus": "candidate",
       "id": "ASKT02",
+      "text": "我读不进去的时候，会把书合上。那页还在，等会儿再翻也找得到。",
+      "form": "preference",
+      "topic": "book",
+      "level": "light"
+    },
+    {
       "pool": "ASKT",
-      "text": "我有时会把书合上，看看窗外。",
-      "level": "light",
       "states": [
         "focus-ready",
         "focus-running",
@@ -1104,16 +5012,18 @@
         "categorySelected"
       ],
       "tags": [
-        "care"
+        "presence"
       ],
-      "copyVersion": "companion-voice-v3",
-      "reviewStatus": "candidate"
-    },
-    {
+      "copyVersion": "companion-voice-v4",
+      "reviewStatus": "candidate",
       "id": "ASKT08",
+      "text": "陪你坐一会儿。这次不用找话说。",
+      "form": "response",
+      "topic": "company",
+      "level": "light"
+    },
+    {
       "pool": "ASKT",
-      "text": "我有时什么也不拿，就安静坐一会儿。",
-      "level": "light",
       "states": [
         "focus-ready",
         "focus-running",
@@ -1127,16 +5037,18 @@
         "categorySelected"
       ],
       "tags": [
-        "rest"
+        "presence"
       ],
-      "copyVersion": "companion-voice-v3",
-      "reviewStatus": "candidate"
-    },
-    {
+      "copyVersion": "companion-voice-v4",
+      "reviewStatus": "candidate",
       "id": "ASKT10",
+      "text": "还惦记着下一步的话，留几个字给待会儿的自己。写得认得出来就行。",
+      "form": "practical",
+      "topic": "unfinished",
+      "level": "light"
+    },
+    {
       "pool": "ASKT",
-      "text": "要是还惦记着下一步，先记一句，再去休息。",
-      "level": "light",
       "states": [
         "focus-ready",
         "focus-running",
@@ -1150,16 +5062,18 @@
         "categorySelected"
       ],
       "tags": [
-        "care"
+        "presence"
       ],
-      "copyVersion": "companion-voice-v3",
-      "reviewStatus": "candidate"
-    },
-    {
+      "copyVersion": "companion-voice-v4",
+      "reviewStatus": "candidate",
       "id": "ASKT15",
+      "text": "歇会儿吧。接下来的安排，不用挤在这一刻。",
+      "form": "response",
+      "topic": "rest",
+      "level": "light"
+    },
+    {
       "pool": "ASKT",
-      "text": "先歇会儿吧。接下来的事，等舒服一点再想。",
-      "level": "light",
       "states": [
         "focus-ready",
         "focus-running",
@@ -1173,16 +5087,18 @@
         "categorySelected"
       ],
       "tags": [
-        "rest"
+        "presence"
       ],
-      "copyVersion": "companion-voice-v3",
-      "reviewStatus": "candidate"
-    },
-    {
+      "copyVersion": "companion-voice-v4",
+      "reviewStatus": "candidate",
       "id": "ASKT16",
+      "text": "有时休息最舒服的地方，是终于不用接着做下一件。",
+      "form": "observation",
+      "topic": "unhurried",
+      "level": "light"
+    },
+    {
       "pool": "ASKT",
-      "text": "休息的时候，没干什么也挺好。",
-      "level": "light",
       "states": [
         "focus-ready",
         "focus-running",
@@ -1196,16 +5112,18 @@
         "categorySelected"
       ],
       "tags": [
-        "autonomy"
+        "presence"
       ],
-      "copyVersion": "companion-voice-v3",
-      "reviewStatus": "candidate"
-    },
-    {
+      "copyVersion": "companion-voice-v4",
+      "reviewStatus": "candidate",
       "id": "ASKT17",
+      "text": "眼睛也歇一歇吧，看看屏幕以外的地方。",
+      "form": "practical",
+      "topic": "screen",
+      "level": "light"
+    },
+    {
       "pool": "ASKT",
-      "text": "闭会儿眼，或看看别处，挑舒服的就好。",
-      "level": "light",
       "states": [
         "focus-ready",
         "focus-running",
@@ -1219,16 +5137,18 @@
         "categorySelected"
       ],
       "tags": [
-        "care"
+        "presence"
       ],
-      "copyVersion": "companion-voice-v3",
-      "reviewStatus": "candidate"
-    },
-    {
+      "copyVersion": "companion-voice-v4",
+      "reviewStatus": "candidate",
       "id": "ASKT18",
+      "text": "连挑个放松的办法都嫌费劲时，空着这一会儿也挺合适。",
+      "form": "response",
+      "topic": "choice",
+      "level": "light"
+    },
+    {
       "pool": "ASKT",
-      "text": "不想做决定的话，先什么都不选。",
-      "level": "light",
       "states": [
         "focus-ready",
         "focus-running",
@@ -1242,39 +5162,18 @@
         "categorySelected"
       ],
       "tags": [
-        "patience"
+        "presence"
       ],
-      "copyVersion": "companion-voice-v3",
-      "reviewStatus": "candidate"
-    },
-    {
+      "copyVersion": "companion-voice-v4",
+      "reviewStatus": "candidate",
       "id": "ASKT21",
-      "pool": "ASKT",
-      "text": "想换点轻松的事，也好。我有时就随便翻翻书，不求记住什么。",
-      "level": "light",
-      "states": [
-        "focus-ready",
-        "focus-running",
-        "focus-paused",
-        "break-ready",
-        "break-running",
-        "break-paused"
-      ],
-      "requiredFacts": [
-        "explicitRequest",
-        "categorySelected"
-      ],
-      "tags": [
-        "possibility"
-      ],
-      "copyVersion": "companion-voice-v3",
-      "reviewStatus": "candidate"
+      "text": "想换点轻松的事也好。书我会挑有图的，翻到哪页算哪页。",
+      "form": "preference",
+      "topic": "light-reading",
+      "level": "light"
     },
     {
-      "id": "ASKT22",
       "pool": "ASKT",
-      "text": "就算休息计时到了，也不用立刻开工。你还想歇，就接着歇。",
-      "level": "light",
       "states": [
         "focus-ready",
         "focus-running",
@@ -1288,10 +5187,165 @@
         "categorySelected"
       ],
       "tags": [
-        "autonomy"
+        "presence"
       ],
-      "copyVersion": "companion-voice-v3",
-      "reviewStatus": "candidate"
+      "copyVersion": "companion-voice-v4",
+      "reviewStatus": "candidate",
+      "id": "ASKT22",
+      "text": "休息计时到点，只是在报时间。想再歇会儿，就再歇会儿。",
+      "form": "practical",
+      "topic": "timer",
+      "level": "light"
+    },
+    {
+      "pool": "ASKT",
+      "states": [
+        "focus-ready",
+        "focus-running",
+        "focus-paused",
+        "break-ready",
+        "break-running",
+        "break-paused"
+      ],
+      "requiredFacts": [
+        "explicitRequest",
+        "categorySelected"
+      ],
+      "tags": [
+        "presence"
+      ],
+      "copyVersion": "companion-voice-v4",
+      "reviewStatus": "candidate",
+      "id": "ASKT25",
+      "text": "歇着时有人在旁边，又不用招呼他，我觉得很舒服。你也不用忙着招呼我。",
+      "form": "response",
+      "topic": "company",
+      "level": "light"
+    },
+    {
+      "pool": "ASKT",
+      "states": [
+        "focus-ready",
+        "focus-running",
+        "focus-paused",
+        "break-ready",
+        "break-running",
+        "break-paused"
+      ],
+      "requiredFacts": [
+        "explicitRequest",
+        "categorySelected"
+      ],
+      "tags": [
+        "presence"
+      ],
+      "copyVersion": "companion-voice-v4",
+      "reviewStatus": "candidate",
+      "id": "ASKT26",
+      "text": "有回休息，我列了听歌、看书、收拾桌子，还认真排了先后。看着看着，怎么像另一份工作清单？最后只留了听歌。那首歌我本来就想听，听到喜欢的地方，还倒回去又听了一遍。",
+      "form": "mini-story",
+      "topic": "rest-list",
+      "level": "deep"
+    },
+    {
+      "pool": "ASKT",
+      "states": [
+        "focus-ready",
+        "focus-running",
+        "focus-paused",
+        "break-ready",
+        "break-running",
+        "break-paused"
+      ],
+      "requiredFacts": [
+        "explicitRequest",
+        "categorySelected"
+      ],
+      "tags": [
+        "presence"
+      ],
+      "copyVersion": "companion-voice-v4",
+      "reviewStatus": "candidate",
+      "id": "ASKT27",
+      "text": "手边有水的话，喝一口吧。",
+      "form": "practical",
+      "topic": "water",
+      "level": "light"
+    },
+    {
+      "pool": "ASKT",
+      "states": [
+        "focus-ready",
+        "focus-running",
+        "focus-paused",
+        "break-ready",
+        "break-running",
+        "break-paused"
+      ],
+      "requiredFacts": [
+        "explicitRequest",
+        "categorySelected"
+      ],
+      "tags": [
+        "presence"
+      ],
+      "copyVersion": "companion-voice-v4",
+      "reviewStatus": "candidate",
+      "id": "ASKT28",
+      "text": "脑子要是还在忙，也不用连它一起催。我有时只是把手里的东西放下，坐着看一会儿窗外。",
+      "form": "preference",
+      "topic": "mental-rest",
+      "level": "deep"
+    },
+    {
+      "pool": "ASKT",
+      "states": [
+        "focus-ready",
+        "focus-running",
+        "focus-paused",
+        "break-ready",
+        "break-running",
+        "break-paused"
+      ],
+      "requiredFacts": [
+        "explicitRequest",
+        "categorySelected"
+      ],
+      "tags": [
+        "presence"
+      ],
+      "copyVersion": "companion-voice-v4",
+      "reviewStatus": "candidate",
+      "id": "ASKT29",
+      "text": "歇着时，我偏爱听熟悉的歌。下一句要唱什么都知道，跟着哼两声就很舒服。",
+      "form": "preference",
+      "topic": "music",
+      "level": "light"
+    },
+    {
+      "pool": "ASKT",
+      "states": [
+        "focus-ready",
+        "focus-running",
+        "focus-paused",
+        "break-ready",
+        "break-running",
+        "break-paused"
+      ],
+      "requiredFacts": [
+        "explicitRequest",
+        "categorySelected"
+      ],
+      "tags": [
+        "presence"
+      ],
+      "copyVersion": "companion-voice-v4",
+      "reviewStatus": "candidate",
+      "id": "ASKT30",
+      "text": "有回我想认真发会儿呆，坐下就在想：这样算发呆了吗？后来走了神，倒把这事忘了。",
+      "form": "mini-story",
+      "topic": "daydream",
+      "level": "deep"
     }
   ],
   "interfaceCopy": [
@@ -1408,9 +5462,9 @@
   "welcomeNote": {
     "id": "WELCOME_NOTE",
     "text": "你好，我会在这里陪你，也忙一点自己的事。选个时长就能开始；想记点什么、暂停或休息，随时都行。",
-    "copyVersion": "companion-moments-v2",
+    "copyVersion": "companion-moments-v3",
     "reviewStatus": "candidate"
   },
   "interfaceCopyVersion": "prd-v37",
-  "requestedCopyVersion": "companion-voice-v3"
+  "requestedCopyVersion": "companion-voice-v4"
 }

@@ -1,3 +1,14 @@
+import { isSceneId } from './scenes'
+import type { SceneId } from './types'
+
+export const COPY_FORMS = ['response', 'preference', 'observation', 'mini-story', 'small-report', 'invitation', 'practical', 'time-greeting'] as const
+export const DAYPARTS = ['morning', 'afternoon', 'evening', 'night'] as const
+export interface CopyConditions {
+  readonly dayparts?: readonly typeof DAYPARTS[number][]
+  readonly focusMinutes?: readonly [number, number]
+  readonly scenes?: readonly SceneId[]
+}
+
 export const NODE_POOLS = ['RET', 'STA', 'END', 'ZER', 'BRK'] as const
 export const ASK_POOLS = ['ASKG', 'ASKS', 'ASKB', 'ASKT'] as const
 export const POOLS = [...NODE_POOLS, ...ASK_POOLS] as const
@@ -14,6 +25,10 @@ export interface Encouragement {
   readonly pool: Pool
   readonly text: string
   readonly level: 'light' | 'deep'
+  /** Editorial descriptors, never a user's mood or a selection order. */
+  readonly form: typeof COPY_FORMS[number]
+  readonly topic: string
+  readonly when?: CopyConditions
   readonly states: readonly CompanionState[]
   readonly requiredFacts: readonly Fact[]
   readonly tags: readonly string[]
@@ -60,7 +75,27 @@ export function parseFeedbackCatalog(value: unknown): FeedbackCatalog {
     if (id !== `${pool}${String(index).padStart(2, '0')}` || !Number.isSafeInteger(index) || index < 1) fail(`${id}.id`)
     text(e.text, `${id}.text`)
     if (/[{}<>]/.test(e.text as string)) fail(`${id}.text template/markup`)
-    if (!['light', 'deep'].includes(e.level as string) || (!pool.startsWith('ASK') && e.level !== 'light')) fail(`${id}.level`)
+    if (!['light', 'deep'].includes(e.level as string)) fail(`${id}.level`)
+    if (!COPY_FORMS.includes(e.form as typeof COPY_FORMS[number])) fail(`${id}.form`)
+    text(e.topic, `${id}.topic`)
+    if (e.when !== undefined) {
+      const when = object(e.when, `${id}.when`)
+      if (!Object.keys(when).length || Object.keys(when).some(k => !['dayparts', 'focusMinutes', 'scenes'].includes(k))) fail(`${id}.when.keys`)
+      if (when.dayparts !== undefined) {
+        if (!['RET', 'STA', 'BRK'].includes(pool)) fail(`${id}.when.dayparts.pool`)
+        list(when.dayparts, DAYPARTS, `${id}.when.dayparts`)
+      }
+      if (when.focusMinutes !== undefined) {
+        const bounds = when.focusMinutes
+        if (pool !== 'STA' || !Array.isArray(bounds) || bounds.length !== 2 ||
+          bounds.some(n => !Number.isInteger(n) || n < 1 || n > 120) || bounds[0] > bounds[1]) fail(`${id}.when.focusMinutes`)
+      }
+      if (when.scenes !== undefined) {
+        const scenes = when.scenes
+        if (!['STA', 'BRK'].includes(pool) || !Array.isArray(scenes) || !scenes.length ||
+          new Set(scenes).size !== scenes.length || scenes.some(id => !isSceneId(id) || !id.startsWith(pool === 'STA' ? 'F' : 'R'))) fail(`${id}.when.scenes`)
+      }
+    }
     if (e.copyVersion !== (pool.startsWith('ASK') ? requestedVersion : version) || e.reviewStatus !== 'candidate') fail(`${id}.metadata`)
     list(e.states, COMPANION_STATES, `${id}.states`)
     list(e.requiredFacts, FACTS, `${id}.requiredFacts`)
@@ -69,7 +104,7 @@ export function parseFeedbackCatalog(value: unknown): FeedbackCatalog {
   // Pool size and short/long mix belong to the catalog, not a hard-coded sequence.
   for (const pool of POOLS) {
     const entries = (root.entries as Encouragement[]).filter(e => e.pool === pool)
-    if (entries.length < 2 || new Set(entries.map(e => e.text)).size !== entries.length) fail(`${pool}.coverage`)
+    if (entries.filter(e => !e.when).length < 2 || new Set(entries.map(e => e.text)).size !== entries.length) fail(`${pool}.coverage`)
     if (pool.startsWith('ASK')) {
       for (const state of COMPANION_STATES) {
         if (entries.filter(e => e.states.includes(state) && e.requiredFacts.every(f => f === 'explicitRequest' || f === 'categorySelected')).length < 2) fail(`${pool}.${state}.coverage`)
@@ -104,6 +139,10 @@ export interface FeedbackContext {
   persistence: Persistence
   participationSaved?: boolean
   returningReady?: boolean
+  /** Actual presentation-time local hour supplied by the adapter. Missing means generic copy only. */
+  localHour?: number | undefined
+  focusDurationMs?: number | undefined
+  sceneId?: SceneId | undefined
 }
 
 type EventDetails =
@@ -205,8 +244,27 @@ function eligibility(event: FeedbackEvent, context: FeedbackContext): { pool: Po
   return { pool, facts }
 }
 
-function choose(pool: Pool, facts: Set<Fact>, currentState: CompanionState, memory: FeedbackMemory, catalog: FeedbackCatalog) {
-  const eligible = catalog.entries.filter(e => e.pool === pool && e.states.includes(currentState) && e.requiredFacts.every(f => facts.has(f)) && e.id !== memory.lastIds[pool])
+/** Context only filters authored facts; it does not infer feelings or award content. */
+export function copyFitsContext(entry: Encouragement, context: FeedbackContext): boolean {
+  const when = entry.when
+  if (!when) return true
+  if (when.dayparts) {
+    const hour = context.localHour
+    if (hour === undefined || !Number.isInteger(hour) || hour < 0 || hour > 23) return false
+    const daypart = hour < 6 ? 'night' : hour < 12 ? 'morning' : hour < 18 ? 'afternoon' : 'evening'
+    if (!when.dayparts.includes(daypart)) return false
+  }
+  if (when.focusMinutes) {
+    const duration = context.focusDurationMs
+    if (context.phase !== 'focus' || duration === undefined || !Number.isFinite(duration) ||
+      duration < when.focusMinutes[0] * 60_000 || duration > when.focusMinutes[1] * 60_000) return false
+  }
+  if (when.scenes && (!context.sceneId || !when.scenes.includes(context.sceneId))) return false
+  return true
+}
+
+function choose(pool: Pool, facts: Set<Fact>, currentState: CompanionState, memory: FeedbackMemory, catalog: FeedbackCatalog, context: FeedbackContext) {
+  const eligible = catalog.entries.filter(e => e.pool === pool && e.states.includes(currentState) && e.requiredFacts.every(f => facts.has(f)) && copyFitsContext(e, context) && e.id !== memory.lastIds[pool])
   if (!eligible.length) return null
   // Independent draws, not a shuffled bag. The host supplies a fresh seed each
   // time the app opens; only the immediately previous phrase in this pool is excluded.
@@ -266,7 +324,7 @@ export function transitionFeedback(memory: FeedbackMemory, event: FeedbackEvent,
   if (!pool || (!enabled && !requested)) return result(true)
   if (['paused', 'resumed', 'note-saved', 'break-ended'].includes(event.kind)) return result(true)
   if (!requested && memory.lastAutomaticAt !== null && event.atMs - memory.lastAutomaticAt < cooldownMs) return result(true)
-  const chosen = choose(pool, facts, companionState, memory, catalog)
+  const chosen = choose(pool, facts, companionState, memory, catalog, context)
   if (chosen) {
     frame.encouragement = chosen.entry
     state.randomState = chosen.randomState

@@ -27,6 +27,22 @@ async function endFocus(page) {
   await button(page, '开始休息').waitFor()
 }
 
+// Give the existing ID adapter a reproducible prefix so opening the reader and,
+// when needed, choosing its category reaches the longest real requested text.
+// No catalog or application behavior is replaced.
+const requested = catalog.entries.filter(e => e.pool.startsWith('ASK') && e.states.includes('focus-ready') &&
+  e.requiredFacts.every(f => ['operationSaved', 'explicitRequest', ...(e.pool === 'ASKG' ? [] : ['categorySelected'])].includes(f)) && !e.when)
+const longestRequested = requested.reduce((longest, entry) => entry.text.length > longest.text.length ? entry : longest)
+const longestPool = requested.filter(e => e.pool === longestRequested.pool)
+const longestIndex = longestPool.indexOf(longestRequested)
+const targetDraw = seed => {
+  let state = (Math.imul(seed, 1664525) + 1013904223) >>> 0
+  if (longestRequested.pool !== 'ASKG') state = (Math.imul(state, 1664525) + 1013904223) >>> 0
+  return Math.floor(state / 0x1_0000_0000 * longestPool.length)
+}
+let longTextSeed = 0
+while (targetDraw(longTextSeed) !== longestIndex) longTextSeed++
+
 process.env.BASE_PATH = '/clock/'
 await mkdir(output, { recursive: true })
 await build({ build: { outDir } })
@@ -117,6 +133,36 @@ try {
     await page.screenshot({ path: path.join(output, `rest-${width}.png`), fullPage: true })
     await button(page, '暂停休息').click()
     check(`${width}: pausing rest keeps factual feedback only`, await speech(page).count() === 0)
+    await context.close()
+  }
+  for (const width of [320, 375, 430]) {
+    const context = await browser.newContext({ viewport: { width, height: 812 }, reducedMotion: 'reduce', hasTouch: true })
+    await context.addInitScript(seed => {
+      let serial = 0
+      Object.defineProperty(crypto, 'randomUUID', { value: () =>
+        `${seed.toString(16).padStart(8, '0')}-0000-4000-8000-${(++serial).toString(16).padStart(12, '0')}` })
+    }, longTextSeed)
+    const page = await context.newPage()
+    page.on('pageerror', e => errors.push(e.message))
+    page.on('console', e => { if (e.type() === 'error') errors.push(e.text()) })
+    await page.goto(url)
+    await button(page, '开始专注').waitFor()
+    await button(page, '给我一句鼓励').click()
+    const reader = page.getByRole('region', { name: '一句鼓励' })
+    if (longestRequested.pool !== 'ASKG') await reader.getByRole('combobox', { name: '鼓励类型' }).selectOption(longestRequested.pool)
+    const quote = page.locator('.fp-reader-quote:visible')
+    await quote.waitFor()
+    check(`${width}: the longest requested text is reachable through the normal reader`, await quote.innerText() === longestRequested.text)
+    for (const fontSize of ['16px', '32px']) {
+      await page.evaluate(size => { document.documentElement.style.fontSize = size }, fontSize)
+      await frames(page)
+      check(`${width}: longest requested text remains complete at ${fontSize}`, await quote.innerText() === longestRequested.text && await quote.evaluate(e =>
+        e.scrollHeight <= e.clientHeight + 1 && e.scrollWidth <= e.clientWidth + 1))
+      check(`${width}: longest-text reader stays within the viewport at ${fontSize}`, await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1))
+    }
+    await button(reader, '换一句鼓励').focus()
+    await page.keyboard.press('Enter')
+    check(`${width}: long-text controls remain keyboard reachable`, await quote.innerText() !== longestRequested.text && await button(reader, '换一句鼓励').evaluate(e => e === document.activeElement))
     await context.close()
   }
   check('No browser console or page errors', errors.length === 0)

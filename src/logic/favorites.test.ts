@@ -83,10 +83,10 @@ it('keeps a removed phrase readable and cancellable without allowing a new favor
 })
 
 it('preserves a revised phrase snapshot until explicit cancellation and re-favoriting', () => {
-  const original = { id: 'ASKG12', text: '我试过把书倒过来看。同一幅画，原来还有另一种看法。', copyVersion: 'companion-voice-v2', savedAt: 900, rev: 1, deletedAt: null }
+  const original = { id: 'ASKG02', text: '我有时只读一页，也很喜欢那一页。', copyVersion: 'companion-voice-v3', savedAt: 900, rev: 1, deletedAt: null }
   const saved = { ...createSnapshot(spec), quoteFavorites: [original] }
   const current = feedbackCatalog.entries.find(e => e.id === original.id)!
-  expect(current.copyVersion).toBe('companion-voice-v3')
+  expect(current.copyVersion).toBe('companion-voice-v4')
   expect(current.text).not.toBe(original.text)
   const context = { now: 2000, dateKeyOf: () => '2026-11-22', quoteCatalog: feedbackCatalog.entries }
   const command: FavoriteAction = { type: 'setQuoteFavorite', quote: current, selected: true, expectedRev: 1, requestedAt: 2000 }

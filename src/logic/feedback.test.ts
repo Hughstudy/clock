@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import raw from '../data/encouragement.zh-CN.json'
 import { feedbackCatalog } from '../data/encouragement'
-import { ASK_POOLS, NODE_POOLS, createFeedbackMemory, parseFeedbackCatalog, transitionFeedback, type FeedbackContext, type FeedbackEvent } from './feedback'
+import { ASK_POOLS, DAYPARTS, NODE_POOLS, createFeedbackMemory, copyFitsContext, parseFeedbackCatalog, transitionFeedback, type CopyConditions, type FeedbackContext, type FeedbackEvent } from './feedback'
 
 const ready: FeedbackContext = { phase: 'focus', status: 'ready', persistence: 'saved', participationSaved: true }
 const running: FeedbackContext = { ...ready, status: 'running' }
@@ -10,20 +10,20 @@ const event = (details: Omit<FeedbackEvent, 'id' | 'atMs' | 'origin'> & Record<s
 const reduce = (e: FeedbackEvent, c = ready, m = createFeedbackMemory(), options = {}) => transitionFeedback(m, e, c, feedbackCatalog, options)
 
 describe('PRD copy resource integrity', () => {
-  it('contains the exact pool coverage, candidate status and deep/light separation', () => {
+  it('meets the requested catalog size and keeps every pool available', () => {
     for (const pool of NODE_POOLS) expect(feedbackCatalog.entries.filter(e => e.pool === pool).length).toBeGreaterThanOrEqual(2)
     for (const pool of ASK_POOLS) expect(feedbackCatalog.entries.filter(e => e.pool === pool).length).toBeGreaterThanOrEqual(2)
-    expect(feedbackCatalog.entries).toHaveLength(61)
+    expect(feedbackCatalog.entries.length).toBeGreaterThanOrEqual(200)
     expect(feedbackCatalog.entries.every(e => e.reviewStatus === 'candidate')).toBe(true)
   })
 
   it('versions the companion’s spoken lines independently from automatic and welcome copy', () => {
     for (const entry of feedbackCatalog.entries) {
       if (entry.pool.startsWith('ASK')) {
-        expect(entry.copyVersion).toBe('companion-voice-v3')
-      } else expect(entry.copyVersion).toBe('companion-moments-v2')
+        expect(entry.copyVersion).toBe('companion-voice-v4')
+      } else expect(entry.copyVersion).toBe('companion-moments-v3')
     }
-    expect(feedbackCatalog.welcomeNote.copyVersion).toBe('companion-moments-v2')
+    expect(feedbackCatalog.welcomeNote.copyVersion).toBe('companion-moments-v3')
   })
 
   it.each(['id', 'facts', 'states', 'version', 'requested-version', 'markup', 'missing', 'deep', 'ui', 'error'] as const)('rejects damaged %s before use', kind => {
@@ -35,7 +35,7 @@ describe('PRD copy resource integrity', () => {
     if (kind === 'requested-version') bad.entries.find(e => e.pool === 'ASKG')!.copyVersion = bad.copyVersion
     if (kind === 'markup') bad.entries[0]!.text = '<script>alert(1)</script>'
     if (kind === 'missing') bad.entries = bad.entries.filter(e => e.pool !== 'ASKT')
-    if (kind === 'deep') bad.entries[0]!.level = 'deep'
+    if (kind === 'deep') bad.entries[0]!.level = 'cinematic'
     if (kind === 'ui') bad.interfaceCopy[0]!.id = bad.interfaceCopy[1]!.id
     if (kind === 'error') bad.errors[0]!.text = ' '
     expect(() => parseFeedbackCatalog(bad)).toThrow(/feedback catalog/)
@@ -243,5 +243,90 @@ describe('rotation, silence and one-result-per-action', () => {
     const quiet = reduce(event({ kind: 'focus-ended', elapsedMs: 1000, reason: 'manual' }), ready, createFeedbackMemory(), { nodeEncouragement: false })
     expect(quiet.frame.status.text).toBe('本段计时1秒。'); expect(quiet.frame.encouragement).toBeNull()
     expect(reduce(event({ kind: 'encouragement-requested' }, 'ask'), ready, quiet.state, { nodeEncouragement: false }).frame.encouragement?.pool).toBe('ASKG')
+  })
+})
+
+describe('authored context conditions', () => {
+  const conditioned = (when: CopyConditions) => ({ ...feedbackCatalog.entries.find(e => e.pool === 'STA')!, when })
+
+  it.each([[0, 'night'], [5, 'night'], [6, 'morning'], [11, 'morning'], [12, 'afternoon'], [17, 'afternoon'], [18, 'evening'], [23, 'evening']] as const)('uses actual local hour %s for %s copy', (localHour, daypart) => {
+    for (const candidate of DAYPARTS) {
+      expect(copyFitsContext(conditioned({ dayparts: [candidate] }), { ...running, localHour })).toBe(candidate === daypart)
+    }
+  })
+
+  it('falls back to generic copy when local time is unavailable or invalid', () => {
+    for (const localHour of [undefined, NaN, Infinity, -1, 24, 8.5]) {
+      for (const entry of feedbackCatalog.entries.filter(e => e.pool === 'RET')) {
+        expect(copyFitsContext(entry, { ...ready, localHour })).toBe(!entry.when)
+      }
+    }
+  })
+
+  it.each([[1, 10], [11, 30], [31, 120]] as const)('matches the captured %s–%s minute band only', (lower, upper) => {
+    const target = conditioned({ focusMinutes: [lower, upper] })
+    for (const minutes of [lower, upper]) {
+      const context = { ...running, focusDurationMs: minutes * 60_000 }
+      expect(copyFitsContext(target, context)).toBe(true)
+      expect(copyFitsContext(target, { ...context, phase: 'break' })).toBe(false)
+    }
+    for (const minutes of [lower - 1, upper + 1]) expect(copyFitsContext(target, { ...running, focusDurationMs: minutes * 60_000 })).toBe(false)
+  })
+
+  it('does not invent a duration or currently visible scene', () => {
+    const duration = conditioned({ focusMinutes: [1, 10] })
+    for (const focusDurationMs of [undefined, NaN, Infinity, -1, 0]) expect(copyFitsContext(duration, { ...running, focusDurationMs })).toBe(false)
+    const book = conditioned({ scenes: ['F3'] })
+    expect(copyFitsContext(book, running)).toBe(false)
+    expect(copyFitsContext(book, { ...running, sceneId: 'F4' })).toBe(false)
+    expect(copyFitsContext(book, { ...running, sceneId: 'F3' })).toBe(true)
+  })
+
+  it('requires all supplied conditions rather than treating them as alternatives', () => {
+    const entry = conditioned({ dayparts: ['morning'], focusMinutes: [1, 10], scenes: ['F3'] })
+    const context = { ...running, localHour: 9, focusDurationMs: 5 * 60_000, sceneId: 'F3' as const }
+    expect(copyFitsContext(entry, context)).toBe(true)
+    expect(copyFitsContext(entry, { ...context, localHour: 18 })).toBe(false)
+    expect(copyFitsContext(entry, { ...context, focusDurationMs: 25 * 60_000 })).toBe(false)
+    expect(copyFitsContext(entry, { ...context, sceneId: 'F2' })).toBe(false)
+  })
+
+  it('keeps all requested support universally available in its declared states', () => {
+    for (const entry of feedbackCatalog.entries.filter(e => e.pool.startsWith('ASK'))) expect(entry.when).toBeUndefined()
+  })
+
+  it.each([
+    {}, { daypart: ['morning'] }, { dayparts: ['dawn'] }, { dayparts: [] },
+    { focusMinutes: [30, 1] }, { focusMinutes: [0, 30] }, { focusMinutes: [1, 121] },
+    { scenes: ['F9'] }, { scenes: ['R1'] }, { scenes: ['F1', 'F1'] },
+  ])('rejects malformed start conditions %j', when => {
+    const bad = structuredClone(raw)
+    const entry = bad.entries.find(e => e.pool === 'STA') as unknown as Record<string, unknown>
+    entry.when = when
+    expect(() => parseFeedbackCatalog(bad)).toThrow(/feedback catalog/)
+  })
+
+  it('rejects a conditional-only pool so absent facts always have a safe fallback', () => {
+    const bad = structuredClone(raw)
+    for (const entry of bad.entries.filter(e => e.pool === 'RET')) {
+      (entry as unknown as Record<string, unknown>).when = { dayparts: ['morning'] }
+    }
+    expect(() => parseFeedbackCatalog(bad)).toThrow(/RET.coverage/)
+  })
+
+  it('filters before drawing across every hour, duration band and focus activity', () => {
+    for (let localHour = 0; localHour < 24; localHour++) {
+      for (const minutes of [5, 25, 60]) {
+        for (const sceneId of ['F1', 'F2', 'F3', 'F4', 'F5', 'F6', 'F7', 'F8'] as const) {
+          const context = { ...running, localHour, focusDurationMs: minutes * 60_000, sceneId }
+          const eligible = feedbackCatalog.entries.filter(e => e.pool === 'STA' && copyFitsContext(e, context))
+          expect(eligible.length).toBeGreaterThanOrEqual(2)
+          for (const seed of [1, 1234, 0xffffffff]) {
+            const chosen = reduce(event({ kind: 'focus-started' }), context, createFeedbackMemory(seed)).frame.encouragement!
+            expect(eligible).toContainEqual(chosen)
+          }
+        }
+      }
+    }
   })
 })

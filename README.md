@@ -2,6 +2,8 @@
 
 **Shared learning:** the [learning and experience map](docs/learning/README.md) collects character research, dialogue analysis, source notes and practical writing lessons. Use it to find evidence and examples; adopted product decisions remain in the PRD. Product-learning notes and original Chinese copy exercises retain Chinese.
 
+**Companion copy, November 23:** the [current 239-entry catalog](docs/prd/09-encouragement.md) adds specific interests, independent small stories and concise transitions. See [editorial lessons](docs/learning/companion-language/07-catalog-rewrite.md) and [verification](docs/verification/companion-copy-rewrite.md).
+
 **Current product documentation:** [番茄是个番茄 — PRD map](docs/prd/README.md) (v37, November 6, 2026). Start with the product overview, then follow the map to behavior, UI, data, acceptance, character, dialogue and the code bridge. This is the maintained product source; earlier handoffs remain historical snapshots. The split and new dialogue candidates do not change the application or establish full product acceptance.
 
 The November 2 PRD v35 increment introduced the current Focus controls and Records navigation. Focus keeps timing and thought controls in stable groups, results require explicit preparation before another start, and encouragement has a category reader with saved favorites. Records offers four views, full-history thought search, month selection and 20-item pages. Snapshot v8 preserves earlier data and adds quote favorites. See the [v35 scope](docs/plans/INTERACTION_V35_PLAN.md) and [verification](docs/verification/interaction-v35.md).

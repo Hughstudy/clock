@@ -43,11 +43,14 @@ export function feedbackFromTransition(before: AppSnapshot, transition: Transiti
   return { ...base, kind: 'reconcile' }
 }
 
-export function feedbackContext(snapshot: AppSnapshot, persistence: FeedbackContext['persistence'], event: AppFeedbackEvent | null): FeedbackContext {
+export function feedbackContext(snapshot: AppSnapshot, persistence: FeedbackContext['persistence'], event: AppFeedbackEvent | null, localHour?: number): FeedbackContext {
   return {
     phase: snapshot.timer.phase === 'focus' ? 'focus' : 'break',
     status: snapshot.timer.session?.status ?? 'ready',
     persistence,
+    localHour,
+    focusDurationMs: snapshot.timer.phase === 'focus' ? snapshot.timer.session?.durationMs : undefined,
+    sceneId: snapshot.settings.sceneVarietyEnabled ? snapshot.timer.session?.scene?.sceneId : undefined,
     participationSaved: persistence === 'saved' && event?.sessionId !== undefined &&
       snapshot.participations.some(p => p.sessionId === event.sessionId),
     returningReady: !snapshot.timer.session && (snapshot.participations.length > 0 || snapshot.records.length > 0 || snapshot.restMemories.length > 0),
@@ -71,6 +74,7 @@ export interface FeedbackHostInput {
   active: boolean
   nodeEncouragement: boolean
   automaticVisible?: boolean
+  localHour?: number
 }
 
 /** Countdown refreshes are intentionally absent: they never redraw copy or restart cues. */
@@ -81,7 +85,7 @@ export function feedbackSignature(input: FeedbackHostInput): string {
 }
 
 export function createFeedbackHost(input: FeedbackHostInput, catalog: FeedbackCatalog, initial: { seed: number; enteredAtMs?: number } = { seed: 1 }): FeedbackHostState {
-  const context = feedbackContext(input.snapshot, input.persistence, input.event)
+  const context = feedbackContext(input.snapshot, input.persistence, input.event, input.localHour)
   const entryPending = Boolean(initial.enteredAtMs !== undefined && input.active && input.automaticVisible !== false && input.nodeEncouragement && context.returningReady && context.persistence === 'saved' && !input.event)
   const feedback = transitionFeedback(createFeedbackMemory(initial.seed), { kind: 'reconcile', id: 'initial-view', atMs: 0, origin: 'restore' }, context, catalog)
   return { feedback, entryPending, cue: null, lastEventKey: null, signature: '' }
@@ -96,7 +100,7 @@ export function updateFeedbackHost(previous: FeedbackHostState, input: FeedbackH
   const eventKey = candidate ? JSON.stringify([candidate.id, candidate.kind, candidate.generation, candidate.revision, candidate.origin]) : null
   const fresh = candidate && eventKey !== previous.lastEventKey
   const current = fresh && candidate.generation === input.snapshot.datasetGeneration && candidate.revision === input.snapshot.revision
-  const context = feedbackContext(input.snapshot, input.persistence, candidate)
+  const context = feedbackContext(input.snapshot, input.persistence, candidate, input.localHour)
   const available = input.active && input.automaticVisible !== false && input.nodeEncouragement
   const greeting = previous.entryPending && current && candidate.origin === 'restore' && candidate.kind === 'reconcile' &&
     available && context.returningReady && input.persistence === 'saved'
@@ -123,7 +127,7 @@ export function updateFeedbackHost(previous: FeedbackHostState, input: FeedbackH
 }
 
 export function interactWithFeedback(previous: FeedbackHostState, input: FeedbackHostInput, event: FeedbackEvent, catalog: FeedbackCatalog): FeedbackHostState {
-  const feedback = transitionFeedback(previous.feedback.state, event, feedbackContext(input.snapshot, input.persistence, input.event), catalog, { nodeEncouragement: input.nodeEncouragement })
+  const feedback = transitionFeedback(previous.feedback.state, event, feedbackContext(input.snapshot, input.persistence, input.event, input.localHour), catalog, { nodeEncouragement: input.nodeEncouragement })
   if (!input.active) feedback.announcement = null
   return { ...previous, entryPending: false, feedback, cue: cueFor(event, feedback, input.active) }
 }

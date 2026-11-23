@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { nowMs } from '../adapters/calendar'
+import { localHour, nowMs } from '../adapters/calendar'
 import { newId } from '../adapters/ids'
 import { feedbackCatalog } from '../data/encouragement'
 import { createFeedbackHost, feedbackSignature, interactWithFeedback, updateFeedbackHost, type FeedbackHostInput } from '../logic/feedback-host'
@@ -21,7 +21,7 @@ export function useFeedback(app: ClockApp, options: { active?: boolean; automati
     }
   }, [])
   const input: FeedbackHostInput = {
-    snapshot: app.snapshot, persistence: app.saveState, event: app.feedbackEvent,
+    snapshot: app.snapshot, persistence: app.saveState, event: app.feedbackEvent, localHour: localHour(nowMs()),
     active: (options.active ?? true) && pageVisible, nodeEncouragement: options.nodeEncouragement ?? app.snapshot.settings.encouragementEnabled,
     automaticVisible: options.automaticVisible ?? true,
   }
@@ -37,7 +37,7 @@ export function useFeedback(app: ClockApp, options: { active?: boolean; automati
   const request = useCallback((category?: AskPool) => {
     const event = { kind: 'encouragement-requested' as const, id: newId(), atMs: nowMs(), origin: 'user' as const, ...(category ? { category } : {}) }
     setStored(previous => interactWithFeedback(previous, input, event, feedbackCatalog))
-  }, [input.snapshot, input.persistence, input.event, input.active, input.nodeEncouragement])
+  }, [input.snapshot, input.persistence, input.event, input.active, input.nodeEncouragement, input.localHour])
   const next = useCallback(() => {
     const pool = state.feedback.frame.encouragement?.pool
     request(state.feedback.frame.placement === 'requested' && pool?.startsWith('ASK') ? pool as AskPool : undefined)
@@ -45,7 +45,7 @@ export function useFeedback(app: ClockApp, options: { active?: boolean; automati
   const dismiss = useCallback(() => {
     const event = { kind: 'dismissed' as const, id: newId(), atMs: nowMs(), origin: 'user' as const }
     setStored(previous => interactWithFeedback(previous, input, event, feedbackCatalog))
-  }, [input.snapshot, input.persistence, input.event, input.active, input.nodeEncouragement])
+  }, [input.snapshot, input.persistence, input.event, input.active, input.nodeEncouragement, input.localHour])
 
   // Remember the settle cue that played, so the finished activity stays while its result shows.
   const [settle, setSettle] = useState<PresentationCue | null>(null)
