@@ -16,12 +16,14 @@
 
 ## 先看什么
 
+**2026-11-23 语言研究与重新审稿。** 用户要求至少200句、更多高频场景素材，并先学习咨询、社会、市场、消费等心理学。[心理学阅读与语言复盘](25-language-variety.md)记录十项来源、示范对话拆解、260句未发布工作稿的问题、两个月概率视角及20条试写。线上仍为61句；这次发布研究文档，不发布扩写代码。文案数量不作为舒适度、趣味或医疗效果的证明。
+
 | 你要做的事 | 建议阅读顺序 | 看完应能回答 |
 | --- | --- | --- |
 | 讨论这个产品是否成立 | [产品全貌](01-product.md) → [伙伴性格](10-character.md) → 产品全貌的[待决事项](01-product.md#mechanism-decisions) | 产品是什么、为什么值得用、哪些已定、哪些仍待验证 |
 | 打磨人物与弧光 | [已确认的性格](10-character.md) → [App 交互与取舍](19-character-in-app.md) → [创作框架与原则](20-character-framework.md) | 什么能被感受到、哪些设定放下、少量场景如何表现自己的趣味与亲近 |
 | 了解伙伴的背景 | [背景故事](17-character-background.md) → [研究及现状核对](18-character-background-research.md) → [当前表达边界](19-character-in-app.md) | 作者可借鉴哪些往事；为什么它们不自动成为 App 剧情或制作任务 |
-| 设计语言与写台词 | [44种使用情境](21-language-scenes.md) → [共用语气和选句](08-voice.md) → [当前句库](09-encouragement.md)／[日常候选](11-dialogue.md) | 此刻该不该说、怎样表达关系与趣味、何时变化与退出、哪些仍未实现 |
+| 设计语言与写台词 | [心理学阅读与复盘](25-language-variety.md) → [44种使用情境](21-language-scenes.md) → [共用语气和选句](08-voice.md) → [当前句库](09-encouragement.md) | 此刻该不该说、回应有没有依据、内容是否真正丰富、哪些仍是未发布草稿 |
 | 设计一个故事 | [场景创作方法](20-character-framework.md#character-scene-method) → [故事规则](02-features.md#story-rewards) → [章稿模板](12-stories.md#chapter-brief) → [故事验收](07-acceptance.md#causal-longterm-tests) | 人物选择是否可见，起因、结果、各个结束落点与收集条件是否完整 |
 | 改页面和按钮 | [功能规格](02-features.md) → [UI规范与固定文案](03-ui.md) → [动作索引](13-actions.md) → [验收](07-acceptance.md) | 一次点击改变什么、控件怎么协作、布局是否稳定 |
 | 研究专注、休息与临时调时 | [交互研究](22-timer-interaction-research.md) → [现行计时规则](02-features.md#f1) | 区分下一段准备、原段内调时和结束切换；查看调研证据、三种方案与待验证影响 |
@@ -57,6 +59,7 @@
 | [22-timer-interaction-research.md](22-timer-interaction-research.md) | 专注、休息与时间选择的独立研究；竞品、代码历史、三案比较、完整流程判断、目标路径和反例 | 2026-11-22讨论稿；建议同时设计下一段直达与原段内调时，分步验证；尚未替换现行规则或实施 |
 | [23-timer-current-flows.md](23-timer-current-flows.md) | 专注、休息、时长的全部基础状态与动作；按目标列完整路径、点击数、输入成本及异常分支 | 2026-11-22现状说明；与候选方案分开，先供流程评审，非改版验收 |
 | [24-copy-review.md](24-copy-review.md) | 199项运行资源逐句审阅，原文、取舍、改后文本与理由 | 2026-11-22编辑记录；历史删除项不作为运行候选，现行文本以09为准 |
+| [25-language-variety.md](25-language-variety.md) | 六个心理学研究方向、十项来源、示范对话分析、260句工作稿复盘、两个月视角与20条候选 | 2026-11-23研究稿；纠正过度压短与语义单调，扩写与条件选句未发布 |
 
 ## 不要混淆的几件事
 
