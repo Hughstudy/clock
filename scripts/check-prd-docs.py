@@ -9,6 +9,7 @@ import sys
 ROOT = Path(__file__).resolve().parents[1]
 PRD = ROOT / 'docs/prd'
 MODULES = sorted(PRD.glob('*.md'))
+LEARNING = sorted((ROOT / 'docs/learning').rglob('*.md'))
 ENTRYPOINTS = [ROOT / p for p in (
     'README.md', 'AGENTS.md', 'PLAN.md',
     'docs/plans/ANIMATION_PLAN.md', 'docs/plans/MAIN_LOGIC_PLAN.md',
@@ -39,7 +40,7 @@ def anchors(path):
     return result
 
 count = 0
-for path in MODULES + ENTRYPOINTS:
+for path in MODULES + LEARNING + ENTRYPOINTS:
     if not path.is_file():
         errors.append(f'Missing file: {path.relative_to(ROOT)}')
         continue
@@ -74,6 +75,18 @@ for path in MODULES:
     if path.name != 'README.md' and f']({path.name})' not in map_text:
         errors.append(f'PRD map does not list {path.name}')
 
+for path in LEARNING:
+    if path.name == 'README.md':
+        if path.parent != ROOT / 'docs/learning':
+            parent_map = path.parent.parent / 'README.md'
+            target = path.relative_to(parent_map.parent).as_posix()
+            if not parent_map.is_file() or f']({target})' not in parent_map.read_text():
+                errors.append(f'Learning map does not list {path.relative_to(ROOT)}')
+        continue
+    local_map = path.parent / 'README.md'
+    if not local_map.is_file() or f']({path.name})' not in local_map.read_text():
+        errors.append(f'Learning map does not list {path.relative_to(ROOT)}')
+
 explicit_owners = {}
 for path in MODULES:
     for anchor in re.findall(r'<a id="([^"]+)"', path.read_text()):
@@ -96,5 +109,5 @@ for entry in runtime:
 if errors:
     print('\n'.join(errors), file=sys.stderr)
     sys.exit(1)
-print(f'PASS: {len(MODULES)} PRD documents; {count} local links; '
+print(f'PASS: {len(MODULES)} PRD documents; {len(LEARNING)} learning documents; {count} local links; '
       f'{len(explicit_owners)} unique explicit anchors; {len(ids)} dialogue candidates; {len(runtime)} runtime lines matched.')

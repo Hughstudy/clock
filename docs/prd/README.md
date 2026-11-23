@@ -1,5 +1,7 @@
 # 番茄是个番茄 · 产品文档地图
 
+**独立学习目录：** [学习与经验地图](../learning/README.md)收纳本窗口的人物、语言研究及可复用经验；PRD保留产品决定与研究入口。新增的对话、中文表达、幽默和长期使用研究见[伙伴语言专题](../learning/companion-language/README.md)。
+
 **如何使用：** 先读[产品全貌](01-product.md)，再按下面的任务地图找详细规则。写伙伴内容看性格、台词和故事；开发功能看功能、UI、数据及对应验收。不要把整个目录当作每次都必须读完的一份长文。
 
 当前为 **v37，2026-11-06**。从v36完整主稿拆分，保留原有A—F章节号、RULE／ACT／T编号与锚点；新增48句日常台词候选。此次更新是文档组织与内容创作，不代表这些内容已经上线。
@@ -50,16 +52,16 @@
 | [13-actions.md](13-actions.md) | 用户动作与系统事件的ACT索引 | F；供定位，不另定义一套规则 |
 | [14-code-bridge.md](14-code-bridge.md) | 理念到代码的对应、差异、建议与证据边界 | 桥接文档；代码状态须看核对提交 |
 | [15-character-arc-proposal.md](15-character-arc-proposal.md) | 早期人物矛盾、三个尺度的弧光、六张试写卡 | 2026-11-06提案历史；当前讨论先看19与20，不直接作为制作清单 |
-| [16-character-research.md](16-character-research.md) | 六轮研究与文稿自检、一手来源、否决方向及证据边界 | 研究记录；未做用户试验，不宣称已验证吸引力 |
+| [16-character-research.md](16-character-research.md) | 人物研究的兼容入口，保留原锚点 | 全文迁入独立学习目录；历史研究不自动成为现行需求 |
 | [17-character-background.md](17-character-background.md) | 背景故事正文、现在的愿望、个人偏好及以后表演的创作依据 | 新身世创作稿；供评阅，不是上线剧情或动画任务 |
-| [18-character-background-research.md](18-character-background-research.md) | 十一项互联网来源、现有形象与活动核对、方向比较及反向检查 | 2026-11-14研究记录；区分来源、推论与实现，不宣称用户验证 |
+| [18-character-background-research.md](18-character-background-research.md) | 背景研究的兼容入口，保留原来源及复盘锚点 | 全文迁入独立学习目录，保留2026-11-14阅读和验证范围 |
 | [19-character-in-app.md](19-character-in-app.md) | 实际交互与表达通道、性格取舍、四张简单场景卡与能力边界 | 2026-11-21当前人物讨论入口；前三张优先试稿，物件点击后置，均未实施 |
 | [20-character-framework.md](20-character-framework.md) | 动机、选择、相处方式、情绪、场景写法、制作原则与再次复盘 | 创作工作稿；供评稿与筛选，不是新增运行时人格系统 |
 | [21-language-scenes.md](21-language-scenes.md) | 44种使用情境的语言目的、候选说法、呈现／变化／退出、三段使用路径和接入顺序 | 语言设计入口；已接入语言规则与未来触碰、物件、故事分开标明 |
 | [22-timer-interaction-research.md](22-timer-interaction-research.md) | 专注、休息与时间选择的独立研究；竞品、代码历史、三案比较、完整流程判断、目标路径和反例 | 2026-11-22讨论稿；建议同时设计下一段直达与原段内调时，分步验证；尚未替换现行规则或实施 |
 | [23-timer-current-flows.md](23-timer-current-flows.md) | 专注、休息、时长的全部基础状态与动作；按目标列完整路径、点击数、输入成本及异常分支 | 2026-11-22现状说明；与候选方案分开，先供流程评审，非改版验收 |
 | [24-copy-review.md](24-copy-review.md) | 199项运行资源逐句审阅，原文、取舍、改后文本与理由 | 2026-11-22编辑记录；历史删除项不作为运行候选，现行文本以09为准 |
-| [25-language-variety.md](25-language-variety.md) | 六个心理学研究方向、十项来源、示范对话分析、260句工作稿复盘、两个月视角与20条候选 | 2026-11-23研究稿；纠正过度压短与语义单调，扩写与条件选句未发布 |
+| [25-language-variety.md](25-language-variety.md) | 学习结果怎样回到语言PRD、当前实现与待验证事项 | 研究全文已迁出；当前运行61句，260句扩写及条件选句仍未发布 |
 
 ## 不要混淆的几件事
 

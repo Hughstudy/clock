@@ -45,6 +45,8 @@ The exported window assignments are historical for this local continuation. The 
 
 ## Architecture
 
+- Reusable product research and writing lessons live in [docs/learning](docs/learning/README.md), with topic maps and explicit reading limits. Start with the relevant topic when researching character or language; do not load every note for unrelated changes. These Chinese product-learning records and original examples are reference material, not a second PRD or task board. Adopted decisions belong in the corresponding PRD module, and candidate text must not be treated as shipped content.
+
 - Follow the separate [Animation Plan](docs/plans/ANIMATION_PLAN.md) and [Main Logic Plan](docs/plans/MAIN_LOGIC_PLAN.md); PLAN.md owns their shared interface and integration sequence. These are module responsibilities, not new live window claims. The documentation split does not itself authorize a source reorganization or approve pending product choices.
 - Main logic owns accounting, persistence, rewards/bookmarks, saved settings, feedback eligibility/copy/priority and factual screen semantics. Animation owns deterministic drawing, pose mapping, contact geometry and cancellable presentation. Main must work with a static renderer; animation must be testable with contract fixtures.
 - Main publishes read-only views, permitted transient cues and explicit user-intent callbacks. Animation completion/cancellation changes only local presentation state; it cannot save, grant rewards, start/end timers or gate controls. Keep visual cue identity independent from accessible announcement identity and preserve one main-owned live-region policy.
