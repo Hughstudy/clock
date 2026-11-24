@@ -11,6 +11,7 @@ import { ThoughtPanel } from '../components/ThoughtPanel'
 import { TimerActionButton } from '../components/TimerActionButton'
 import { BlueCompanion } from '../components/companion/BlueCompanion'
 import { CompanionFeedback } from '../components/companion/CompanionFeedback'
+import { SceneRecordBook } from '../components/scene-journal/SceneRecordBook'
 import { sceneSettingFor } from '../components/companion/CompanionScenery'
 import { useSceneLight } from '../hooks/companion/useSceneLight'
 import type { SaveState, Thought } from '../contracts/focus'
@@ -49,6 +50,7 @@ interface Props {
   systemNotices?: ReactNode
   dispatch: (action: UserAction) => void | Promise<boolean>
   onSettings: () => void
+  onOpenRecords: () => void
 }
 
 const titles = { duration: copy.durationTitle, end: copy.endQuestion, thought: copy.write,
@@ -60,7 +62,7 @@ const titles = { duration: copy.durationTitle, end: copy.endQuestion, thought: c
  * confirmation and data details share one local task surface.
  */
 export function HomeScreen({ active, view, result, linkedThoughts, defaultsIntent, companion, thoughts,
-  reducedMotion, canEdit, saveState, timerPending = false, favorites, onTaskChange, systemNoticeSummary = null, systemNotices, dispatch, onSettings }: Props) {
+  reducedMotion, canEdit, saveState, timerPending = false, favorites, onTaskChange, systemNoticeSummary = null, systemNotices, dispatch, onSettings, onOpenRecords }: Props) {
   const [task, setTask] = useState<Panel>(null)
   const choice = useDurationChoice(defaultsIntent)
   const [restChoice, setRestChoice] = useState<RestPhase | null>(null)
@@ -306,7 +308,7 @@ export function HomeScreen({ active, view, result, linkedThoughts, defaultsInten
     <section className="screen home" style={light ? { '--sky': light.sky, '--floor': light.floor } as CSSProperties : undefined} data-tone={tone} data-setting={setting} data-sky-ink={light?.skyInk ?? 'default'} data-panel={panel ?? ''} data-ready-focus={readyFocus} data-chrome={chrome.away ? 'away' : 'shown'} data-arriving={chrome.arriving} aria-label="专注计时">
       {/* While the card is away, a tap on the room brings it back. A pat on the companion stays a pat. */}
       <div ref={sceneBox} className="fp-scene" data-setting={setting} data-chrome={chrome.away ? 'away' : 'shown'}
-        onClick={event => { if (chrome.away && !(event.target as Element).closest('[data-touch-kind]')) chrome.callOut() }}>
+        onClick={event => { if (chrome.away && !(event.target as Element).closest('[data-touch-kind], [data-scene-book-trigger]')) chrome.callOut() }}>
         <div className="fp-top" {...awayAttrs}>
           <h1>专注</h1>
           <button type="button" className="pill pill--glass pill--icon" onClick={onSettings} aria-label="设置">
@@ -318,6 +320,7 @@ export function HomeScreen({ active, view, result, linkedThoughts, defaultsInten
           voiceRef={voiceBox} {...(favorites ? { favorites } : {})} onNext={companion.next} onChoose={companion.request} onClose={close} />}
         {spoken && <ShortCompanionMessage voiceRef={voiceBox} text={spoken.text} onRead={target => { setMessage(spoken.text); show('message', target) }} />}
         <div className="fp-art">
+          <SceneRecordBook place={companion.sceneryEnabled ? scene?.id ?? 'ready' : 'plain'} active={active && !panel} onOpen={onOpenRecords} />
           <CompanionFeedback feedback={companion.feedback} reducedMotion={reducedMotion} renderCharacter={(presentation, keyboardPat) =>
               <BlueCompanion presentation={presentation} keyboardPat={keyboardPat} cueId={companion.cue?.id} scene={scene}
                 panelOpen={!!panel} sceneryEnabled={companion.sceneryEnabled} night={view.night}

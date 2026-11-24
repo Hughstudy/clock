@@ -1,0 +1,36 @@
+/* Everything drawn during the flight is inert. Inputs, focus and announcements
+   stay on the real destination underneath. */
+.scene-fold-stage {
+  position: fixed;
+  z-index: 100;
+  inset: 0;
+  overflow: hidden;
+  background: var(--paper);
+  pointer-events: none;
+  user-select: none;
+}
+
+.scene-fold-stage * { pointer-events: none !important; }
+.scene-fold-room, .scene-fold-scrim, .scene-fold-chrome { position: absolute; inset: 0; }
+.scene-fold-scrim { background: #3d2a1c; }
+.scene-fold-page, .scene-fold-gutter { position: absolute; inset: 0 auto auto 0; width: 100%; }
+.scene-fold-page-shadow { position: absolute; border-radius: 7px 14px 13px 7px; }
+.scene-fold-gutter { background: linear-gradient(90deg, #35271b66, transparent 38%); }
+.scene-fold-closed { position: absolute; display: block; overflow: visible; }
+.scene-fold-cast { position: absolute; border-radius: 7px 14px 13px 7px; box-shadow: 0 25px 46px 3px #38281954; }
+
+/* Measure the landing site at its settled size when Focus is revealed. */
+html[data-page-turn='back'] #root .home :is(.fp-art, .fp-digits, .fp-clock-phase) { transition: none !important; }
+/* Capture Records with its normal scrollbar gutter, then give the inert room
+   the same full-width viewport it had before navigation. Pin the live hit
+   surfaces to their measured positions until that normal gutter returns. */
+html[data-scene-viewport] { scrollbar-gutter: auto !important; }
+html[data-scene-viewport] #root > .app[data-screen='stats'] {
+  margin-inline: var(--scene-records-left) 0;
+  width: var(--scene-records-width);
+}
+html[data-scene-viewport] #root > .app[data-screen='stats'] .tab-bar {
+  left: var(--scene-nav-left);
+  width: var(--scene-nav-width);
+}
+@media (prefers-reduced-motion: reduce) { .scene-fold-stage { display: none; } }

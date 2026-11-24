@@ -1,5 +1,7 @@
 # 番茄是个番茄 · 产品文档地图
 
+**场景手帐（2026-11-25）。** [从专注场景翻开手帐](02-features.md#scene-journal)说明十一项活动的摆位、进入记录和合书返回；[T-REC44](07-acceptance.md#t-rec44)覆盖即时操作与减少动态。
+
 **计时交互更新（2026-11-23）。** 用户选定了[中途改剩余时间](02-features.md#adjust-remaining)。专注和休息在运行或暂停时沿用同一段。[11月22日评审](22-timer-interaction-research.md)中的下一段直达和组合结束按钮仍为讨论方案。
 
 **当前文案更新（2026-11-23）：** [239句现行库](09-encouragement.md)与运行资源同步；[改稿笔记](../learning/companion-language/07-catalog-rewrite.md)记录学习如何用于删改。当前语言规则见08与21。

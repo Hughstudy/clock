@@ -15,6 +15,9 @@ export function useSceneFit(scene: RefObject<HTMLElement>, framed: boolean): voi
     let timeDrop = 0
     const resize = new ResizeObserver(() => schedule())
     const measure = () => {
+      // Focus stays mounted behind Records. Keep its last real framing until
+      // it is visible and can provide the book's landing coordinates again.
+      if (!root.offsetWidth || !root.offsetHeight) return
       const art = root.querySelector<SVGSVGElement>('.fp-art .blue-companion')
       // The art box ends above the floor band the card sits on; that edge is the support.
       const artBox = root.querySelector<HTMLElement>('.fp-art')
@@ -25,7 +28,9 @@ export function useSceneFit(scene: RefObject<HTMLElement>, framed: boolean): voi
       // Older in-progress sessions can still carry a step beneath the time.
       const step = root.querySelector<HTMLElement>('.fp-step')
       const speechSpace = root.querySelector<HTMLElement>('.fp-speech-reserve')
-      for (const element of [time, step, panel, speechSpace]) if (element) resize.observe(element)
+      // A marker or a status row changes the art's support height even when
+      // the outer scene keeps the same viewport.
+      for (const element of [artBox, time, step, panel, speechSpace]) if (element) resize.observe(element)
       const box = root.getBoundingClientRect()
       const font = parseFloat(getComputedStyle(root).fontSize) || 16
       const passingHeight = Math.ceil(2 * font * 1.45 + 34)
@@ -95,12 +100,14 @@ export function useSceneFit(scene: RefObject<HTMLElement>, framed: boolean): voi
     let settle = requestAnimationFrame(() => { settle = requestAnimationFrame(() => { root.dataset.motion = 'on' }) })
     resize.observe(root)
     children.observe(root, { childList: true })
+    root.addEventListener('scene-book-measure', measure)
     window.visualViewport?.addEventListener('resize', schedule)
     return () => {
       cancelAnimationFrame(frame)
       cancelAnimationFrame(settle)
       resize.disconnect()
       children.disconnect()
+      root.removeEventListener('scene-book-measure', measure)
       window.visualViewport?.removeEventListener('resize', schedule)
     }
   }, [scene, framed])

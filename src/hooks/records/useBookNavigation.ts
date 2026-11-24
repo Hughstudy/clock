@@ -64,7 +64,8 @@ export function useBookNavigation(props: Pick<RecordsBookInput, 'view' | 'favori
       cover: root.querySelector<HTMLElement>('.rj-cover')!,
     })
     motion.current = api
-    api.open()
+    // A trip from the room brings its own hinged cover. Direct entry still opens the book here.
+    if (document.documentElement.dataset.pageTurn !== 'forward') api.open()
     return () => {
       api.dispose()
       motion.current = null

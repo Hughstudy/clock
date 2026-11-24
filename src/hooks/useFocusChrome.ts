@@ -2,9 +2,9 @@ import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react
 import { focusChromeDelay } from '../logic/focus-chrome'
 import type { Spec } from '../logic/spec'
 
-// A clock already on the quiet screen stays in place through its first tap. While
-// shown, holding or keyboard-focusing its new edit trigger keeps it from moving away.
-const CONTROLS = '.fp-plate, .fp-top, .tab-bar, .home[data-chrome="shown"] .fp-clock-trigger'
+// A press on the clock or book holds the current view. A press after the
+// controls have tucked must not recall them and move the target under a finger.
+const CONTROLS = '.fp-plate, .fp-top, .tab-bar, .home[data-chrome="shown"] :is(.fp-clock-trigger, .scene-book-trigger)'
 // Short landscapes already keep the card in its own side region, so it stays put there.
 const SHORT_LANDSCAPE = '(orientation: landscape) and (max-height: 599px)'
 

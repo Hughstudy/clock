@@ -3,6 +3,7 @@ import { formatClock, PHASE_LABELS } from './components/format'
 import { Notices } from './components/Notices'
 import { TabBar, type Screen } from './components/TabBar'
 import { TimerEndedBanner, timerEndedText } from './components/TimerEndedBanner'
+import { cancelSceneJournal } from './components/scene-journal/navigation'
 import { focusCopy } from './data/focus-copy'
 import { useFeedback } from './hooks/useFeedback'
 import { useMotionPreference } from './hooks/companion/useMotionPreference'
@@ -114,6 +115,8 @@ export function App() {
 
   // An ending seen on Focus needs no second notice on the other screens.
   const ended = app.result
+  // Reveal fresh facts immediately if the session ends or data changes under a moving page.
+  useLayoutEffect(cancelSceneJournal, [ended?.sessionId, app.snapshot.datasetGeneration, app.saveError, app.notice?.kind])
   const [seenEnding, setSeenEnding] = useState<string | null>(null)
   useEffect(() => { if (screen === 'home') setSeenEnding(ended?.sessionId ?? null) }, [screen, ended?.sessionId])
   const unseenEnding = ended && screen !== 'home' && seenEnding !== ended.sessionId ? ended : null
@@ -145,13 +148,13 @@ export function App() {
     focusOnHome.current = null
     if (target) document.querySelector<HTMLElement>(target)?.focus({ preventScroll: true })
   }, [screen])
-  // Settings is a separate surface with a way back, so entering and leaving it has a direction:
-  // it slides in from the trailing edge, and Focus fades back in on return. Tabs stay instant.
-  // The screen changes synchronously in the same tap; only its first frames ease in.
+  // Settings has its own sheet transition. Selecting an active tab finishes its journal motion.
   const navTimer = useRef(0)
-  const openScreen = (next: Screen, focusTarget: string | null = null, returning = false) => {
+  const openScreen = useCallback((next: Screen, focusTarget: string | null = null, returning = false) => {
     const root = document.documentElement
     window.clearTimeout(navTimer.current)
+    if (next === screen) cancelSceneJournal()
+    if (next === 'stats' && next !== screen) refresh()
     if ((next === 'settings' || screen === 'settings') && !motion.reducedMotion) {
       root.dataset.nav = next === 'settings' ? 'forward' : 'back'
       navTimer.current = window.setTimeout(() => { delete root.dataset.nav }, 400)
@@ -159,7 +162,8 @@ export function App() {
     focusOnHome.current = focusTarget
     if (returning) back(next)
     else navigate(next)
-  }
+  }, [back, motion.reducedMotion, navigate, refresh, screen])
+  const openRecords = useCallback(() => openScreen('stats'), [openScreen])
 
   // A new install opens quietly: offline readiness is listed in Settings › 应用状态, not on Focus.
   const systemNoticeSummary = app.notice ? '数据状态需要查看' : app.saveError ? '有更改尚未保存' : pwa.updateReady ? '新版本已准备好' : null
@@ -196,7 +200,8 @@ export function App() {
                 active={screen === 'home'} result={app.result} linkedThoughts={linkedThoughts} defaultsIntent={defaultsIntent}
                 favorites={favorites} timerPending={app.timerPending} onTaskChange={setFocusTaskOpen}
                 systemNoticeSummary={systemNoticeSummary} systemNotices={notices}
-                saveState={app.saveState} canEdit={canEdit} dispatch={app.dispatch} onSettings={() => openScreen('settings')} />
+                saveState={app.saveState} canEdit={canEdit} dispatch={app.dispatch} onSettings={() => openScreen('settings')}
+                onOpenRecords={openRecords} />
             </div>
             {screen === 'stats' && <RecordsScreen key={app.snapshot.datasetGeneration} view={statsView} thoughts={thoughts} canEdit={canEdit} visit={recordsVisit}
               favorites={favorites}
@@ -210,10 +215,7 @@ export function App() {
         )}
       </main>
       {unseenEnding && <TimerEndedBanner result={unseenEnding} onView={() => openScreen('home', '.home .fp-primary button')} onDismiss={() => setSeenEnding(unseenEnding.sessionId)} />}
-      <TabBar active={screen} onSelect={next => {
-        if (next === 'stats' && next !== screen) refresh()
-        openScreen(next)
-      }} />
+      <TabBar active={screen} onSelect={openScreen} />
       <p className="sr-only" aria-live={announcement?.priority ?? 'polite'} aria-atomic="true">
         {announcement && <span key={announcement.id}>{announcement.text}</span>}
       </p>

@@ -1,0 +1,129 @@
+@import './book-art.css';
+
+/* A sibling of the pet button: these are two separately focusable objects.
+   The camera frame shares the original 240:190 character art's dimensions,
+   responsive camera transforms and bottom support edge. */
+.fp-art > .scene-book-plane {
+  position:absolute;
+  left:50%;
+  bottom:0;
+  width:var(--art-w);
+  max-width:none;
+  aspect-ratio:240/190;
+  transform:translate(-50%,10%);
+  container-type:inline-size;
+  pointer-events:none;
+  z-index:2;
+}
+.home[data-layout='readable'] .fp-art > .scene-book-plane {
+  width:min(100cqw,100cqh * 240 / 190);
+  bottom:50%;
+  transform:translate(-50%,50%);
+}
+.scene-book-plane > .scene-book-trigger {
+  --book-body-width:var(--book-span);
+  --book-drawn-height:calc(var(--book-body-width) * .55);
+  --book-touch-height:max(var(--book-drawn-height),44px / max(.4,var(--fit-scale,1)));
+  position:absolute;
+  display:grid;
+  place-items:center;
+  width:max(var(--book-body-width) * 1.11,44px / max(.4,var(--fit-scale,1)));
+  height:var(--book-touch-height);
+  min-width:0;
+  min-height:0;
+  padding:0;
+  margin:0;
+  border:0;
+  background:none;
+  box-shadow:none;
+  border-radius:6px;
+  pointer-events:auto;
+  translate:-50% calc(-50% - var(--book-hit-lift,0px));
+  touch-action:manipulation;
+  cursor:pointer;
+  -webkit-tap-highlight-color:transparent;
+}
+.scene-book-plane > .scene-book-trigger:active { transform:none; }
+.scene-book-trigger > [data-scene-book-block] {
+  display:block;
+  position:absolute;
+  left:50%;
+  top:calc(50% + var(--book-hit-lift,0px) - var(--book-body-width) * .09);
+  width:var(--book-body-width);
+  aspect-ratio:3/4;
+  translate:-50% -50%;
+  pointer-events:none;
+}
+.scene-book-trigger .journal-projection {
+  display:block;
+  width:100%;
+  height:100%;
+  overflow:visible;
+}
+.scene-book-trigger > [data-scene-book-shadow] {
+  display:block;
+  position:absolute;
+  left:50%;
+  top:calc(50% + var(--book-hit-lift,0px) + var(--book-body-width) * .214);
+  width:calc(var(--book-body-width) * 1.44);
+  height:calc(var(--book-body-width) * .24);
+  translate:-50% -50%;
+  background:radial-gradient(ellipse closest-side, rgb(70 45 25 / .37) 28%, rgb(70 45 25 / .23) 66%, transparent);
+  pointer-events:none;
+}
+.scene-book-trigger:focus-visible {
+  outline:2px solid #2459ab;
+  outline-offset:2px;
+  background:rgb(255 251 235 / 15%);
+}
+.home[data-layout='readable'] .scene-book-trigger {
+  /* The compact illustration has no parent scale, even when the original
+     fitting variable still describes a 0.4× room. Extend the hit surface
+     above the floor; the picture itself stays at its authored position. */
+  --book-touch-height:max(var(--book-drawn-height),44px);
+  --book-hit-lift:calc((var(--book-touch-height) - var(--book-drawn-height)) / 2);
+  width:max(var(--book-body-width) * 1.11,44px);
+  height:var(--book-touch-height);
+}
+
+/* Keep every authored resting spot in the frame as the primary controls tuck.
+   These six room/mat corners extend beyond the stock enlarged quiet camera. */
+@media (orientation:portrait) {
+  .app .home:not([data-layout='readable']) .fp-scene:has(.scene-book-trigger:is(
+    [data-book-scene='F1'], [data-book-scene='F3'], [data-book-scene='F8'],
+    [data-book-scene='R1'], [data-book-scene='R2'], [data-book-scene='R3'])) {
+    --away-scale:var(--fit-scale,1);
+  }
+}
+/* Keep the extra touch surface above the floor when the console is visible.
+   The artwork itself retains its original center on the table or mat. */
+@media (orientation:portrait) {
+  .home[data-chrome='shown']:not([data-layout='readable']) .scene-book-trigger {
+    --book-hit-lift:calc((var(--book-touch-height) - var(--book-drawn-height)) / 2);
+  }
+}
+@media (orientation:landscape) and (max-height:599px) {
+  .home:not([data-layout='readable']) .scene-book-trigger {
+    --book-hit-lift:calc((var(--book-touch-height) - var(--book-drawn-height)) / 2);
+  }
+}
+
+@media (orientation:portrait) and (max-height:640px) {
+  .app .home[data-chrome='shown']:not([data-layout='readable']) .fp-art {
+    inset-block-end:calc(var(--art-clear) + 8px);
+  }
+}
+
+/* The result, rest chooser and saved marker can each add a row above the
+   buttons. Keep the support surface and its book above the visible rows. */
+@media (orientation: portrait) {
+  .app .home:not([data-layout='readable']) {
+    --art-clear: calc(var(--console) + var(--bar-clear) + var(--book-status-space, 0px) + var(--book-note-space, 0px));
+  }
+  .home:has(.fp-status[data-running='false']:not(:empty)) {
+    --book-status-space: calc(max(44px, 2.3rem) + 6px);
+  }
+  .home:has(.fp-note:not([hidden])) {
+    --book-note-space: calc(var(--voice-row) + 6px);
+  }
+}

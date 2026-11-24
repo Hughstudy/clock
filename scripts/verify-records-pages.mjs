@@ -26,6 +26,9 @@ try {
       const turn = (dir,kind)=>page.locator('.bm-transition[data-direction="'+dir+'"][data-turn="'+kind+'"]')
       await page.goto(url)
       await press('记录')
+      await page.locator('.scene-fold-stage .journal-hinge').waitFor({state:'attached'})
+      // Reloading straight into Records opens its own cover without a room to lift it from.
+      await page.reload()
       await page.locator('.bm-cover:not([hidden])').waitFor()
       assert.equal(await page.getByText('记录索引',{exact:true}).count(),0)
       await tab('room').click()

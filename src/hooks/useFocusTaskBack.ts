@@ -27,10 +27,13 @@ function listen() {
 }
 
 function showScreen(screen: Screen) {
+  // A task or a pending history.back() can settle on the screen already
+  // displayed. Only a change of destination starts a screen transition.
+  if (screen === visibleScreen) return
   // Browser Back does not focus a button first. Finish editing while the old
   // screen is still mounted, so its normal blur handler can save valid fields
   // and retain invalid drafts instead of losing the event during unmount.
-  if (screen !== visibleScreen && document.activeElement instanceof HTMLElement) document.activeElement.blur()
+  if (document.activeElement instanceof HTMLElement) document.activeElement.blur()
   visibleScreen = screen
   screenListeners.forEach(listener => listener(screen))
 }
