@@ -74,7 +74,7 @@ export function EncouragementReader({ quote, canEdit, favorites, voiceRef, reada
   const otherProblems = favorites?.problems.filter(problem => problem.quote.id !== quote.id && favorites.detailFor(problem.quote)) ?? []
   const category = copy.askOptions.find(option => option.pool === quote.pool) ?? copy.askOptions[0]
   const favoriteLabel = pending ? '等待保存确认' : previousVersion ? '取消旧版收藏' : saved ? '取消收藏这句' : '收藏这句'
-  const footer = <div className="fp-reader-actions" role="group" aria-label="这句鼓励">
+  const footer = (head: boolean) => <div className="fp-reader-actions" role="group" aria-label="这句鼓励">
       <button type="button" className="text-action" data-speech-control="next" onClick={onNext}>
         <SpeechIcon kind="next"/>{copy.nextEncouragement}</button>
       {favorites && <button type="button" className="text-action" data-speech-control="favorite" disabled={!canEdit || pending}
@@ -90,6 +90,10 @@ export function EncouragementReader({ quote, canEdit, favorites, voiceRef, reada
           {copy.askOptions.map(option => <option key={option.pool} value={option.pool}>{option.label}</option>)}
         </select>
       </label>
+      {head && <button type="button" className="text-action fp-reader-close-icon" aria-label={copy.dismiss}
+        title={copy.dismiss} data-speech-control="close" onClick={onClose}>
+        <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><path d="m6 6 12 12M18 6 6 18"/></svg>
+      </button>}
     </div>
   const feedbackNote = !!(previousVersion || feedback || otherProblems.length) && (
     <div className="fp-reader-feedback" id="focus-quote-feedback">
@@ -103,12 +107,12 @@ export function EncouragementReader({ quote, canEdit, favorites, voiceRef, reada
     <section ref={speech} className="fp-head-speech fp-companion-speech fp-encouragement" data-location="scene"
       id={inScene ? 'focus-requested-quote' : undefined} data-visible={inScene} aria-label={copy.encouragementTitle}
       onFocusCapture={trackFocus} onBlurCapture={trackBlur} aria-hidden={!inScene} aria-describedby={inScene && feedbackNote ? 'focus-quote-feedback' : undefined} {...(!inScene ? { inert: '' } : {})}>
-      <p className="fp-reader-quote">{quote.text}</p>{footer}
+      <p className="fp-reader-quote">{quote.text}</p>{footer(true)}
     </section>
     {!inScene && voiceRef.current && createPortal(
       <section ref={onPlate} className="fp-encouragement" data-location="plate" id="focus-requested-quote" aria-label={copy.encouragementTitle}
         onFocusCapture={trackFocus} onBlurCapture={trackBlur} aria-describedby={feedbackNote ? 'focus-quote-feedback' : undefined}>
-        <p className="fp-reader-quote">{quote.text}</p>{footer}
+        <p className="fp-reader-quote">{quote.text}</p>{footer(false)}
         <button type="button" className="text-action fp-reader-close" data-speech-control="close" onClick={onClose}>{copy.dismiss}</button>
       </section>, voiceRef.current)}
     {feedbackNote && voiceRef.current && createPortal(feedbackNote, voiceRef.current)}

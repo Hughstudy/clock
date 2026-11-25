@@ -228,6 +228,11 @@ export function useClockApp(): ClockApp {
         }
         const { completion } = transition
         if (origin !== 'restore' && origin !== 'sync' && write.saved && completion && shouldChime(completion, nowMs(), write.snapshot.settings, spec)) chime.play()
+        // The chooser opens only for a pause actually applied by this command.
+        // Expiry, another tab's earlier pause, or a failed write isn't that transition.
+        if (action.type === 'pause') return !write.error && store.status.persistence !== 'read-only' &&
+          previous?.status === 'running' && previous.id === action.sessionId &&
+          write.snapshot.timer.session?.status === 'paused' && write.snapshot.timer.session.id === action.sessionId
         // The editable in-memory draft may advance despite an unavailable disk.
         return accepted && store.status.persistence !== 'read-only'
       } catch (error) {
@@ -326,6 +331,8 @@ export function useClockApp(): ClockApp {
       case 'adjustRemaining':
         return commit(action)
       case 'pause':
+        if (timer.session) return commit({ type: 'pause', sessionId: timer.session.id, generation: datasetGeneration })
+        return
       case 'resume':
       case 'end':
         if (timer.session) void commit({ type: action.type, sessionId: timer.session.id, generation: datasetGeneration })

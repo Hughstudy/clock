@@ -3,7 +3,7 @@ import { prepareMinutes } from './focus-duration-actions.mjs'
 import { mkdtemp, mkdir, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
-import { holdFocusCard, launchChromium } from './lib/browser.mjs'
+import { holdFocusCard, launchChromium, showFocusTools } from './lib/browser.mjs'
 import { build, preview } from 'vite'
 import react from '@vitejs/plugin-react'
 
@@ -70,6 +70,8 @@ async function inspectSpeech(page, id) {
     await page.touchscreen.tap(table.x, table.y)
     check('Touching the table in front of the character leaves its pose alone', await svg.getAttribute('data-touch') === '')
   }
+  await showFocusTools(page)
+  const paused = (await readSaved(page)).data.timer.session
   const ask = page.getByRole('button', { name: '给我一句鼓励', exact: true })
   await ask.click()
   const reader = page.getByRole('region', { name: '一句鼓励' })
@@ -114,10 +116,12 @@ async function inspectSpeech(page, id) {
   check(`${id}: the speech tail points at this companion and the quote clears its hands and clock`,
     geometry && Math.abs(geometry.tailX - geometry.headX) < 3 && geometry.gap >= 0 && geometry.gap < 11 && geometry.belowClock && geometry.clear)
   await page.screenshot({ path: path.join(output, `reading-${id}.png`), animations: 'disabled' })
-  await ask.click()
+  await reader.getByRole('button', { name: '收到鼓励了', exact: true }).click()
   const after = (await readSaved(page)).data.timer.session
-  check(`${id}: reading leaves the same running session and returns to the plate`,
-    session.id === after?.id && after.status === 'running' && session.deadline === after.deadline && await ask.evaluate(el => el === document.activeElement))
+  check(`${id}: reading preserves the paused session and its remaining time`,
+    session.id === after?.id && after.status === 'paused' && after.remainingMs === paused.remainingMs)
+  await page.getByRole('button', { name: /^继续(专注|休息)$/ }).click()
+  await untilSaved(page, s => s.timer.session?.status === 'running', 'resume after reading')
   for (const viewport of [{width:320,height:568},{width:430,height:932},{width:375,height:850}]) {
     await page.setViewportSize(viewport)
     await page.clock.runFor(400)
@@ -201,6 +205,7 @@ try {
   await untilSaved(page, s => s.timer.session?.status === 'running', 'resume')
   check('Resume retains session and activity', (await readSaved(page)).data.timer.session.id === firstId && await sceneAttribute(page, '') === firstScene)
 
+  await showFocusTools(page)
   await page.getByRole('button', { name: '记下想法', exact: true }).click()
   await page.locator('#thought-text').fill('Scene E2E draft')
   check('Thought editor suspends scene motion', await svg.getAttribute('data-scene-motion') === 'false' && await svg.evaluate(el => el.getAnimations({ subtree: true }).every(animation => animation.playState !== 'running')))
@@ -219,18 +224,13 @@ try {
   await page.getByRole('button', { name: '回到专注', exact: true }).click()
   await untilSaved(page, s => s.settings.durationsMinutes.focus === 1, 'one minute default')
 
-  // Start from a local input panel: its closure must not consume the entrance.
   await focusReady(page)
-  check('The timer has no separate intention input', await page.locator('.fp-step-open, .fp-step-input').count() === 0)
-  await page.getByRole('button', { name: '记下想法', exact: true }).click()
-  await page.locator('#thought-text').fill('先读一页')
-  await page.getByRole('button', { name: '保存想法', exact: true }).click()
-  await page.getByRole('dialog', { name: '记下想法' }).waitFor({ state: 'hidden' })
+  check('Preparation has no new writing entry', await page.getByRole('button', { name: '记下想法', exact: true }).count() === 0)
   await primary.click()
-  const afterWriting = await untilSaved(page, s => !!s.timer.session, 'focus start after writing')
-  check('Starting after writing retains its entrance', await sceneAttribute(page, 'phase') === 'open')
-  check('An intention written before starting is saved once in thoughts', afterWriting.timer.session.step === null &&
-    afterWriting.thoughts.filter(t => t.text === '先读一页' && t.sessionId === null).length === 1)
+  const afterWriting = await untilSaved(page, s => !!s.timer.session, 'next focus start after writing')
+  check('Starting the next focus retains its entrance', await sceneAttribute(page, 'phase') === 'open')
+  check('A saved thought stays with its original focus across the next start', afterWriting.timer.session.step === null &&
+    afterWriting.thoughts.filter(t => t.text === 'Scene E2E draft' && t.sessionId === firstId).length === 1)
   focusScenes.push(afterWriting.timer.session.scene.sceneId)
   check('Consecutive focus starts differ', focusScenes[1] !== firstScene)
   await inspectSpeech(page, focusScenes[1])
@@ -351,7 +351,9 @@ try {
   await primary.focus()
   await page.keyboard.press('Space')
   await untilSaved(page, s => s.timer.session?.status === 'paused', 'keyboard pause')
-  check('Keyboard activation remains usable during animation', await primary.evaluate(el => el === document.activeElement))
+  const pauseTools = page.getByRole('dialog', { name: '专注工具' })
+  await pauseTools.waitFor()
+  check('Keyboard pause opens the tools during animation', await pauseTools.evaluate(el => el.contains(document.activeElement)))
 
   const beforeOffline = (await readSaved(page)).data.timer.session
   await page.evaluate(() => navigator.serviceWorker.ready)

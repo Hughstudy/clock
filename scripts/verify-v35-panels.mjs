@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict'
 import path from 'node:path'
 import { mkdir, readFile, writeFile } from 'node:fs/promises'
-import { holdFocusCard, launchChromium } from './lib/browser.mjs'
+import { holdFocusCard, launchChromium, showFocusTools } from './lib/browser.mjs'
 import { build, preview } from 'vite'
 
 const output = path.resolve(process.env.PANEL_REVIEW_OUTPUT || '.preview/v35-panels')
@@ -16,10 +16,10 @@ const interruptedPool = catalog.entries.filter(e => e.pool === 'ASKB')
 const longest = interruptedPool.reduce((a, b) => a.text.length >= b.text.length ? a : b)
 const interruptedLine = longest.text
 // Fix only the feedback entropy for this geometry fixture. The ordinary flow
-// suite uses real entropy. The first draw is ASKG; changing category draws ASKB.
+// suite uses real entropy. Starting draws STA, the request draws ASKG, then changing category draws ASKB.
 const advance = seed => (Math.imul(seed, 1664525) + 1013904223) >>> 0
 let speechSeed = 0
-while (Math.floor(advance(advance(speechSeed)) / 0x1_0000_0000 * interruptedPool.length) !== interruptedPool.indexOf(longest)) speechSeed++
+while (Math.floor(advance(advance(advance(speechSeed))) / 0x1_0000_0000 * interruptedPool.length) !== interruptedPool.indexOf(longest)) speechSeed++
 async function speechAtHead(page, speech) {
   const bubble = await speech.boundingBox(), head = await page.locator('.fp-art [data-part="tuft"]').boundingBox()
   const tail = await speech.evaluate(element => {
@@ -63,7 +63,7 @@ async function tabTo(page, target) {
 }
 
 function focusBounds(page) {
-  return page.evaluate(() => [...document.querySelectorAll('.fp-digits, .fp-controls button, .fp-thought-tools button, .tab-bar button')].map(element => {
+  return page.evaluate(() => [...document.querySelectorAll('.fp-digits, .fp-controls button, .tab-bar button')].map(element => {
     const { x, y, width, height } = element.getBoundingClientRect()
     return [x, y, width, height]
   }).flat())
@@ -132,7 +132,14 @@ try {
       await clock.evaluate(el => el === document.activeElement))
     check(`${name}: applying the duration closes the panel without starting`, await page.getByRole('button', { name: '调整专注时长，当前 31 分钟' }).isVisible() &&
       await page.evaluate(() => !JSON.parse(localStorage.getItem('whale-focus:snapshot'))?.timer.session))
-    await button(page, '记下想法').click()
+    const menu = await showFocusTools(page)
+    for (const name of ['给我一句鼓励', '留个标记', '记下想法']) {
+      const option = button(menu, name)
+      await option.scrollIntoViewIfNeeded()
+      const box = await option.boundingBox()
+      check(`${width}px: ${name} is fully reachable in the paused chooser`, box.width >= 44 && box.height >= 44 && await inViewAndHit(option))
+    }
+    await button(menu, '记下想法').click()
     await page.locator('#thought-text').fill(`可保存的测试想法 ${name}`)
     await page.screenshot({ path: path.join(output, `${name}-editor.png`) })
     const frame = await dialog(page).boundingBox()
@@ -152,25 +159,28 @@ try {
     await dialog(page).waitFor({ state: 'detached' })
     check(`${name}: keyboard save persists the entered text`, await page.evaluate(text => JSON.parse(localStorage.getItem('whale-focus:snapshot')).thoughts.some(thought => thought.text === text), `可保存的测试想法 ${name}`))
     const ask = button(page, '给我一句鼓励')
-    check(`${name}: the single encouragement opener is a tool on the plate`, await button(page.locator('.fp-plate .fp-thought-tools'), '给我一句鼓励').count() === 1 && await ask.count() === 1)
+    const toolsLauncher = button(page, '专注工具')
+    await showFocusTools(page)
+    check(`${name}: the paused chooser offers one encouragement action`, await button(menu, '给我一句鼓励').count() === 1 && await ask.count() === 1)
     await ask.scrollIntoViewIfNeeded()
     const before = await focusBounds(page)
     await ask.click()
     const reader = page.getByRole('region', { name: '一句鼓励' })
     const speech = page.locator('.fp-companion-speech[data-visible="true"]')
     const quote = reader.locator('.fp-reader-quote')
+    const close = button(reader, '收到鼓励了')
     const next = button(reader, '换一句鼓励')
     const favorite = button(reader, '收藏这句')
     const category = reader.getByRole('combobox', { name: '鼓励类型' })
     await reader.waitFor()
-    check(`${name}: one requested quote and one control set appear without a second dialog`, await reader.count() === 1 && await quote.count() === 1 && !await dialog(page).count() && await ask.getAttribute('aria-pressed') === 'true')
+    check(`${name}: one requested quote and one control set appear without a second dialog`, await reader.count() === 1 && await quote.count() === 1 && !await dialog(page).count() && await close.isVisible())
     await category.selectOption('ASKB')
     // The fixture selects the longest current interrupted line, without assuming
     // random draws exhaust the pool or rerolling until a convenient result appears.
     check(`${name}: the interrupted quote is readable in full without clipping`, await quote.innerText() === interruptedLine && await quote.evaluate(el => el.scrollWidth <= el.clientWidth + 1 && el.scrollHeight <= el.clientHeight + 1))
     if (font < 32 && height >= 667) {
       check(`${name}: opening and changing a request preserves the timer, tool and tab targets`, sameBounds(before, await focusBounds(page)))
-      check(`${name}: timer and thought actions stay reachable during reading`, await inViewAndHit(button(page, '开始专注')) && await inViewAndHit(button(page, '记下想法')) && await inViewAndHit(button(page, '留个标记')))
+      check(`${name}: resume and the paused tools launcher stay reachable during reading`, await inViewAndHit(button(page, '继续专注')) && await inViewAndHit(toolsLauncher))
     }
     await page.screenshot({ path: path.join(output, `${name}-reader.png`) })
     check(`${name}: keyboard reaches the direct favorite action`, await tabTo(page, favorite) && await inViewAndHit(favorite))
@@ -180,14 +190,15 @@ try {
     check(`${name}: the native category selector is keyboard reachable`, await tabTo(page, category) && await inViewAndHit(category))
     await category.selectOption('ASKT')
     check(`${name}: selecting a category updates the sentence in the same reader`, await quote.innerText() !== interruptedLine && await category.inputValue() === 'ASKT' && !await dialog(page).count())
-    check(`${name}: the request toggle remains the reachable close action`, await tabTo(page, ask) && await inViewAndHit(ask))
+    check(`${name}: the reader close action is keyboard reachable`, await tabTo(page, close) && await inViewAndHit(close))
     await page.keyboard.press('Enter')
     await reader.waitFor({ state: 'detached' })
-    check(`${name}: closing returns keyboard focus to the encouragement opener`, await ask.evaluate(element => element === document.activeElement))
+    check(`${name}: closing returns keyboard focus to the paused tools launcher`, await toolsLauncher.evaluate(element => element === document.activeElement))
     if (font < 32 && height >= 667) {
       // The longest real ASKB line above may need the plate. Exercise head
       // geometry separately with an actual short draw, at this same viewport.
       const geometryBefore = await focusBounds(page)
+      await showFocusTools(page)
       await ask.click()
       await reader.waitFor()
       await headSizedReader(page, reader)
@@ -202,7 +213,7 @@ try {
         check(`${name}: ${await control.getAttribute('aria-label') || await control.innerText()} is directly under the spoken text and clear of the face`,
           await inViewAndHit(control) && box.width >= 44 && box.height >= 44 && box.y >= wordBox.y + wordBox.height - 1 && box.y + box.height <= bubble.y + bubble.height + 1)
       }
-      await ask.click()
+      await close.click()
       await reader.waitFor({ state: 'detached' })
     }
     await context.close()
@@ -224,6 +235,7 @@ try {
   await page.locator('.home[data-layout="scene"]').waitFor()
   check('Returning to the original text size preserves its input and reachable cancel', await durationInput.evaluate(element => element === window.originalDurationInput && element.value === '37') && await inViewAndHit(button(dialog(page), '取消')))
   await button(dialog(page), '取消').click()
+  await showFocusTools(page)
   await button(page, '记下想法').click()
   await page.locator('#thought-text').fill('缩放和键盘变化期间保留的文字')
   await page.locator('#thought-text').evaluate(element => { window.originalEditor = element; element.setSelectionRange(2, 5) })
@@ -261,6 +273,7 @@ try {
   await pull(240)
   await dialog(page).waitFor({ state: 'detached' })
   check('Pulling the sheet header down closes it and keeps the draft', await button(page, '继续草稿').isVisible())
+  await showFocusTools(page)
   await button(page, '给我一句鼓励').click()
   const reader = page.getByRole('region', { name: '一句鼓励' })
   await reader.waitFor()
@@ -277,18 +290,28 @@ try {
   await page.locator('.fp-companion-speech[data-visible="true"]').waitFor()
   check('Returning to head-anchored reading preserves the quote and keyboard action',
     await page.locator('.fp-reader-quote:visible').innerText() === phrase && await next.evaluate(element => element === document.activeElement))
+  await button(reader, '收到鼓励了').click()
+  await button(page, '结束专注').click()
+  await button(page, '确认结束').click()
+  await button(page, '准备专注').click()
   // Set up the next draw in this isolated profile's saved bag, then start through the normal UI.
   await page.evaluate(() => {
     const key = 'whale-focus:snapshot', saved = JSON.parse(localStorage.getItem(key))
     saved.scenes.focus.remaining = ['F4']
     localStorage.setItem(key, JSON.stringify(saved))
   })
+  await page.clock.install()
   await page.reload()
+  await button(page, '开始专注').waitFor()
+  // This returning profile may speak on preparation. Let its normal 30s
+  // automatic-phrase cooldown elapse before testing the authored tea start.
+  await page.clock.fastForward(31_000)
   await button(page, '开始专注').click()
   await page.locator('.blue-companion[data-scene="F4"]').waitFor()
   const automatic = page.locator('.fp-bubble:visible')
   await automatic.waitFor()
   check('The automatic tea-scene line points at its off-center head', await speechAtHead(page, automatic))
+  await showFocusTools(page)
   const digitsBefore = await page.locator('.fp-digits').boundingBox()
   await button(page, '给我一句鼓励').click()
   const teaReader = page.getByRole('region', { name: '一句鼓励' })
@@ -298,7 +321,8 @@ try {
   check('Requesting a phrase in the tea scene keeps the tail on the same head and the clock still',
     await speechAtHead(page, requested) && Math.abs(digitsBefore.y - digitsAfter.y) <= 1 && !await automatic.count())
   await page.screenshot({ path: path.join(output, '375x812-tea-reader.png') })
-  await button(page, '给我一句鼓励').click()
+  await button(teaReader, '收到鼓励了').click()
+  await button(page, '继续专注').click()
   await page.setViewportSize({ width: 320, height: 568 })
   await page.evaluate(() => { document.documentElement.style.fontSize = '32px' })
   await button(page, '暂停专注').click()

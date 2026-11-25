@@ -2,7 +2,7 @@ import assert from 'node:assert/strict'
 import path from 'node:path'
 import { mkdir, writeFile } from 'node:fs/promises'
 import { build, preview } from 'vite'
-import { launchChromium } from './lib/browser.mjs'
+import { launchChromium, showFocusTools } from './lib/browser.mjs'
 
 const output = path.resolve(process.env.INTERACTION_REVIEW_OUTPUT || '.preview/interaction-review')
 const outDir = path.join(output, 'build'), key = 'whale-focus:snapshot'
@@ -109,6 +109,7 @@ try {
   check('IME Escape does not dismiss Settings', await page.locator('.settings').isVisible())
   await page.keyboard.press('Escape')
   check('Ordinary Escape still returns from Settings', await button(page, '开始专注').isVisible())
+  await showFocusTools(page)
   await tap(page, '记下想法')
   await editor(page).fill('   ')
   await tap(page, '另写一条')
@@ -121,11 +122,14 @@ try {
 
   for (const width of [320, 375, 430]) for (const scale of [1, 2]) {
     const { context, page } = await open(width, scale), label = `${width}px/${scale * 100}%`
+    await showFocusTools(page)
     await tap(page, '记下想法')
+    const paused = (await snapshot(page)).timer.session
     await editor(page).fill('原来保存的想法')
     await tap(page, '保存想法')
     await page.getByRole('dialog').waitFor({ state: 'detached' })
     const original = (await snapshot(page)).thoughts[0].id
+    await showFocusTools(page)
     await tap(page, '记下想法')
     await editor(page).fill('尚未提交的草稿')
     await imeEscape(page, editor(page))
@@ -162,7 +166,7 @@ try {
     await search.fill('原来'); await page.locator('[data-jl-search]').click()
     await page.locator(`[data-jl-note="${original}"]`).waitFor()
     check(label + ': ordinary search still finds the saved note', await page.locator('[data-jl-note]').count() === 1)
-    check(label + ': writing and navigation never start a timer', !(await snapshot(page)).timer.session)
+    assert.deepEqual((await snapshot(page)).timer.session, paused, label + ': writing and navigation preserve the paused timer')
     await context.close()
   }
   check('Interaction regression flows have no runtime or console errors', errors.length === 0)

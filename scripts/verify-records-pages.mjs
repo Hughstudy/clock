@@ -2,7 +2,7 @@ import assert from 'node:assert/strict'
 import path from 'node:path'
 import { build, preview } from 'vite'
 import { webkit } from 'playwright'
-import { launchChromium } from './lib/browser.mjs'
+import { launchChromium, showFocusTools } from './lib/browser.mjs'
 
 const directory = path.resolve('.preview/records-book-build')
 process.env.BASE_PATH = '/clock/'
@@ -34,16 +34,18 @@ try {
       await tab('room').click()
       assert.equal(await book.locator('[data-jl-source]').count(),0)
       await press('专注')
+      await showFocusTools(page)
       await press('记下想法')
       const note = '晚些去找一本蓝色的书。'
       await page.getByRole('textbox').fill(note)
       await press('保存想法')
       await page.locator('dialog:modal').waitFor({state:'hidden'})
+      await showFocusTools(page)
       await press('给我一句鼓励')
       await press('收藏这句')
       await page.getByRole('button',{name:'取消收藏这句',exact:true}).waitFor()
-      await press('给我一句鼓励')
-      await press('开始专注')
+      await press('收到鼓励了')
+      await press('继续专注')
       await page.waitForFunction(key=>JSON.parse(localStorage[key])?.timer.session,snapshot)
       await press('结束专注')
       await press('确认结束')

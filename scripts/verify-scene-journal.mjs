@@ -199,6 +199,14 @@ async function review(browser, url) {
       await button(page, '开始专注').click()
     }
     await button(page, rest ? '暂停休息' : '暂停专注').click()
+    const tools = page.getByRole('dialog', { name: '专注工具' })
+    await tools.waitFor()
+    // The paused choices must leave the physical book reachable. Try the
+    // book directly for half the visits, and dismiss before using a tab.
+    if (i % 2) {
+      await page.keyboard.press('Escape')
+      await tools.waitFor({ state: 'hidden' })
+    }
     await button(page, rest ? '继续休息' : '继续专注').waitFor()
     const session = (await snapshot(page)).timer.session
     const source = await inspectPlacement(page)

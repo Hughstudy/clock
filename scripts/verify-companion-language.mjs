@@ -30,7 +30,7 @@ async function endFocus(page) {
 // Give the existing ID adapter a reproducible prefix so opening the reader and,
 // when needed, choosing its category reaches the longest real requested text.
 // No catalog or application behavior is replaced.
-const requested = catalog.entries.filter(e => e.pool.startsWith('ASK') && e.states.includes('focus-ready') &&
+const requested = catalog.entries.filter(e => e.pool.startsWith('ASK') && e.states.includes('focus-paused') &&
   e.requiredFacts.every(f => ['operationSaved', 'explicitRequest', ...(e.pool === 'ASKG' ? [] : ['categorySelected'])].includes(f)) && !e.when)
 const longestRequested = requested.reduce((longest, entry) => entry.text.length > longest.text.length ? entry : longest)
 const longestPool = requested.filter(e => e.pool === longestRequested.pool)
@@ -71,6 +71,8 @@ try {
     await wake(page)
     check(`${width}: waking controls does not replay speech`, await speech(page).count() === 0)
 
+    check(`${width}: running keeps requested encouragement out of the room`, await button(page, '给我一句鼓励').count() === 0)
+    await button(page, '暂停专注').click()
     await button(page, '给我一句鼓励').click()
     const reader = page.getByRole('region', { name: '一句鼓励' })
     const quote = page.locator('.fp-reader-quote:visible')
@@ -92,11 +94,16 @@ try {
     await button(reader, '收藏这句').click()
     await page.waitForFunction(text => JSON.parse(localStorage.getItem('whale-focus:snapshot')).quoteFavorites.some(q => q.text === text && q.deletedAt === null), chosen)
     const session = (await snapshot(page)).timer.session.id
+    await button(page, '专注工具').click()
     await button(page, '记下想法').click()
     await page.getByRole('dialog', { name: '记下想法', exact: true }).waitFor()
     await page.keyboard.press('Escape')
     await reader.waitFor()
-    check(`${width}: an editor preserves the requested phrase and timer`, await quote.innerText() === chosen && (await snapshot(page)).timer.session.id === session)
+    check(`${width}: returning from a paused editor preserves the requested phrase`, await quote.innerText() === chosen)
+    await button(page, '结束专注').click()
+    await button(page, '返回计时').click()
+    await reader.waitFor()
+    check(`${width}: cancelling end preserves the requested phrase and original paused timer`, await quote.innerText() === chosen && (await snapshot(page)).timer.session.id === session && (await snapshot(page)).timer.session.status === 'paused')
     await page.evaluate(() => { document.documentElement.style.fontSize = '32px' })
     await frames(page)
     check(`${width}: 200% text retains the whole phrase`, await quote.innerText() === chosen && await quote.isVisible())
@@ -106,9 +113,11 @@ try {
     check(`${width}: keyboard changes the quote and retains focus`, await quote.innerText() !== chosen && await button(reader, '换一句鼓励').evaluate(e => e === document.activeElement))
     await page.screenshot({ path: path.join(output, `reader-${width}-200.png`), fullPage: true })
     await page.reload()
-    await button(page, '暂停专注').waitFor()
-    check(`${width}: active-session reload does not greet`, await speech(page).count() === 0)
+    await button(page, '继续专注').waitFor()
+    check(`${width}: reloading a paused session does not greet or request a quote`, await speech(page).count() === 0 && await reader.count() === 0)
     check(`${width}: favorites retain clicked text and version`, (await snapshot(page)).quoteFavorites.some(q => q.text === chosen && q.copyVersion === catalog.requestedCopyVersion && q.deletedAt === null))
+    await button(page, '继续专注').click()
+    await button(page, '暂停专注').waitFor()
     await page.clock.fastForward(31_000)
     await endFocus(page)
     await speech(page).waitFor({ state: 'attached' })
@@ -146,7 +155,12 @@ try {
     page.on('pageerror', e => errors.push(e.message))
     page.on('console', e => { if (e.type() === 'error') errors.push(e.text()) })
     await page.goto(url)
-    await button(page, '开始专注').waitFor()
+    await button(page, '开始专注').click()
+    await button(page, '暂停专注').click()
+    await button(page, '给我一句鼓励').waitFor()
+    // Reload on the same paused session so the seeded first draw belongs to the request.
+    await page.reload()
+    await button(page, '专注工具').click()
     await button(page, '给我一句鼓励').click()
     const reader = page.getByRole('region', { name: '一句鼓励' })
     if (longestRequested.pool !== 'ASKG') await reader.getByRole('combobox', { name: '鼓励类型' }).selectOption(longestRequested.pool)

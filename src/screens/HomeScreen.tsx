@@ -5,6 +5,7 @@ import { DurationRuler } from '../components/DurationRuler'
 import { RemainingTimeEditor, type RemainingEdit } from '../components/RemainingTimeEditor'
 import { ShortCompanionMessage } from '../components/ShortCompanionMessage'
 import { FocusPanel } from '../components/FocusPanel'
+import { PauseTools } from '../components/PauseTools'
 import { ConfirmPopover } from '../components/ConfirmPopover'
 import { formatClock, formatElapsedParts, formatMinutes, PHASE_LABELS, spokenClock } from '../components/format'
 import { ThoughtPanel } from '../components/ThoughtPanel'
@@ -28,7 +29,7 @@ import type { SessionResult, UserAction } from '../hooks/useClockApp'
 import type { Thoughts } from '../hooks/useThoughts'
 import type { TimerView } from '../hooks/useViews'
 
-type Panel = 'duration' | 'remaining' | 'end' | 'thought' | 'thoughts' | 'encouragement' | 'message' | 'status' | null
+type Panel = 'tools' | 'duration' | 'remaining' | 'end' | 'thought' | 'thoughts' | 'encouragement' | 'message' | 'status' | null
 type RestPhase = 'shortBreak' | 'longBreak'
 
 interface Props {
@@ -72,9 +73,10 @@ export function HomeScreen({ active, view, result, linkedThoughts, defaultsInten
   const confirming = useRef<string | null>(null)
   const sceneBox = useRef<HTMLDivElement>(null)
   const voiceBox = useRef<HTMLDivElement>(null)
-  const voiceButton = useRef<HTMLButtonElement>(null)
+  const toolsButton = useRef<HTMLButtonElement>(null)
+  const pendingPause = useRef<symbol | null>(null)
+  const toolsSession = useRef<string | null>(null)
   const primaryRef = useRef<HTMLDivElement>(null)
-  const markButton = useRef<HTMLButtonElement>(null)
   const opener = useRef<HTMLElement | null>(null)
   const previousPanel = useRef<Panel>(null)
 
@@ -93,7 +95,13 @@ export function HomeScreen({ active, view, result, linkedThoughts, defaultsInten
   const requested = frame.placement === 'requested' ? frame.encouragement : null
   // A temporary editor or confirmation covers requested speech. The feedback owner keeps its
   // exact phrase until it is explicitly dismissed, so returning never draws another quote.
-  const panel = active ? (thoughts.open ? 'thought' : task ?? (requested ? 'encouragement' : null)) : null
+  const toolsAvailable = paused && toolsSession.current === view.sessionId
+  const currentTask = task === 'tools' && !toolsAvailable ? null : task
+  const panel = active ? (thoughts.open ? 'thought' : currentTask ?? (requested ? 'encouragement' : null)) : null
+  useLayoutEffect(() => () => { pendingPause.current = null }, [active, view.sessionId])
+  useLayoutEffect(() => {
+    if (task === 'tools' && (!active || !toolsAvailable)) setTask(null)
+  }, [task, active, toolsAvailable])
   const reading = panel === 'encouragement'
   const scene = panel && companion.scene?.allowBeats ? { ...companion.scene, allowBeats: false } : companion.scene
   const confirmExpired = task === 'end' && confirming.current !== view.sessionId
@@ -110,10 +118,9 @@ export function HomeScreen({ active, view, result, linkedThoughts, defaultsInten
 
   useLayoutEffect(() => {
     const returning = previousPanel.current !== panel && (!panel || panel === 'encouragement')
-    if (active && previousPanel.current && returning) {
-      const prior = previousPanel.current === 'encouragement' ? voiceButton.current : opener.current
-      const speechTask = previousPanel.current === 'message' || previousPanel.current === 'encouragement'
-      const fallback = speechTask ? voiceButton.current : null
+    if (active && previousPanel.current && returning && !(previousPanel.current === 'tools' && panel === 'encouragement')) {
+      const prior = previousPanel.current === 'encouragement' ? toolsButton.current : opener.current
+      const fallback = toolsButton.current
       const target = prior?.isConnected && !prior.matches(':disabled') && prior.getClientRects().length
         ? prior : fallback ?? primaryRef.current?.querySelector<HTMLButtonElement>('button')
       target?.focus({ preventScroll: true })
@@ -122,6 +129,8 @@ export function HomeScreen({ active, view, result, linkedThoughts, defaultsInten
   }, [active, panel])
 
   const show = (next: Exclude<Panel, null>, target: HTMLElement) => {
+    pendingPause.current = null
+    if (next === 'tools') toolsSession.current = view.sessionId
     if (next === 'remaining') {
       if (!view.adjustmentGuard || !canEdit || timerPending) return
       remainingEdit.current = {
@@ -171,7 +180,21 @@ export function HomeScreen({ active, view, result, linkedThoughts, defaultsInten
   }
   const pick = choice.pick
   const startRest = () => dispatch({ type: 'startBreak', phase: restPhase })
-  const toggle = () => dispatch({ type: paused ? 'resume' : 'pause' })
+  const toggle = async () => {
+    if (paused) {
+      setTask(null)
+      if (requested) companion.dismiss()
+      return dispatch({ type: 'resume' })
+    }
+    const attempt = Symbol()
+    pendingPause.current = attempt
+    const applied = await dispatch({ type: 'pause' })
+    if (applied && pendingPause.current === attempt) {
+      toolsSession.current = view.sessionId
+      opener.current = primaryRef.current?.querySelector('button') ?? null
+      setTask('tools')
+    }
+  }
   const edit = (id: string, target?: HTMLElement) => {
     if (target) opener.current = target
     setTask(null)
@@ -248,7 +271,7 @@ export function HomeScreen({ active, view, result, linkedThoughts, defaultsInten
             const undo = thoughts.undo!
             undo.run()
             // The restore button goes once it works; keep keyboard focus on the tool it came from.
-            if (undo.removesItself && event.detail === 0) markButton.current?.focus()
+            if (undo.removesItself && event.detail === 0) (toolsButton.current ?? primaryRef.current?.querySelector('button'))?.focus()
           }}>{thoughts.undo.label}</button>}
           {needsAttention && <button type="button" className="text-action"
             aria-label={copy.statusDetails} onClick={event => show('status', event.currentTarget)}>详情</button>}
@@ -284,26 +307,6 @@ export function HomeScreen({ active, view, result, linkedThoughts, defaultsInten
           </div>
         </div>
   )
-  const toolsRow = (
-    <div key="tools" className="fp-tools-slot">
-          <div className="fp-thought-tools" role="group" aria-label="鼓励与想法工具">
-            <button ref={voiceButton} type="button" className="text-action fp-voice-open" aria-pressed={reading}
-              aria-controls={reading ? 'focus-requested-quote' : undefined} aria-description={reading ? '再次轻点收起鼓励' : undefined}
-              onClick={event => { if (reading) close(); else show('encouragement', event.currentTarget) }}>
-              <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="1.6"><path d="M20 11a8 8 0 0 1-8 8c-1.4 0-2.7-.3-3.8-.9L4 20l1.3-4A8 8 0 1 1 20 11Z"/></svg>{uiText('UI19')}</button>
-            <button ref={markButton} type="button" className="text-action" disabled={!canEdit}
-              onClick={thoughts.mark} onKeyDown={e => { if (e.repeat && (e.key === 'Enter' || e.key === ' ')) e.preventDefault() }}>
-              <svg width="16" height="16" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6"><path d="M6 4h12v16l-6-4-6 4zM9 9h6m-3-3v6"/></svg>{copy.mark}</button>
-            <button type="button" className="text-action" disabled={!canEdit} onClick={e => show('thought', e.currentTarget)}>
-              <svg width="16" height="16" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6"><path d="m5 15-1 5 5-1L20 8l-4-4zM14 6l4 4"/></svg>{copy.write}</button>
-            {/* The grid reserves this slot even when empty, so a save never moves either thought tool. */}
-            {!!linkedThoughts.length && <button type="button" className="text-action fp-tools-label" aria-label={`${copy.sessionThoughts}（${linkedThoughts.length}）`}
-              title={`${copy.sessionThoughts}（${linkedThoughts.length}）`} onClick={event => show('thoughts', event.currentTarget)}>
-              <svg width="16" height="16" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"><path d="M7 4h10a2 2 0 0 1 2 2v14l-3-2-4 2-4-2-3 2V6a2 2 0 0 1 2-2zM9 9h6M9 13h4"/></svg>
-              <span className="fp-tools-count">{linkedThoughts.length > 99 ? '99+' : linkedThoughts.length}</span></button>}
-          </div>
-        </div>
-  )
   return (
     <section className="screen home" style={light ? { '--sky': light.sky, '--floor': light.floor } as CSSProperties : undefined} data-tone={tone} data-setting={setting} data-sky-ink={light?.skyInk ?? 'default'} data-panel={panel ?? ''} data-ready-focus={readyFocus} data-chrome={chrome.away ? 'away' : 'shown'} data-arriving={chrome.arriving} aria-label="专注计时">
       {/* While the card is away, a tap on the room brings it back. A pat on the companion stays a pat. */}
@@ -311,6 +314,9 @@ export function HomeScreen({ active, view, result, linkedThoughts, defaultsInten
         onClick={event => { if (chrome.away && !(event.target as Element).closest('[data-touch-kind], [data-scene-book-trigger]')) chrome.callOut() }}>
         <div className="fp-top" {...awayAttrs}>
           <h1>专注</h1>
+          {paused && <button ref={toolsButton} type="button" className="pill pill--glass fp-tools-opener"
+            aria-haspopup="dialog" aria-expanded={panel === 'tools'} aria-controls={panel === 'tools' ? 'focus-pause-tools' : undefined}
+            onClick={event => { if (panel === 'tools') close(); else show('tools', event.currentTarget) }}>专注工具</button>}
           <button type="button" className="pill pill--glass pill--icon" onClick={onSettings} aria-label="设置">
             <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><path d="M5 4v16M12 4v16M19 4v16"/><path d="M2 8h6M9 15h6M16 9h6" strokeWidth="3.4"/></svg>
           </button>
@@ -320,7 +326,7 @@ export function HomeScreen({ active, view, result, linkedThoughts, defaultsInten
           voiceRef={voiceBox} {...(favorites ? { favorites } : {})} onNext={companion.next} onChoose={companion.request} onClose={close} />}
         {spoken && <ShortCompanionMessage voiceRef={voiceBox} text={spoken.text} onRead={target => { setMessage(spoken.text); show('message', target) }} />}
         <div className="fp-art">
-          <SceneRecordBook place={companion.sceneryEnabled ? scene?.id ?? 'ready' : 'plain'} active={active && !panel} onOpen={onOpenRecords} />
+          <SceneRecordBook place={companion.sceneryEnabled ? scene?.id ?? 'ready' : 'plain'} active={active && (!panel || panel === 'tools')} onOpen={onOpenRecords} />
           <CompanionFeedback feedback={companion.feedback} reducedMotion={reducedMotion} renderCharacter={(presentation, keyboardPat) =>
               <BlueCompanion presentation={presentation} keyboardPat={keyboardPat} cueId={companion.cue?.id} scene={scene}
                 panelOpen={!!panel} sceneryEnabled={companion.sceneryEnabled} night={view.night}
@@ -347,7 +353,7 @@ export function HomeScreen({ active, view, result, linkedThoughts, defaultsInten
         </FocusPanel>}
         {panel === 'remaining' && remainingEdit.current && <RemainingTimeEditor opened={remainingEdit.current}
           view={view} anchor={sceneBox.current?.querySelector('.fp-digits') ?? null} canEdit={canEdit} onClose={close} dispatch={dispatch} />}
-        {panel && panel !== 'duration' && panel !== 'remaining' && panel !== 'encouragement' && panel !== 'end' && <FocusPanel key={panel} title={titles[panel]} onClose={close} timerSummary={timerSummary}
+        {panel && panel !== 'tools' && panel !== 'duration' && panel !== 'remaining' && panel !== 'encouragement' && panel !== 'end' && <FocusPanel key={panel} title={titles[panel]} onClose={close} timerSummary={timerSummary}
           closeLabel={!ready && !view.isBreak ? uiText(view.step ? 'UI16' : 'UI17') : '返回'}>
           {panel === 'message' && <p className="fp-full-message" tabIndex={-1} data-initial-focus>{message}</p>}
           {panel === 'thoughts' && <ul className="fp-session-list">{linkedThoughts.map((note, index) => <li key={note.id} data-thought-id={note.id}>
@@ -378,6 +384,14 @@ export function HomeScreen({ active, view, result, linkedThoughts, defaultsInten
         </FocusPanel>}
       </div>
 
+      {panel === 'tools' && <PauseTools anchor={primaryRef.current}
+        requested={!!requested} canEdit={canEdit} count={linkedThoughts.length} onClose={close}
+        onAsk={target => {
+          if (requested) { companion.dismiss(); setTask(null) }
+          else show('encouragement', target)
+        }}
+        onMark={() => { thoughts.mark(); setTask(null) }}
+        onWrite={target => show('thought', target)} onRead={target => show('thoughts', target)} />}
       {panel === 'end' && <ConfirmPopover title={titles.end} anchor={opener.current} cancelLabel={copy.cancelEnd} summary={timerSummary}
         readout={sceneBox.current?.querySelector('.fp-digits') ?? null} onCancel={close}>
         <p data-initial-focus tabIndex={-1}>{confirmExpired ? copy.endExpired : copy.endExplanation}</p>
@@ -387,7 +401,7 @@ export function HomeScreen({ active, view, result, linkedThoughts, defaultsInten
           <button type="button" className="text-action" onClick={() => dispatch({ type: 'retrySave' })}>{copy.retry}</button></p>}
       </ConfirmPopover>}
       <div className="fp-plate" data-panel={panel ?? ''} data-attention={needsAttention} {...awayAttrs}>
-        {readableLayout ? [statusRow, controlsRow, toolsRow, noteRow, voiceRow] : [noteRow, voiceRow, statusRow, controlsRow, toolsRow]}
+        {readableLayout ? [statusRow, controlsRow, noteRow, voiceRow] : [noteRow, voiceRow, statusRow, controlsRow]}
 
       </div>
       {chrome.away && <>

@@ -2,7 +2,7 @@ import assert from 'node:assert/strict'
 import path from 'node:path'
 import { mkdir, writeFile } from 'node:fs/promises'
 import { webkit } from 'playwright'
-import { holdFocusCard, launchChromium } from './lib/browser.mjs'
+import { holdFocusCard, launchChromium, showFocusTools } from './lib/browser.mjs'
 import { build, preview } from 'vite'
 
 const output = path.resolve(process.env.NAVIGATION_REVIEW_OUTPUT || '.preview/ios-navigation')
@@ -151,6 +151,8 @@ try {
   await screen(page, 'home')
   check('Back from the first book page returns to Focus without changing the timer', (await snapshot(page)).timer.session.id === running.timer.session.id && (await snapshot(page)).timer.session.status === 'running')
 
+  await showFocusTools(page)
+  const paused = (await snapshot(page)).timer.session
   await button(page, '记下想法').click()
   await page.locator('#thought-text').fill('导航保留的草稿')
   // The sheet covers the tab bar. Closing it keeps the draft, and Records offers to continue it.
@@ -205,7 +207,7 @@ try {
   await settingsPage.waitForFunction(() => JSON.parse(localStorage.getItem('whale-focus:snapshot')).settings.durationsMinutes.focus === 37)
   await settingsPage.reload()
   check('Browser Back commits a valid focused Settings duration before unmount and reload', (await snapshot(settingsPage)).settings.durationsMinutes.focus === 37)
-  assert.deepEqual((await snapshot(settingsPage)).timer.session, running.timer.session)
+  assert.deepEqual((await snapshot(settingsPage)).timer.session, paused)
   check('Committing Settings on Back preserves the active timer', true)
 
   await button(settingsPage, '设置').click()

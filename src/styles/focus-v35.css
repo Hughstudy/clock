@@ -22,18 +22,6 @@
 .home .fp-control-secondary > button { inline-size: 100%; min-block-size: var(--control-row); padding-inline: 12px; border: 0;
   border-radius: 999px; background-color: #ede5d6; color: var(--ink); font-weight: 600; font-size: 1rem; transition: transform .12s ease; }
 .home .fp-control-secondary > button:active:not(:disabled) { filter: brightness(.94); }
-/* Tools: one quiet row of equal thirds, an icon over its label, grouped by space alone. The count's
-   place is always kept, so a first note never moves a tool. */
-.home .fp-tools-slot { display: flex; flex-direction: column; inline-size: min(100%, 400px); min-block-size: var(--tools-row); margin: 0 auto; padding: 0; border: 0; }
-.home .fp-thought-tools { display: grid; flex: none; grid-template-columns: repeat(3, minmax(0, 1fr)) 44px; align-items: stretch; gap: 2px; margin: 0; padding: 0; }
-.home[data-ready-focus='true']:not([data-layout='readable']) .fp-thought-tools { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-.home .fp-thought-tools .text-action { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; min-inline-size: 0;
-  min-block-size: var(--tools-row); padding: 4px 2px; border-radius: 16px; background: transparent; color: var(--ink);
-  font-size: .75rem; font-weight: 600; line-height: 1.2; white-space: normal; text-align: center; }
-.home .fp-thought-tools .text-action svg { flex: none; inline-size: 1.375rem; block-size: 1.375rem; color: var(--whale-deep); }
-.home .fp-thought-tools .text-action:active:not(:disabled) { background: #ede5d6; filter: none; }
-.home .fp-thought-tools .fp-tools-label { grid-column: 4; min-inline-size: 44px; padding-inline: 0; }
-.home .fp-tools-count { font-variant-numeric: tabular-nums; font-weight: 700; }
 /* Feedback takes a row at the top of the card only while there is something to say. The card
    grows upward for it; nothing floats over the companion and no empty band is left behind. */
 .home .fp-note { position: static; flex: none; inline-size: min(100%, 400px); max-inline-size: none; margin-inline: auto;
@@ -163,7 +151,7 @@
   .home .fp-plate { min-block-size: 0; overflow-y: auto; justify-content: flex-start; }
   .home:not([data-layout='readable']) .fp-plate { inset-block-start: auto; margin-block: 0; }
   /* Short landscapes scroll the card. Each row keeps its full hit area. */
-  .home .fp-plate > :is(.fp-voice-slot, .fp-status, .fp-controls, .fp-tools-slot) { flex-shrink: 0; }
+  .home .fp-plate > :is(.fp-voice-slot, .fp-status, .fp-controls) { flex-shrink: 0; }
 }
 
 /* At accessibility sizes, the clock owns its own region. Everything below is
@@ -198,10 +186,6 @@
 .home[data-layout='readable'] .fp-controls button { min-block-size: max(44px, 1.8rem); padding-block: 6px; }
 .home[data-layout='readable'] .fp-primary .btn-primary, .home[data-layout='readable'] .fp-primary .btn-primary:hover {
   min-block-size: max(44px, 1.8rem); padding-block: 6px; box-shadow: none; }
-.home[data-layout='readable'] .fp-tools-slot { order: 2; flex-shrink: 0; block-size: auto; margin: 0 auto; overflow: visible; }
-.home[data-layout='readable'] .fp-thought-tools { grid-template-columns: 1fr; gap: 8px; }
-.home[data-layout='readable'] .fp-thought-tools > button { flex-direction: row; min-block-size: max(44px, 1.6rem); justify-content: flex-start; gap: 8px; padding-inline: 6px; font-size: .875rem; text-align: start; }
-.home[data-layout='readable'] .fp-thought-tools .fp-tools-label { grid-column: 1; }
 .home[data-layout='readable'] .fp-note { order: 3; flex-shrink: 0; min-block-size: 44px; flex-wrap: wrap; justify-content: flex-start;
   gap: 8px; padding-block-start: 10px; border-top: 1px solid var(--cream-line); }
 .home[data-layout='readable'] .fp-note__text { flex: 1 0 100%; white-space: normal; overflow: visible; overflow-wrap: anywhere; }
@@ -221,14 +205,6 @@
   .home[data-layout='readable'] .fp-plate { margin-inline-start: var(--readable-scene-width); inline-size: calc(100% - var(--readable-scene-width));
     padding-block-start: 12px; scrollbar-gutter: stable both-edges; }
   .home[data-layout='readable'] .fp-controls { grid-template-columns: repeat(auto-fit, minmax(min(100%, 5.2rem), 1fr)); }
-  .home[data-layout='readable'] .fp-tools-slot { container: thought-tools / inline-size; }
-  .home[data-layout='readable'] .fp-thought-tools { grid-template-columns: repeat(3, minmax(0, 1fr)) 44px; }
-  .home[data-layout='readable'] .fp-thought-tools .fp-tools-label { grid-column: 4; }
-  @container thought-tools (max-width: 16rem) {
-    .home[data-layout='readable'] .fp-thought-tools { grid-template-columns: minmax(0, 1fr) 44px; }
-    .home[data-layout='readable'] .fp-thought-tools > button { grid-column: 1; }
-    .home[data-layout='readable'] .fp-thought-tools .fp-tools-label { grid-area: 1 / 2; }
-  }
 }
 /* When the card alone exceeds a short viewport, its controls remain scrollable.
    This also covers user-enlarged text without reducing their chosen font size. */
@@ -237,8 +213,6 @@
 }
 @media (max-width: 360px) {
   .home .fp-controls { gap: 8px; }
-  /* Six characters stay on one line at the narrowest phone width. */
-  .home:not([data-layout='readable']) .fp-thought-tools .text-action { font-size: .6875rem; }
   /* A result and its rest choice take a line each rather than squeeze. */
   .home .fp-status:has(.fp-rest-choice) { flex-wrap: wrap; justify-content: center; block-size: auto; row-gap: 0; }
   .home .fp-status:has(.fp-rest-choice) .fp-rest-choice { max-inline-size: 100%; }

@@ -49,4 +49,3 @@
 .home .fp-encouragement[data-location='plate'] { inline-size: 100%; padding: 10px 12px 2px; border: 1px solid #c7bba7; border-radius: 18px; background: #fffcf5; }
 .home .fp-encouragement[data-location='plate'] .fp-reader-actions { flex-wrap: wrap; }
 .home .fp-reader-close { display: block; margin-inline-start: auto; }
-.home .fp-thought-tools .fp-voice-open[aria-pressed='true'] { background: var(--whale-soft); color: var(--whale-deep); }

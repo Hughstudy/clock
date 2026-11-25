@@ -1,4 +1,5 @@
 import path from 'node:path'
+import { showFocusTools } from './lib/browser.mjs'
 
 const key = 'whale-focus:snapshot'
 const minute = 60_000
@@ -40,10 +41,14 @@ export async function checkRemainingTime(browser, url, check, output) {
     await focusClock(page).tap()
     await page.getByRole('dialog', { name: '调整专注剩余时间' }).waitFor()
     await button(dialog, '取消').click()
+    await showFocusTools(page)
     await button(page, '留个标记').click()
     await button(page, '补充文字').waitFor()
+    await button(page, '继续专注').click()
+    await button(page, '暂停专注').waitFor()
     const initial = await snapshot(page)
     const original = initial.timer.session
+    const spentBeforeResume = original.durationMs - original.runStartRemainingMs
     await focusClock(page).click()
     await input.fill('0')
     check('An invalid remaining value leaves the active schedule intact',
@@ -53,7 +58,7 @@ export async function checkRemainingTime(browser, url, check, output) {
     const current = adjusted.timer.session
     check('A running edit uses its commit instant and keeps precisely the elapsed milliseconds, identity, scene, marker and original plan',
       current.status === 'running' && current.id === original.id && current.startedAt === original.startedAt &&
-      current.initialDurationMs === 25 * minute && current.durationMs === current.deadline - original.startedAt &&
+      current.initialDurationMs === 25 * minute && current.durationMs === spentBeforeResume + current.deadline - (original.deadline - original.runStartRemainingMs) &&
       current.runStartRemainingMs === 10 * minute && current.durationMs >= 18 * minute + 20_000 && current.durationMs < 19 * minute &&
       current.scene.sceneId === original.scene.sceneId && adjusted.thoughts[0].id === initial.thoughts[0].id &&
       adjusted.thoughts[0].sessionId === original.id && adjusted.participations.length === 1 &&
@@ -64,6 +69,7 @@ export async function checkRemainingTime(browser, url, check, output) {
     await button(page, '继续专注').waitFor()
     const paused = (await snapshot(page)).timer.session
     const spent = paused.durationMs - paused.remainingMs
+    await page.keyboard.press('Escape')
     await focusClock(page).focus()
     await page.keyboard.press('Enter')
     await page.waitForFunction(() => document.activeElement?.getAttribute('role') === 'slider')
@@ -133,6 +139,23 @@ export async function checkRemainingTime(browser, url, check, output) {
     await button(page, '开始休息').click()
     await button(page, '暂停休息').waitFor()
     const rest = (await snapshot(page)).timer.session
+    const tools = page.getByRole('dialog', { name: '专注工具', exact: true })
+    check('Running rest has no pause-tools entry', !await button(page, '专注工具').count() && !await tools.count())
+    await button(page, '暂停休息').click()
+    await tools.waitFor()
+    const remaining = (await snapshot(page)).timer.session.remainingMs
+    await page.clock.fastForward(minute)
+    check('Rest pause opens the same three tools and leaves its remaining time fixed',
+      await button(tools, '给我一句鼓励').isVisible() && await button(tools, '留个标记').isVisible() &&
+      await button(tools, '记下想法').isVisible() && (await snapshot(page)).timer.session.remainingMs === remaining)
+    await page.keyboard.press('Escape')
+    await tools.waitFor({ state: 'hidden' })
+    await button(page, '专注工具').press('Enter')
+    await tools.waitFor()
+    await button(page, '继续休息').click()
+    await button(page, '暂停休息').waitFor()
+    check('Resuming rest directly from reopened tools retains its original identity',
+      (await snapshot(page)).timer.session.id === rest.id && !await tools.count() && !await button(page, '专注工具').count())
     await page.clock.fastForward(minute + 250)
     await restClock(page).click()
     await applyMinutes(2)

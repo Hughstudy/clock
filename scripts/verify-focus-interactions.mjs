@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict'
 import path from 'node:path'
 import { mkdir, writeFile } from 'node:fs/promises'
-import { holdFocusCard, launchChromium } from './lib/browser.mjs'
+import { holdFocusCard, launchChromium, showFocusTools } from './lib/browser.mjs'
 import { build, preview } from 'vite'
 import { focusTime, prepareMinutes } from './focus-duration-actions.mjs'
 import { checkDurationRuler } from './check-duration-ruler.mjs'
@@ -16,6 +16,13 @@ const errors = []
 const check = (name, condition) => { assert.ok(condition, name); checks.push(name); console.log('PASS', name) }
 const button = (page, name) => page.getByRole('button', { name, exact: typeof name === 'string' })
 const tap = (page, name) => button(page, name).click()
+const toolbox = page => page.getByRole('dialog', { name: '专注工具', exact: true })
+async function useTool(page, name) {
+  await showFocusTools(page)
+  await tap(page, name)
+}
+const noTools = async page => !(await button(page, '专注工具').count()) && !(await toolbox(page).count()) &&
+  !(await button(page, '给我一句鼓励').count()) && !(await button(page, '留个标记').count()) && !(await button(page, '记下想法').count())
 const snapshot = page => page.evaluate(k => JSON.parse(localStorage.getItem(k)), key)
 const dialog = page => page.getByRole('dialog')
 const bookEditor = page => page.locator('[data-jl-detail="editor"]')
@@ -71,6 +78,7 @@ try {
   check('Focus preparation has one time readout and no duration preset row',
     await focusTime(page).count() === 1 && await page.getByRole('group', { name: '专注时长' }).count() === 0 &&
     await page.getByRole('button', { name: /^(5 分钟|15 分钟|25 分钟|其他)$/ }).count() === 0)
+  check('Preparation has no new-tool entry', await noTools(page))
   await prepareMinutes(page, 15)
   check('Choosing a duration changes only the ready display',
     !(await snapshot(page))?.timer.session && await page.locator('.fp-digits').innerText() === '15:00')
@@ -89,23 +97,46 @@ try {
   const owner = first.timer.session.id
   check('A five-minute start preserves the configured duration and quiet default',
     first.timer.session.durationMs === 300000 && first.settings.durationsMinutes.focus === 25 && !first.settings.soundEnabled)
+  check('Running has no new-tool entry', await noTools(page))
   await tap(page, '摸摸蓝色伙伴')
   check('A pat leaves panels closed', !await dialog(page).count())
+  // Hold the pause transaction before it can apply. A press alone cannot
+  // expose tools for an active countdown or change the saved session.
+  await page.evaluate(() => {
+    const request = navigator.locks.request.bind(navigator.locks)
+    navigator.locks.request = async (...args) => {
+      navigator.locks.request = request
+      await new Promise(resolve => { window.allowPause = resolve })
+      return request(...args)
+    }
+  })
   await button(page, '暂停专注').focus()
   await page.keyboard.press('Space')
+  await page.waitForFunction(() => typeof window.allowPause === 'function')
+  check('Pending pause leaves tools closed and the saved countdown running', await noTools(page) &&
+    (await snapshot(page)).timer.session.status === 'running')
+  await page.evaluate(() => window.allowPause())
   await button(page, '继续专注').waitFor()
-  check('Keyboard pause retains focus through its pending save', await button(page, '继续专注').evaluate(el => el === document.activeElement))
-  await page.keyboard.press('Space')
+  await toolbox(page).waitFor()
+  for (const name of ['给我一句鼓励', '留个标记', '记下想法']) assert(await button(toolbox(page), name).isVisible())
+  check('Keyboard focus enters the paused choices', await button(toolbox(page), '给我一句鼓励').evaluate(el => el === document.activeElement))
+  const pause = (await snapshot(page)).timer.session
+  await page.clock.fastForward(15_000)
+  check('The keyboard pause exposes all three actions and excludes time spent choosing', pause.id === owner &&
+    pause.status === 'paused' && (await snapshot(page)).timer.session.remainingMs === pause.remainingMs)
+  await button(page, '继续专注').click()
   await button(page, '暂停专注').waitFor()
-  check('Keyboard resume retains focus on the same primary', await button(page, '暂停专注').evaluate(el => el === document.activeElement))
+  check('Resume works directly with the chooser open and keeps the original session',
+    await noTools(page) && (await snapshot(page)).timer.session.id === owner)
+  await showFocusTools(page)
   const baseline = await geometry(page)
   await tap(page, '留个标记')
   await button(page, '补充文字').waitFor()
   const markerA = (await snapshot(page)).thoughts[0].id
   check('Marker and undo do not move controls or increase background height', stable(baseline, await geometry(page)))
   await page.clock.fastForward(850)
-  await tap(page, '留个标记')
-  await tap(page, '记下想法')
+  await useTool(page, '留个标记')
+  await useTool(page, '记下想法')
   await dialog(page).locator('.fp-linked summary').click()
   await button(dialog(page).locator(`[data-thought-id="${markerA}"]`), '补充文字').click()
   await page.locator('#thought-text').fill('只补第一个记号')
@@ -114,9 +145,16 @@ try {
   const marked = (await snapshot(page)).thoughts
   check('Supplement updates the selected marker only', marked.length === 2 && marked.find(t => t.id !== markerA).text === '')
   if (await dialog(page).count()) await page.keyboard.press('Escape')
-  await tap(page, '记下想法')
+  await useTool(page, '记下想法')
   await page.locator('#thought-text').fill('晚上取快递')
   await page.clock.fastForward(800)
+  const resumePeer = await context.newPage()
+  await resumePeer.clock.install({ time: new Date(await page.evaluate(() => Date.now())) })
+  await resumePeer.goto(url)
+  await tap(resumePeer, '继续专注')
+  await button(resumePeer, '暂停专注').waitFor()
+  await resumePeer.close()
+  await page.bringToFront()
   await page.clock.fastForward(300000)
   await page.waitForFunction(k => JSON.parse(localStorage.getItem(k)).records.length === 1, key)
   check('Expiry leaves the editor and text in place', await page.locator('#thought-text').inputValue() === '晚上取快递' &&
@@ -139,21 +177,22 @@ try {
     drafted.length === 1 && drafted[0].sessionId === owner && drafted[0].dateKey === '2026-10-31')
   if (await dialog(page).count()) await page.keyboard.press('Escape')
   const beforeReading = await geometry(page)
-  await tap(page, '给我一句鼓励')
+  await useTool(page, '给我一句鼓励')
   const reader = page.getByRole('region', { name: '一句鼓励' })
   const reading = page.locator('.fp-reader-quote:visible')
   const phrase = await reading.innerText()
   const category = reader.getByRole('combobox', { name: '鼓励类型' })
-  const ask = button(page, '给我一句鼓励')
-  check('Opening a requested quote leaves the running timer and navigation in place', stable(beforeReading, await geometry(page)))
+  const toolsLauncher = button(page, '专注工具')
+  const dismissReader = button(reader, '收到鼓励了')
+  check('Opening a requested quote leaves the timer and navigation in place', stable(beforeReading, await geometry(page)))
   const whileReading = await snapshot(page)
-  await tap(page, '留个标记')
+  await useTool(page, '留个标记')
   await page.waitForFunction(({ key, count }) => JSON.parse(localStorage.getItem(key)).thoughts.length === count + 1,
     { key, count: whileReading.thoughts.length })
   const markedWhileReading = await snapshot(page)
-  check('Marking while reading keeps the quote and the same running session',
+  check('Marking while reading keeps the quote and the same paused session',
     await reading.innerText() === phrase && markedWhileReading.timer.session.id === whileReading.timer.session.id &&
-    markedWhileReading.timer.session.status === 'running' && markedWhileReading.thoughts.at(-1).sessionId === whileReading.timer.session.id)
+    markedWhileReading.timer.session.status === 'paused' && markedWhileReading.thoughts.at(-1).sessionId === whileReading.timer.session.id)
   check('Encouragement opens directly in the daily category', await category.inputValue() === 'ASKG')
   await category.selectOption('ASKG')
   check('Selecting the current category keeps the original quote', await reading.innerText() === phrase)
@@ -162,26 +201,24 @@ try {
   check('Changing the category presents a different quote in the same reader', interrupted !== phrase && await category.inputValue() === 'ASKB' && await reader.count() === 1)
   for (const [opener, task] of [['记下想法', '记下想法'], ['结束专注', '结束本次专注？']]) {
     const launch = button(page, opener)
+    if (opener === '记下想法') await showFocusTools(page)
     await launch.click()
     await page.getByRole('dialog', { name: task, exact: true }).waitFor()
     check(`${opener} temporarily takes the reading surface`, !await reader.count())
     await page.keyboard.press('Escape')
     await reader.waitFor()
     check(`Back from ${opener} restores the phrase, category and original control`, await reading.innerText() === interrupted &&
-      await category.inputValue() === 'ASKB' && await launch.evaluate(el => el === document.activeElement))
+      await category.inputValue() === 'ASKB' && await (opener === '记下想法' ? toolsLauncher : launch).evaluate(el => el === document.activeElement))
   }
-  await tap(second, '暂停专注')
-  await page.locator('.fp-status').getByText(/已暂停/).waitFor()
-  check('A remote pause keeps the selected phrase readable', await reading.innerText() === interrupted)
   await page.goBack()
   await reader.waitFor({ state: 'detached' })
-  check('Browser Back closes the reading and focuses its single source', await ask.evaluate(el => el === document.activeElement))
-  await ask.click()
-  check('A new request begins in the daily category', await category.inputValue() === 'ASKG' && await ask.getAttribute('aria-pressed') === 'true')
+  check('Browser Back closes reading and restores a visible control', await toolsLauncher.evaluate(el => el === document.activeElement))
+  await useTool(page, '给我一句鼓励')
+  check('A new request begins in the daily category', await category.inputValue() === 'ASKG')
   await button(reader, '换一句鼓励').focus()
   await page.keyboard.press('Escape')
   await reader.waitFor({ state: 'detached' })
-  check('Escape dismisses the speech and restores the request button', await ask.getAttribute('aria-pressed') === 'false' && await ask.evaluate(el => el === document.activeElement))
+  check('Escape dismisses the speech and restores the paused tools launcher', await toolsLauncher.evaluate(el => el === document.activeElement))
   await second.close()
   await page.bringToFront()
   const failingSession = (await snapshot(page)).timer.session.id
@@ -219,6 +256,7 @@ try {
   check('Releasing a held Pause after expiry cannot start the suggested rest',
     !released.timer.session && released.records.filter(r => r.sessionId === held.id).length === 1)
   await tap(page, '准备专注')
+  await button(page, '开始专注').waitFor()
   check('Preparing the next focus does not start it', !(await snapshot(page)).timer.session)
   await tap(page, '开始专注')
   await button(page, '暂停专注').waitFor()
@@ -237,11 +275,10 @@ try {
   check('An obsolete confirmation stays with a return action and settles once at expiry',
     expired.records.filter(r => r.sessionId === confirming.id && r.endReason === 'deadline').length === 1 && !await button(dialog(page), '确认结束').count())
   await tap(dialog(page), '返回计时')
-  const beforeResultMarker = expired.thoughts.length
-  await tap(page, '留个标记')
-  await page.waitForFunction(({ key, count }) => JSON.parse(localStorage.getItem(key)).thoughts.length === count + 1, { key, count: beforeResultMarker })
-  check('A result-state marker is independent of the ended session', (await snapshot(page)).thoughts.at(-1).sessionId === null)
-  await tap(page, '记下想法')
+  check('Results expose no new thought, marker or encouragement entry', await noTools(page))
+  await tap(page, '准备专注')
+  await button(page, '开始专注').waitFor()
+  await useTool(page, '记下想法')
   const editor = page.locator('#thought-text')
   await editor.fill('😀'.repeat(501))
   check('Overlong text remains editable with submission disabled', await editor.inputValue() === '😀'.repeat(501) && await button(dialog(page), '保存想法').isDisabled())
@@ -277,7 +314,7 @@ try {
   await page.locator('[data-jl-back]').click()
   await bookEditor(page).waitFor({ state: 'detached' })
   await tap(page, '专注')
-  await tap(page, '记下想法')
+  await useTool(page, '记下想法')
   await editor.fill('回执 A')
   // A sheet covers the tab bar. Closing it keeps the draft, and Records offers to continue it.
   await page.keyboard.press('Escape')
@@ -296,9 +333,9 @@ try {
   check('Transferred editor keeps its recoverable draft', await editor.inputValue() === '回执 A')
   await page.keyboard.press('Escape')
   await dialog(page).waitFor({ state: 'detached' })
-  await tap(page, '给我一句鼓励')
+  await useTool(page, '给我一句鼓励')
   check('Leaving writing for reading keeps one task open and protects the draft', await reader.count() === 1 && !await editor.count())
-  await ask.click()
+  await dismissReader.click()
   await tap(page, '继续草稿')
   check('Continuing restores the input after a reader visit', await editor.inputValue() === '回执 A')
   await page.evaluate(() => {

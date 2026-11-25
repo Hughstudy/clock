@@ -2,7 +2,7 @@ import assert from 'node:assert/strict'
 import { mkdir, writeFile } from 'node:fs/promises'
 import path from 'node:path'
 import { webkit } from 'playwright'
-import { holdFocusCard, launchChromium } from './lib/browser.mjs'
+import { holdFocusCard, launchChromium, showFocusTools } from './lib/browser.mjs'
 import { build, preview } from 'vite'
 
 const output = path.resolve(process.env.IOS_REVIEW_OUTPUT || '.preview/ios-design')
@@ -68,14 +68,18 @@ try {
     const down = await primary.boundingBox()
     check(`${name}: pressed primary retains its complete 44px target`, stable(up, down) && down.width >= 44 && down.height >= 44)
     await p.mouse.up(); await button(p, '暂停专注').waitFor()
-    const mark = button(p, '留个标记'); await mark.scrollIntoViewIfNeeded()
-    const before = await mark.boundingBox(), writeBefore = await button(p, '记下想法').boundingBox()
+    const tools = await showFocusTools(p)
+    const mark = button(tools, '留个标记'); await mark.scrollIntoViewIfNeeded()
+    const before = await mark.boundingBox()
     const point = { x: before.x + before.width - 4, y: before.y + before.height / 2 }
     await p.mouse.click(point.x, point.y); await p.waitForFunction(() => JSON.parse(localStorage.getItem('whale-focus:snapshot')).thoughts.length === 1)
     await p.clock.runFor(900)
-    check(`${name}: saving the first marker keeps both thought tools stationary`, stable(before, await mark.boundingBox()) && stable(writeBefore, await button(p, '记下想法').boundingBox()))
-    await p.mouse.click(point.x, point.y); await p.waitForFunction(() => JSON.parse(localStorage.getItem('whale-focus:snapshot')).thoughts.length === 2)
-    check(`${name}: a second tap at the original edge creates a marker, not an editor`, await p.locator('#thought-text').count() === 0)
+    check(`${name}: saving a marker dismisses the choices and keeps the timer paused`,
+      !await tools.isVisible() && (await snapshot(p)).timer.session.status === 'paused')
+    await showFocusTools(p)
+    await mark.click()
+    await p.waitForFunction(() => JSON.parse(localStorage.getItem('whale-focus:snapshot')).thoughts.length === 2)
+    check(`${name}: deliberately reopening the tools saves a second marker`, !await tools.isVisible() && !await p.locator('#thought-text').count())
     if (font === 32) {
       check(`${name}: enlarged clock has its own clear region`, await p.evaluate(() => {
         const t = document.querySelector('.fp-digits').getBoundingClientRect(), c = document.querySelector('.fp-plate').getBoundingClientRect()
@@ -84,8 +88,9 @@ try {
       await p.locator('.fp-plate').evaluate(e => { e.scrollTop = 0 })
     }
     await p.screenshot({ path: path.join(output, `${name}-marked.png`) })
-    await button(p, '暂停专注').focus()
-    for (const next of ['结束专注', '给我一句鼓励', '留个标记', '记下想法']) {
+    await button(p, '专注工具').press('Enter')
+    check(`${name}: keyboard opening focuses the first tool`, await button(tools, '给我一句鼓励').evaluate(e => e === document.activeElement))
+    for (const next of ['留个标记', '记下想法']) {
       // macOS WebKit's default Tab mode skips buttons; Option-Tab includes all controls.
       await p.keyboard.press(process.env.IOS_BROWSER === 'webkit' ? 'Alt+Tab' : 'Tab')
       check(`${name}: keyboard follows the control order to ${next}`, await button(p, next).evaluate(e => e === document.activeElement))
@@ -95,7 +100,7 @@ try {
     check(`${name}: editor has a reachable close action`, await close.evaluate(e => { const r = e.getBoundingClientRect(); return r.top >= 0 && r.bottom <= innerHeight + 1 }))
     await p.keyboard.press('Escape'); await dialog.waitFor({ state: 'hidden' })
     await p.locator('.fp-plate').evaluate(e => { e.scrollTop = 0 })
-    check(`${name}: closing editor returns to an unobscured running timer`, await button(p, '暂停专注').count() === 1)
+    check(`${name}: closing the editor returns to the paused timer`, await button(p, '继续专注').isVisible())
     await ctx.close()
   }
   // Chromium can emulate hardware safe-area values. Exercise the PWA viewport

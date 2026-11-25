@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict'
 import path from 'node:path'
 import { mkdir, writeFile } from 'node:fs/promises'
-import { holdFocusCard, launchChromium } from './lib/browser.mjs'
+import { holdFocusCard, launchChromium, showFocusTools } from './lib/browser.mjs'
 import { build, preview } from 'vite'
 
 const output = path.resolve(process.env.V35_PERSISTENCE_OUTPUT || '.preview/v35-persistence')
@@ -30,7 +30,7 @@ async function newPage(context, url) {
   page.on('console', message => { if (message.type() === 'error') errors.push(message.text()) })
   await page.clock.install({ time: new Date('2026-11-02T12:00:00+08:00') })
   await page.goto(url)
-  await button(page, '开始专注').waitFor()
+  await page.locator('.fp-primary button').waitFor()
   await page.evaluate(async () => { if ('serviceWorker' in navigator) await navigator.serviceWorker.ready })
   const details = button(page, '查看状态')
   if (await details.isVisible()) {
@@ -41,8 +41,12 @@ async function newPage(context, url) {
   }
   return page
 }
+async function useTool(page, name) {
+  await showFocusTools(page)
+  await tap(page, name)
+}
 async function addThought(page, text) {
-  await tap(page, '记下想法')
+  await useTool(page, '记下想法')
   await page.locator('#thought-text').fill(text)
   await tap(page.getByRole('dialog'), '保存想法')
   await until(page, `value?.thoughts.some(t => t.text === ${JSON.stringify(text)})`)
@@ -94,6 +98,8 @@ try {
   await page.keyboard.press('Escape'); await tap(page, '记录')
   check('Retry contributes the one confirmed record exactly once', /1 段已结束专注/.test(await statistics(page)))
   await tap(page, '专注')
+  await tap(page, '准备专注')
+  await button(page, '开始专注').waitFor()
   const first = await addThought(page, '保留原文甲'), second = await addThought(page, '保留原文乙')
   await noteRows(page)
   await writes(page, true); await removeThought(page, first)
@@ -103,7 +109,7 @@ try {
   await writes(page, false); await tap(noteDetail(page), '重试保存')
   await noteRow(page, first).waitFor({ state: 'detached' })
   await removeThought(page, second); await noteRow(page, second).waitFor({ state: 'detached' })
-  await tap(page, '专注'); await tap(page, '留个标记'); await noteRows(page)
+  await tap(page, '专注'); await useTool(page, '留个标记'); await noteRows(page)
   check('Both ten-minute deletion undos survive a later marker operation',
     await button(page, '撤销删除：保留原文甲').isVisible() && await button(page, '撤销删除：保留原文乙').isVisible())
   await tap(page, '撤销删除：保留原文甲')
@@ -112,13 +118,13 @@ try {
     (await snapshot(page)).thoughts.filter(t => t.id === first && t.deletedAt === null).length === 1)
   await tap(page, '专注'); await page.clock.fastForward(1000)
   const markerCount = (await snapshot(page)).thoughts.length
-  await tap(page, '留个标记')
+  await useTool(page, '留个标记')
   await until(page, `value?.thoughts.length === ${markerCount + 1}`)
   const markStart = await page.evaluate(() => performance.now())
   const oldMarker = (await snapshot(page)).thoughts.at(-1).id
   await tap(page.locator('.fp-note'), '撤销标记')
   await until(page, `value?.thoughts.find(t => t.id === ${JSON.stringify(oldMarker)})?.deletedAt !== null`)
-  await tap(page, '留个标记')
+  await useTool(page, '留个标记')
   const markEnd = await page.evaluate(() => performance.now())
   await until(page, `value?.thoughts.at(-1)?.id !== ${JSON.stringify(oldMarker)}`)
   check('A new mark after quick undo creates a new ID within the coalescing window',
@@ -127,7 +133,7 @@ try {
 
   // Save A, continue typing B, and then save B must update the same formal item.
   const editingContext = await browser.newContext(options), editorPage = await newPage(editingContext, url)
-  await tap(editorPage, '记下想法')
+  await useTool(editorPage, '记下想法')
   const editor = editorPage.locator('#thought-text')
   await editor.fill('  保存 A \n')
   await editorPage.clock.fastForward(700)
@@ -176,7 +182,7 @@ try {
   // An unchanged empty marker still needs its draft retirement saved. Matching
   // the already-durable note alone must not close the editor or report success.
   const unchangedContext = await browser.newContext(options), unchangedPage = await newPage(unchangedContext, url)
-  await tap(unchangedPage, '留个标记')
+  await useTool(unchangedPage, '留个标记')
   await until(unchangedPage, 'value?.thoughts.length === 1')
   const unchangedId = (await snapshot(unchangedPage)).thoughts[0].id
   await noteRows(unchangedPage)
@@ -208,7 +214,7 @@ try {
 
   // Favorite failure, late acknowledgement, cancellation, and peer synchronization.
   const favoriteContext = await browser.newContext(options), favoritePage = await newPage(favoriteContext, url)
-  await tap(favoritePage, '给我一句鼓励')
+  await useTool(favoritePage, '给我一句鼓励')
   const phraseA = await favoritePage.locator('.fp-reader-quote:visible').innerText()
   await writes(favoritePage, true); await tap(favoritePage, '收藏这句')
   await button(favoritePage, '等待保存确认').waitFor()
@@ -221,7 +227,7 @@ try {
   await until(favoritePage, 'value?.quoteFavorites.some(q => q.deletedAt === null)')
   check('A late favorite receipt leaves B unselected and preserves A text',
     await button(favoritePage, '收藏这句').getAttribute('aria-pressed') === 'false' && (await snapshot(favoritePage)).quoteFavorites[0].text === phraseA)
-  await tap(favoritePage, '给我一句鼓励'); await tap(favoritePage, '记录'); await favoritePage.getByRole('tab', { name: '收藏', exact: true }).click()
+  await tap(favoritePage, '收到鼓励了'); await tap(favoritePage, '记录'); await favoritePage.getByRole('tab', { name: '收藏', exact: true }).click()
   await quoteRow(favoritePage).click()
   await writes(favoritePage, true); await tap(favoriteDetail(favoritePage), '取消收藏')
   await favoriteDetail(favoritePage).getByText(/尚未确认保存/).first().waitFor()
@@ -232,9 +238,9 @@ try {
   await favoritePage.locator('[data-jl-section="favorites"] .jl-empty').waitFor()
   await quoteRow(favoritePage).waitFor({ state: 'detached' })
   check('Confirmed cancellation clears its text snapshot and keeps a versioned tombstone', (await snapshot(favoritePage)).quoteFavorites[0].text === '')
-  await tap(favoritePage, '专注'); await tap(favoritePage, '给我一句鼓励'); await tap(favoritePage, '收藏这句')
+  await tap(favoritePage, '专注'); await useTool(favoritePage, '给我一句鼓励'); await tap(favoritePage, '收藏这句')
   await button(favoritePage, '取消收藏这句').waitFor()
-  await tap(favoritePage, '给我一句鼓励'); await tap(favoritePage, '记录'); await favoritePage.getByRole('tab', { name: '收藏', exact: true }).click()
+  await tap(favoritePage, '收到鼓励了'); await tap(favoritePage, '记录'); await favoritePage.getByRole('tab', { name: '收藏', exact: true }).click()
   const peer = await newPage(favoriteContext, url)
   await tap(peer, '记录'); await peer.getByRole('tab', { name: '收藏', exact: true }).click()
   await quoteRow(peer).click()
@@ -245,7 +251,7 @@ try {
   await favoriteContext.close()
 
   const lockContext = await browser.newContext(options), lockPage = await newPage(lockContext, url)
-  await tap(lockPage, '给我一句鼓励')
+  await useTool(lockPage, '给我一句鼓励')
   const blockedPhrase = await lockPage.locator('.fp-reader-quote:visible').innerText()
   await lockPage.evaluate(() => {
     const request = navigator.locks.request.bind(navigator.locks)
@@ -258,7 +264,7 @@ try {
   await lockPage.locator('.fp-reader-feedback:visible').filter({ hasText: '尚未确认保存' }).waitFor()
   await tap(lockPage, '换一句鼓励'); await tap(lockPage, '收藏这句')
   await button(lockPage, '取消收藏这句').waitFor()
-  await tap(lockPage, '给我一句鼓励'); await tap(lockPage, '记录'); await lockPage.getByRole('tab', { name: '收藏', exact: true }).click()
+  await tap(lockPage, '收到鼓励了'); await tap(lockPage, '记录'); await lockPage.getByRole('tab', { name: '收藏', exact: true }).click()
   const failure = await lockPage.locator('#rj-leaf').innerText()
   check('Unapplied lock failure for A remains explained after a successful B favorite',
     failure.includes(Array.from(blockedPhrase).slice(0, 18).join('')) && failure.includes('尚未确认保存') && (await snapshot(lockPage)).quoteFavorites.filter(q => q.deletedAt === null).length === 1)

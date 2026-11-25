@@ -1,5 +1,7 @@
 # Engineering plan
 
+**Pause tools, 2026-11-25.** A deliberate pause opens three optional actions for encouragement, marking and writing. Users can dismiss and reopen them while paused. Resuming closes the tools and continues the original timer. The card reserves no space for a tool row during preparation or a running timer. See the [current rule](docs/prd/02-features.md#pause-tools).
+
 **Scene journal, 2026-11-25.** The owner approved the reviewed opening for the main application. Each of the eleven activities has a grounded journal. The prop and Records tab open the same reading visit, with a reversible cover turn and immediate destination controls. See the [product rule](docs/prd/02-features.md#scene-journal), [acceptance case](docs/prd/07-acceptance.md#t-rec44) and [verification](docs/verification/scene-journal.md).
 
 **Mid-session timing, 2026-11-23.** The owner chose editing the remaining time on an active focus or break. The digits open an editor bound to the current session and schedule. Running edits set a deadline from acceptance, paused edits replace the frozen remainder. Actual elapsed time, original plan, notes and activity identity survive changes and recovery. See the [product rule](docs/prd/02-features.md#adjust-remaining) and [verification](docs/verification/remaining-time.md). The other two timer proposals remain under review.

@@ -45,10 +45,17 @@ try {
   await button(page, '开始专注').waitFor()
   await page.evaluate(() => { window.updateGuardToken = 'original-document' })
 
+  // Make a recoverable independent draft while a rest is paused, then end
+  // that rest so the draft is the only remaining update blocker.
+  await button(page, '选择休息').click()
+  await button(page, '开始休息').click()
+  await button(page, '暂停休息').click()
   await button(page, '记下想法').click()
   await page.locator('#thought-text').fill('更新前保留的想法')
   await closePanel(page)
   await page.waitForFunction(() => JSON.parse(localStorage.getItem('whale-focus:snapshot'))?.thoughtDraft?.text === '更新前保留的想法')
+  await button(page, '结束休息').click()
+  await button(page, '开始专注').waitFor()
 
   // A real second worker is installed from changed bytes, using the same app
   // assets. Only this isolated verification build is modified.

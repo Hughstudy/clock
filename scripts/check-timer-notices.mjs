@@ -15,6 +15,12 @@ export async function checkTimerNotices(browser, url, check) {
     const banner = page.locator('.timer-ended')
     const live = page.locator('.app > [aria-live]')
     const tab = name => page.locator('.tab-bar').getByRole('button', { name, exact: true })
+    const startPausedRest = async () => {
+      await button('选择休息').click()
+      await button('开始休息').click()
+      await button('暂停休息').click()
+      await button('留个标记').waitFor()
+    }
     const expire = async () => {
       const { durationMs } = await session()
       await page.clock.fastForward(durationMs + 100)
@@ -75,13 +81,12 @@ export async function checkTimerNotices(browser, url, check) {
     check('After a rest deadline, the clock names the next focus and the receipt gives the actual rest time',
       await page.locator('.fp-clock-phase').innerText() === '准备专注' &&
       (await page.locator('.fp-status').innerText()).includes('本次休息 5 分钟') && !await session())
+    await startPausedRest()
     await button('记下想法').click()
     const writing = page.locator('#thought-text')
     await writing.fill('读一页')
     await page.keyboard.press('Escape')
     await page.getByRole('dialog').waitFor({ state: 'hidden' })
-    await button('选择休息').click()
-    await button('开始休息').click()
     await button('结束休息').waitFor()
     await page.clock.runFor(1000)
     await button('结束休息').click()
@@ -95,6 +100,7 @@ export async function checkTimerNotices(browser, url, check) {
     const note = page.locator('.fp-note')
     const details = button('查看状态')
     const noteText = note.locator('.fp-note__text')
+    await startPausedRest()
     await button('留个标记').click()
     await button('撤销标记', note).waitFor()
     check('A saved mark needs no details button', !await details.count())
@@ -112,15 +118,19 @@ export async function checkTimerNotices(browser, url, check) {
     await restore.focus()
     await page.keyboard.press('Enter')
     await restore.waitFor({ state: 'detached' })
-    check('Keyboard focus survives the restore button going away', await page.evaluate(() => document.activeElement.innerText.includes('留个标记')))
+    check('Keyboard focus returns to a visible paused tool when its restore action goes away', await page.evaluate(() =>
+      document.activeElement instanceof HTMLButtonElement && !!document.activeElement.getClientRects().length &&
+      ['专注工具', '留个标记'].includes(document.activeElement.getAttribute('aria-label') || document.activeElement.textContent.trim())))
     check('The named restore brings the mark back', (await page.evaluate(() => JSON.parse(localStorage.getItem('whale-focus:snapshot')).thoughts)).filter(t => t.deletedAt === null).length >= 1)
     await page.clock.runFor(10_100)
 
+    if (!await button('留个标记').isVisible()) await button('专注工具').click()
     await button('留个标记').click()
     await button('撤销标记', note).waitFor()
+    await button('结束休息').click()
     await button('开始专注').click()
     await button('暂停专注').waitFor()
-    check('The prepared intention remains a dated thought when focus starts', (await session()).step === null &&
+    check('The independent rest thought keeps its original owner when focus starts', (await session()).step === null &&
       await page.evaluate(() => JSON.parse(localStorage.getItem('whale-focus:snapshot')).thoughts.some(t => t.text === '读一页' && t.sessionId === null)))
     await button('撤销标记', note).waitFor({ state: 'detached' })
     check('A new session retires the earlier mark shortcuts', !await button('补充文字', note).count())
@@ -163,6 +173,7 @@ export async function checkTimerNotices(browser, url, check) {
     check('Restoring the last listed thought also keeps focus on it', await restoreByKeyboard(undoButtons.nth(1)))
     await tab('专注').click()
 
+    await startPausedRest()
     await page.evaluate(() => {
       window.originalSetItem = Storage.prototype.setItem
       Storage.prototype.setItem = function (name, value) {
@@ -182,6 +193,8 @@ export async function checkTimerNotices(browser, url, check) {
     await page.waitForTimeout(100)
     check('An undo in the status panel leaves focus inside the panel', await page.evaluate(() => !!document.activeElement.closest('.focus-panel')))
     await page.keyboard.press('Escape')
+    await button('结束休息').click()
+    await button('开始专注').waitFor()
     await page.close()
 
     // Another tab settles the deadline; a save fails and is retried.

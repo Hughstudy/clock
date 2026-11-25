@@ -11,3 +11,7 @@ Verified on 2026-11-25 with the production build served at `/clock/`. Chrome 158
 | Screen fit | All eleven placements were checked at 320×568, 375×760, 430×932, 740×390, 1024×768 and 1440×900 CSS pixels, plus 320×568 with 200% text. The timer controls and navigation left a usable 44 px book target. |
 
 The [journal regression](../../scripts/verify-scene-journal.mjs) runs in `npm run test:e2e`. Run `IOS_BROWSER=webkit node scripts/verify-scene-journal.mjs` for the WebKit variant. The [Records regression](../../scripts/verify-records-pages.mjs) also checks opening the cover on a direct Records reload.
+
+## Pause tools in the same release
+
+The [Focus interaction regression](../../scripts/verify-focus-interactions.mjs) exercised preparation, running, pause, resume and ending. It held the pause storage lock to confirm the choices only appeared after the original session paused. A user could then request a quote, save a note or leave a marker, dismiss the choices and resume the same session. A browser walkthrough also opened the journal directly from this paused screen and returned to the original activity. The [panel checks](../../scripts/verify-v35-panels.mjs) covered keyboard focus, short screens and enlarged text.

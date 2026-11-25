@@ -3,7 +3,7 @@ import path from 'node:path'
 import { mkdir, writeFile } from 'node:fs/promises'
 import { webkit } from 'playwright'
 import { build, preview } from 'vite'
-import { launchChromium } from './lib/browser.mjs'
+import { launchChromium, showFocusTools } from './lib/browser.mjs'
 
 const output = path.resolve(process.env.STEP_ASIDE_OUTPUT || '.preview/focus-step-aside')
 const outDir = path.join(output, 'build')
@@ -128,27 +128,34 @@ async function behaviour(browser, url, label, viewport) {
   await page.clock.fastForward(400)
   check(`${label} ${name}: a double tap on the handle presses nothing else`, await running(page) === 'running' && await page.locator('.app[data-screen="home"]').count() === 1)
 
+  await showFocusTools(page)
   const ask = button(page, '给我一句鼓励')
   await ask.click()
   await page.clock.fastForward(9000)
   const reader = page.getByRole('region', { name: '一句鼓励' })
   check(`${label} ${name}: reading keeps the speech and timer controls available`, await reader.isVisible() &&
-    await button(page, '暂停专注').isVisible() && await button(page, '结束专注').isVisible() && await ask.getAttribute('aria-pressed') === 'true')
-  await ask.click()
+    await button(page, '继续专注').isVisible() && await button(page, '结束专注').isVisible() && await button(reader, '收到鼓励了').isVisible())
+  await button(reader, '收到鼓励了').click()
   await reader.waitFor({ state: 'detached' })
+  await showFocusTools(page)
   await tap(page, '记下想法')
   await button(page, '回到计时').waitFor()
   await page.clock.fastForward(30000)
   check(`${label} ${name}: an open note holds the card`, await page.locator('.home[data-chrome="shown"]').count() === 1)
   await tap(page, '回到计时')
-  await page.clock.fastForward(7000)
-  check(`${label} ${name}: closing a task restarts the wait`, await page.locator('.home[data-chrome="shown"]').count() === 1)
-  await page.clock.fastForward(1400)
-  await home(page, 'away')
+  await page.clock.fastForward(9000)
+  check(`${label} ${name}: closing the editor holds the card until explicit resume`,
+    await running(page) === 'paused' && await page.locator('.home[data-chrome="shown"]').count() === 1)
+  await tap(page, '继续专注')
+  await button(page, '暂停专注').waitFor()
+  await stepAside(page)
 
   await callOutFromRoom(page)
+  await showFocusTools(page)
   await tap(page, '留个标记')
   await page.locator('.fp-note .text-action').first().waitFor()
+  await tap(page, '继续专注')
+  await button(page, '暂停专注').waitFor()
   await page.clock.fastForward(8400)
   check(`${label} ${name}: a mark's confirmation holds the card`, await page.locator('.home[data-chrome="shown"]').count() === 1)
   await page.clock.fastForward(11000)
