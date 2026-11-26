@@ -6,20 +6,25 @@ import { initialTimer } from '../timer'
 import { quoteKey, type SavedQuote } from '../../contracts/favorites'
 import { PHASES, type FocusRecord, type FocusSceneId, type ParticipationRecord, type Phase, type RestMemory, type SceneAssignment, type SceneRotation, type SceneState, type SceneUnlock, type Session, type Thought, type ThoughtDraft, type TimerState } from '../types'
 import { isRecord, isCount, isEpochMs, isInstant, isPositiveMs, isId, isTimeZone, isText, isStep } from './guards'
+import { readReadingBinding, readReadingMemory } from './reading'
 
 function readSceneAssignment(raw: unknown): SceneAssignment | null {
   return isRecord(raw) && isSceneId(raw.sceneId) && isCount(raw.ordinal) && raw.ordinal > 0 && (raw.selectionVersion === 1 || raw.selectionVersion === 2)
     ? { sceneId: raw.sceneId, ordinal: raw.ordinal, selectionVersion: raw.selectionVersion } : null
 }
 
-function readSession(raw: unknown, issues: string[]): Session | null {
+function readSession(raw: unknown, issues: string[], allowReading: boolean): Session | null {
   if (!isRecord(raw) || !isId(raw.id) || !isPositiveMs(raw.durationMs) || !isTimeZone(raw.timeZone) || !(raw.startedAt === null || isInstant(raw.startedAt)) || !isStep(raw.step)) return null
   const { id, durationMs, timeZone, startedAt, step } = raw
   const scene = raw.scene === undefined ? null : readSceneAssignment(raw.scene)
   if (raw.scene !== undefined && !scene) issues.push('timer.session.scene')
   if (raw.initialDurationMs !== undefined && !isPositiveMs(raw.initialDurationMs)) issues.push('timer.session.initialDurationMs')
   if (raw.timingRevision !== undefined && !isCount(raw.timingRevision)) issues.push('timer.session.timingRevision')
-  const shared = { id, durationMs, timeZone, startedAt, step, ...(scene ? { scene } : {}),
+  const reading = allowReading && raw.reading !== undefined && startedAt !== null &&
+    (raw.initialDurationMs === undefined || isPositiveMs(raw.initialDurationMs))
+    ? readReadingBinding(raw.reading, scene ?? undefined, isPositiveMs(raw.initialDurationMs) ? raw.initialDurationMs : durationMs) : undefined
+  if (allowReading && raw.reading !== undefined && !reading) issues.push('timer.session.reading')
+  const shared = { id, durationMs, timeZone, startedAt, step, ...(scene ? { scene } : {}), ...(reading ? { reading } : {}),
     ...(isPositiveMs(raw.initialDurationMs) ? { initialDurationMs: raw.initialDurationMs } : {}),
     ...(isCount(raw.timingRevision) ? { timingRevision: raw.timingRevision } : {}) }
   if (raw.status === 'running' && isInstant(raw.deadline)) {
@@ -32,15 +37,15 @@ function readSession(raw: unknown, issues: string[]): Session | null {
   return null
 }
 
-export function readTimer(raw: unknown, completionCount: number, issues: string[]): TimerState {
+export function readTimer(raw: unknown, completionCount: number, issues: string[], allowReading: boolean): TimerState {
   if (!isRecord(raw)) { issues.push('timer'); return { ...initialTimer(), completedFocusCount: completionCount } }
   let phase: Phase = 'focus'
   if (PHASES.includes(raw.phase as Phase)) phase = raw.phase as Phase
   else issues.push('timer.phase')
-  let session = raw.session === null ? null : readSession(raw.session, issues)
+  let session = raw.session === null ? null : readSession(raw.session, issues, allowReading)
   if (session?.scene && isFocusSceneId(session.scene.sceneId) !== (phase === 'focus')) {
     issues.push('timer.session.scene.phase')
-    const { scene: _scene, ...withoutScene } = session
+    const { scene: _scene, reading: _reading, ...withoutScene } = session
     session = withoutScene
   }
   if (raw.session !== null && !session) issues.push('timer.session')
@@ -58,7 +63,7 @@ export function readRestSuggestion(raw: unknown, timer: TimerState, records: rea
   return null
 }
 
-export function readRecords(raw: unknown, issues: string[]): FocusRecord[] {
+export function readRecords(raw: unknown, issues: string[], allowReading: boolean): FocusRecord[] {
   if (!Array.isArray(raw)) { issues.push('records'); return [] }
   const seen = new Set<string>()
   const records: FocusRecord[] = []
@@ -72,10 +77,17 @@ export function readRecords(raw: unknown, issues: string[]): FocusRecord[] {
       const scene = r.scene === undefined ? null : readSceneAssignment(r.scene)
       if (r.scene !== undefined && (!scene || !isFocusSceneId(scene.sceneId))) issues.push(`record.scene (${r.sessionId})`)
       if (r.initialDurationMs !== undefined && !isPositiveMs(r.initialDurationMs)) issues.push(`record.initialDurationMs (${r.sessionId})`)
-      records.push({ sessionId: r.sessionId, startedAt: r.startedAt, endedAt: r.endedAt, dateKey: r.dateKey,
+      const record: FocusRecord = { sessionId: r.sessionId, startedAt: r.startedAt, endedAt: r.endedAt, dateKey: r.dateKey,
         targetMs: r.targetMs, elapsedMs: r.elapsedMs, endReason: r.endReason, source: r.source, step: r.step,
         ...(isPositiveMs(r.initialDurationMs) ? { initialDurationMs: r.initialDurationMs } : {}),
-        ...(scene && isFocusSceneId(scene.sceneId) ? { scene } : {}) })
+        ...(scene && isFocusSceneId(scene.sceneId) ? { scene } : {}) }
+      if (allowReading && r.reading !== undefined) {
+        const reading = r.initialDurationMs === undefined || isPositiveMs(r.initialDurationMs)
+          ? readReadingMemory(r.reading, record) : undefined
+        if (reading) record.reading = reading
+        else issues.push(`record.reading (${r.sessionId})`)
+      }
+      records.push(record)
     } else dropped += 1
   }
   if (dropped) issues.push(`records (${dropped} unreadable)`)

@@ -36,7 +36,7 @@ export function BlueCompanion({ presentation, cueId, scene, inspection, panelOpe
   const gradientId = useId().replace(/:/g, '')
   const scenePose = spec.poses[presentation.stance]
   const sceneFrame = scene ? sampleScenePose({
-    id: scene.id, status: scene.status, progress: inspection ? scene.completedProgress : sceneMotion.presentedProgress,
+    id: scene.id, reading: scene.reading, status: scene.status, progress: inspection ? scene.completedProgress : sceneMotion.presentedProgress,
     activityProgress: inspection ? scene.completedProgress : sceneMotion.activityProgress,
     actionKind: inspection?.actionKind ?? sceneMotion.sampleKind,
     actionProgress: inspection?.actionProgress ?? sceneMotion.actionProgress,

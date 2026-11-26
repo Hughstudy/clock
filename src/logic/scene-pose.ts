@@ -1,4 +1,5 @@
 import type { SceneId } from './types'
+import type { ReadingSceneView } from './presentation'
 import { sampleFoodPose } from './scene-food-rig'
 import { drawWandArm } from './scene-wand-arm'
 import { palmArc, roundedReach } from './scene-reach'
@@ -9,6 +10,7 @@ export interface SceneArm { points: readonly number[]; palm: ScenePoint }
 export type SceneActionKind = 'idle' | 'open' | 'beat' | 'ending'
 export interface ScenePoseInput {
   id: SceneId
+  reading?: ReadingSceneView | undefined
   status?: 'running' | 'paused' | 'ended'
   progress: number
   /** Local handling cursor; distinct from factual completed progress. */
@@ -37,7 +39,10 @@ export interface ScenePoseFrame {
   right: SceneArm
   cup: SceneObject & { scale: number; held: number; liquid: number }
   kettle: SceneObject & { grip: ScenePoint; spout: ScenePoint; pour: number }
-  book: { turn: number; close: number; ribbon: number; corner: ScenePoint; coverEdge: ScenePoint; coverFront: ScenePoint }
+  book: {
+    turn: number; close: number; ribbon: number; corner: ScenePoint; coverEdge: ScenePoint; coverFront: ScenePoint
+    reading?: ReadingSceneView | undefined; pageLift: number; ticketPosition: number
+  }
   boat: { fold: number; transfer: number; x: number; y: number; scale: number; left: ScenePoint; right: ScenePoint }
   wand: SceneObject & { ring: ScenePoint; breath: number; bubbles: readonly { x: number; y: number; radius: number; travel: number }[] }
   blocks: readonly SceneObject[]
@@ -85,6 +90,25 @@ export function focusAttentionTransforms(a: FocusAttention): { head: string | un
   }
 }
 const point = (x: number, y: number): ScenePoint => ({ x, y })
+/** Point where the ticket emerges from between the leaves at the near edge. */
+export const bookTicketAnchor = (position: number) => point(148 + 23 * position, 174.5 + 4.1 * position)
+
+function readingBookHandling(reading: ReadingSceneView, input: ScenePoseInput): number {
+  if (reading.stage === 'closed') {
+    // A permitted ending may move the ticket and close the book. Recovery uses the still.
+    return input.actionKind === 'ending' && !input.staticOnly
+      ? mix(.4, 1, clamp(input.actionProgress ?? 0)) : 1
+  }
+  if (reading.stage === 'open') return 0
+  if (reading.stage === 'turn' && !input.staticOnly) {
+    // The physical turn lasts a few seconds, even in the longer chapter.
+    const start = reading.variant === 'hat' ? .35 : .25
+    const length = reading.variant === 'hat' ? .075 : .003
+    return .4 * span(input.progress, start, start + length)
+  }
+  // The spread remains open when the user stays with the last page or ends manually.
+  return .4
+}
 const pointMix = (a: ScenePoint, b: ScenePoint, t: number): ScenePoint => point(mix(a.x, b.x, t), mix(a.y, b.y, t))
 const arm = (points: readonly number[], x: number, y: number): SceneArm => ({ points, palm: point(x, y) })
 const mirror = (a: SceneArm): SceneArm => ({ points: a.points.map((v, i) => i % 2 === 0 ? 324 - v : v), palm: point(324 - a.palm.x, a.palm.y) })
@@ -235,7 +259,7 @@ export function sampleScenePose(input: ScenePoseInput): ScenePoseFrame {
   const contacts: SceneContact[] = []
   const cup = { x: TEA_CUP_HELD.x-1, y: TEA_CUP_HELD.y, angle: 0, scale: SCENE_CUP_SCALE, held: 1, liquid: 1 }
   const kettle = { x: 131, y: 179, angle: 0, grip: point(131,135), spout: point(166,153), pour: 0 }
-  const book = { turn: 0, close: 0, ribbon: span(p,.66,.74), corner: point(206,161), coverEdge: point(206,161), coverFront: point(214,175) }
+  const book: ScenePoseFrame['book'] = { turn: 0, close: 0, ribbon: span(p,.66,.74), corner: point(206,161), coverEdge: point(206,161), coverFront: point(214,175), pageLift: 0, ticketPosition: 0 }
   const boat = { fold: p, transfer: span(p,.78,1), x:150, y:0, scale:.71, left: point(135,173), right: point(189,174) }
   let wand: ScenePoseFrame['wand'] = { x: 240, y: 165, angle: 0, ring: point(240,193), breath: 0, bubbles: [] }
   const blocks: SceneObject[] = [{x:64,y:186,angle:0},{x:196,y:186,angle:0},{x:100,y:186,angle:0},{x:100,y:164,angle:0}]
@@ -286,34 +310,50 @@ export function sampleScenePose(input: ScenePoseInput): ScenePoseFrame {
     if(cup.held===1)contacts.push(contact('cup-handle',right.palm,rp))
     gaze.x=-2*(1-lift)
   } else if(input.id==='F3') {
+    const reading = input.reading
+    const handling = reading ? readingBookHandling(reading, input) : p
     const ls = point(111,143), rs = point(213,143)
     const leftRest = point(136,169), rightRest = point(188,169)
     let leftPalm = leftRest, rightPalm = rightRest
-    const turn = span(p,.12,.34)
-    book.turn = turn; book.close = span(p,.815,.957)
+    const turn = span(handling,.12,.34)
+    book.reading = reading
+    book.pageLift = reading?.variant === 'hat' ? 9 : 0
+    book.turn = reading ? 1 - turn : turn
+    book.close = span(handling,.815,.957)
     const edge = (fraction: number, rise: number) => point(
-      150 + 39 * Math.cos(fraction * Math.PI), 162 - rise * Math.sin(fraction * Math.PI))
-    book.corner = edge(turn,5)
+      150 + 39 * Math.cos(fraction * Math.PI), 162 - book.pageLift - rise * Math.sin(fraction * Math.PI))
+    book.corner = edge(book.turn,5)
     // Thumb near the fore-edge turns a page; it can settle onto its own stack.
-    const pageGrip = point(.74*book.corner.x+.26*150+16, .74*book.corner.y+.26*169+8)
-    const grasp = span(p,.08,.12) * (1-span(turn,.30,.46))
-    rightPalm = palmArc(rs,rightPalm,pageGrip,grasp)
-    if(grasp===1)contacts.push(contact('page-corner',rightPalm,pageGrip))
-    const ribbon = span(p,.5,.56) * (1-span(p,.68,.74))
-    const marker = point(180,167)
-    rightPalm = palmArc(rs,rightPalm,marker,ribbon)
-    if(ribbon===1)contacts.push(contact('bookmark',rightPalm,marker))
+    const pageGrip = point(.74*book.corner.x+.26*150+16, .74*book.corner.y+.26*(169-book.pageLift)+8+book.pageLift*.55)
+    const grasp = span(handling,.08,.12) * (1-span(turn,.30,.46))
+    if (reading) {
+      // Turning back starts on the left. The ticket stays put until a saved chapter moves it.
+      leftPalm = palmArc(ls,leftPalm,pageGrip,grasp)
+      if (grasp===1) contacts.push(contact('page-corner',leftPalm,pageGrip))
+      book.ticketPosition = reading.bookmark === 'next' ? 1 : span(handling,.50,.69)
+      const grip = bookTicketAnchor(book.ticketPosition)
+      const hold = span(handling,.40,.50) * (1-span(handling,.69,.75))
+      leftPalm = palmArc(ls,leftPalm,grip,hold)
+      if (hold===1) contacts.push(contact('bookmark',leftPalm,grip))
+    } else {
+      rightPalm = palmArc(rs,rightPalm,pageGrip,grasp)
+      if(grasp===1)contacts.push(contact('page-corner',rightPalm,pageGrip))
+      const ribbon = span(p,.5,.56) * (1-span(p,.68,.74))
+      const marker = point(180,167)
+      rightPalm = palmArc(rs,rightPalm,marker,ribbon)
+      if(ribbon===1)contacts.push(contact('bookmark',rightPalm,marker))
+    }
 
     // The book sits diagonally. The two hands hold opposite corners of the
     // same fore-edge as the cover passes the spine.
     const close = book.close
     book.coverEdge = edge(close,4)
-    book.coverFront = point(book.coverEdge.x+29,book.coverEdge.y+11)
+    book.coverFront = point(book.coverEdge.x+29,book.coverEdge.y+11+book.pageLift)
     // Slide the supporting palm along the fore-edge as its perspective turns.
     const rightGrip = pointMix(book.coverEdge,book.coverFront,span(close,.1,.5))
     const leftGrip = pointMix(book.coverEdge,book.coverFront,.76 * span(close,.54,.90))
-    const rightHold = span(p,.75,.815) * (1-span(close,.50,.57))
-    const leftHold = span(close,.40,.50) * (1-span(p,.957,1))
+    const rightHold = span(handling,.75,.815) * (1-span(close,.50,.57))
+    const leftHold = span(close,.40,.50) * (1-span(handling,.957,1))
     rightPalm = palmArc(rs,rightPalm,rightGrip,rightHold)
     leftPalm = palmArc(ls,leftPalm,leftGrip,leftHold)
     left = roundedReach('left',ls,leftPalm); right = roundedReach('right',rs,rightPalm)

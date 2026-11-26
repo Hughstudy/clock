@@ -32,6 +32,12 @@ export function BookMemory({
         {p.caption && <p className="jl-caption">{p.caption}</p>}
       </div>
       <Facts p={p} showArt={showArt} />
+      {p.reading?.excerpt && (
+        <figure className="jl-reading-excerpt" data-reading-excerpt>
+          <figcaption>它回读的那一句</figcaption>
+          <blockquote>{p.reading.excerpt}</blockquote>
+        </figure>
+      )}
       {p.record && (
         <div className="jl-record-metadata">
           {p.record.step && <p>这一小步：{p.record.step}</p>}

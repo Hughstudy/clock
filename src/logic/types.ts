@@ -1,4 +1,5 @@
 import type { SavedQuote } from '../contracts/favorites'
+import type { ReadingBinding, ReadingMemory } from './reading-story'
 
 export type Phase = 'focus' | 'shortBreak' | 'longBreak'
 
@@ -57,6 +58,8 @@ export type Session = {
   step: string | null
   /** Absent only for old records/sessions with no historical scene assignment. */
   scene?: SceneAssignment
+  /** Bound when this particular reading activity starts. */
+  reading?: ReadingBinding
 } & (
   | { status: 'running'; deadline: number; runStartRemainingMs?: number }
   | { status: 'paused'; remainingMs: number }
@@ -86,6 +89,7 @@ export interface FocusRecord {
   /** The session's optional small step, copied when it ended. */
   step: string | null
   scene?: SceneAssignment
+  reading?: ReadingMemory
 }
 
 /** An ended rest. v9 only retained the latest ending, without its date key, kind or reason. */

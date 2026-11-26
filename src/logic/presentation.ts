@@ -1,9 +1,10 @@
 import type { FeedbackEvent, FeedbackFrame, FeedbackResult, Persistence, Pool } from './feedback'
+import { readingStage, type ReadingBinding, type ReadingStage } from './reading-story'
 import { endingTierForElapsed } from './scenes'
 import type { AppSnapshot, SceneId } from './types'
 
 /** Contract version for the main → animation boundary. Bump when a field's meaning changes. */
-export const PRESENTATION_CONTRACT = 'C2-P5'
+export const PRESENTATION_CONTRACT = 'C2-P6'
 
 /** The activity follows the time budget it started with, including after a timer edit or reload. */
 export function focusSceneProgress(elapsedMs: number, originalDurationMs: number): number {
@@ -26,6 +27,9 @@ export interface PresentationCue {
   thoughtId: string | null
 }
 
+/** The original bookmark and reached story beat, shared with the static renderer. */
+export type ReadingSceneView = Readonly<Pick<ReadingBinding, 'variant' | 'bookmark'> & { stage: ReadingStage }>
+
 /** One host-assigned activity. Keys are stable across countdown updates and recovery. */
 export interface CompanionScene {
   /** Dataset generation, logical session and scene-selection version. */
@@ -36,6 +40,7 @@ export interface CompanionScene {
   status: 'running' | 'paused' | 'ended'
   /** Portion of the original activity timeline reached, from 0 to 1. Rest uses zero. */
   completedProgress: number
+  reading?: ReadingSceneView
   /** The host suppresses beats while another input/panel needs attention. */
   allowBeats: boolean
   /** Main permits a transient cue independently of the read-only activity. */
@@ -123,6 +128,10 @@ export function companionSceneOf(snapshot: AppSnapshot, cue: PresentationCue | n
       key: keyFor(session.id, session.scene.selectionVersion), id: session.scene.sceneId,
       sessionId: session.id, phase, status: session.status,
       completedProgress: phase === 'focus' ? progress : 0, allowBeats: allowed,
+      ...(session.reading && { reading: {
+        variant: session.reading.variant, bookmark: session.reading.bookmark,
+        stage: readingStage(session.reading, progress),
+      } }),
       cue: matchedCue, ending: null,
     }
   }
@@ -143,6 +152,9 @@ export function companionSceneOf(snapshot: AppSnapshot, cue: PresentationCue | n
     key: keyFor(ended.sessionId, ended.scene.selectionVersion), id: ended.scene.sceneId,
     sessionId: ended.sessionId, phase: ended.phase === 'focus' ? 'focus' : 'break', status: 'ended',
     completedProgress: record ? focusSceneProgress(record.elapsedMs, record.initialDurationMs ?? record.targetMs) : 0,
+    ...(record?.reading && { reading: {
+      variant: record.reading.variant, bookmark: record.reading.bookmark, stage: record.reading.stage,
+    } }),
     allowBeats: true, cue: kept,
     ending: { cueId: kept?.id ?? `ending:${ended.sessionId}`, tier: record ? endingTierForElapsed(record.elapsedMs) : null },
   }

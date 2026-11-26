@@ -1,6 +1,6 @@
 import { monthLabel } from '../../format'
 import { savedDay } from './data'
-import { Picture, PageHead, DatedList, Row } from './BookPaper'
+import { Picture, PageHead, DatedList, Row, RoomPicture } from './BookPaper'
 import { BookMemory } from './BookMemory'
 import { BookFilters, BookPagination } from './BookTools'
 import type { BookViewProps } from './props'
@@ -14,6 +14,7 @@ export function BookChapters({ props, book }: BookViewProps) {
     phrases,
     phrase,
     groups,
+    bookmarkSource,
     matches,
     input,
     setInput,
@@ -131,11 +132,10 @@ export function BookChapters({ props, book }: BookViewProps) {
     return (
       <>
         <PageHead kicker="生活场景" title="窗边的小屋" />
-        {showArt && (
-          <figure className="jl-room-photo">
-            <Picture id="room" alt="蓝伙伴坐在窗边的小屋里。" />
-          </figure>
-        )}
+        <RoomPicture showArt={showArt} openSource={bookmarkSource
+          ? () => openDetail({ kind: 'room', scene: 'F3', source: bookmarkSource })
+          : null}
+        />
         <div className="jl-stamp-shelf">
           <h3 className="jl-subtitle">架上的画签</h3>
           {!groups.size && (

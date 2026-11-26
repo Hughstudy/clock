@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from 'vitest'
 import { spec } from '../data/spec'
 import { applyAction, standingFocusResult, type AppAction } from '../logic/app'
 import { encodeSnapshot, SNAPSHOT_VERSION } from '../logic/snapshot'
+import { readingBookmarkSource } from '../logic/reading-story'
 import { sessionScheduleKey } from '../logic/timer'
 import type { AppSnapshot } from '../logic/types'
 import { createLock, type LockRunner } from './locks'
@@ -46,10 +47,70 @@ function tab(storage: KeyValueStorage | null, writerId: string, lock: LockRunner
 
 function act(store: SnapshotStore, action: AppAction, now: number) {
   return store.transact((latest) => {
-    const t = applyAction(latest, action, { now, dateKeyOf: utcKey, quoteCatalog: feedbackCatalog.entries }, spec)
+    const durable = store.durableSnapshot
+    const t = applyAction(latest, action, { now, dateKeyOf: utcKey, quoteCatalog: feedbackCatalog.entries,
+      durableReadingRecords: durable?.datasetGeneration === latest.datasetGeneration ? durable.records : [] }, spec)
     return { snapshot: t.snapshot, changed: t.changed, value: t.completion }
   })
 }
+
+describe('reading chapter in the focus record transaction', () => {
+  async function startBook(store: SnapshotStore) {
+    await store.transact(latest => ({ changed: true, value: null, snapshot: { ...latest,
+      scenes: { ...latest.scenes, focus: { ...latest.scenes.focus, remaining: ['F3'] } } } }))
+    return act(store, { type: 'startFocus', sessionId: 'reading', timeZone: 'UTC', durationMinutes: 25 }, T0)
+  }
+
+  it('commits a failed result and ticket together on retry, only once across tabs', async () => {
+    const storage = new MemoryStorage(), lock = sharedLock()
+    const local = tab(storage, 'a', lock), peer = tab(storage, 'b', lock)
+    await startBook(local)
+    storage.failWrites = true
+    const pending = await act(local, { type: 'reconcile' }, T0 + 25 * 60_000)
+    expect(pending.saved).toBe(false)
+    expect(local.snapshot.records[0]?.reading?.archive).toBe('page')
+    expect(local.savedRecordIds.has('reading')).toBe(false)
+    expect(readingBookmarkSource(local.durableSnapshot!.records)).toBeUndefined()
+    storage.failWrites = false
+    await Promise.all([act(peer, { type: 'reconcile' }, T0 + 27 * 60_000), act(local, { type: 'reconcile' }, T0 + 27 * 60_000)])
+    const confirmed = tab(storage, 'after').durableSnapshot!
+    expect(confirmed.records).toHaveLength(1)
+    expect(readingBookmarkSource(confirmed.records)?.sessionId).toBe('reading')
+    expect(confirmed.timer.completedFocusCount).toBe(1)
+  })
+
+  it('drops a provisional ticket when a peer already extended the clock', async () => {
+    const storage = new MemoryStorage(), lock = sharedLock()
+    const local = tab(storage, 'a', lock), peer = tab(storage, 'b', lock)
+    await startBook(local)
+    storage.failWrites = true
+    await act(local, { type: 'reconcile' }, T0 + 25 * 60_000)
+    storage.failWrites = false
+    await act(peer, { type: 'adjustRemaining', sessionId: 'reading', expectedTimingRevision: 0, remainingMinutes: 20 }, T0 + 15 * 60_000)
+    await act(local, { type: 'reconcile' }, T0 + 26 * 60_000)
+    expect(local.snapshot.timer.session?.id).toBe('reading')
+    expect(local.durableSnapshot!.records).toHaveLength(0)
+    await act(local, { type: 'end', sessionId: 'reading' }, T0 + 28 * 60_000)
+    expect(local.durableSnapshot!.records[0]?.reading).toMatchObject({ stage: 'linger', archive: 'note' })
+    expect(readingBookmarkSource(local.durableSnapshot!.records)).toBeUndefined()
+  })
+
+  it('does not use an unsaved first chapter as the next session’s starting bookmark', async () => {
+    const storage = new MemoryStorage(), local = tab(storage, 'a')
+    await startBook(local)
+    storage.failWrites = true
+    await act(local, { type: 'reconcile' }, T0 + 25 * 60_000)
+    await local.transact(latest => ({ changed: true, value: null, snapshot: { ...latest,
+      scenes: { ...latest.scenes, focus: { ...latest.scenes.focus, remaining: ['F3'] } } } }))
+    await act(local, { type: 'startFocus', sessionId: 'another', durationMinutes: 25, timeZone: 'UTC' }, T0 + 26 * 60_000)
+    expect(local.snapshot.timer.session?.reading).toMatchObject({ variant: 'chapter', bookmark: 'original' })
+    expect(readingBookmarkSource(local.durableSnapshot!.records)).toBeUndefined()
+    storage.failWrites = false
+    await act(local, { type: 'reconcile' }, T0 + 27 * 60_000)
+    expect(readingBookmarkSource(local.durableSnapshot!.records)?.sessionId).toBe('reading')
+    expect(local.durableSnapshot!.timer.session?.reading?.bookmark).toBe('original')
+  })
+})
 
 describe('durable quote favorites', () => {
   const quote = feedbackCatalog.entries.find(q => q.pool === 'ASKG')!
@@ -691,8 +752,9 @@ describe('SnapshotStore across tabs', () => {
     const a = tab(storage, 'a')
     await act(a, { type: 'start', sessionId: 'existing', timeZone: 'UTC' }, T0)
     const saved = stored(storage)
+    const { reading: _notInV5, ...oldSession } = saved.timer.session!
     const old = { ...saved, version: 5,
-      timer: { ...saved.timer, session: { ...saved.timer.session!, scene: { sceneId: 'F3', ordinal: 7, selectionVersion: 1 } } },
+      timer: { ...saved.timer, session: { ...oldSession, scene: { sceneId: 'F3', ordinal: 7, selectionVersion: 1 } } },
       scenes: { ...saved.scenes, focus: { ordinal: 7, cycle: 3, last: 'F3', remaining: ['F1', 'F2'] } },
     }
     storage.setItem(KEY, JSON.stringify(old))

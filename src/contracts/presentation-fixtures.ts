@@ -6,7 +6,7 @@ import { createFeedbackHost, feedbackFromTransition, interactWithFeedback, updat
 import { companionSceneOf, companionViewOf, focusSceneProgress, type CompanionScene, type CompanionView, type PresentationCue } from '../logic/presentation'
 import { createSnapshot } from '../logic/snapshot'
 import { remainingMs } from '../logic/timer'
-import type { AppSnapshot } from '../logic/types'
+import type { AppSnapshot, FocusSceneId } from '../logic/types'
 
 /**
  * Deterministic outcomes produced by the real main logic, for developing and
@@ -25,6 +25,7 @@ export const FIXTURE_NAMES = [
   'ready', 'focus-started', 'paused', 'resumed', 'ended-elapsed', 'ended-early', 'ended-zero',
   'thought-marker', 'thought-text', 'break-started', 'break-ended', 'requested',
   'save-pending', 'save-retried', 'restored', 'synchronized', 'stale-result', 'hidden-screen', 'motion-disabled',
+  'reading-linger', 'reading-closed', 'reading-hat',
 ] as const
 export type FixtureName = (typeof FIXTURE_NAMES)[number]
 
@@ -35,8 +36,10 @@ const dateKeyOf = (ms: number) => new Date(ms).toISOString().slice(0, 10)
 interface StepOptions { at: number; origin?: FeedbackEvent['origin']; saved?: boolean; id?: string; active?: boolean }
 
 /** Drives the real reducer and feedback host the way the app's hooks do. */
-function scenario(preferences = { motionEnabled: true, encouragementEnabled: true }) {
-  let snapshot: AppSnapshot = { ...createSnapshot(spec), settings: { ...createSnapshot(spec).settings, ...preferences } }
+function scenario(preferences = { motionEnabled: true, encouragementEnabled: true }, nextScene?: FocusSceneId) {
+  let snapshot: AppSnapshot = createSnapshot(spec)
+  snapshot.settings = { ...snapshot.settings, ...preferences }
+  if (nextScene) snapshot.scenes.focus.remaining = [nextScene]
   let persistence: Persistence = 'saved'
   let n = 0
   let now = T0
@@ -108,5 +111,9 @@ export function presentationFixtures(): PresentationFixture[] {
     scenario().act(start(), { at: T0 }).act({ type: 'pause' }, { at: T0 + MIN }).stale(T0 + 2 * MIN).fixture('stale-result'),
     scenario().act(start(), { at: T0, active: false }).fixture('hidden-screen'),
     scenario({ motionEnabled: false, encouragementEnabled: true }).act(start(), { at: T0 }).fixture('motion-disabled'),
+    scenario(undefined, 'F3').act(start(), { at: T0 }).act({ type: 'pause' }, { at: T0 + 21.25 * MIN }).fixture('reading-linger'),
+    scenario(undefined, 'F3').act(start(), { at: T0 }).act({ type: 'reconcile' }, { at: deadline, origin: 'expiry' }).fixture('reading-closed'),
+    scenario(undefined, 'F3').act({ type: 'start', sessionId: 'hat', timeZone: 'UTC', durationMinutes: 1 }, { at: T0 })
+      .act({ type: 'reconcile' }, { at: T0 + MIN, origin: 'expiry' }).fixture('reading-hat'),
   ]
 }

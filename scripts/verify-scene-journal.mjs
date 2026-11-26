@@ -4,6 +4,7 @@ import { tmpdir } from 'node:os'
 import path from 'node:path'
 import { webkit } from 'playwright'
 import { build, preview } from 'vite'
+import { checkReadingChapter } from './check-reading-chapter.mjs'
 import { launchChromium } from './lib/browser.mjs'
 
 const triggerSelector = '#root .home [data-scene-book-trigger]'
@@ -268,7 +269,9 @@ try {
   await build({ build: { outDir, emptyOutDir: true }, logLevel: 'warn' })
   server = await preview({ build: { outDir }, preview: { host: '127.0.0.1', port: 0 } })
   browser = process.env.IOS_BROWSER === 'webkit' ? await webkit.launch() : await launchChromium()
-  await review(browser, `http://127.0.0.1:${server.httpServer.address().port}/clock/`)
+  const url = `http://127.0.0.1:${server.httpServer.address().port}/clock/`
+  await review(browser, url)
+  await checkReadingChapter(browser, url)
 } finally {
   await browser?.close()
   if (server) await new Promise(resolve => server.httpServer.close(resolve))

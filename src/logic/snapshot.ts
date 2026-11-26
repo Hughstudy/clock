@@ -2,6 +2,7 @@ import { defaultSettings, sanitizeSettings } from './settings'
 import { initialScenes, isFocusSceneId, selectScene } from './scenes'
 import type { Spec } from './spec'
 import { initialTimer } from './timer'
+import { readingBookmarkSource } from './reading-story'
 import type { AppSnapshot } from './types'
 import { isRecord, isCount, isEpochMs, isId } from './snapshot/guards'
 import { MIGRATIONS, runMigrations, type Migration, type MigrationContext } from './snapshot/migrations'
@@ -11,8 +12,8 @@ import { readTimer, readRestSuggestion, readRecords, readRestMemories, readParti
 export { MIGRATIONS, runMigrations, type Migration, type MigrationContext } from './snapshot/migrations'
 export { mergeSnapshots, hasMissingRecords } from './snapshot/merge'
 
-/** v11 preserves conditional timing edits and their original session plans. */
-export const SNAPSHOT_VERSION = 11
+/** v12 preserves individually bound reading sessions and their authored, immutable memories. */
+export const SNAPSHOT_VERSION = 12
 
 export function createSnapshot(spec: Spec): AppSnapshot {
   return {
@@ -36,7 +37,8 @@ export function decodeSnapshot(text: string, spec: Spec, context: MigrationConte
   // A corrupt generation cannot be reset to zero: doing so could revive deleted data.
   if (!isCount(data.datasetGeneration)) return { kind: 'unreadable', reason: 'Saved data generation is invalid.' }
   const issues: string[] = []
-  const records = readRecords(data.records, issues)
+  const allowReading = raw.version >= 12
+  const records = readRecords(data.records, issues, allowReading)
   const ending = data.lastRestEnd
   const lastRestEnd = isRecord(ending) && isId(ending.sessionId) && isEpochMs(ending.endedAt) && isCount(ending.elapsedMs)
     ? { sessionId: ending.sessionId, endedAt: ending.endedAt, elapsedMs: ending.elapsedMs } : null
@@ -44,7 +46,21 @@ export function decodeSnapshot(text: string, spec: Spec, context: MigrationConte
   const participations = readParticipations(data.participations, issues)
   const { settings, issues: settingIssues } = sanitizeSettings(data.settings, spec)
   issues.push(...settingIssues)
-  let timer = readTimer(data.timer, records.filter((r) => r.endReason === 'deadline').length, issues)
+  let timer = readTimer(data.timer, records.filter((r) => r.endReason === 'deadline').length, issues, allowReading)
+  if (allowReading && !readingBookmarkSource(records)) {
+    // The next chapter has one source in this dataset. Keep the timer/time records if that source was damaged.
+    for (const record of records) {
+      if (record.reading?.bookmark === 'next') {
+        delete record.reading
+        issues.push(`record.reading.bookmark (${record.sessionId})`)
+      }
+    }
+    if (timer.session?.reading?.bookmark === 'next') {
+      const { reading: _reading, ...session } = timer.session
+      timer = { ...timer, session }
+      issues.push('timer.session.reading.bookmark')
+    }
+  }
   const restSuggestionSessionId = readRestSuggestion(data.restSuggestionSessionId, timer, records, issues)
   const thoughts = readThoughts(data.thoughts, spec, issues)
   const quoteFavorites = readFavorites(data.quoteFavorites, issues)

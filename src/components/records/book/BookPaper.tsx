@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react'
 import type { Page } from '../../../hooks/records/book-data'
-import { art } from './data'
+import { art, readingArt } from './data'
 
 interface PictureProps {
   id?: string | null | undefined
@@ -14,7 +14,38 @@ export function Picture({ id, className, alt = '' }: PictureProps) {
 
 export function PagePicture({ p, showArt }: { p: Page; showArt: boolean }) {
   if (!showArt || !p.art) return null
+  if (p.reading) {
+    const illustration = p.reading.illustration
+    return (
+      <figure className="jl-photo">
+        <img className="jl-illustration" data-reading-art={illustration} src={readingArt[illustration]} alt={p.alt} draggable={false}/>
+      </figure>
+    )
+  }
   return <figure className="jl-photo"><Picture id={p.art} className="jl-illustration" alt={p.alt}/></figure>
+}
+
+export function RoomPicture({ showArt, openSource }: { showArt: boolean; openSource: (() => void) | null }) {
+  if (!openSource) return showArt ? (
+    <figure className="jl-room-photo">
+      <Picture id="room" alt="蓝伙伴坐在窗边的小屋里。" />
+    </figure>
+  ) : null
+  return (
+    <button type="button" className="jl-room-source" data-jl-bookmark-source="" onClick={openSource}>
+      {showArt && (
+        <span className="jl-room-photo">
+          <span className="jl-room-painting">
+            <Picture id="room" alt="蓝伙伴身旁放着合上的书，车票的一角从书页间露出来。" />
+            <img className="jl-room-ticket" src={readingArt['closed-book']} alt="" draggable={false}/>
+          </span>
+        </span>
+      )}
+      <span className="jl-room-bookmark-caption">
+        <strong>车票夹在下一章</strong><span>翻回那次手记 ›</span>
+      </span>
+    </button>
+  )
 }
 
 export function PageHead({ kicker, title, stamp }: { kicker: string; title: string; stamp?: string | undefined }) {

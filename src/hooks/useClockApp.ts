@@ -11,7 +11,7 @@ import { applyAction, expiredSessionResult, resolveSessionResult, shouldChime, s
 import { feedbackFromTransition, type AppFeedbackEvent } from '../logic/feedback-host'
 import type { FeedbackEvent } from '../logic/feedback'
 import type { SettingsPatch } from '../logic/settings'
-import type { AppSnapshot, Phase, RestMemory, Thought } from '../logic/types'
+import type { AppSnapshot, FocusRecord, Phase, RestMemory, Thought } from '../logic/types'
 import { datePendingDeletion } from '../logic/thoughts'
 import type { SavedQuote } from '../contracts/favorites'
 import { feedbackCatalog } from '../data/encouragement'
@@ -38,6 +38,7 @@ export type { SessionResult } from '../logic/app'
 export interface ClockApp {
   snapshot: AppSnapshot
   savedRecordIds: ReadonlySet<string>
+  durableRecords: readonly FocusRecord[]
   durableThoughts: readonly Thought[]
   durableRests: readonly RestMemory[]
   durableFavorites: readonly SavedQuote[]
@@ -76,6 +77,7 @@ interface PendingThought extends Thought {
   retirement?: { previous: string | null; next: string }
 }
 const EMPTY_THOUGHTS: readonly Thought[] = []
+const EMPTY_RECORDS: readonly FocusRecord[] = []
 const EMPTY_RESTS: readonly RestMemory[] = []
 const EMPTY_FAVORITES: readonly SavedQuote[] = []
 const TIMER_COMMANDS = new Set(['start', 'startFocus', 'startBreak', 'pause', 'resume', 'end', 'skipBreak', 'prepare', 'adjustRemaining'])
@@ -188,7 +190,9 @@ export function useClockApp(): ClockApp {
               }
             }
           }
-          const t = applyAction(before, action, { now, dateKeyOf: dateKeyInZone, quoteCatalog: feedbackCatalog.entries }, spec)
+          const durable = store.durableSnapshot
+          const t = applyAction(before, action, { now, dateKeyOf: dateKeyInZone, quoteCatalog: feedbackCatalog.entries,
+            durableReadingRecords: durable?.datasetGeneration === before.datasetGeneration ? durable.records : [] }, spec)
           return { snapshot: t.snapshot, changed: t.changed || before !== latest, value: { transition: t, before } }
         })
         refresh()
@@ -368,6 +372,7 @@ export function useClockApp(): ClockApp {
     timerPending: timerPendingCount > 0, durableFavorites: durable?.quoteFavorites ?? EMPTY_FAVORITES,
     hasPendingOperations: pending.current.size > 0 || unconfirmed.current.size > 0 || queuedOperations.current > 0 || timerPendingCount > 0,
     checkReload,
+    durableRecords: durable?.records ?? EMPTY_RECORDS,
     durableRests: durable?.restMemories ?? EMPTY_RESTS,
     durableThoughts: durable?.thoughts ?? EMPTY_THOUGHTS }
 }

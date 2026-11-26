@@ -1,6 +1,7 @@
 import { useId, type CSSProperties, type ReactNode } from 'react'
 import { CompanionPaint } from './CompanionPaint'
 import { CompanionScenery } from './CompanionScenery'
+import { PictureBookPage, ReadingTicket } from './ReadingBookArt'
 import type { CompanionScene } from '../../contracts/presentation'
 import { blueCompanionSpec } from '../../data/blue-companion'
 import { useSceneLight } from '../../hooks/companion/useSceneLight'
@@ -120,24 +121,26 @@ function FoodSpoon({grip,tip,held}:{grip:{x:number;y:number};tip:{x:number;y:num
   </g>
 }
 function Book({frame}:{frame:ScenePoseFrame}){
-  const { close, turn, corner, coverEdge, coverFront, ribbon } = frame.book
+  const { close, turn, corner, coverEdge, coverFront, ribbon, reading, pageLift } = frame.book
   const { x, y } = coverEdge
-  const spine = {x:150,y:169}
+  const spine = {x:150,y:169-pageLift}
   const midX = (spine.x+x)/2, midY = (spine.y+y)/2
-  const cover = `M150 169 Q${midX} ${midY-2} ${x} ${y} L${coverFront.x} ${coverFront.y} Q${midX+29} ${midY+9} 179 180 Z`
+  const cover = `M150 ${spine.y} Q${midX} ${midY-2} ${x} ${y} L${coverFront.x} ${coverFront.y} Q${midX+29} ${midY+9+pageLift} 179 180 Z`
   const outerCover = stage(close,.44,.55)
-  return <g data-scene-part="book">
-    <P d="M111 162 L150 169 L179 180 L179 183 L140 176 L111 165 Z" c="green"/>
-    <P d="M111 162 Q133 160 152 169 L179 180 Q153 174 140 173 Z" c="paper"/>
-    {[0,1].map(i=><P key={i} d={`M${123+5*i} ${165+i*4} Q139 ${165+i*4} ${149+5*i} ${170+i*4}`} c="softline"/>)}
+  return <g data-scene-part="book" data-reading-variant={reading?.variant} data-reading-stage={reading?.stage}>
+    <P d={`M111 ${162-pageLift} L150 ${spine.y} L179 180 L179 183 L140 176 L111 ${165-pageLift} Z`} c="green"/>
+    <P d={`M111 ${162-pageLift} Q133 ${160-pageLift} 152 ${spine.y} L179 180 Q153 174 140 173 Z`} c="paper"/>
+    {[0,1].map(i=><P key={i} d={`M${123+5*i} ${165+i*4-pageLift*.7} Q139 ${165+i*4-pageLift*.6} ${149+5*i} ${170+i*4-pageLift*.5}`} c="softline"/>)}
     <P d={cover} c="paper"/>
     <g opacity={1-outerCover}>
-      {[0,1].map(i=><P key={i} d={`M${154+(x-150)*.15+5*i} ${172+i*4+(y-162)*.15} Q${midX+4} ${midY+1+i*4} ${155+(x-150)*.83+5*i} ${y+4+i*4}`} c="softline"/>)}
+      {reading?.variant === 'hat' ? <PictureBookPage stage={reading.stage}/> : reading?.stage === 'linger'
+        ? <P d="M159 171 Q168 167.5 180 167 M165 174.5 Q170 173 176 172" c="softline"/>
+        : [0,1].map(i=><P key={i} d={`M${154+(x-150)*.15+5*i} ${172+i*4+(y-162)*.15-pageLift*.7} Q${midX+4} ${midY+1+i*4} ${155+(x-150)*.83+5*i} ${y+4+i*4}`} c="softline"/>)}
     </g>
-    <P d={`M150 169 Q${(150+corner.x)/2} ${corner.y-4} ${corner.x} ${corner.y} l29 11 Q${(150+corner.x)/2+29} ${corner.y+9} 179 180 Z`} c="paper" opacity={Math.sin(turn*Math.PI)*(1-close)}/>
-    <g transform={`translate(${midX+7} ${midY})`} opacity={ribbon}>
+    <P d={`M150 ${spine.y} Q${(150+corner.x)/2} ${corner.y-4} ${corner.x} ${corner.y} l29 ${11+pageLift} Q${(150+corner.x)/2+29} ${corner.y+9+pageLift} 179 180 Z`} c="paper" opacity={Math.sin(turn*Math.PI)*(1-close)}/>
+    {reading ? <ReadingTicket position={frame.book.ticketPosition}/> : <g transform={`translate(${midX+7} ${midY})`} opacity={ribbon}>
       <P d="M-3 0 L3 -1 L12 19 L8 17 L6 20Z" c="pink"/>
-    </g>
+    </g>}
     <P d={cover} c="green" opacity={outerCover}/>
     <P d={`M${150+(x-150)*.13} ${169+(y-169)*.13} l29 11`} c="softline" opacity={outerCover}/>
   </g>
@@ -213,7 +216,7 @@ export function CompanionSceneArt({scene,frame:provided,night=0}:Props){
   const sky = useSceneLight('garden',night)!
   const paint = useId().replace(/:/g, '')
   const material = { '--scene-coat': `url(#${paint}-body)`, '--scene-belly': `url(#${paint}-belly)` } as CSSProperties
-  const f=provided??sampleScenePose({id:scene.id,status:scene.status,progress:scene.completedProgress,staticOnly:true});const id=scene.id,p=f.progress;const lean=`rotate(${f.body.lean} ${f.body.x+120} ${f.body.y+160})`
+  const f=provided??sampleScenePose({id:scene.id,reading:scene.reading,status:scene.status,progress:scene.completedProgress,staticOnly:true});const id=scene.id,p=f.progress;const lean=`rotate(${f.body.lean} ${f.body.x+120} ${f.body.y+160})`
   let back:ReactNode=null,objects:ReactNode=null,held:ReactNode=null
   const usesTable=['F1','F2','F3','F6','F7'].includes(id)
   const focusArm=(side:'left'|'right')=>f.flipperArm===side?{'data-focus-arm':`${f[side].points[0]} ${f[side].points[1]} ${side==='left'?1:-1}`}:undefined

@@ -214,6 +214,7 @@ export function useRecordsBook(props: RecordsBookInput) {
     setInput,
     composing,
     groups,
+    bookmarkSource: data.bookmarkSource,
     pages,
     matches,
     timeline,

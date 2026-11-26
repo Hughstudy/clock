@@ -41,12 +41,13 @@ Paths in the table are relative to `src/` unless another prefix is present.
 
 | Internal file | Responsibility |
 | --- | --- |
-| `snapshot/migrations.ts` | Ordered v1–v11 upgrade transforms and migration runner |
+| `snapshot/migrations.ts` | Ordered v1–v12 upgrade transforms and migration runner |
 | `snapshot/read.ts` | Field readers and repair diagnostics for the current model |
 | `snapshot/merge.ts` | Same-generation merge and missing-data detection |
+| `snapshot/reading.ts` | Validate edition, original budget, reached outcome and saved copy for bound reading sessions |
 | `snapshot/guards.ts` | Small shared predicates used by migration and readers |
 
-Snapshot v11 preserves the original time plan and schedule revisions for mid-session edits. Running edits re-anchor the remaining interval, and paused edits preserve the frozen state. Snapshot v10 adds durable ended rests keyed by session ID. A v9 snapshot can supply at most its last evidenced rest ending. The original archive date, short/long break kind, ending reason or scene can be unknown. The v9 migration still preserves the identity of an automatic rest suggestion separately from an explicitly prepared rest. See the [iOS review](verification/ios-design-review.md). Existing schema migrations and inert v5 scene history remain necessary compatibility paths. Full backup/restore, dataset replacement and authored story collection remain unfinished; moving files does not implement them.
+Snapshot v12 adds optional F3 reading bindings and saved story leaves. `logic/reading-story.ts` resolves reached stages and the confirmed ticket source using the edition in `logic/reading-edition-v1.ts`. Older records retain their generic activity. Snapshot v11 preserves the original time plan and schedule revisions for mid-session edits. Running edits re-anchor the remaining interval, and paused edits preserve the frozen state. Snapshot v10 adds durable ended rests keyed by session ID. A v9 snapshot can supply at most its last evidenced rest ending. The original archive date, short/long break kind, ending reason or scene can be unknown. The v9 migration still preserves the identity of an automatic rest suggestion separately from an explicitly prepared rest. See the [iOS review](verification/ios-design-review.md). Existing schema migrations and inert v5 scene history remain necessary compatibility paths. Full backup/restore, dataset replacement and story collection beyond the reading ticket remain unfinished; moving files does not implement them.
 
 ## Records modules
 

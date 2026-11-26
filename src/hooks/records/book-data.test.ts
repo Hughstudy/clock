@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { readBook, preferredPage } from './book-data'
+import { archiveReading, type ReadingBinding } from '../../logic/reading-story'
 import type { RecordView } from '../useViews'
 import type { RestMemory, SceneId, Thought } from '../../logic/types'
 
@@ -54,6 +55,30 @@ describe('book projection from saved views', () => {
     expect(result.pages.map((p) => p.id)).toEqual(['rest:old', 'record:shared', 'rest:shared'])
     expect(result.groups.get('R2')!.map((p) => p.id)).toEqual(['rest:shared', 'rest:old'])
     expect(result.pages[0]).toMatchObject({ day: '日期不详', dateKey: null, kind: '休息', ending: '' })
+  })
+
+  it('prints only confirmed story snapshots, leaving the activity index and the source of the ticket distinct', () => {
+    const first: ReadingBinding = { version: 1, variant: 'chapter', bookmark: 'original' }
+    const short: ReadingBinding = { ...first, variant: 'hat' }
+    const makeRecord = (id: string, binding: ReadingBinding, elapsedMs: number, endReason: RecordView['endReason'], saved = true) => ({
+      ...focus(id, 'F3', saved), endReason, elapsedMs, reading: archiveReading(binding, elapsedMs, endReason),
+    })
+    const early = makeRecord('early', first, 21.25 * 60_000, 'manual')
+    const oneMinute = makeRecord('hat', short, 60_000, 'deadline')
+    const pending = makeRecord('pending', first, 25 * 60_000, 'deadline', false)
+    const withoutTicket = book([early, oneMinute, pending, focus('legacy', 'F3')])
+    const page = (id: string) => withoutTicket.pages.find(item => item.id === 'record:' + id)
+    expect(page('early')).toMatchObject({
+      art: 'F3', activity: '一起读书', title: early.reading.title, caption: early.reading.caption,
+      reading: { archive: 'note', illustration: 'reading' },
+    })
+    expect(page('hat')?.reading).toMatchObject({ archive: 'page', illustration: 'dog-found', excerpt: oneMinute.reading.excerpt })
+    expect(page('legacy')).toMatchObject({ art: 'F3', title: '一起读书' })
+    expect(page('legacy')?.reading).toBeUndefined()
+    expect(page('pending')?.reading).toBeUndefined()
+    expect(withoutTicket.groups.get('F3')).toHaveLength(3)
+    expect(withoutTicket.bookmarkSource).toBeNull()
+    expect(book([early, oneMinute, { ...pending, saved: true }]).bookmarkSource).toBe('record:pending')
   })
 
   it('keeps note identity and ownership instead of inventing a new relationship', () => {

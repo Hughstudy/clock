@@ -4,6 +4,7 @@ import { sceneNames } from '../../data/scene-copy'
 import { knownDate, matchesMonth, filterNotes, orderMemories, indexActivities } from '../../logic/records-query'
 export { listWindow, listPageFor, matchesMonth } from '../../logic/records-query'
 import type { SceneId, Thought } from '../../logic/types'
+import { readingBookmarkSource, type ReadingMemory } from '../../logic/reading-story'
 import type { RecordView, StatsView } from '../useViews'
 
 export interface Page {
@@ -21,6 +22,7 @@ export interface Page {
   endedAt: number
   ending: string
   record?: RecordView
+  reading?: ReadingMemory
 }
 export interface Note {
   id: string
@@ -41,6 +43,12 @@ const captions: Record<SceneId, string> = {
   R1: '小伙伴坐在垫子上，舒舒服服地伸开双臂。',
   R2: '天空那朵云慢悠悠的。小伙伴也抬头看着它。',
   R3: '杯子圆圆的，刚好可以用两只手围住。',
+}
+const readingAlt: Record<ReadingMemory['illustration'], string> = {
+  reading: '小伙伴在桌旁读着摊开的书。',
+  'dog-hat': '面包店门前，一只长耳朵的小狗戴着红帽子。',
+  'dog-found': '翻回去的那一页，面包店门前的小狗把红帽子叼在嘴里。',
+  'closed-book': '合上的书里露出一角金黄色的车票书签。',
 }
 
 export function preferredPage(pages: readonly Page[]) {
@@ -67,7 +75,8 @@ export function readBook(
     reason: string | null,
     record?: RecordView
   ) {
-    const title = scene ? sceneNames[scene] : '一段' + kind
+    const activity = scene ? sceneNames[scene] : '一段' + kind
+    const reading = scene === 'F3' && record?.saved ? record.reading : undefined
     pages.push({
       id,
       art: scene,
@@ -77,12 +86,13 @@ export function readBook(
       time,
       endedAt,
       duration: formatMinutes(elapsed),
-      activity: title,
-      title,
-      caption: scene ? captions[scene] : '',
-      alt: scene ? '伙伴的活动插画：' + title : '',
+      activity,
+      title: reading?.title ?? activity,
+      caption: reading?.caption ?? (scene ? captions[scene] : ''),
+      alt: reading ? readingAlt[reading.illustration] : scene ? '伙伴的活动插画：' + activity : '',
       ending: reason === 'manual' ? '手动结束' : reason === 'deadline' ? '到时结束' : '',
       ...(record && { record }),
+      ...(reading && { reading }),
     })
   }
   for (const row of view.recordBySession.values())
@@ -117,7 +127,8 @@ export function readBook(
       return [{ id: n.id, day: date(n.dateKey), time: view.clockTime(n.createdAt), text: n.text, source: n }]
     })
   )
-  return { pages: ordered, notes, groups }
+  const bookmark = readingBookmarkSource(Array.from(view.recordBySession.values()).filter(record => record.saved))
+  return { pages: ordered, notes, groups, bookmarkSource: bookmark ? 'record:' + bookmark.sessionId : null }
 }
 
 export function useBookEntries(

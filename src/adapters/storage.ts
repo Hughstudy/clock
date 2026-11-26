@@ -13,6 +13,7 @@ import type { AppSnapshot, RestMemory, TimerState } from '../logic/types'
 import type { LockRunner } from './locks'
 import { quoteKey } from '../contracts/favorites'
 import { sameFavorite } from '../logic/favorites'
+import { sameReadingMemory } from '../logic/reading-story'
 
 export interface KeyValueStorage {
   getItem(key: string): string | null
@@ -139,7 +140,8 @@ export class SnapshotStore {
       // A fork can share the end instant and actual time but have a different plan.
       if (saved && saved.endedAt === record.endedAt && saved.elapsedMs === record.elapsedMs &&
           saved.targetMs === record.targetMs && saved.initialDurationMs === record.initialDurationMs &&
-          saved.endReason === record.endReason && saved.dateKey === record.dateKey) ids.add(record.sessionId)
+          saved.endReason === record.endReason && saved.dateKey === record.dateKey &&
+          sameReadingMemory(saved.reading, record.reading)) ids.add(record.sessionId)
     }
     return ids
   }

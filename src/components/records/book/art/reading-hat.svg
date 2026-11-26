@@ -1,0 +1,80 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"
+     width="320" height="240" viewBox="0 24 320 240">
+  <style>
+    #found { display: none }
+    #found:target { display: inline }
+    #found:target + #worn { display: none }
+  </style>
+<defs>
+  <pattern id="paper" width="23" height="19" patternUnits="userSpaceOnUse">
+    <path d="M3 2l1 .3m12 7l1.3-.1m-9 6l.7.1" fill="none" stroke="#6f7159" stroke-width="1" opacity=".17"/>
+    <path d="M13 3l1-.3M0 10l.8.1m20 7l1.5-.3" fill="none" stroke="#fffdf1" stroke-width="1.3" opacity=".6"/>
+  </pattern>
+  <g id="bakery" stroke-linecap="round" stroke-linejoin="round">
+    <rect width="320" height="288" fill="#f2e7ce"/>
+    <path d="M0 177q60-9 118-5l78-1v42H0z" fill="#d7dcbd"/>
+    <path d="M0 200q83-11 175-5l145-1v94H0z" fill="#e8dabc"/>
+    <path d="M0 222q60-1 98-7m116 3q74-7 106-5M0 263q38-4 54-3m74-9l42-3m51 20l70-5" fill="none" stroke="#bfae8b" stroke-width="1.3" opacity=".62"/>
+    <g fill="#adc7a4">
+      <path d="M0 169c15-4 9-16 20-20 4-2 8-1 10 2 1-13 8-18 13-17 8 2 7 13 11 16 8-11 16-8 19 2 7-5 10-2 16 4l7 18z"/>
+      <path d="M0 129c13-12 21-17 24-30-11 4-23 13-26 21z"/>
+    </g>
+    <path d="M0 156Q7 129 23 106m-18 33q-2-15-6-19" fill="none" stroke="#789c7e" stroke-width="2"/>
+    <path d="M140 205V69q0-8 8-8l172-1v145z" fill="#b5cabb"/>
+    <path d="M269 60h51v145h-51z" fill="#a6c0b0"/>
+    <path d="M143 193l177 1v9l-180 1z" fill="#7a9b86"/>
+    <path d="M152 91h105v72H152z" fill="#5b8780" stroke="#527a74" stroke-width="2"/>
+    <path d="M157 95h96v64h-96z" fill="#dbe5cc"/>
+    <path d="M159 97h89q-12 16-34 22-28 8-55 21z" fill="#cae0d1"/>
+    <path d="M222 98l-53 43m68-42l-21 18" stroke="#eef0d6" stroke-width="3" fill="none" opacity=".89"/>
+    <path d="M275 91h42v105h-42z" fill="#6e9586" stroke="#608777" stroke-width="2"/>
+    <path d="M280 97h32v49h-32z" fill="#dce6cc"/>
+    <path d="M282 138l28-30" fill="none" stroke="#c1d9c7" stroke-width="4"/>
+    <circle cx="282" cy="161" r="2.8" fill="#f1d598"/>
+    <path d="M152 159l106-.6v6.2l-107 .9z" fill="#718f7e"/>
+    <path d="M161 156c-.5-7 4-12 9-12 2-4 8-8 12-6 6 .4 10 5 12 10 2 2 3 4 3 8z" fill="#cc9761" stroke="#ae8253" stroke-width="1.4"/>
+    <path d="M170 145c3 1 5 4 5 7m2-12c3 1 5 4 6 7m1-8c3 1 4 3 5 5" fill="none" stroke="#f3d49a" stroke-width="2.2"/>
+    <path d="M211 155c0-6 3-11 7-13 6-3 11-3 16 1 6 1 8 5 8 12z" fill="#d6a66c" stroke="#af885c" stroke-width="1.4"/>
+    <path d="M224 143l-3 9m10-7l-2 7" fill="none" stroke="#f2cd91" stroke-width="2.3"/>
+    <path d="M132 61l10-19 178-2v25l-190 4z" fill="#f2ead1" stroke="#8aab96" stroke-width="1.7"/>
+    <path d="M149 42l18-.2-5 24-19 .4zM185 41.6l18-.2-2.4 23.6-19 .4zM222 41l19-.3 1.1 23.5-20 .4zM259 40.6l18-.2 4.8 23-20 .4zM295 40.2l18-.2 7 21.5v1.7l-20 .4z" fill="#82a994"/>
+    <path d="M130 68l190-4v7c-8 6-15 6-21 .6-5 5-13 6-19 .4-6 5-12 6-19 .4-6 5-14 6-20 .4-5 5-13 6-19 .4-6 5-12 6-20 .4-5 5-13 6-20 .4-5 5-13 6-19 .4-6 5-13 6-20 .4-5 3-9 4-13 .6z" fill="#d3d8b7" stroke="#8eab94" stroke-width="1.2"/>
+    <path d="M111 87v-54q1-6 7-6h27" fill="none" stroke="#597971" stroke-width="2.8"/>
+    <path d="M119 26v11m16-11v11" fill="none" stroke="#7d8c71" stroke-width="1.5"/>
+    <ellipse cx="127" cy="51" rx="18" ry="16" fill="#f7e6bd" stroke="#899a7e" stroke-width="1.7"/>
+    <path d="M115 55c1-2 0-4 2-7 2-3 5-3 8-4 5-1 11 3 13 9-5 1-6 4-12 4-4 .1-7-.4-11-2z" fill="#c99053"/>
+    <path d="M122 47l4 5m2-7l4 5" fill="none" stroke="#f4d597" stroke-width="1.8"/>
+  </g>
+  <g id="dog" stroke="#5e7374" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M39 84c-17 2-30-1-31-12-1-8 5-14 12-15-1 7 4 12 11 12l13-2z" fill="#a9bdc0"/>
+    <path d="M48 96l10 23 14-.2q-1-5-7-6l-4-21zm48-1l5 23 14-.1q-.5-5-7-6l-.4-23z" fill="#a4b5b3"/>
+    <path d="M35 75c8-13 26-17 48-16l13-16c6-10 19-13 29-12 12 1 19 6 22 13l5 9 13 2c4 1 6 4 4 8-2 6-10 11-18 11l-18-1-12 20q-1 6-5 9l-2 19 6 2q2 2 1 4l-17 1-3-26q-14 3-33 3l-5 20 5 1q3 1 2 5l-18 .1 1-26q-13-5-24-17z" fill="#e7e5d2"/>
+    <path d="M32 72c11-12 27-16 43-15 7 1 11 3 17 5-3 8-9 14-18 17-9 2-15-2-22 1-5 2-7 7-13 8-6 0-9-8-7-16z" fill="#a0b8bf" stroke="none"/>
+    <path d="M109 35c-8-1-14 2-19 9-7 10-12 21-10 32 2 8 8 15 14 14 8-3 12-15 13-27 1-9 5-20 2-28z" fill="#a37652" stroke="#82654f"/>
+    <path d="M90 77q-2-10 7-26" fill="none" stroke="#c39a70" stroke-width="2.1"/>
+    <path d="M116 76l16 3m-54 17q10 3 16 0" fill="none" stroke="#a6aca0" stroke-width="1.5"/>
+    <circle cx="137" cy="50" r="2.8" fill="#344e50" stroke="none"/>
+    <path d="M160 54q9-2 10 3 .2 5-7 7-4-1-3-10z" fill="#425d60" stroke="none"/>
+    <path d="M146 69q7 3 13-.8" fill="none" stroke="#5f6f66" stroke-width="1.5"/>
+  </g>
+  <g id="hat" stroke-linejoin="round" stroke-linecap="round">
+    <path d="M0 16q2-11 10-15 9-5 18 1 5 4 8 14z" fill="#d77f68" stroke="#9a6554" stroke-width="1.7"/>
+    <path d="M11 1q8 1 12 15" fill="none" stroke="#ba6b58" stroke-width="1.4"/>
+    <path d="M.5 15q15-2 34 .4 8-1 14 2-1 3-7 4l-12-1q-11 1-26-.6z" fill="#b86453" stroke="#935f4e" stroke-width="1.5"/>
+    <path d="M16-.5q2-2 4 0" fill="none" stroke="#965e4e" stroke-width="2.2"/>
+  </g>
+  <g id="dogScene">
+    <use xlink:href="#bakery"/>
+    <ellipse cx="103" cy="245" rx="72" ry="5.5" fill="#879b83" opacity=".2"/>
+    <g transform="translate(11 106) scale(1.075)"><use xlink:href="#dog"/></g>
+  </g>
+</defs>
+  <use xlink:href="#dogScene"/>
+  <g id="found" transform="translate(11 106) scale(1.075) translate(157 70) rotate(59) scale(-.94 .94) translate(-47 -19)">
+    <use xlink:href="#hat"/>
+  </g>
+  <g id="worn" transform="translate(11 106) scale(1.075) translate(101 17) rotate(-7 20 15)">
+    <use xlink:href="#hat"/>
+  </g>
+  <path d="M0 0h320v288H0z" fill="url(#paper)" opacity=".62"/>
+</svg>

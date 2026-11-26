@@ -1,5 +1,6 @@
 import { applySettingsPatch, defaultSettings, isValidDuration, sameSettings, type SettingsPatch } from './settings'
 import { isFocusSceneId, selectScene } from './scenes'
+import { archiveReading, bindReading } from './reading-story'
 import type { Spec } from './spec'
 import { canRestore, isLive, isWellFormedUnicode, normalizeStep, purgeExpiredText } from './thoughts'
 import { adjustRemaining, breakAfterFocus, expireSession, maxRemainingMinutes, pauseSession, remainingMs, resetSession, resumeSession, sessionScheduleKey, skipBreak, startSession } from './timer'
@@ -34,6 +35,8 @@ export interface ActionContext {
   now: number
   dateKeyOf: (epochMs: number, timeZone: string) => DateKey
   quoteCatalog?: readonly FavoriteQuote[]
+  /** When the working snapshot includes pending writes, only these records can supply a ticket. */
+  durableReadingRecords?: readonly FocusRecord[]
 }
 
 export interface Completion {
@@ -154,6 +157,7 @@ export function reconcile(snapshot: AppSnapshot, ctx: ActionContext, spec: Spec)
     source: expired.startedAt === null ? 'legacy' : 'native',
     step: expired.step,
     ...(active?.scene ? { scene: active.scene } : {}),
+    ...(active?.reading ? { reading: archiveReading(active.reading, expired.durationMs, 'deadline') } : {}),
   }
   const scenes: AppSnapshot['scenes'] = { ...snapshot.scenes, lastEnded: active?.scene ? {
     sessionId: active.id, phase: 'focus', scene: active.scene,
@@ -219,9 +223,10 @@ function act(snapshot: AppSnapshot, action: AppAction, ctx: ActionContext, spec:
       const step = focus && action.type !== 'startBreak' ? normalizeStep(action.step, spec.timer.stepMaxLength) : null
       const started = startSession(timer, snapshot.settings, now, action.sessionId, action.timeZone, duration, step)
       const selection = selectScene(snapshot.scenes, focus ? 'focus' : 'rest', action.sessionId)
+      const reading = bindReading(selection.assignment.sceneId, duration, ctx.durableReadingRecords ?? snapshot.records)
       return {
         ...unchanged(snapshot), changed: true,
-        snapshot: { ...snapshot, timer: { ...started, session: started.session ? { ...started.session, scene: selection.assignment } : null }, scenes: selection.scenes,
+        snapshot: { ...snapshot, timer: { ...started, session: started.session ? { ...started.session, scene: selection.assignment, ...(reading ? { reading } : {}) } : null }, scenes: selection.scenes,
           restSuggestionSessionId: null,
           lastFocusMinutes: focus && chosen !== undefined ? chosen : snapshot.lastFocusMinutes,
           participations: focus
@@ -249,6 +254,7 @@ function act(snapshot: AppSnapshot, action: AppAction, ctx: ActionContext, spec:
       const session = snapshot.timer.session
       if (!session) return unchanged(snapshot)
       if (snapshot.timer.phase !== 'focus') return endRest(snapshot, ctx, now, 'manual')
+      const elapsedMs = session.durationMs - remainingMs(snapshot.timer, snapshot.settings, now)
       const ended: FocusRecord = {
         sessionId: session.id,
         startedAt: session.startedAt,
@@ -256,11 +262,12 @@ function act(snapshot: AppSnapshot, action: AppAction, ctx: ActionContext, spec:
         dateKey: ctx.dateKeyOf(now, session.timeZone),
         targetMs: session.durationMs,
         ...(session.initialDurationMs !== undefined ? { initialDurationMs: session.initialDurationMs } : {}),
-        elapsedMs: session.durationMs - remainingMs(snapshot.timer, snapshot.settings, now),
+        elapsedMs,
         endReason: 'manual',
         source: session.startedAt === null ? 'legacy' : 'native',
         step: session.step,
         ...(session.scene ? { scene: session.scene } : {}),
+        ...(session.reading ? { reading: archiveReading(session.reading, elapsedMs, 'manual') } : {}),
       }
       return { ...unchanged(snapshot), snapshot: { ...snapshot, timer: resetSession(snapshot.timer), records: [...snapshot.records, ended],
         scenes: { ...snapshot.scenes, lastEnded: session.scene ? {

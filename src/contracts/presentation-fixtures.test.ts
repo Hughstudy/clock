@@ -23,9 +23,12 @@ const EXPECTED: Record<FixtureName, { cue: CueKind | null; announced: boolean; s
   'stale-result': { cue: null, announced: false, status: 'UI26' },
   'hidden-screen': { cue: null, announced: false, status: 'UI27' },
   'motion-disabled': { cue: 'begin', announced: true, status: 'UI27' },
+  'reading-linger': { cue: 'pause', announced: true, status: 'UI26' },
+  'reading-closed': { cue: 'settle', announced: true, status: 'UI30' },
+  'reading-hat': { cue: 'settle', announced: true, status: 'UI30' },
 }
 
-describe('C2-P5 presentation fixtures', () => {
+describe('C2-P6 presentation fixtures', () => {
   const fixtures = presentationFixtures()
 
   it('covers every published scenario once', () => {
@@ -54,6 +57,13 @@ describe('C2-P5 presentation fixtures', () => {
       expect(f.feedback.frame.status.id).toMatch(/^UI3[01]$/)
     }
     expect(fixtures.find((x) => x.name === 'ended-early')!.feedback.frame.status.text).toContain('3分钟20秒')
+  })
+
+  it('publishes the reached bound reading pose even when animation is skipped', () => {
+    const reading = (name: FixtureName) => fixtures.find(f => f.name === name)?.scene?.reading
+    expect(reading('reading-linger')).toMatchObject({ variant: 'chapter', stage: 'linger', bookmark: 'original' })
+    expect(reading('reading-closed')).toMatchObject({ variant: 'chapter', stage: 'closed' })
+    expect(reading('reading-hat')).toMatchObject({ variant: 'hat', stage: 'found' })
   })
 
   it('links thought cues to their thought and session, and reports preferences without deciding motion', () => {

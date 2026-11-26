@@ -110,6 +110,29 @@ html:has(.app[data-screen='stats']) { scrollbar-gutter: stable; }
 #ribbon-journal .jl-room-photo::before,#ribbon-journal .jl-room-photo::after { content:""; width:24px; height:24px; position:absolute; background:light-dark(#cbb78d,#9a855e); clip-path:polygon(0 0,100% 0,0 100%); }
 #ribbon-journal .jl-room-photo::before { left:-1px; top:-1px; }
 #ribbon-journal .jl-room-photo::after { right:-1px; bottom:-1px; transform:rotate(180deg); }
+#ribbon-journal .jl-room-source {
+  display: block; width: 100%; padding: 0; text-align: start;
+}
+#ribbon-journal .jl-room-source .jl-room-photo { display: block; margin-bottom: 0!important; }
+#ribbon-journal .jl-room-painting { display: block; position: relative; }
+#ribbon-journal .jl-room-painting .jl-room-ticket {
+  position: absolute; inset-inline-end: 5%; bottom: 6%; width: 22%; height: auto; aspect-ratio: auto;
+}
+#ribbon-journal .jl-room-bookmark-caption {
+  display: flex; align-items: baseline; flex-wrap: wrap; justify-content: space-between;
+  gap: .2em .6em; padding: .65em .2em; margin-bottom: .55em; border-bottom: 1px solid var(--jl-rule);
+}
+#ribbon-journal .jl-room-bookmark-caption strong { font: 550 1rem/1.5 var(--serif); }
+#ribbon-journal .jl-room-bookmark-caption > span { color: var(--teal); font: 500 .82rem/1.5 var(--sans); }
+#ribbon-journal .jl-illustration[data-reading-art="closed-book"] {
+  object-fit: contain; padding: 8% 11%; box-sizing: border-box;
+  background: linear-gradient(168deg,#f2e6cf 0 47%,#e7c9a0 47.4% 68%,#e0c098 68.4% 100%);
+}
+#ribbon-journal .jl-reading-excerpt {
+  border-inline-start: 2px solid var(--sage); padding: .15em 0 .15em .8em;
+}
+#ribbon-journal .jl-reading-excerpt figcaption { color: var(--muted); font: 400 .8rem/1.55 var(--sans); }
+#ribbon-journal .jl-reading-excerpt blockquote { color: var(--ink); font: 450 1.04rem/1.7 var(--serif); }
 #ribbon-journal .jl-subtitle { color:var(--ink); font:550 1.01rem/1.55 var(--serif); }
 #ribbon-journal .jl-stamp-grid { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); column-gap:5px; row-gap:9px; margin:9px 0 0; }
 #ribbon-journal .jl-stamp-cell { display:flex; flex-direction:column; align-items:center; gap:3px; padding:0; min-width:0!important; font:400 .74rem/1.43 var(--sans)!important; overflow-wrap:anywhere; }

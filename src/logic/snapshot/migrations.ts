@@ -70,6 +70,8 @@ export const MIGRATIONS: Readonly<Record<number, Migration>> = {
   9: old => ({ ...old, version: 10, restMemories: [] }),
   // Every old clock is unedited. Its duration already represents its initial and current plan.
   10: old => ({ ...old, version: 11 }),
+  // Existing F3 timers and pictures carry no evidence of an authored reading session.
+  11: old => ({ ...old, version: 12 }),
 }
 
 export function runMigrations(data: Json, from: number, to: number, migrations: Readonly<Record<number, Migration>>, context: MigrationContext): Json | null {

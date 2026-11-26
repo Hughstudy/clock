@@ -117,12 +117,12 @@ export function useHistoryRange(view: StatsView, length: RangeLength) {
   return { totals, ...history }
 }
 
-export function useStatsView(snapshot: AppSnapshot, now: number, savedRecordIds: ReadonlySet<string>, durableThoughts: readonly Thought[], durableRests: readonly RestMemory[]): StatsView {
+export function useStatsView(snapshot: AppSnapshot, now: number, durableRecords: readonly FocusRecord[], durableThoughts: readonly Thought[], durableRests: readonly RestMemory[]): StatsView {
   const todayKey = localDateKey(now)
   const band = recordsBand(localHour(now))
   const restMemories = useMemo(() => [...durableRests].sort((a, b) =>
     b.endedAt - a.endedAt || a.sessionId.localeCompare(b.sessionId, 'en')), [durableRests])
-  const index = useMemo(() => indexByDay(snapshot.records.filter(r => savedRecordIds.has(r.sessionId))), [snapshot.records, savedRecordIds])
+  const index = useMemo(() => indexByDay(durableRecords), [durableRecords])
   const durableById = useMemo(() => new Map(durableThoughts.map(t => [t.id, t])), [durableThoughts])
   const live = useMemo(() => {
     // An unconfirmed edit, status change or deletion never replaces the formal version.
@@ -139,9 +139,12 @@ export function useStatsView(snapshot: AppSnapshot, now: number, savedRecordIds:
         if (linked) linked.push(t)
         else bySession.set(t.sessionId, [t])
       }
-      const records = snapshot.records.map(r => ({
+      // In a competing ending, the saved record owns both elapsed time and the printed story.
+      const confirmed = new Map(durableRecords.map(r => [r.sessionId, r]))
+      const pendingRecords = snapshot.records.filter(r => !confirmed.has(r.sessionId))
+      const records = [...durableRecords, ...pendingRecords].map(r => ({
         ...r,
-        saved: savedRecordIds.has(r.sessionId),
+        saved: confirmed.has(r.sessionId),
         sceneProgress: focusSceneProgress(r.elapsedMs, r.initialDurationMs ?? r.targetMs),
         thoughts: (bySession.get(r.sessionId) ?? []).sort((a, b) => a.createdAt - b.createdAt || a.id.localeCompare(b.id)),
         timeLabel: r.startedAt === null ? `${localClockTime(r.endedAt)} 结束` : `${localClockTime(r.startedAt)}–${localClockTime(r.endedAt)}`,
@@ -171,6 +174,6 @@ export function useStatsView(snapshot: AppSnapshot, now: number, savedRecordIds:
         clockTime: localClockTime,
       }
     },
-    [band, index, todayKey, snapshot.records, snapshot.thoughts, snapshot.timer, live, savedRecordIds, durableThoughts, durableById, restMemories],
+    [band, index, todayKey, snapshot.records, snapshot.thoughts, snapshot.timer, live, durableRecords, durableThoughts, durableById, restMemories],
   )
 }

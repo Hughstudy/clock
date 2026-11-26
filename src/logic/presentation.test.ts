@@ -10,7 +10,7 @@ const act = (snapshot: AppSnapshot, action: AppAction, now = 0) => applyAction(s
 const start = () => act(createSnapshot(spec), { type: 'start', sessionId: 'focus-one', timeZone: 'UTC', durationMinutes: 60 })
 const cue = (kind: PresentationCue['kind'], sessionId = 'focus-one'): PresentationCue => ({ id: `cue:${sessionId}:${kind}`, kind, sessionId, thoughtId: null })
 
-describe('C2-P5 readonly scene projection', () => {
+describe('C2-P6 readonly scene projection', () => {
   it('shows the reached pose at an adjusted deadline, including after reloading the ending', () => {
     const adjusted = act(start(), { type: 'adjustRemaining', sessionId: 'focus-one', expectedTimingRevision: 0, remainingMinutes: 10 }, 8 * 60_000)
     const ended = act(adjusted, { type: 'reconcile' }, 18 * 60_000)

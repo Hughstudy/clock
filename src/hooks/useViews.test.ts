@@ -4,7 +4,7 @@ import { describe, expect, it } from 'vitest'
 import { spec } from '../data/spec'
 import { applyAction, type AppAction } from '../logic/app'
 import { createSnapshot } from '../logic/snapshot'
-import type { AppSnapshot, RestMemory } from '../logic/types'
+import type { AppSnapshot, FocusRecord, RestMemory } from '../logic/types'
 import { useStatsView, useTimerView, type StatsView, type TimerView } from './useViews'
 import type { Thought } from '../logic/types'
 
@@ -17,14 +17,24 @@ function viewOf(snapshot: AppSnapshot, now: number): TimerView {
   return value!
 }
 
-function statsOf(snapshot: AppSnapshot, saved: ReadonlySet<string>, durable: readonly Thought[], durableRests: readonly RestMemory[] = []): StatsView {
+function statsOf(snapshot: AppSnapshot, saved: ReadonlySet<string>, durable: readonly Thought[], durableRests: readonly RestMemory[] = [],
+  durableRecords: readonly FocusRecord[] = snapshot.records.filter(r => saved.has(r.sessionId))): StatsView {
   let value: StatsView | undefined
-  function Probe() { value = useStatsView(snapshot, T0, saved, durable, durableRests); return null }
+  function Probe() { value = useStatsView(snapshot, T0, durableRecords, durable, durableRests); return null }
   renderToStaticMarkup(createElement(Probe))
   return value!
 }
 
 describe('confirmed records and formal thought projection', () => {
+  it('prints the durable outcome when a competing tab ends the same session differently', () => {
+    const initial = createSnapshot(spec)
+    initial.scenes.focus.remaining = ['F3']
+    const started = act(initial, { type: 'start', sessionId: 'book', timeZone: 'UTC' })
+    const manual = act(started, { type: 'end' }, T0 + 21.25 * 60_000)
+    const deadline = act(started, { type: 'reconcile' }, T0 + 25 * 60_000)
+    const result = statsOf(deadline, new Set(['book']), [], [], manual.records)
+    expect(result.recordBySession.get('book')).toMatchObject({ saved: true, endReason: 'manual', reading: { archive: 'note', stage: 'linger' } })
+  })
   it('shows only durable rest memories, latest first, without crediting focus time', () => {
     const ended = act(act(createSnapshot(spec), { type: 'startBreak', sessionId: 'one', timeZone: 'UTC' }), { type: 'end' }, T0 + 100)
     const second = act(act(ended, { type: 'startBreak', sessionId: 'two', timeZone: 'UTC' }), { type: 'end' }, T0 + 200)
